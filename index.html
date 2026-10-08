@@ -1,0 +1,575 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Garde-robe Blue Box</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+/* Layout : une colonne de fiches produit, sommaire collant, sections empilées (tenue → semaine → catalogue → accords → à compléter) */
+:root {
+  --bg: #eef1f5;
+  --surface: #ffffff;
+  --surface-2: #f5f7fa;
+  --ink: #141b2d;
+  --muted: #586176;
+  --line: #d6dbe4;
+  --indigo: #2b4c9b;
+  --indigo-soft: #e2e8f6;
+  --on-indigo: #ffffff;
+  --rivet: #a5561f;
+  --ok: #26714a;
+  --ok-soft: #dff0e6;
+  --maybe: #8e6210;
+  --maybe-soft: #f6ecd6;
+  --no: #ac3537;
+  --no-soft: #f6e0e0;
+  --f-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --f-body: "Source Sans 3", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --gutter: 16px;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e131d; --surface: #161d2b; --surface-2: #1c2435; --ink: #e7ebf3; --muted: #9ba5b9; --line: #2a3447;
+    --indigo: #93abef; --indigo-soft: #1f2a47; --on-indigo: #0e131d; --rivet: #e3925a;
+    --ok: #67c690; --ok-soft: #16301f; --maybe: #e2b552; --maybe-soft: #33280f; --no: #f08080; --no-soft: #3a1b1c;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e131d; --surface: #161d2b; --surface-2: #1c2435; --ink: #e7ebf3; --muted: #9ba5b9; --line: #2a3447;
+  --indigo: #93abef; --indigo-soft: #1f2a47; --on-indigo: #0e131d; --rivet: #e3925a;
+  --ok: #67c690; --ok-soft: #16301f; --maybe: #e2b552; --maybe-soft: #33280f; --no: #f08080; --no-soft: #3a1b1c;
+  color-scheme: dark;
+}
+@media (min-width: 720px) { :root { --gutter: 32px; } }
+
+* { box-sizing: border-box; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 1rem/1.5 var(--f-body); -webkit-font-smoothing: antialiased; }
+img { max-width: 100%; }
+a { color: var(--indigo); }
+:focus-visible { outline: 2px solid var(--indigo); outline-offset: 2px; }
+
+.page { max-width: 1120px; margin: 0 auto; padding-inline: var(--gutter); padding-block: 0 64px; }
+
+.eyebrow { font: 600 .72rem/1.3 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.mono { font-family: var(--f-mono); font-size: .78rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* En-tête */
+.tete { display: grid; gap: 14px; padding-block: 40px 24px; }
+h1 { margin: 0; font-family: var(--f-display); font-stretch: 125%; font-weight: 800; font-size: clamp(2.1rem, 7.5vw, 3.8rem); line-height: .95; letter-spacing: -.015em; text-wrap: balance; }
+.resume { margin: 0; max-width: 65ch; color: var(--muted); font-size: 1.05rem; }
+.resume strong { color: var(--ink); font-weight: 600; }
+.couverture { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 0; padding: 0; list-style: none; }
+.couverture li { display: inline-flex; align-items: baseline; gap: 6px; padding: 4px 11px; border: 1px solid var(--line); border-radius: 999px; font-size: .88rem; }
+.couverture li b { font: 500 .8rem var(--f-mono); font-variant-numeric: tabular-nums; }
+.couverture li.oui { background: var(--indigo-soft); border-color: transparent; }
+.couverture li.non { border-style: dashed; color: var(--muted); }
+
+/* Sommaire collant */
+.sommaire { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; margin-inline: calc(var(--gutter) * -1); padding-inline: var(--gutter); background: var(--bg); border-bottom: 1px solid var(--line); }
+.sommaire ul { display: flex; gap: 4px; margin: 0; padding: 8px 0; list-style: none; overflow-x: auto; scrollbar-width: none; }
+.sommaire a { display: block; padding: 6px 12px; border-radius: 999px; color: var(--ink); font-weight: 600; font-size: .92rem; text-decoration: none; white-space: nowrap; }
+.sommaire a:hover { background: var(--surface); }
+
+/* Sections */
+section { padding-top: 48px; scroll-margin-top: 52px; }
+.entete-section { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; margin-bottom: 16px; }
+h2 { margin: 0; font-family: var(--f-display); font-stretch: 112%; font-weight: 750; font-size: clamp(1.4rem, 3.6vw, 1.75rem); line-height: 1.1; text-wrap: balance; }
+.entete-section p { margin: 0; color: var(--muted); }
+.intro { margin: -6px 0 16px; max-width: 65ch; color: var(--muted); }
+
+/* Boutons et badges */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font: 600 .95rem/1.2 var(--f-body); cursor: pointer; }
+.btn:hover { border-color: var(--indigo); }
+.btn.primaire { background: var(--indigo); border-color: var(--indigo); color: var(--on-indigo); }
+.badge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; font-weight: 600; font-size: .82rem; white-space: nowrap; }
+.badge.ok { background: var(--ok-soft); color: var(--ok); }
+.badge.maybe { background: var(--maybe-soft); color: var(--maybe); }
+.badge.no { background: var(--no-soft); color: var(--no); }
+.pastille { display: inline-block; width: .8em; height: .8em; border-radius: 50%; border: 1px solid var(--line); vertical-align: -.05em; flex: none; }
+.couleur { display: inline-flex; align-items: center; gap: 6px; font-size: .9rem; }
+
+/* Tenue du jour */
+.tenue { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.slot { display: flex; flex-direction: column; margin: 0; overflow: hidden; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.slot img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; background: var(--surface-2); }
+.slot figcaption { display: grid; gap: 2px; padding: 10px 12px 12px; min-width: 0; }
+.slot strong { font-weight: 600; line-height: 1.25; }
+.slot.pieds { justify-content: center; gap: 8px; padding: 20px 16px; background: transparent; border: 1.5px dashed var(--line); }
+.slot.pieds strong { font-family: var(--f-display); font-stretch: 112%; font-size: 1.1rem; }
+.slot.pieds p { margin: 0; color: var(--muted); font-size: .92rem; }
+.verdict { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; }
+.verdict-texte { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; min-width: 0; }
+.verdict-texte p { margin: 0; color: var(--muted); }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (max-width: 560px) {
+  .tenue { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .slot.pieds { grid-column: 1 / -1; padding: 14px 16px; }
+}
+
+/* Semaine */
+.jours { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; padding: 0; border: 0; }
+.jours legend { padding: 0; margin-bottom: 8px; font-weight: 600; }
+.puce { position: relative; display: inline-flex; align-items: center; padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); font-weight: 600; font-size: .9rem; cursor: pointer; user-select: none; }
+.puce input { position: absolute; opacity: 0; pointer-events: none; }
+.puce:has(input:checked) { background: var(--indigo); border-color: var(--indigo); color: var(--on-indigo); }
+.puce:has(input:focus-visible) { outline: 2px solid var(--indigo); outline-offset: 2px; }
+.semaine { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.semaine li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.semaine li.aujourdhui { border-color: var(--indigo); box-shadow: inset 3px 0 0 var(--indigo); }
+.vignettes { display: flex; gap: 4px; }
+.vignettes img { display: block; width: 44px; height: 55px; object-fit: cover; border-radius: 6px; background: var(--surface-2); }
+.ligne-corps { display: grid; gap: 2px; min-width: 0; }
+.ligne-corps .noms { font-weight: 600; line-height: 1.3; }
+.ligne-corps .noms span { color: var(--muted); font-weight: 400; }
+.bilan { margin: 12px 0 0; color: var(--muted); font-size: .92rem; }
+.semaine li.vide { display: block; padding: 20px; background: transparent; border: 1.5px dashed var(--line); color: var(--muted); }
+
+/* Catalogue */
+.filtres { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.filtres button { padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); font: 600 .9rem var(--f-body); cursor: pointer; }
+.filtres button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+.filtres b { font: 500 .78rem var(--f-mono); opacity: .75; margin-left: 4px; }
+.grille { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (min-width: 640px) { .grille { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.fiche { display: flex; flex-direction: column; overflow: hidden; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.fiche img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; background: var(--surface-2); }
+.fiche-corps { display: flex; flex: 1; flex-direction: column; gap: 4px; padding: 10px 12px 12px; min-width: 0; }
+.fiche-corps strong { font-weight: 600; line-height: 1.25; }
+.fiche-corps .coupe { color: var(--muted); font-size: .86rem; line-height: 1.3; }
+.fiche-corps .assoc { font-size: .84rem; }
+.fiche-corps a { margin-top: auto; padding-top: 6px; font-size: .86rem; font-weight: 600; text-decoration: none; overflow-wrap: anywhere; }
+.fiche-corps a:hover { text-decoration: underline; }
+
+/* Accords */
+.legende { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.table-scroll { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+table.accords { width: 100%; min-width: 820px; border-collapse: separate; border-spacing: 0; }
+.accords th, .accords td { padding: 6px 4px; text-align: center; border-bottom: 1px solid var(--line); }
+.accords tbody tr:last-child th, .accords tbody tr:last-child td { border-bottom: 0; }
+.accords thead th { vertical-align: bottom; width: 70px; color: var(--muted); font-weight: 600; font-size: .7rem; line-height: 1.2; }
+.accords thead img { display: block; width: 40px; height: 50px; margin: 0 auto 4px; object-fit: cover; border-radius: 4px; background: var(--surface-2); }
+.accords .coin, .accords tbody th { position: sticky; left: 0; z-index: 1; padding-inline: 10px; background: var(--surface); text-align: left; border-right: 1px solid var(--line); }
+.accords .coin { vertical-align: bottom; }
+.accords tbody th .lig { display: flex; align-items: center; gap: 8px; font-size: .86rem; font-weight: 600; white-space: nowrap; }
+.accords tbody th img { width: 32px; height: 40px; object-fit: cover; border-radius: 4px; background: var(--surface-2); }
+.cell { width: 36px; height: 36px; border: 0; border-radius: 50%; font: 600 .78rem var(--f-mono); cursor: pointer; }
+.cell.ok { background: var(--ok-soft); color: var(--ok); }
+.cell.maybe { background: var(--maybe-soft); color: var(--maybe); }
+.cell.no { background: var(--no-soft); color: var(--no); }
+.cell:hover { box-shadow: 0 0 0 2px currentColor; }
+
+/* À compléter */
+.priorites { display: grid; margin: 0; padding: 0; list-style: none; }
+.priorites li { display: grid; grid-template-columns: 2.6rem minmax(0, 1fr); gap: 4px 14px; padding-block: 18px; border-top: 1px solid var(--line); }
+.priorites li:last-child { border-bottom: 1px solid var(--line); }
+.priorites .rang { grid-row: span 3; font-family: var(--f-display); font-stretch: 125%; font-weight: 800; font-size: 2rem; line-height: 1; color: var(--rivet); font-variant-numeric: tabular-nums; }
+.priorites h3 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; margin: 0; font-family: var(--f-display); font-stretch: 112%; font-weight: 700; font-size: 1.15rem; }
+.priorites p { margin: 0; max-width: 65ch; }
+.priorites .idee { color: var(--muted); }
+.priorites .idee b { color: var(--ink); font-weight: 600; }
+
+footer { margin-top: 48px; color: var(--muted); font-size: .86rem; }
+footer p { margin: 0; max-width: 65ch; }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="tete">
+    <span class="eyebrow" id="sur-titre">Achats magasin depuis juin 2026</span>
+    <h1>Garde-robe Blue&nbsp;Box</h1>
+    <p class="resume" id="resume"></p>
+    <ul class="couverture" id="couverture" aria-label="Pièces par catégorie"></ul>
+  </header>
+
+  <nav class="sommaire" aria-label="Sommaire">
+    <ul>
+      <li><a href="#tenue">Tenue du jour</a></li>
+      <li><a href="#semaine">Ma semaine</a></li>
+      <li><a href="#catalogue">Catalogue</a></li>
+      <li><a href="#accords">Accords</a></li>
+      <li><a href="#completer">À compléter</a></li>
+    </ul>
+  </nav>
+
+  <section id="tenue" aria-labelledby="titre-tenue">
+    <div class="entete-section">
+      <h2 id="titre-tenue">Tenue du jour</h2>
+      <p id="date-du-jour"></p>
+    </div>
+    <div class="tenue" id="tenue-slots"></div>
+    <div class="verdict">
+      <div class="verdict-texte" id="tenue-verdict"></div>
+      <div class="actions" id="tenue-actions"></div>
+    </div>
+  </section>
+
+  <section id="semaine" aria-labelledby="titre-semaine">
+    <div class="entete-section">
+      <h2 id="titre-semaine">Ma semaine</h2>
+      <button class="btn" type="button" id="recomposer" data-action="recomposer">Recomposer la semaine</button>
+    </div>
+    <p class="intro">Coche tes jours de travail. Chaque jour reçoit un pull différent, et les bas tournent pour montrer toute la collection.</p>
+    <fieldset class="jours" id="jours">
+      <legend class="eyebrow">Jours de travail</legend>
+      <label class="puce"><input type="checkbox" id="jour-lun" value="lun">Lun</label>
+      <label class="puce"><input type="checkbox" id="jour-mar" value="mar">Mar</label>
+      <label class="puce"><input type="checkbox" id="jour-mer" value="mer">Mer</label>
+      <label class="puce"><input type="checkbox" id="jour-jeu" value="jeu">Jeu</label>
+      <label class="puce"><input type="checkbox" id="jour-ven" value="ven">Ven</label>
+      <label class="puce"><input type="checkbox" id="jour-sam" value="sam">Sam</label>
+      <label class="puce"><input type="checkbox" id="jour-dim" value="dim">Dim</label>
+    </fieldset>
+    <ol class="semaine" id="liste-semaine"></ol>
+    <p class="bilan" id="bilan-semaine"></p>
+  </section>
+
+  <section id="catalogue" aria-labelledby="titre-catalogue">
+    <div class="entete-section">
+      <h2 id="titre-catalogue">Catalogue</h2>
+      <p id="compte-catalogue"></p>
+    </div>
+    <div class="filtres" id="filtres" role="group" aria-label="Filtrer par catégorie"></div>
+    <div class="grille" id="grille"></div>
+  </section>
+
+  <section id="accords" aria-labelledby="titre-accords">
+    <div class="entete-section">
+      <h2 id="titre-accords">Accords bas × pulls</h2>
+      <p id="compte-accords"></p>
+    </div>
+    <p class="intro">Chaque case est une tenue. Touche une case pour la voir en grand en haut de la page.</p>
+    <div class="legende">
+      <span class="badge ok">●● Valeur sûre</span>
+      <span class="badge maybe">● Possible</span>
+      <span class="badge no">× À éviter</span>
+    </div>
+    <div class="table-scroll"><table class="accords" id="table-accords"></table></div>
+  </section>
+
+  <section id="completer" aria-labelledby="titre-completer">
+    <div class="entete-section">
+      <h2 id="titre-completer">À compléter</h2>
+      <p id="compte-completer"></p>
+    </div>
+    <p class="intro">Pour être habillé 100&nbsp;% magasin au travail, voici les catégories encore vides, de la plus urgente à la moins urgente.</p>
+    <ol class="priorites" id="priorites"></ol>
+  </section>
+
+  <footer>
+    <p>Les données viennent de <span class="mono">garde-robe.js</span>. Les liens ont été nettoyés de leurs paramètres de suivi publicitaire. Trois pulls n'ont pas de fiche sur le site de la marque : leur lien mène chez un revendeur.</p>
+  </footer>
+</div>
+
+<script src="garde-robe.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  const D = window.GARDE_ROBE;
+  const CAT = Object.fromEntries(D.categories.map(c => [c.id, c]));
+  const PAR_ID = Object.fromEntries(D.articles.map(a => [a.id, a]));
+  const BAS = D.articles.filter(a => CAT[a.categorie].role === "bas");
+  const HAUTS = D.articles.filter(a => CAT[a.categorie].role === "haut");
+  const ENCOLURES = { zip: "Zippé", rond: "Col rond", polo: "Col polo" };
+  const NIVEAUX = {
+    2: { nom: "Valeur sûre", cls: "ok", sym: "●●" },
+    1: { nom: "Possible", cls: "maybe", sym: "●" },
+    0: { nom: "À éviter", cls: "no", sym: "×" },
+  };
+  const JOURS = [["lun", "Lundi"], ["mar", "Mardi"], ["mer", "Mercredi"], ["jeu", "Jeudi"], ["ven", "Vendredi"], ["sam", "Samedi"], ["dim", "Dimanche"]];
+  const AUJ = JOURS[(new Date().getDay() + 6) % 7];
+  const CLE = "garde-robe-bluebox:v1";
+
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  const accord = (b, h) => D.accords[b.teinte][h.teinte];
+  const noteAccord = (b, h) => D.notesAccord[b.teinte + "/" + h.teinte] || "";
+  const estBas = a => CAT[a.categorie].role === "bas";
+  const court = a => estBas(a)
+    ? a.modele.replace(/^(Pantalon|Jean) /, "").split(" ")[0].replace("™", "") + " " + a.couleur.toLowerCase()
+    : ENCOLURES[a.encolure] + " " + a.couleur.toLowerCase();
+  const pastille = a => `<i class="pastille" style="background:${esc(D.teintes[a.teinte].hex)}"></i>`;
+  const pluriel = (n, mot) => `${n} ${mot}${n > 1 ? "s" : ""}`;
+
+  // ---------- état (préférences locales, facultatives) ----------
+  function lire() {
+    try {
+      const e = JSON.parse(localStorage.getItem(CLE));
+      if (!e || !Array.isArray(e.jours)) return null;
+      const jours = e.jours.filter(j => JOURS.some(x => x[0] === j));
+      const plan = {};
+      for (const j of jours) {
+        const t = e.plan && e.plan[j];
+        if (t && PAR_ID[t.bas] && PAR_ID[t.haut]) plan[j] = { bas: t.bas, haut: t.haut };
+      }
+      return { jours, plan };
+    } catch (_) { return null; }
+  }
+  function ecrire() {
+    try { localStorage.setItem(CLE, JSON.stringify(etat)); } catch (_) { /* stockage indisponible */ }
+  }
+
+  let etat = lire() || { jours: ["lun", "mar", "mer", "jeu", "ven", "sam"], plan: {} };
+  let apercu = null;      // tenue choisie dans le tableau des accords
+  let ideeDuJour = null;  // tenue proposée quand aujourd'hui n'est pas travaillé
+  let filtre = "tout";
+
+  // ---------- composition des tenues ----------
+  // Note une tenue dans son contexte : accord des couleurs, pulls déjà pris, bas déjà portés, jours voisins.
+  function noter(b, h, ctx) {
+    const s = accord(b, h);
+    if (s === 0 || ctx.hautsPris.has(h.id)) return -Infinity;
+    if (ctx.actuel && ctx.actuel.bas === b.id && ctx.actuel.haut === h.id) return -Infinity;
+    let n = s * 10 + Math.random() * 4;
+    n -= (ctx.usageBas.get(b.id) || 0) * 12;
+    for (const v of ctx.voisins) {
+      const hv = PAR_ID[v.haut];
+      if (v.bas === b.id) n -= 15;
+      if (hv.encolure === h.encolure) n -= 3;
+      if (hv.teinte === h.teinte) n -= 4;
+    }
+    if (ctx.actuel) {
+      if (ctx.actuel.haut === h.id) n -= 8;
+      if (ctx.actuel.bas === b.id) n -= 4;
+    }
+    return n;
+  }
+  function meilleure(ctx) {
+    let choix = null, max = -Infinity;
+    for (const b of BAS) for (const h of HAUTS) {
+      const n = noter(b, h, ctx);
+      if (n > max) { max = n; choix = { bas: b.id, haut: h.id }; }
+    }
+    return choix;
+  }
+  const joursPlanifies = () => JOURS.map(x => x[0]).filter(j => etat.plan[j]);
+
+  function contexteJour(j, actuel) {
+    const ordre = JOURS.map(x => x[0]).filter(x => x === j || etat.plan[x]);
+    const i = ordre.indexOf(j);
+    const autres = ordre.filter(x => x !== j).map(x => etat.plan[x]);
+    const usageBas = new Map();
+    autres.forEach(t => usageBas.set(t.bas, (usageBas.get(t.bas) || 0) + 1));
+    return {
+      hautsPris: new Set(autres.map(t => t.haut)),
+      usageBas,
+      voisins: [etat.plan[ordre[i - 1]], etat.plan[ordre[i + 1]]].filter(Boolean),
+      actuel,
+    };
+  }
+  function composerSemaine() {
+    etat.plan = {};
+    for (const [j] of JOURS) {
+      if (etat.jours.includes(j)) etat.plan[j] = meilleure(contexteJour(j, null));
+    }
+    ecrire();
+  }
+  function changerJour(j) {
+    etat.plan[j] = meilleure(contexteJour(j, etat.plan[j]));
+    ecrire();
+  }
+
+  // ---------- rendu ----------
+  function rendreTete() {
+    const marques = {};
+    D.articles.forEach(a => { marques[a.marque] = (marques[a.marque] || 0) + 1; });
+    const parMarque = Object.entries(marques).sort((x, y) => y[1] - x[1]).map(([m, n]) => `${esc(m)} ${n}`).join(" · ");
+    let possibles = 0, sures = 0;
+    BAS.forEach(b => HAUTS.forEach(h => { const s = accord(b, h); if (s > 0) possibles++; if (s === 2) sures++; }));
+    document.getElementById("sur-titre").textContent = `Achats magasin depuis ${D.depuis}`;
+    document.getElementById("resume").innerHTML =
+      `<strong>${D.articles.length} pièces</strong> (${parMarque}). De quoi composer <strong>${possibles} tenues</strong> bas + pull, dont ${sures} valeurs sûres. Il manque encore les chaussures pour une tenue 100&nbsp;% magasin.`;
+    document.getElementById("couverture").innerHTML = D.categories.map(c => {
+      const n = D.articles.filter(a => a.categorie === c.id).length;
+      return `<li class="${n ? "oui" : "non"}">${esc(c.nom)} <b>${n}</b></li>`;
+    }).join("");
+    document.getElementById("date-du-jour").textContent =
+      new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+  }
+
+  function slot(a) {
+    return `<figure class="slot">
+      <img src="${esc(a.image)}" alt="${esc(a.marque + " " + a.modele + ", " + a.couleur)}" width="480" height="600">
+      <figcaption>
+        <span class="eyebrow">${esc(a.marque)}</span>
+        <strong>${esc(a.modele)}</strong>
+        <span class="couleur">${pastille(a)}${esc(a.couleur)}</span>
+      </figcaption>
+    </figure>`;
+  }
+
+  function tenueAffichee() {
+    if (apercu) return { t: apercu, contexte: "Choisie dans le tableau des accords." };
+    if (etat.plan[AUJ[0]]) return { t: etat.plan[AUJ[0]], contexte: `Prévue dans ta semaine pour ${AUJ[1].toLowerCase()}.` };
+    if (!ideeDuJour) ideeDuJour = meilleure({ hautsPris: new Set(), usageBas: new Map(), voisins: [], actuel: null });
+    return { t: ideeDuJour, contexte: `${AUJ[1]} n'est pas coché dans ta semaine, voici quand même une idée.` };
+  }
+
+  function rendreTenue() {
+    const { t, contexte } = tenueAffichee();
+    const b = PAR_ID[t.bas], h = PAR_ID[t.haut];
+    const niv = NIVEAUX[accord(b, h)];
+    document.getElementById("tenue-slots").innerHTML = slot(h) + slot(b) +
+      `<div class="slot pieds">
+        <span class="eyebrow">Chaussures</span>
+        <strong>Pas encore de paire du magasin</strong>
+        <p>C'est la prochaine pièce à trouver. <a href="#completer">Voir l'idée</a></p>
+      </div>`;
+    const note = noteAccord(b, h);
+    document.getElementById("tenue-verdict").innerHTML =
+      `<span class="badge ${niv.cls}">${niv.sym} ${niv.nom}</span><p>${esc(note || contexte)}</p>`;
+    document.getElementById("tenue-actions").innerHTML = apercu
+      ? `<button class="btn" type="button" id="retour-tenue" data-action="retour">Revenir à la tenue du jour</button>`
+      : `<button class="btn primaire" type="button" id="autre-tenue" data-action="autre">Autre tenue</button>`;
+  }
+
+  function rendreSemaine() {
+    JOURS.forEach(([j]) => { document.getElementById("jour-" + j).checked = etat.jours.includes(j); });
+    const jours = joursPlanifies();
+    const liste = document.getElementById("liste-semaine");
+    if (!jours.length) {
+      liste.innerHTML = `<li class="vide">Coche au moins un jour de travail pour composer ta semaine.</li>`;
+      document.getElementById("bilan-semaine").textContent = "";
+      return;
+    }
+    liste.innerHTML = jours.map(j => {
+      const t = etat.plan[j], b = PAR_ID[t.bas], h = PAR_ID[t.haut];
+      const niv = NIVEAUX[accord(b, h)];
+      const nomJour = JOURS.find(x => x[0] === j)[1];
+      const auj = j === AUJ[0];
+      return `<li class="${auj ? "aujourdhui" : ""}">
+        <div class="vignettes">
+          <img src="${esc(h.image)}" alt="" width="44" height="55" loading="lazy">
+          <img src="${esc(b.image)}" alt="" width="44" height="55" loading="lazy">
+        </div>
+        <div class="ligne-corps">
+          <span class="eyebrow">${esc(nomJour)}${auj ? " · aujourd'hui" : ""}</span>
+          <span class="noms">${esc(h.marque)} ${esc(court(h).toLowerCase())} <span>+</span> ${esc(b.marque)} ${esc(court(b))}</span>
+          <span><span class="badge ${niv.cls}">${niv.sym} ${niv.nom}</span></span>
+        </div>
+        <button class="btn" type="button" id="changer-${j}" data-action="changer" data-jour="${j}" aria-label="Changer la tenue de ${esc(nomJour.toLowerCase())}">Changer</button>
+      </li>`;
+    }).join("");
+    const pulls = new Set(jours.map(j => etat.plan[j].haut)).size;
+    const bas = new Set(jours.map(j => etat.plan[j].bas)).size;
+    document.getElementById("bilan-semaine").textContent =
+      `Cette semaine : ${pulls} pull${pulls > 1 ? "s" : ""} sur ${HAUTS.length} et ${bas} bas sur ${BAS.length} mis en avant.`;
+  }
+
+  function rendreCatalogue() {
+    const presentes = D.categories.filter(c => D.articles.some(a => a.categorie === c.id));
+    const options = [{ id: "tout", nom: "Tout", n: D.articles.length }]
+      .concat(presentes.map(c => ({ id: c.id, nom: c.nom, n: D.articles.filter(a => a.categorie === c.id).length })));
+    document.getElementById("filtres").innerHTML = options.map(o =>
+      `<button type="button" id="filtre-${o.id}" data-action="filtre" data-filtre="${o.id}" aria-pressed="${o.id === filtre}">${esc(o.nom)}<b>${o.n}</b></button>`
+    ).join("");
+    const liste = D.articles.filter(a => filtre === "tout" || a.categorie === filtre);
+    document.getElementById("compte-catalogue").textContent = pluriel(liste.length, "pièce");
+    document.getElementById("grille").innerHTML = liste.map(a => {
+      const n = estBas(a) ? HAUTS.filter(h => accord(a, h) > 0).length : BAS.filter(b => accord(b, a) > 0).length;
+      const total = estBas(a) ? HAUTS.length : BAS.length;
+      const avec = estBas(a) ? "pulls" : "bas";
+      const lien = a.officiel ? `Fiche ${a.site} ↗` : `Fiche revendeur · ${a.site} ↗`;
+      return `<article class="fiche">
+        <img src="${esc(a.image)}" alt="${esc(a.marque + " " + a.modele + ", " + a.couleur)}" width="480" height="600" loading="lazy">
+        <div class="fiche-corps">
+          <span class="eyebrow">${esc(a.marque)} · ${esc(CAT[a.categorie].nom.replace(/s$/, ""))}</span>
+          <strong>${esc(a.modele)}</strong>
+          <span class="couleur">${pastille(a)}${esc(a.couleur)}</span>
+          <span class="coupe">${esc(a.coupe)}</span>
+          ${a.ref ? `<span class="mono">Réf. ${esc(a.ref)}</span>` : ""}
+          <span class="assoc">Va avec ${n} ${avec} sur ${total}</span>
+          <a href="${esc(a.lien)}" target="_blank" rel="noopener noreferrer">${esc(lien)}</a>
+        </div>
+      </article>`;
+    }).join("");
+  }
+
+  function rendreAccords() {
+    let possibles = 0;
+    BAS.forEach(b => HAUTS.forEach(h => { if (accord(b, h) > 0) possibles++; }));
+    document.getElementById("compte-accords").textContent = `${possibles} tenues possibles sur ${BAS.length * HAUTS.length}`;
+    const tete = `<thead><tr><th scope="col" class="coin eyebrow">Bas \\ Pull</th>${HAUTS.map(h =>
+      `<th scope="col"><img src="${esc(h.image)}" alt="" width="40" height="50" loading="lazy">${esc(court(h))}</th>`
+    ).join("")}</tr></thead>`;
+    const corps = `<tbody>${BAS.map(b => `<tr>
+      <th scope="row"><span class="lig"><img src="${esc(b.image)}" alt="" width="32" height="40" loading="lazy">${esc(court(b))}</span></th>
+      ${HAUTS.map(h => {
+        const niv = NIVEAUX[accord(b, h)];
+        const label = `${court(h)} avec ${court(b)} : ${niv.nom}`;
+        return `<td><button class="cell ${niv.cls}" type="button" data-action="voir" data-bas="${b.id}" data-haut="${h.id}" title="${esc(label)}" aria-label="${esc(label)}">${niv.sym}</button></td>`;
+      }).join("")}
+    </tr>`).join("")}</tbody>`;
+    document.getElementById("table-accords").innerHTML = tete + corps;
+  }
+
+  function rendreCompleter() {
+    const vides = D.aCompleter.filter(p => !D.articles.some(a => a.categorie === p.categorie));
+    const couvertes = D.categories.filter(c => D.articles.some(a => a.categorie === c.id)).length;
+    document.getElementById("compte-completer").textContent = `${couvertes} catégories couvertes sur ${D.categories.length}`;
+    document.getElementById("priorites").innerHTML = vides.map((p, i) => `<li>
+      <span class="rang" aria-hidden="true">${i + 1}</span>
+      <h3>${esc(CAT[p.categorie].nom)} <span class="mono">0 pièce</span></h3>
+      <p>${esc(p.pourquoi)}</p>
+      <p class="idee"><b>Idée :</b> ${esc(p.idee)}</p>
+    </li>`).join("");
+  }
+
+  function rendre(...parties) {
+    const focus = document.activeElement && document.activeElement.id;
+    parties.forEach(f => f());
+    if (focus) { const el = document.getElementById(focus); if (el && el !== document.activeElement) el.focus({ preventScroll: true }); }
+  }
+
+  // ---------- interactions ----------
+  document.getElementById("jours").addEventListener("change", e => {
+    const j = e.target.value;
+    if (e.target.checked) {
+      if (!etat.jours.includes(j)) etat.jours.push(j);
+      etat.plan[j] = meilleure(contexteJour(j, null));
+    } else {
+      etat.jours = etat.jours.filter(x => x !== j);
+      delete etat.plan[j];
+    }
+    ecrire();
+    rendre(rendreSemaine, rendreTenue);
+  });
+
+  document.addEventListener("click", e => {
+    const el = e.target.closest("[data-action]");
+    if (!el) return;
+    const action = el.dataset.action;
+    if (action === "recomposer") { composerSemaine(); rendre(rendreSemaine, rendreTenue); }
+    else if (action === "changer") { changerJour(el.dataset.jour); rendre(rendreSemaine, rendreTenue); }
+    else if (action === "autre") {
+      if (etat.plan[AUJ[0]]) { changerJour(AUJ[0]); rendre(rendreSemaine, rendreTenue); }
+      else { ideeDuJour = meilleure({ hautsPris: new Set(), usageBas: new Map(), voisins: [], actuel: ideeDuJour }); rendre(rendreTenue); }
+    }
+    else if (action === "retour") { apercu = null; rendre(rendreTenue); document.getElementById("autre-tenue").focus({ preventScroll: true }); }
+    else if (action === "voir") {
+      apercu = { bas: el.dataset.bas, haut: el.dataset.haut };
+      rendre(rendreTenue);
+      document.getElementById("tenue").scrollIntoView({ block: "start" });
+    }
+    else if (action === "filtre") { filtre = el.dataset.filtre; rendre(rendreCatalogue); }
+  });
+
+  // ---------- démarrage ----------
+  if (!joursPlanifies().length && etat.jours.length) composerSemaine();
+  else etat.jours.forEach(j => { if (!etat.plan[j]) etat.plan[j] = meilleure(contexteJour(j, null)); });
+  rendreTete();
+  rendreTenue();
+  rendreSemaine();
+  rendreCatalogue();
+  rendreAccords();
+  rendreCompleter();
+})();
+</script>
+</body>
+</html>
