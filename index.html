@@ -105,6 +105,7 @@ h2 { margin: 0; font-family: var(--f-display); font-stretch: 112%; font-weight: 
 .couleur { display: inline-flex; align-items: center; gap: 6px; font-size: .9rem; }
 .annonce { margin: 0 0 12px; font-weight: 600; color: var(--no); }
 .annonce:empty { display: none; }
+.annonce.ok { color: var(--ok); }
 
 /* Ajouter un achat */
 .panneau { margin-top: 8px; padding: 20px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); scroll-margin-top: 16px; }
@@ -494,9 +495,10 @@ footer p { margin: 0; max-width: 65ch; }
   let apercu = null;       // tenue choisie dans le tableau des accords
   let ideeDuJour = null;   // tenue proposée quand aujourd'hui n'est pas travaillé
   let filtre = "tout";
-  // Dans le visualiseur, les pièces ajoutées arrivent après le premier affichage : on attend
-  // de les avoir avant de remplacer une tenue de la semaine qui y fait référence.
-  let pret = !(window.claude && typeof window.claude.use === "function");
+  // Pièces ajoutées depuis la page : "chargement" tant que la base n'a pas répondu de façon
+  // définitive, "ok" ensuite, "indisponible" si elle ne répond pas. Tant que ce n'est pas "ok",
+  // une tenue de la semaine qui cite une pièce inconnue est gardée telle quelle, jamais effacée.
+  let etatAjouts = window.claude && typeof window.claude.use === "function" ? "chargement" : "ok";
 
   const valide = t => !!(t && PAR_ID[t.bas] && PAR_ID[t.haut]);
 
@@ -589,6 +591,7 @@ footer p { margin: 0; max-width: 65ch; }
   }
   // Remet la semaine d'aplomb quand des pièces arrivent, changent ou disparaissent.
   function reconcilier() {
+    const sur = etatAjouts === "ok";
     let change = false;
     for (const [j] of JOURS) {
       const t = etat.plan[j];
@@ -597,12 +600,12 @@ footer p { margin: 0; max-width: 65ch; }
         continue;
       }
       if (!t) { composerJour(j, null); change = true; continue; }
-      if (!pret) continue; // ses pièces sont peut-être encore en chargement
+      if (!sur) continue; // ses pièces sont peut-être seulement pas encore chargées
       if (!valide(t)) { delete etat.plan[j]; composerJour(j, null); change = true; continue; }
       if (habiller(t, contexteJour(j, null), false)) change = true;
     }
     if (change) ecrire();
-    if (pret) {
+    if (sur) {
       if (apercu && !valide(apercu)) apercu = null;
       if (apercu) habiller(apercu, ctxVide(), false);
       if (ideeDuJour && valide(ideeDuJour)) habiller(ideeDuJour, ctxVide(), false);
@@ -645,11 +648,14 @@ footer p { margin: 0; max-width: 65ch; }
     if (apercu && valide(apercu)) return { t: apercu, contexte: "Choisie dans le tableau des accords." };
     apercu = null;
     const prevue = etat.plan[AUJ[0]];
+    let contexte = `${AUJ[1]} n'est pas coché dans ta semaine, voici quand même une idée.`;
     if (etat.jours.includes(AUJ[0]) && prevue) {
-      return valide(prevue) ? { t: prevue, contexte: `Prévue dans ta semaine pour ${AUJ[1].toLowerCase()}.` } : null;
+      if (valide(prevue)) return { t: prevue, contexte: `Prévue dans ta semaine pour ${AUJ[1].toLowerCase()}.` };
+      if (etatAjouts === "chargement") return null;
+      contexte = "Ta tenue prévue aujourd'hui utilise une pièce ajoutée qui n'a pas pu être chargée. Voici une autre idée.";
     }
     if (!valide(ideeDuJour)) ideeDuJour = composerAvecRepli(ctxVide());
-    return ideeDuJour ? { t: ideeDuJour, contexte: `${AUJ[1]} n'est pas coché dans ta semaine, voici quand même une idée.` } : null;
+    return ideeDuJour ? { t: ideeDuJour, contexte } : null;
   }
 
   function rendreTenue() {
@@ -701,7 +707,12 @@ footer p { margin: 0; max-width: 65ch; }
       const auj = j === AUJ[0];
       const eyebrow = `<span class="eyebrow">${esc(nomJour)}${auj ? " · aujourd'hui" : ""}</span>`;
       if (!valide(t)) {
-        return `<li class="${auj ? "aujourdhui" : ""}"><div class="vignettes"></div><div class="ligne-corps">${eyebrow}<span class="noms"><span>Chargement des pièces ajoutées…</span></span></div><span></span></li>`;
+        const message = etatAjouts === "chargement"
+          ? "Chargement des pièces ajoutées…"
+          : "Cette tenue utilise une pièce ajoutée qui n'a pas pu être chargée.";
+        const bouton = etatAjouts === "chargement" ? "<span></span>"
+          : `<button class="btn" type="button" id="changer-${j}" data-action="changer" data-jour="${j}" aria-label="Changer la tenue de ${esc(nomJour.toLowerCase())}">Changer</button>`;
+        return `<li class="${auj ? "aujourdhui" : ""}"><div class="vignettes"></div><div class="ligne-corps">${eyebrow}<span class="noms"><span>${message}</span></span></div>${bouton}</li>`;
       }
       const b = PAR_ID[t.bas], h = PAR_ID[t.haut], p = PAR_ID[t.pieds];
       const niv = NIVEAUX[accord(b, h)];
@@ -731,7 +742,8 @@ footer p { margin: 0; max-width: 65ch; }
     return isNaN(d) ? "" : d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
   }
 
-  let confirmation = null; // pièce dont on confirme la suppression
+  let confirmation = null;       // pièce dont on confirme la suppression
+  let erreurSuppression = null;  // { id, message } quand la suppression a échoué
 
   function fiche(a) {
     const r = role(a);
@@ -743,6 +755,7 @@ footer p { margin: 0; max-width: 65ch; }
     if (a.ajoute && peutEcrire) {
       actions = confirmation === a.id
         ? `<div class="fiche-actions"><p>Supprimer cette pièce et sa photo ?</p>
+            ${erreurSuppression && erreurSuppression.id === a.id ? `<p class="form-erreur" role="alert">${esc(erreurSuppression.message)}</p>` : ""}
             <button class="btn petit danger plein" type="button" id="oui-${esc(a.id)}" data-action="confirmer-suppression" data-id="${esc(a.id)}">Supprimer</button>
             <button class="btn petit" type="button" id="non-${esc(a.id)}" data-action="annuler-suppression">Garder</button></div>`
         : `<div class="fiche-actions">
@@ -831,10 +844,13 @@ footer p { margin: 0; max-width: 65ch; }
   let db = null, assets = null, peutEcrire = false;
 
   function texte(v, max) { return typeof v === "string" ? v.trim().slice(0, max) : ""; }
+  const SUIVI = /^(utm_.*|fbclid|gclid|gclsrc|gbraid|wbraid|dclid|msclkid|igshid|_kx|mc_eid|srsltid|gad_source|gad_campaignid|pk_.*|cmpid|referer)$/i;
   function lienSur(v) {
     try {
       const u = new URL(String(v));
-      return u.protocol === "https:" || u.protocol === "http:" ? u.href : null;
+      if (u.protocol !== "https:" && u.protocol !== "http:") return null;
+      [...u.searchParams.keys()].forEach(k => { if (SUIVI.test(k)) u.searchParams.delete(k); });
+      return u.href;
     } catch (_) { return null; }
   }
   // Les documents de la base sont des données : tout est vérifié avant affichage.
@@ -861,9 +877,36 @@ footer p { margin: 0; max-width: 65ch; }
       .sort((x, y) => x.ajouteLe.localeCompare(y.ajouteLe) || x.docId.localeCompare(y.docId));
     indexer();
     if (confirmation && !PAR_ID[confirmation]) confirmation = null;
-    pret = true;
+    // Un instantané « fromCache » n'est pas encore définitif : il sert à l'affichage, pas à trancher.
+    if (!(snap.metadata && snap.metadata.fromCache)) etatAjouts = "ok";
+    if (etatAjouts === "ok" && edition && !PAR_ID[edition.id] && !envoiEnCours) {
+      fermerPanneau();
+      annonce("La pièce que tu modifiais a été supprimée.");
+    }
     reconcilier();
     rendreTout();
+  }
+
+  // Écriture refusée pour des raisons de droits : la page repasse en lecture seule pour cette visite.
+  function passerEnLecture() {
+    peutEcrire = false;
+    F("ouvrir-ajout").hidden = true;
+    F("achat-envoyer").disabled = true;
+    rendre(rendreCatalogue);
+  }
+
+  let reabonne = false;
+  function abonner() {
+    db.collection("achats").onSnapshot(surSnapshot, err => {
+      if (err && err.code === "unavailable" && !reabonne) { reabonne = true; abonner(); return; }
+      if (etatAjouts !== "ok") etatAjouts = "indisponible";
+      if (!envoiEnCours) F("ajouter").hidden = true;
+      peutEcrire = false;
+      F("ouvrir-ajout").hidden = true;
+      annonce("Les pièces ajoutées depuis la page ne se mettent plus à jour. Recharge la page pour les retrouver et en ajouter d'autres.");
+      reconcilier();
+      rendreTout();
+    });
   }
 
   async function brancher() {
@@ -874,20 +917,22 @@ footer p { margin: 0; max-width: 65ch; }
     [db, assets] = ns;
     const user = ns[2];
     if (!db) {
-      pret = true; reconcilier(); rendreTout();
+      etatAjouts = "indisponible";
+      reconcilier(); rendreTout();
       return;
     }
-    db.collection("achats").onSnapshot(surSnapshot, () => {
-      annonce("Les pièces ajoutées depuis la page n'ont pas pu être chargées. Recharge la page pour réessayer.");
-      pret = true; reconcilier(); rendreTout();
-    });
-    const proprio = user ? await user.isOwner() : true;
+    abonner();
+    // Sans la capacité user, la page ne sait pas qui regarde : elle ne propose pas l'écriture.
+    const proprio = user ? await user.isOwner() : false;
     peutEcrire = !!assets && proprio;
     F("ouvrir-ajout").hidden = !peutEcrire;
     if (peutEcrire) rendre(rendreCatalogue);
   }
 
-  function annonce(msg) { F("annonce").textContent = msg; }
+  function annonce(msg, type) {
+    F("annonce").textContent = msg;
+    F("annonce").classList.toggle("ok", type === "ok");
+  }
 
   // ---------- formulaire « Ajouter un achat » ----------
   const MOTS_CATEGORIE = [
@@ -915,27 +960,27 @@ footer p { margin: 0; max-width: 65ch; }
     const jean = categorie === "jeans";
     const haut = possede(CAT, categorie) && CAT[categorie].role === "haut";
     const regles = [
-      [/blanc casse|ecru|creme|ivoire|off.?white/, "ecru"],
-      [/marine|navy|bleu nuit|bleu fonce|brut|indigo|rinse/, jean ? "denim-brut" : "marine"],
-      [/bleu clair|bleu ciel|ciel|bleu pale|delave clair|bleach/, jean ? "denim-clair" : "bleu-ciel"],
-      [/bleu|denim|stone/, jean ? "denim-moyen" : "bleu"],
-      [/gris clair|gris perle|perle/, "gris-clair"],
-      [/gris fonce|anthracite|charbon/, "gris-fonce"],
-      [/gris|chine/, "gris-moyen"],
-      [/noir|black/, "noir"],
-      [/blanc|white/, "blanc"],
-      [/bordeaux|lie de vin|prune|burgundy|grenat/, "bordeaux"],
-      [/rose|pink/, "rose"],
-      [/rouge|red/, "rouge"],
-      [/vert|kaki|olive|sapin|green/, "vert"],
-      [/marron|chocolat|brun|cognac|tabac|brown/, "marron"],
-      [/^beige$/, haut ? "ecru" : "beige"],
-      [/beige|camel|sable|taupe|mastic/, "beige"],
-      [/jaune|moutarde|yellow/, "jaune"],
-      [/orange|rouille|brique/, "orange"],
-      [/violet|mauve|lilas|lavande/, "violet"],
+      ["blanc casse|ecru|creme|ivoire|off.?white", "ecru"],
+      ["marine|navy|bleu nuit|bleu fonce|brut|indigo|rinse", jean ? "denim-brut" : "marine"],
+      ["bleu clair|bleu ciel|ciel|bleu pale|delave clair|bleach", jean ? "denim-clair" : "bleu-ciel"],
+      ["bleu|denim|stone", jean ? "denim-moyen" : "bleu"],
+      ["gris clair|gris perle|perle", "gris-clair"],
+      ["gris fonce|anthracite|charbon", "gris-fonce"],
+      ["gris|grise|chine", "gris-moyen"],
+      ["noir|noire|black", "noir"],
+      ["blanc|blanche|white", "blanc"],
+      ["bordeaux|lie de vin|prune|burgundy|grenat", "bordeaux"],
+      ["rose|pink", "rose"],
+      ["rouge|red", "rouge"],
+      ["vert|verte|kaki|olive|sapin|green", "vert"],
+      ["marron|chocolat|brun|cognac|tabac|brown", "marron"],
+      ["^beige$", haut ? "ecru" : "beige"],
+      ["beige|camel|sable|taupe|mastic", "beige"],
+      ["jaune|moutarde|yellow", "jaune"],
+      ["orange|rouille|brique", "orange"],
+      ["violet|violette|mauve|lilas|lavande", "violet"],
     ];
-    for (const [re, t] of regles) if (re.test(c)) return t;
+    for (const [mots, t] of regles) if (new RegExp("\\b(" + mots + ")s?\\b").test(c)) return t;
     return "";
   }
   function devinerEncolure(modele, categorie) {
@@ -948,6 +993,7 @@ footer p { margin: 0; max-width: 65ch; }
     if (/rond|crew/.test(m)) return "rond";
     return undefined;
   }
+  const COULEUR_EN_TETE = /^(noire?|blanc|blanche|bleu|gris|grise|beige|rouge|rose|verte?|kaki|marine|bordeaux|ecru|creme|ivoire|marron|chocolat|camel|sable|taupe|jaune|moutarde|orange|violet|mauve|brut|anthracite|olive|black|white|navy)s?\b/;
   // « Tommy Jeans - Pull - 1_4 zip - Noir.png » → marque, catégorie, modèle, couleur.
   function analyserTitre(titre) {
     const t = titre.replace(/\.(png|jpe?g|webp|gif|heic|heif)$/i, "").replace(/(\d)_(\d)/g, "$1/$2").trim();
@@ -958,7 +1004,8 @@ footer p { margin: 0; max-width: 65ch; }
       r.couleur = parts[parts.length - 1];
       r.modele = parts.slice(2, -1).join(" - ");
     } else if (parts.length === 3) {
-      if (devinerTeinte(parts[2], r.categorie)) r.couleur = parts[2]; else r.modele = parts[2];
+      // « Marque - Catégorie - X » : X est la couleur seulement s'il commence par un mot de couleur.
+      if (COULEUR_EN_TETE.test(sansAccents(parts[2]))) r.couleur = parts[2]; else r.modele = parts[2];
     }
     return r;
   }
@@ -969,6 +1016,7 @@ footer p { margin: 0; max-width: 65ch; }
   let photo = null;            // { img, url, w, h, fond }
   let cadrage = { zoom: 1, x: 0, y: 0 };
   let envoiEnCours = false;
+  let titreAuto = "";          // titre posé à partir du nom de fichier, remplaçable par la photo suivante
 
   function remplirListes() {
     F("achat-categorie").innerHTML = `<option value="">Choisir…</option>` +
@@ -1020,6 +1068,8 @@ footer p { margin: 0; max-width: 65ch; }
       const c = document.createElement("canvas");
       c.width = 8; c.height = 8;
       const x = c.getContext("2d");
+      x.fillStyle = "#ffffff";
+      x.fillRect(0, 0, 8, 8);
       x.drawImage(img, 0, 0, 8, 8);
       const px = [[0, 0], [7, 0], [0, 7], [7, 7]].map(([i, j]) => x.getImageData(i, j, 1, 1).data);
       const moy = k => Math.round(px.reduce((s, p) => s + p[k], 0) / px.length);
@@ -1046,8 +1096,12 @@ footer p { margin: 0; max-width: 65ch; }
       F("achat-zoom").value = "1";
       F("cadre").hidden = false;
       dessiner();
-      if (!F("achat-titre").value.trim()) {
-        F("achat-titre").value = fichier.name.replace(/\.[^.]+$/, "").replace(/(\d)_(\d)/g, "$1/$2");
+      // Le nom de fichier ne sert de titre que s'il suit le format Canva (pas « IMG_2041 »).
+      const actuel = F("achat-titre").value.trim();
+      if (!actuel || actuel === titreAuto) {
+        const nom = fichier.name.replace(/\.[^.]+$/, "").replace(/(\d)_(\d)/g, "$1/$2").trim();
+        titreAuto = /\s[-–—]\s/.test(nom) ? nom : "";
+        F("achat-titre").value = titreAuto;
         depuisTitre();
       }
     };
@@ -1066,6 +1120,7 @@ footer p { margin: 0; max-width: 65ch; }
     touches.clear();
     oublierPhoto();
     edition = null;
+    titreAuto = "";
     F("photo-actuelle").hidden = true;
     F("titre-ajouter").textContent = "Ajouter un achat";
     F("achat-envoyer").textContent = "Ajouter à la garde-robe";
@@ -1122,9 +1177,9 @@ footer p { margin: 0; max-width: 65ch; }
 
   const pause = ms => new Promise(r => setTimeout(r, ms));
   // Un seul nouvel essai, et seulement pour les pannes passagères.
-  async function appel(fn, codePassager) {
+  async function appel(fn, codesPassagers) {
     try { return await fn(); } catch (e) {
-      if (!e || e.code !== codePassager) throw e;
+      if (!e || !codesPassagers.includes(e.code)) throw e;
       await pause(400 + Math.random() * 600);
       return fn();
     }
@@ -1140,7 +1195,7 @@ footer p { margin: 0; max-width: 65ch; }
       resource_exhausted: "Trop d'envois d'un coup. Attends un instant puis réessaie.",
       upstream_auth: "Ta session a expiré. Recharge la page puis réessaie.",
       revoked: "L'accès à la page a changé. Recharge-la.",
-      invalid_argument: "L'enregistrement a été refusé. Seul le propriétaire de la page peut ajouter des pièces.",
+      invalid_argument: "L'enregistrement a été refusé : seul le propriétaire de la page peut ajouter ou modifier des pièces.",
       not_granted: "L'ajout de pièces n'est pas disponible dans cette vue de la page.",
       capability_disabled: "L'ajout de pièces n'est pas disponible dans cette vue de la page.",
       capability_removed: "L'ajout de pièces n'est pas disponible dans cette vue de la page.",
@@ -1149,83 +1204,162 @@ footer p { margin: 0; max-width: 65ch; }
     return messages[code] || "L'enregistrement n'a pas abouti. Réessaie dans un instant.";
   }
 
+  const CODES_DROITS = ["invalid_argument", "not_granted", "capability_disabled", "capability_removed"];
+
+  // Supprime une photo qu'aucune pièce ne cite plus ; prévient si le stockage refuse.
+  function supprimerPhoto(id, silencieux) {
+    return appel(() => assets.delete(id), ["store_unavailable", "rate_limited"]).catch(() => {
+      if (!silencieux) annonce("La pièce est à jour, mais son ancienne photo n'a pas pu être effacée du stockage de la page.");
+    });
+  }
+
+  function occupe(oui) {
+    envoiEnCours = oui;
+    F("achat-envoyer").disabled = oui || !peutEcrire;
+    F("achat-envoyer").textContent = oui ? "Envoi…" : edition ? "Enregistrer" : "Ajouter à la garde-robe";
+    F("fermer-ajout").disabled = oui;
+    F("achat-annuler").disabled = oui;
+  }
+
   async function envoyer(e) {
     e.preventDefault();
-    if (envoiEnCours || !db || !assets) return;
+    if (envoiEnCours || !db || !assets || !peutEcrire) return;
     const { v, manque } = lireFormulaire();
-    if (manque) { erreur(manque); return; }
-    envoiEnCours = true;
-    F("achat-envoyer").disabled = true;
-    erreur(""); succes("");
+    if (manque) { erreur(manque); succes(""); return; }
     const enEdition = edition;
-    let nouvelleImage = null;
+    const courant = enEdition ? PAR_ID[enEdition.id] : null;
+    if (enEdition && !courant) { erreur("Cette pièce a été supprimée entre-temps : il n'y a plus rien à modifier."); return; }
+    occupe(true);
+    erreur(""); succes("");
+    let nouvelleImage = null, ref = null, corps = null, aboutie = false, echec = null;
     try {
       if (photo) {
         const blob = await exporterPhoto();
-        nouvelleImage = (await appel(() => assets.upload(blob, { type: "image/jpeg" }), "store_unavailable")).id;
+        nouvelleImage = (await appel(() => assets.upload(blob, { type: "image/jpeg" }), ["store_unavailable"])).id;
       }
-      const corps = {
+      const maintenant = new Date().toISOString();
+      corps = {
         titre: v.titre, marque: v.marque, categorie: v.categorie, modele: v.modele,
         couleur: v.couleur, teinte: v.teinte, coupe: v.coupe, lien: v.lien,
-        image: nouvelleImage || enEdition.imageId,
-        ajouteLe: enEdition ? enEdition.ajouteLe : new Date().toISOString(),
+        image: nouvelleImage || courant.imageId,
+        encolure: devinerEncolure(v.modele, v.categorie) || null,
       };
-      const encolure = devinerEncolure(v.modele, v.categorie);
-      if (encolure) corps.encolure = encolure;
-      if (enEdition) corps.modifieLe = new Date().toISOString();
-      const ref = enEdition ? db.doc("achats/" + enEdition.docId) : db.collection("achats").doc();
-      await appel(() => ref.set(corps), "unavailable");
-      if (enEdition && nouvelleImage) assets.delete(enEdition.imageId).catch(() => {});
-      nouvelleImage = null;
-      const nom = [v.marque, v.modele || singulier(v.categorie), v.couleur].join(" ");
-      reinitialiser();
-      if (enEdition) {
-        F("ajouter").hidden = true;
-        annonce("");
-        succes("");
-        F("ouvrir-ajout").focus({ preventScroll: true });
-      } else {
-        succes(`Ajouté : ${nom}. La pièce est dans le catalogue et dans les tenues.`);
-        F("achat-photo").focus({ preventScroll: true });
-      }
+      if (enEdition) corps.modifieLe = maintenant; else corps.ajouteLe = maintenant;
+      // Une modification passe par update, qui refuse de recréer une pièce supprimée entre-temps.
+      ref = enEdition ? db.doc("achats/" + enEdition.docId) : db.collection("achats").doc();
+      await appel(() => (enEdition ? ref.update(corps) : ref.set(corps)), ["unavailable"]);
+      aboutie = true;
     } catch (err) {
-      if (nouvelleImage) assets.delete(nouvelleImage).catch(() => {});
-      erreur(messageErreur(err));
-    } finally {
-      envoiEnCours = false;
-      F("achat-envoyer").disabled = false;
+      echec = err;
+      // Une écriture peut aboutir même si sa réponse se perd : on relit le document avant de conclure.
+      if (ref && corps) {
+        const lu = await ref.get().catch(() => null);
+        const d = lu && lu.exists ? lu.data() : null;
+        const repere = enEdition ? "modifieLe" : "ajouteLe";
+        if (d && d[repere] === corps[repere] && d.image === corps.image) aboutie = true;
+        else if (nouvelleImage && lu) supprimerPhoto(nouvelleImage, true);
+      } else if (nouvelleImage) {
+        supprimerPhoto(nouvelleImage, true);
+      }
+    }
+    occupe(false);
+    if (!aboutie) {
+      if (enEdition && !PAR_ID[enEdition.id]) erreur("Cette pièce a été supprimée entre-temps : il n'y a plus rien à modifier.");
+      else erreur(messageErreur(echec));
+      if (echec && CODES_DROITS.includes(echec.code)) passerEnLecture();
+      return;
+    }
+    if (enEdition && nouvelleImage) supprimerPhoto(courant.imageId);
+    const nom = [v.marque, v.modele || singulier(v.categorie), v.couleur].join(" ");
+    reinitialiser();
+    if (enEdition) {
+      F("ajouter").hidden = true;
+      annonce(`Modifié : ${nom}.`, "ok");
+      const fiche = F("modifier-" + enEdition.id);
+      if (fiche) {
+        fiche.focus({ preventScroll: true });
+        fiche.closest(".fiche").scrollIntoView({ block: "center" });
+      }
+    } else {
+      succes(CAT[v.categorie].role === "aucun"
+        ? `Ajouté : ${nom}. La pièce est dans le catalogue.`
+        : `Ajouté : ${nom}. La pièce est dans le catalogue et entre dans la composition des tenues.`);
+      F("achat-photo").focus({ preventScroll: true });
     }
   }
 
   async function supprimer(id) {
     const a = PAR_ID[id];
-    if (!a || !a.ajoute || !db) return;
-    annonce("");
+    if (!a || !a.ajoute || !db || !peutEcrire) return;
+    erreurSuppression = null;
+    if (envoiEnCours && edition && edition.docId === a.docId) {
+      erreurSuppression = { id, message: "Attends la fin de l'enregistrement de cette pièce avant de la supprimer." };
+      return;
+    }
     try {
-      await appel(() => db.doc("achats/" + a.docId).delete(), "unavailable");
-      confirmation = null;
-      if (assets) assets.delete(a.imageId).catch(() => {});
+      await appel(() => db.doc("achats/" + a.docId).delete(), ["unavailable"]);
     } catch (err) {
-      annonce("La pièce n'a pas pu être supprimée. " + messageErreur(err));
+      erreurSuppression = {
+        id,
+        message: err && CODES_DROITS.includes(err.code)
+          ? "Tu n'as pas le droit de supprimer des pièces de cette page."
+          : "La pièce n'a pas pu être supprimée. Réessaie dans un instant.",
+      };
+      if (err && CODES_DROITS.includes(err.code)) passerEnLecture();
+      return;
+    }
+    confirmation = null;
+    if (edition && edition.id === id) { fermerPanneau(); annonce("La pièce que tu modifiais a été supprimée."); }
+    if (assets) {
+      appel(() => assets.delete(a.imageId), ["store_unavailable", "rate_limited"])
+        .catch(() => annonce("La pièce est supprimée, mais sa photo n'a pas pu être effacée du stockage de la page."));
     }
   }
 
   // Glisser pour cadrer (souris et doigt), flèches au clavier.
   (function cadrageInteractif() {
     const cv = F("apercu-photo");
-    let depart = null;
+    const doigts = new Map();
+    let geste = null;
+    const ZOOM_MIN = 0.5, ZOOM_MAX = 3;
+    function zoomer(z) {
+      z = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z));
+      // Le décalage suit le zoom pour que le point centré reste au centre.
+      cadrage.x *= z / cadrage.zoom;
+      cadrage.y *= z / cadrage.zoom;
+      cadrage.zoom = z;
+      F("achat-zoom").value = String(z);
+      dessiner();
+    }
+    function demarrer() {
+      const pts = [...doigts.values()];
+      const k = SORTIE.w / cv.clientWidth;
+      if (pts.length === 1) geste = { type: "glisser", x: pts[0].x, y: pts[0].y, cx: cadrage.x, cy: cadrage.y, k };
+      else if (pts.length === 2) geste = { type: "pincer", d: Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y) || 1, z: cadrage.zoom };
+      else geste = null;
+    }
     cv.addEventListener("pointerdown", e => {
-      if (!photo) return;
-      depart = { x: e.clientX, y: e.clientY, cx: cadrage.x, cy: cadrage.y, k: SORTIE.w / cv.clientWidth };
-      cv.setPointerCapture(e.pointerId);
+      if (!photo || doigts.size >= 2) return;
+      doigts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      try { cv.setPointerCapture(e.pointerId); } catch (_) { /* pointeur déjà relâché */ }
+      demarrer();
     });
     cv.addEventListener("pointermove", e => {
-      if (!depart) return;
-      cadrage.x = depart.cx + (e.clientX - depart.x) * depart.k;
-      cadrage.y = depart.cy + (e.clientY - depart.y) * depart.k;
-      dessiner();
+      if (!doigts.has(e.pointerId) || !geste) return;
+      doigts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      const pts = [...doigts.values()];
+      if (geste.type === "glisser") {
+        cadrage.x = geste.cx + (pts[0].x - geste.x) * geste.k;
+        cadrage.y = geste.cy + (pts[0].y - geste.y) * geste.k;
+        dessiner();
+      } else if (geste.type === "pincer" && pts.length === 2) {
+        zoomer(geste.z * Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y) / geste.d);
+      }
     });
-    const fin = () => { depart = null; };
+    const fin = e => {
+      if (!doigts.delete(e.pointerId)) return;
+      demarrer(); // le doigt restant reprend le glisser là où en est la photo
+    };
     cv.addEventListener("pointerup", fin);
     cv.addEventListener("pointercancel", fin);
     cv.addEventListener("keydown", e => {
@@ -1236,7 +1370,7 @@ footer p { margin: 0; max-width: 65ch; }
       cadrage.x += d[0]; cadrage.y += d[1];
       dessiner();
     });
-    F("achat-zoom").addEventListener("input", e => { cadrage.zoom = Number(e.target.value) || 1; dessiner(); });
+    F("achat-zoom").addEventListener("input", e => { if (photo) zoomer(Number(e.target.value) || 1); });
   })();
 
   F("achat-photo").addEventListener("change", e => { const f = e.target.files && e.target.files[0]; if (f) chargerPhoto(f); });
@@ -1275,10 +1409,16 @@ footer p { margin: 0; max-width: 65ch; }
     const el = e.target.closest("[data-action]");
     if (!el) return;
     const action = el.dataset.action;
+    // Pendant un envoi, le formulaire ne se ferme pas et ne change pas de pièce.
+    if (envoiEnCours && ["ouvrir-ajout", "fermer-ajout", "annuler-ajout", "modifier"].includes(action)) return;
     if (action === "recomposer") { composerSemaine(); rendre(rendreSemaine, rendreTenue); }
     else if (action === "changer") {
       const j = el.dataset.jour;
-      if (valide(etat.plan[j])) { composerJour(j, etat.plan[j]); ecrire(); rendre(rendreSemaine, rendreTenue); }
+      if (valide(etat.plan[j])) composerJour(j, etat.plan[j]);
+      else if (etatAjouts !== "chargement") { delete etat.plan[j]; composerJour(j, null); }
+      else return;
+      ecrire();
+      rendre(rendreSemaine, rendreTenue);
     }
     else if (action === "autre") {
       if (etat.jours.includes(AUJ[0]) && valide(etat.plan[AUJ[0]])) {
@@ -1288,7 +1428,12 @@ footer p { margin: 0; max-width: 65ch; }
         rendre(rendreTenue);
       }
     }
-    else if (action === "retour") { apercu = null; rendre(rendreTenue); F("autre-tenue").focus({ preventScroll: true }); }
+    else if (action === "retour") {
+      apercu = null;
+      rendre(rendreTenue);
+      const b = F("autre-tenue");
+      if (b) b.focus({ preventScroll: true });
+    }
     else if (action === "voir") {
       apercu = { bas: el.dataset.bas, haut: el.dataset.haut };
       if (!valide(apercu)) { apercu = null; return; }
@@ -1300,9 +1445,26 @@ footer p { margin: 0; max-width: 65ch; }
     else if (action === "ouvrir-ajout") { reinitialiser(); succes(""); ouvrirPanneau(); }
     else if (action === "fermer-ajout" || action === "annuler-ajout") fermerPanneau();
     else if (action === "modifier") { const a = PAR_ID[el.dataset.id]; if (a && a.ajoute && peutEcrire) ouvrirEdition(a); }
-    else if (action === "supprimer") { confirmation = el.dataset.id; rendre(rendreCatalogue); const b = F("non-" + confirmation); if (b) b.focus(); }
-    else if (action === "annuler-suppression") { const id = confirmation; confirmation = null; rendre(rendreCatalogue); const b = F("supprimer-" + id); if (b) b.focus(); }
-    else if (action === "confirmer-suppression") { el.disabled = true; supprimer(el.dataset.id).then(() => rendre(rendreCatalogue)); }
+    else if (action === "supprimer") {
+      confirmation = el.dataset.id; erreurSuppression = null;
+      rendre(rendreCatalogue);
+      const b = F("non-" + confirmation); if (b) b.focus();
+    }
+    else if (action === "annuler-suppression") {
+      const id = confirmation; confirmation = null; erreurSuppression = null;
+      rendre(rendreCatalogue);
+      const b = F("supprimer-" + id); if (b) b.focus();
+    }
+    else if (action === "confirmer-suppression") {
+      const id = el.dataset.id;
+      el.disabled = true;
+      supprimer(id).then(() => {
+        rendre(rendreCatalogue);
+        // Le focus va sur la confirmation s'il y a une erreur, sinon sur le filtre du catalogue.
+        const b = F(erreurSuppression ? "oui-" + id : "filtre-" + filtre);
+        if (b) b.focus({ preventScroll: !erreurSuppression });
+      });
+    }
   });
 
   // ---------- démarrage ----------
@@ -1311,8 +1473,10 @@ footer p { margin: 0; max-width: 65ch; }
   reconcilier();
   rendreTout();
   brancher();
-  // Si le visualiseur ne répond pas, on n'attend pas indéfiniment les pièces ajoutées.
-  setTimeout(() => { if (!pret) { pret = true; reconcilier(); rendreTout(); } }, 12000);
+  // Si la base tarde trop, on cesse d'afficher « Chargement » (sans rien effacer de la semaine).
+  setTimeout(() => {
+    if (etatAjouts === "chargement") { etatAjouts = "indisponible"; reconcilier(); rendreTout(); }
+  }, 12000);
 })();
 </script>
 </body>

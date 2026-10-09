@@ -319,16 +319,16 @@ window.GARDE_ROBE = {
     {
       categorie: "chaussures",
       pourquoi: "Tu les portes à chaque service, et c'est la seule pièce visible qui empêche aujourd'hui une tenue 100 % magasin.",
-      idee: "Une paire de baskets blanches en cuir : elles vont avec tes 6 bas et tes 10 pulls. Plus tard, une paire sombre (daim marron ou noir) pour l'hiver.",
+      idee: "Une paire de baskets blanches en cuir : elles vont avec tous tes bas et tous tes hauts. Plus tard, une paire sombre (daim marron ou noir) pour l'hiver.",
     },
     {
       categorie: "t-shirts",
-      pourquoi: "Ils se portent sous chaque pull et se voient à l'encolure des 4 pulls zippés dès que tu ouvres le zip.",
+      pourquoi: "Ils se portent sous chaque pull et se voient à l'encolure des pulls zippés dès que tu ouvres le zip.",
       idee: "Deux ou trois basiques à petit logo : blanc, gris chiné, noir. Ils servent aussi seuls quand il fait chaud en boutique.",
     },
     {
       categorie: "chemises",
-      pourquoi: "Une chemise col sorti sous tes 4 pulls col rond donne une deuxième version de chacune de ces tenues.",
+      pourquoi: "Une chemise col sorti sous tes pulls col rond donne une deuxième version de chacune de ces tenues.",
       idee: "Une chemise Oxford blanche ou bleu ciel : elle passe sous les pulls col rond bordeaux, noir, beige et rose.",
     },
     {
