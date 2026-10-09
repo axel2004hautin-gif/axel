@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:wght@400;600;700&display=swap">
 <style>
-/* Layout : une colonne de fiches produit, sommaire collant, sections empilées (tenue → semaine → catalogue → accords → à compléter) */
+/* Layout : une colonne de fiches produit, sommaire collant, sections empilées (ajout → tenue → semaine → catalogue → accords → à compléter) */
 :root {
   --bg: #eef1f5;
   --surface: #ffffff;
@@ -20,6 +20,7 @@
   --indigo-soft: #e2e8f6;
   --on-indigo: #ffffff;
   --rivet: #a5561f;
+  --rivet-soft: #f6e6da;
   --ok: #26714a;
   --ok-soft: #dff0e6;
   --maybe: #8e6210;
@@ -35,20 +36,21 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0e131d; --surface: #161d2b; --surface-2: #1c2435; --ink: #e7ebf3; --muted: #9ba5b9; --line: #2a3447;
-    --indigo: #93abef; --indigo-soft: #1f2a47; --on-indigo: #0e131d; --rivet: #e3925a;
+    --indigo: #93abef; --indigo-soft: #1f2a47; --on-indigo: #0e131d; --rivet: #e3925a; --rivet-soft: #3a2516;
     --ok: #67c690; --ok-soft: #16301f; --maybe: #e2b552; --maybe-soft: #33280f; --no: #f08080; --no-soft: #3a1b1c;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0e131d; --surface: #161d2b; --surface-2: #1c2435; --ink: #e7ebf3; --muted: #9ba5b9; --line: #2a3447;
-  --indigo: #93abef; --indigo-soft: #1f2a47; --on-indigo: #0e131d; --rivet: #e3925a;
+  --indigo: #93abef; --indigo-soft: #1f2a47; --on-indigo: #0e131d; --rivet: #e3925a; --rivet-soft: #3a2516;
   --ok: #67c690; --ok-soft: #16301f; --maybe: #e2b552; --maybe-soft: #33280f; --no: #f08080; --no-soft: #3a1b1c;
   color-scheme: dark;
 }
 @media (min-width: 720px) { :root { --gutter: 32px; } }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
 body { margin: 0; background: var(--bg); color: var(--ink); font: 400 1rem/1.5 var(--f-body); -webkit-font-smoothing: antialiased; }
 img { max-width: 100%; }
@@ -62,6 +64,8 @@ a { color: var(--indigo); }
 
 /* En-tête */
 .tete { display: grid; gap: 14px; padding-block: 40px 24px; }
+.tete-haut { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 20px; }
+.tete-haut > div { display: grid; gap: 10px; min-width: 0; }
 h1 { margin: 0; font-family: var(--f-display); font-stretch: 125%; font-weight: 800; font-size: clamp(2.1rem, 7.5vw, 3.8rem); line-height: .95; letter-spacing: -.015em; text-wrap: balance; }
 .resume { margin: 0; max-width: 65ch; color: var(--muted); font-size: 1.05rem; }
 .resume strong { color: var(--ink); font-weight: 600; }
@@ -87,16 +91,51 @@ h2 { margin: 0; font-family: var(--f-display); font-stretch: 112%; font-weight: 
 /* Boutons et badges */
 .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font: 600 .95rem/1.2 var(--f-body); cursor: pointer; }
 .btn:hover { border-color: var(--indigo); }
+.btn:disabled { opacity: .6; cursor: progress; }
 .btn.primaire { background: var(--indigo); border-color: var(--indigo); color: var(--on-indigo); }
+.btn.petit { padding: 5px 10px; font-size: .85rem; }
+.btn.danger { color: var(--no); }
+.btn.danger.plein { background: var(--no); border-color: var(--no); color: var(--surface); }
 .badge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; font-weight: 600; font-size: .82rem; white-space: nowrap; }
 .badge.ok { background: var(--ok-soft); color: var(--ok); }
 .badge.maybe { background: var(--maybe-soft); color: var(--maybe); }
 .badge.no { background: var(--no-soft); color: var(--no); }
+.badge.complet { background: var(--rivet-soft); color: var(--rivet); }
 .pastille { display: inline-block; width: .8em; height: .8em; border-radius: 50%; border: 1px solid var(--line); vertical-align: -.05em; flex: none; }
 .couleur { display: inline-flex; align-items: center; gap: 6px; font-size: .9rem; }
+.annonce { margin: 0 0 12px; font-weight: 600; color: var(--no); }
+.annonce:empty { display: none; }
+
+/* Ajouter un achat */
+.panneau { margin-top: 8px; padding: 20px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); scroll-margin-top: 16px; }
+.panneau .entete-section { margin-bottom: 12px; }
+.form-grille { display: grid; grid-template-columns: minmax(0, 260px) minmax(0, 1fr); gap: 20px 24px; align-items: start; }
+.depot { display: grid; gap: 8px; padding: 14px; border: 1.5px dashed var(--line); border-radius: var(--radius); background: var(--surface-2); }
+.depot.survol { border-color: var(--indigo); background: var(--indigo-soft); }
+.depot input[type="file"] { width: 100%; max-width: 100%; font: .9rem var(--f-body); color: var(--muted); }
+.cadre { display: grid; gap: 8px; }
+.cadre canvas { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; border-radius: 8px; background: var(--surface-2); touch-action: none; cursor: grab; }
+.cadre canvas:active { cursor: grabbing; }
+.cadre input[type="range"] { width: 100%; accent-color: var(--indigo); }
+.photo-actuelle { display: flex; align-items: center; gap: 10px; }
+.photo-actuelle img { width: 64px; height: 80px; object-fit: cover; border-radius: 6px; background: var(--surface-2); }
+.form-champs { display: grid; gap: 14px; min-width: 0; }
+.champs-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.champ { display: grid; gap: 4px; min-width: 0; align-content: start; }
+.champ label, .depot label { font-weight: 600; font-size: .9rem; }
+.champ input, .champ select { width: 100%; min-width: 0; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); font: 400 1rem/1.3 var(--f-body); }
+.champ-teinte { display: flex; align-items: center; gap: 8px; }
+.champ-teinte select { flex: 1; }
+.champ-teinte .pastille { width: 1.2em; height: 1.2em; }
+.aide { margin: 0; color: var(--muted); font-size: .85rem; }
+.form-erreur { margin: 0; color: var(--no); font-weight: 600; }
+.form-ok { margin: 0; color: var(--ok); font-weight: 600; }
+.form-erreur:empty, .form-ok:empty { display: none; }
+@media (max-width: 680px) { .form-grille { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 480px) { .champs-2 { grid-template-columns: minmax(0, 1fr); } .panneau { padding: 16px; } }
 
 /* Tenue du jour */
-.tenue { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.tenue { display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); gap: 12px; }
 .slot { display: flex; flex-direction: column; margin: 0; overflow: hidden; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
 .slot img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; background: var(--surface-2); }
 .slot figcaption { display: grid; gap: 2px; padding: 10px 12px 12px; min-width: 0; }
@@ -111,6 +150,9 @@ h2 { margin: 0; font-family: var(--f-display); font-stretch: 112%; font-weight: 
 @media (max-width: 560px) {
   .tenue { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .slot.pieds { grid-column: 1 / -1; padding: 14px 16px; }
+  .slot.large { grid-column: 1 / -1; flex-direction: row; }
+  .slot.large img { width: 42%; flex: none; }
+  .slot.large figcaption { align-content: center; }
 }
 
 /* Semaine */
@@ -123,13 +165,15 @@ h2 { margin: 0; font-family: var(--f-display); font-stretch: 112%; font-weight: 
 .semaine { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .semaine li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
 .semaine li.aujourdhui { border-color: var(--indigo); box-shadow: inset 3px 0 0 var(--indigo); }
+.semaine li.vide { display: block; padding: 20px; background: transparent; border: 1.5px dashed var(--line); color: var(--muted); }
 .vignettes { display: flex; gap: 4px; }
 .vignettes img { display: block; width: 44px; height: 55px; object-fit: cover; border-radius: 6px; background: var(--surface-2); }
 .ligne-corps { display: grid; gap: 2px; min-width: 0; }
 .ligne-corps .noms { font-weight: 600; line-height: 1.3; }
 .ligne-corps .noms span { color: var(--muted); font-weight: 400; }
 .bilan { margin: 12px 0 0; color: var(--muted); font-size: .92rem; }
-.semaine li.vide { display: block; padding: 20px; background: transparent; border: 1.5px dashed var(--line); color: var(--muted); }
+.vide { margin: 0; padding: 20px; border: 1.5px dashed var(--line); border-radius: var(--radius); color: var(--muted); }
+@media (max-width: 420px) { .vignettes img { width: 36px; height: 45px; } }
 
 /* Catalogue */
 .filtres { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
@@ -141,11 +185,15 @@ h2 { margin: 0; font-family: var(--f-display); font-stretch: 112%; font-weight: 
 .fiche { display: flex; flex-direction: column; overflow: hidden; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
 .fiche img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; background: var(--surface-2); }
 .fiche-corps { display: flex; flex: 1; flex-direction: column; gap: 4px; padding: 10px 12px 12px; min-width: 0; }
-.fiche-corps strong { font-weight: 600; line-height: 1.25; }
+.fiche-corps strong { font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
 .fiche-corps .coupe { color: var(--muted); font-size: .86rem; line-height: 1.3; }
 .fiche-corps .assoc { font-size: .84rem; }
+.fiche-corps .tag-ajout { font: 500 .72rem/1.3 var(--f-mono); color: var(--rivet); }
 .fiche-corps a { margin-top: auto; padding-top: 6px; font-size: .86rem; font-weight: 600; text-decoration: none; overflow-wrap: anywhere; }
 .fiche-corps a:hover { text-decoration: underline; }
+.fiche-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: auto; padding-top: 8px; }
+.fiche-corps a + .fiche-actions { margin-top: 0; }
+.fiche-actions p { flex-basis: 100%; margin: 0; font-size: .86rem; font-weight: 600; }
 
 /* Accords */
 .legende { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
@@ -174,6 +222,7 @@ table.accords { width: 100%; min-width: 820px; border-collapse: separate; border
 .priorites p { margin: 0; max-width: 65ch; }
 .priorites .idee { color: var(--muted); }
 .priorites .idee b { color: var(--ink); font-weight: 600; }
+.priorites li.vide { display: block; padding: 20px; border: 1.5px dashed var(--line); }
 
 footer { margin-top: 48px; color: var(--muted); font-size: .86rem; }
 footer p { margin: 0; max-width: 65ch; }
@@ -182,11 +231,85 @@ footer p { margin: 0; max-width: 65ch; }
 <body>
 <div class="page">
   <header class="tete">
-    <span class="eyebrow" id="sur-titre">Achats magasin depuis juin 2026</span>
-    <h1>Garde-robe Blue&nbsp;Box</h1>
+    <div class="tete-haut">
+      <div>
+        <span class="eyebrow" id="sur-titre">Achats magasin depuis juin 2026</span>
+        <h1>Garde-robe Blue&nbsp;Box</h1>
+      </div>
+      <button class="btn primaire" type="button" id="ouvrir-ajout" data-action="ouvrir-ajout" hidden>Ajouter un achat</button>
+    </div>
     <p class="resume" id="resume"></p>
     <ul class="couverture" id="couverture" aria-label="Pièces par catégorie"></ul>
   </header>
+
+  <section id="ajouter" class="panneau" aria-labelledby="titre-ajouter" hidden>
+    <div class="entete-section">
+      <h2 id="titre-ajouter">Ajouter un achat</h2>
+      <button class="btn" type="button" id="fermer-ajout" data-action="fermer-ajout">Fermer</button>
+    </div>
+    <form id="form-achat" novalidate>
+      <div class="form-grille">
+        <div class="depot" id="depot">
+          <label for="achat-photo">Photo</label>
+          <input type="file" id="achat-photo" accept="image/*">
+          <p class="aide" id="aide-photo">Ta capture Canva, ou une photo prise en magasin.</p>
+          <div class="photo-actuelle" id="photo-actuelle" hidden>
+            <img id="photo-actuelle-img" src="" alt="" width="64" height="80">
+            <p class="aide">Photo actuelle, gardée si tu n'en choisis pas une autre.</p>
+          </div>
+          <div class="cadre" id="cadre" hidden>
+            <canvas id="apercu-photo" width="480" height="600" tabindex="0" aria-label="Aperçu du recadrage. Fais glisser ou utilise les flèches pour centrer la photo."></canvas>
+            <label for="achat-zoom" class="aide">Zoom</label>
+            <input type="range" id="achat-zoom" min="0.5" max="3" step="0.01" value="1">
+            <p class="aide">Fais glisser la photo pour centrer la pièce dans le cadre.</p>
+          </div>
+        </div>
+        <div class="form-champs">
+          <div class="champ">
+            <label for="achat-titre">Titre</label>
+            <input type="text" id="achat-titre" placeholder="Tommy Jeans - Pull - 1/4 zip - Noir" autocomplete="off" maxlength="200">
+            <p class="aide">Marque - Catégorie - Modèle - Couleur, comme tes fichiers Canva. Si tu choisis la photo d'abord, le titre reprend le nom du fichier.</p>
+          </div>
+          <div class="champs-2">
+            <div class="champ">
+              <label for="achat-marque">Marque</label>
+              <input type="text" id="achat-marque" autocomplete="off" maxlength="60">
+            </div>
+            <div class="champ">
+              <label for="achat-categorie">Catégorie</label>
+              <select id="achat-categorie"></select>
+            </div>
+            <div class="champ">
+              <label for="achat-modele">Modèle</label>
+              <input type="text" id="achat-modele" autocomplete="off" maxlength="80">
+            </div>
+            <div class="champ">
+              <label for="achat-couleur">Couleur</label>
+              <input type="text" id="achat-couleur" autocomplete="off" maxlength="40">
+            </div>
+            <div class="champ">
+              <label for="achat-teinte">Couleur pour les accords</label>
+              <span class="champ-teinte"><i class="pastille" id="achat-teinte-pastille"></i><select id="achat-teinte"></select></span>
+            </div>
+            <div class="champ">
+              <label for="achat-coupe">Coupe <span class="aide">(facultatif)</span></label>
+              <input type="text" id="achat-coupe" autocomplete="off" maxlength="80" placeholder="Slim, col rond…">
+            </div>
+          </div>
+          <div class="champ">
+            <label for="achat-lien">Lien de la fiche <span class="aide">(facultatif)</span></label>
+            <input type="url" id="achat-lien" autocomplete="off" maxlength="500" placeholder="https://…">
+          </div>
+          <p class="form-erreur" id="achat-erreur" role="alert"></p>
+          <div class="actions">
+            <button class="btn primaire" type="submit" id="achat-envoyer">Ajouter à la garde-robe</button>
+            <button class="btn" type="button" id="achat-annuler" data-action="annuler-ajout">Annuler</button>
+          </div>
+          <p class="form-ok" id="achat-ok" role="status"></p>
+        </div>
+      </div>
+    </form>
+  </section>
 
   <nav class="sommaire" aria-label="Sommaire">
     <ul>
@@ -215,7 +338,7 @@ footer p { margin: 0; max-width: 65ch; }
       <h2 id="titre-semaine">Ma semaine</h2>
       <button class="btn" type="button" id="recomposer" data-action="recomposer">Recomposer la semaine</button>
     </div>
-    <p class="intro">Coche tes jours de travail. Chaque jour reçoit un pull différent, et les bas tournent pour montrer toute la collection.</p>
+    <p class="intro" id="intro-semaine">Coche tes jours de travail. Chaque jour reçoit un haut différent, et les bas tournent pour montrer toute la collection.</p>
     <fieldset class="jours" id="jours">
       <legend class="eyebrow">Jours de travail</legend>
       <label class="puce"><input type="checkbox" id="jour-lun" value="lun">Lun</label>
@@ -235,13 +358,14 @@ footer p { margin: 0; max-width: 65ch; }
       <h2 id="titre-catalogue">Catalogue</h2>
       <p id="compte-catalogue"></p>
     </div>
+    <p class="annonce" id="annonce" role="status"></p>
     <div class="filtres" id="filtres" role="group" aria-label="Filtrer par catégorie"></div>
     <div class="grille" id="grille"></div>
   </section>
 
   <section id="accords" aria-labelledby="titre-accords">
     <div class="entete-section">
-      <h2 id="titre-accords">Accords bas × pulls</h2>
+      <h2 id="titre-accords">Accords hauts × bas</h2>
       <p id="compte-accords"></p>
     </div>
     <p class="intro">Chaque case est une tenue. Touche une case pour la voir en grand en haut de la page.</p>
@@ -263,7 +387,7 @@ footer p { margin: 0; max-width: 65ch; }
   </section>
 
   <footer>
-    <p>Les données viennent de <span class="mono">garde-robe.js</span>. Les liens ont été nettoyés de leurs paramètres de suivi publicitaire. Trois pulls n'ont pas de fiche sur le site de la marque : leur lien mène chez un revendeur.</p>
+    <p>Les 16 premières pièces viennent de <span class="mono">garde-robe.js</span>, celles ajoutées avec le formulaire sont enregistrées dans la page. Les liens ont été nettoyés de leurs paramètres de suivi publicitaire. Trois pulls n'ont pas de fiche sur le site de la marque : leur lien mène chez un revendeur.</p>
   </footer>
 </div>
 
@@ -273,11 +397,10 @@ footer p { margin: 0; max-width: 65ch; }
   "use strict";
 
   const D = window.GARDE_ROBE;
+  const T = D.teintes;
   const CAT = Object.fromEntries(D.categories.map(c => [c.id, c]));
-  const PAR_ID = Object.fromEntries(D.articles.map(a => [a.id, a]));
-  const BAS = D.articles.filter(a => CAT[a.categorie].role === "bas");
-  const HAUTS = D.articles.filter(a => CAT[a.categorie].role === "haut");
-  const ENCOLURES = { zip: "Zippé", rond: "Col rond", polo: "Col polo" };
+  const ORDRE_CAT = Object.fromEntries(D.categories.map((c, i) => [c.id, i]));
+  const ENCOLURES = { zip: "Zippé", rond: "Col rond", polo: "Col polo", v: "Col V", capuche: "Capuche" };
   const NIVEAUX = {
     2: { nom: "Valeur sûre", cls: "ok", sym: "●●" },
     1: { nom: "Possible", cls: "maybe", sym: "●" },
@@ -285,28 +408,80 @@ footer p { margin: 0; max-width: 65ch; }
   };
   const JOURS = [["lun", "Lundi"], ["mar", "Mardi"], ["mer", "Mercredi"], ["jeu", "Jeudi"], ["ven", "Vendredi"], ["sam", "Samedi"], ["dim", "Dimanche"]];
   const AUJ = JOURS[(new Date().getDay() + 6) % 7];
+  // D'avril à septembre, les t-shirts passent devant les pulls ; le reste de l'année, l'inverse.
+  const ETE = new Date().getMonth() >= 3 && new Date().getMonth() <= 8;
+  const HORS_SAISON = ETE ? ["pulls", "sweats"] : ["t-shirts", "polos", "shorts"];
   const CLE = "garde-robe-bluebox:v1";
+  const ID_ASSET = /^[A-Za-z0-9_-]{8,64}$/;
+  const PHOTO_ABSENTE = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 5"><rect width="4" height="5" fill="#9aa3b5" fill-opacity=".25"/></svg>');
 
+  const F = id => document.getElementById(id);
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-  const accord = (b, h) => D.accords[b.teinte][h.teinte];
-  const noteAccord = (b, h) => D.notesAccord[b.teinte + "/" + h.teinte] || "";
-  const estBas = a => CAT[a.categorie].role === "bas";
-  const court = a => estBas(a)
-    ? a.modele.replace(/^(Pantalon|Jean) /, "").split(" ")[0].replace("™", "") + " " + a.couleur.toLowerCase()
-    : ENCOLURES[a.encolure] + " " + a.couleur.toLowerCase();
-  const pastille = a => `<i class="pastille" style="background:${esc(D.teintes[a.teinte].hex)}"></i>`;
+  const sansAccents = s => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+  const possede = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+  const singulier = c => CAT[c].nom.replace(/s$/, "");
   const pluriel = (n, mot) => `${n} ${mot}${n > 1 ? "s" : ""}`;
+  const pastille = a => `<i class="pastille" style="background:${esc(T[a.teinte].hex)}"></i>`;
+  const role = a => CAT[a.categorie].role;
 
-  // ---------- état (préférences locales, facultatives) ----------
+  // ---------- pièces : celles de garde-robe.js + celles ajoutées depuis la page ----------
+  let ajoutes = [];
+  let ARTICLES, PAR_ID, BAS, HAUTS, PIEDS, DESSUS;
+  function indexer() {
+    ARTICLES = D.articles.concat(ajoutes)
+      .map((a, i) => [a, i])
+      .sort((x, y) => ORDRE_CAT[x[0].categorie] - ORDRE_CAT[y[0].categorie] || x[1] - y[1])
+      .map(x => x[0]);
+    PAR_ID = Object.fromEntries(ARTICLES.map(a => [a.id, a]));
+    const parRole = r => ARTICLES.filter(a => role(a) === r);
+    BAS = parRole("bas"); HAUTS = parRole("haut"); PIEDS = parRole("pieds"); DESSUS = parRole("dessus");
+  }
+
+  function court(a) {
+    const c = a.couleur.toLowerCase();
+    if (role(a) === "bas") {
+      const m = a.modele.replace(/^(pantalon|jean|short)s? /i, "").split(" ")[0].replace("™", "");
+      return (m || singulier(a.categorie)) + " " + c;
+    }
+    if (a.categorie === "pulls") return (ENCOLURES[a.encolure] || "Pull") + " " + c;
+    return singulier(a.categorie) + " " + c;
+  }
+
+  // ---------- accords de couleurs ----------
+  // Le tableau de garde-robe.js d'abord, puis des règles générales pour les couleurs qu'il ne couvre pas.
+  function evaluer(b, h) {
+    const table = D.accords[b.teinte];
+    if (table && possede(table, h.teinte)) {
+      return { score: table[h.teinte], note: D.notesAccord[b.teinte + "/" + h.teinte] || "" };
+    }
+    const tb = T[b.teinte], th = T[h.teinte];
+    if (b.teinte === h.teinte) return { score: 1, note: "Même couleur en haut et en bas : un ton sur ton à assumer." };
+    if (tb.clarte === "fonce" && th.clarte === "fonce") {
+      return tb.famille === th.famille
+        ? { score: 0, note: "Deux teintes foncées proches : elles se confondent." }
+        : { score: 1, note: "Haut et bas foncés : l'ensemble est très sombre." };
+    }
+    if (tb.clarte === "clair" && th.clarte === "clair" && tb.famille === th.famille) {
+      return { score: 1, note: "Deux tons clairs proches : peu de contraste." };
+    }
+    if (!tb.neutre && !th.neutre) return { score: 1, note: "Deux couleurs franches ensemble : à doser." };
+    return { score: 2, note: "" };
+  }
+  const accord = (b, h) => evaluer(b, h).score;
+
+  // ---------- état local (jours cochés et semaine composée) ----------
   function lire() {
     try {
       const e = JSON.parse(localStorage.getItem(CLE));
       if (!e || !Array.isArray(e.jours)) return null;
-      const jours = e.jours.filter(j => JOURS.some(x => x[0] === j));
+      const jours = JOURS.map(x => x[0]).filter(j => e.jours.includes(j));
       const plan = {};
       for (const j of jours) {
         const t = e.plan && e.plan[j];
-        if (t && PAR_ID[t.bas] && PAR_ID[t.haut]) plan[j] = { bas: t.bas, haut: t.haut };
+        if (!t || typeof t.bas !== "string" || typeof t.haut !== "string") continue;
+        plan[j] = { bas: t.bas, haut: t.haut };
+        if (typeof t.pieds === "string") plan[j].pieds = t.pieds;
+        if (typeof t.dessus === "string") plan[j].dessus = t.dessus;
       }
       return { jours, plan };
     } catch (_) { return null; }
@@ -316,23 +491,29 @@ footer p { margin: 0; max-width: 65ch; }
   }
 
   let etat = lire() || { jours: ["lun", "mar", "mer", "jeu", "ven", "sam"], plan: {} };
-  let apercu = null;      // tenue choisie dans le tableau des accords
-  let ideeDuJour = null;  // tenue proposée quand aujourd'hui n'est pas travaillé
+  let apercu = null;       // tenue choisie dans le tableau des accords
+  let ideeDuJour = null;   // tenue proposée quand aujourd'hui n'est pas travaillé
   let filtre = "tout";
+  // Dans le visualiseur, les pièces ajoutées arrivent après le premier affichage : on attend
+  // de les avoir avant de remplacer une tenue de la semaine qui y fait référence.
+  let pret = !(window.claude && typeof window.claude.use === "function");
+
+  const valide = t => !!(t && PAR_ID[t.bas] && PAR_ID[t.haut]);
 
   // ---------- composition des tenues ----------
-  // Note une tenue dans son contexte : accord des couleurs, pulls déjà pris, bas déjà portés, jours voisins.
   function noter(b, h, ctx) {
     const s = accord(b, h);
     if (s === 0 || ctx.hautsPris.has(h.id)) return -Infinity;
     if (ctx.actuel && ctx.actuel.bas === b.id && ctx.actuel.haut === h.id) return -Infinity;
     let n = s * 10 + Math.random() * 4;
     n -= (ctx.usageBas.get(b.id) || 0) * 12;
+    if (HORS_SAISON.includes(h.categorie)) n -= 6;
+    if (HORS_SAISON.includes(b.categorie)) n -= 6;
     for (const v of ctx.voisins) {
       const hv = PAR_ID[v.haut];
       if (v.bas === b.id) n -= 15;
-      if (hv.encolure === h.encolure) n -= 3;
-      if (hv.teinte === h.teinte) n -= 4;
+      if (hv && hv.categorie === h.categorie && hv.encolure === h.encolure) n -= 3;
+      if (hv && hv.teinte === h.teinte) n -= 4;
     }
     if (ctx.actuel) {
       if (ctx.actuel.haut === h.id) n -= 8;
@@ -340,162 +521,268 @@ footer p { margin: 0; max-width: 65ch; }
     }
     return n;
   }
-  function meilleure(ctx) {
+  function choisirParmi(liste, usage, voisinsIds, teinteAEviter) {
+    let choix, max = -Infinity;
+    for (const a of liste) {
+      let n = Math.random() * 2 - (usage.get(a.id) || 0) * 5;
+      if (voisinsIds.includes(a.id)) n -= 3;
+      if (teinteAEviter && a.teinte === teinteAEviter) n -= 4;
+      if (n > max) { max = n; choix = a.id; }
+    }
+    return choix;
+  }
+  // Chaussures et par-dessus : complète la tenue s'il en manque ou si la pièce a disparu.
+  function habiller(t, ctx, forcer) {
+    let change = false;
+    if (forcer || (PIEDS.length ? !PAR_ID[t.pieds] : t.pieds)) {
+      const p = choisirParmi(PIEDS, ctx.usagePieds, ctx.voisins.map(v => v.pieds), null);
+      if (p) t.pieds = p; else delete t.pieds;
+      change = true;
+    }
+    if (forcer || (DESSUS.length ? !PAR_ID[t.dessus] : t.dessus)) {
+      const d = choisirParmi(DESSUS, ctx.usageDessus, ctx.voisins.map(v => v.dessus), PAR_ID[t.haut].teinte);
+      if (d) t.dessus = d; else delete t.dessus;
+      change = true;
+    }
+    return change;
+  }
+  function composer(ctx) {
     let choix = null, max = -Infinity;
     for (const b of BAS) for (const h of HAUTS) {
       const n = noter(b, h, ctx);
       if (n > max) { max = n; choix = { bas: b.id, haut: h.id }; }
     }
+    if (choix) habiller(choix, ctx, true);
     return choix;
   }
-  const joursPlanifies = () => JOURS.map(x => x[0]).filter(j => etat.plan[j]);
+  // Si tous les hauts sont déjà pris dans la semaine, on accepte d'en reporter un.
+  const composerAvecRepli = ctx => composer(ctx) || composer(Object.assign({}, ctx, { hautsPris: new Set() }));
 
+  function compter(entrees, cle) {
+    const m = new Map();
+    entrees.forEach(t => { if (t[cle]) m.set(t[cle], (m.get(t[cle]) || 0) + 1); });
+    return m;
+  }
+  const ctxVide = actuel => ({ hautsPris: new Set(), usageBas: new Map(), usagePieds: new Map(), usageDessus: new Map(), voisins: [], actuel: actuel || null });
   function contexteJour(j, actuel) {
-    const ordre = JOURS.map(x => x[0]).filter(x => x === j || etat.plan[x]);
+    const ordre = JOURS.map(x => x[0]).filter(x => x === j || valide(etat.plan[x]));
     const i = ordre.indexOf(j);
     const autres = ordre.filter(x => x !== j).map(x => etat.plan[x]);
-    const usageBas = new Map();
-    autres.forEach(t => usageBas.set(t.bas, (usageBas.get(t.bas) || 0) + 1));
     return {
       hautsPris: new Set(autres.map(t => t.haut)),
-      usageBas,
+      usageBas: compter(autres, "bas"),
+      usagePieds: compter(autres, "pieds"),
+      usageDessus: compter(autres, "dessus"),
       voisins: [etat.plan[ordre[i - 1]], etat.plan[ordre[i + 1]]].filter(Boolean),
-      actuel,
+      actuel: actuel || null,
     };
+  }
+  function composerJour(j, actuel) {
+    const t = composerAvecRepli(contexteJour(j, actuel));
+    if (t) etat.plan[j] = t;
+    else if (!actuel) delete etat.plan[j];
   }
   function composerSemaine() {
     etat.plan = {};
-    for (const [j] of JOURS) {
-      if (etat.jours.includes(j)) etat.plan[j] = meilleure(contexteJour(j, null));
-    }
+    JOURS.forEach(([j]) => { if (etat.jours.includes(j)) composerJour(j, null); });
     ecrire();
   }
-  function changerJour(j) {
-    etat.plan[j] = meilleure(contexteJour(j, etat.plan[j]));
-    ecrire();
+  // Remet la semaine d'aplomb quand des pièces arrivent, changent ou disparaissent.
+  function reconcilier() {
+    let change = false;
+    for (const [j] of JOURS) {
+      const t = etat.plan[j];
+      if (!etat.jours.includes(j)) {
+        if (t) { delete etat.plan[j]; change = true; }
+        continue;
+      }
+      if (!t) { composerJour(j, null); change = true; continue; }
+      if (!pret) continue; // ses pièces sont peut-être encore en chargement
+      if (!valide(t)) { delete etat.plan[j]; composerJour(j, null); change = true; continue; }
+      if (habiller(t, contexteJour(j, null), false)) change = true;
+    }
+    if (change) ecrire();
+    if (pret) {
+      if (apercu && !valide(apercu)) apercu = null;
+      if (apercu) habiller(apercu, ctxVide(), false);
+      if (ideeDuJour && valide(ideeDuJour)) habiller(ideeDuJour, ctxVide(), false);
+    }
   }
 
   // ---------- rendu ----------
   function rendreTete() {
     const marques = {};
-    D.articles.forEach(a => { marques[a.marque] = (marques[a.marque] || 0) + 1; });
+    ARTICLES.forEach(a => { marques[a.marque] = (marques[a.marque] || 0) + 1; });
     const parMarque = Object.entries(marques).sort((x, y) => y[1] - x[1]).map(([m, n]) => `${esc(m)} ${n}`).join(" · ");
     let possibles = 0, sures = 0;
     BAS.forEach(b => HAUTS.forEach(h => { const s = accord(b, h); if (s > 0) possibles++; if (s === 2) sures++; }));
-    document.getElementById("sur-titre").textContent = `Achats magasin depuis ${D.depuis}`;
-    document.getElementById("resume").innerHTML =
-      `<strong>${D.articles.length} pièces</strong> (${parMarque}). De quoi composer <strong>${possibles} tenues</strong> bas + pull, dont ${sures} valeurs sûres. Il manque encore les chaussures pour une tenue 100&nbsp;% magasin.`;
-    document.getElementById("couverture").innerHTML = D.categories.map(c => {
-      const n = D.articles.filter(a => a.categorie === c.id).length;
+    F("sur-titre").textContent = `Achats magasin depuis ${D.depuis}`;
+    F("resume").innerHTML =
+      `<strong>${pluriel(ARTICLES.length, "pièce")}</strong> (${parMarque}). De quoi composer <strong>${pluriel(possibles, "tenue")}</strong> haut + bas, dont ${sures} valeur${sures > 1 ? "s" : ""} sûre${sures > 1 ? "s" : ""}. ` +
+      (PIEDS.length
+        ? `Avec ${PIEDS.length > 1 ? "tes chaussures" : "ta paire de chaussures"}, chaque tenue peut être 100&nbsp;% magasin.`
+        : `Il manque encore les chaussures pour une tenue 100&nbsp;% magasin.`);
+    F("couverture").innerHTML = D.categories.map(c => {
+      const n = ARTICLES.filter(a => a.categorie === c.id).length;
+      if (c.optionnelle && !n) return "";
       return `<li class="${n ? "oui" : "non"}">${esc(c.nom)} <b>${n}</b></li>`;
     }).join("");
-    document.getElementById("date-du-jour").textContent =
-      new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+    F("date-du-jour").textContent = new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
   }
 
-  function slot(a) {
-    return `<figure class="slot">
-      <img src="${esc(a.image)}" alt="${esc(a.marque + " " + a.modele + ", " + a.couleur)}" width="480" height="600">
+  function slot(a, large) {
+    return `<figure class="slot${large ? " large" : ""}">
+      <img src="${esc(a.image)}" alt="${esc(a.marque + " " + (a.modele || singulier(a.categorie)) + ", " + a.couleur)}" width="480" height="600">
       <figcaption>
         <span class="eyebrow">${esc(a.marque)}</span>
-        <strong>${esc(a.modele)}</strong>
+        <strong>${esc(a.modele || singulier(a.categorie))}</strong>
         <span class="couleur">${pastille(a)}${esc(a.couleur)}</span>
       </figcaption>
     </figure>`;
   }
 
   function tenueAffichee() {
-    if (apercu) return { t: apercu, contexte: "Choisie dans le tableau des accords." };
-    if (etat.plan[AUJ[0]]) return { t: etat.plan[AUJ[0]], contexte: `Prévue dans ta semaine pour ${AUJ[1].toLowerCase()}.` };
-    if (!ideeDuJour) ideeDuJour = meilleure({ hautsPris: new Set(), usageBas: new Map(), voisins: [], actuel: null });
-    return { t: ideeDuJour, contexte: `${AUJ[1]} n'est pas coché dans ta semaine, voici quand même une idée.` };
+    if (apercu && valide(apercu)) return { t: apercu, contexte: "Choisie dans le tableau des accords." };
+    apercu = null;
+    const prevue = etat.plan[AUJ[0]];
+    if (etat.jours.includes(AUJ[0]) && prevue) {
+      return valide(prevue) ? { t: prevue, contexte: `Prévue dans ta semaine pour ${AUJ[1].toLowerCase()}.` } : null;
+    }
+    if (!valide(ideeDuJour)) ideeDuJour = composerAvecRepli(ctxVide());
+    return ideeDuJour ? { t: ideeDuJour, contexte: `${AUJ[1]} n'est pas coché dans ta semaine, voici quand même une idée.` } : null;
   }
 
   function rendreTenue() {
-    const { t, contexte } = tenueAffichee();
-    const b = PAR_ID[t.bas], h = PAR_ID[t.haut];
-    const niv = NIVEAUX[accord(b, h)];
-    document.getElementById("tenue-slots").innerHTML = slot(h) + slot(b) +
-      `<div class="slot pieds">
-        <span class="eyebrow">Chaussures</span>
-        <strong>Pas encore de paire du magasin</strong>
-        <p>C'est la prochaine pièce à trouver. <a href="#completer">Voir l'idée</a></p>
-      </div>`;
-    const note = noteAccord(b, h);
-    document.getElementById("tenue-verdict").innerHTML =
-      `<span class="badge ${niv.cls}">${niv.sym} ${niv.nom}</span><p>${esc(note || contexte)}</p>`;
-    document.getElementById("tenue-actions").innerHTML = apercu
+    const r = tenueAffichee();
+    if (!r) {
+      F("tenue-slots").style.setProperty("--n", 1);
+      F("tenue-slots").innerHTML = `<p class="vide">Chargement des pièces ajoutées…</p>`;
+      F("tenue-verdict").innerHTML = "";
+      F("tenue-actions").innerHTML = "";
+      return;
+    }
+    const { t, contexte } = r;
+    const b = PAR_ID[t.bas], h = PAR_ID[t.haut], p = PAR_ID[t.pieds], d = PAR_ID[t.dessus];
+    const ev = evaluer(b, h), niv = NIVEAUX[ev.score];
+    const n = 3 + (d ? 1 : 0);
+    let html = slot(h) + slot(b);
+    html += p
+      ? slot(p, n === 3)
+      : `<div class="slot pieds">
+          <span class="eyebrow">Chaussures</span>
+          <strong>Pas encore de paire du magasin</strong>
+          <p>C'est la prochaine pièce à trouver. <a href="#completer">Voir l'idée</a></p>
+        </div>`;
+    if (d) html += slot(d, !p);
+    F("tenue-slots").style.setProperty("--n", n);
+    F("tenue-slots").innerHTML = html;
+    F("tenue-verdict").innerHTML =
+      `<span class="badge ${niv.cls}">${niv.sym} ${niv.nom}</span>` +
+      (p ? `<span class="badge complet">100&nbsp;% magasin</span>` : "") +
+      `<p>${esc(ev.note || contexte)}</p>`;
+    F("tenue-actions").innerHTML = apercu
       ? `<button class="btn" type="button" id="retour-tenue" data-action="retour">Revenir à la tenue du jour</button>`
       : `<button class="btn primaire" type="button" id="autre-tenue" data-action="autre">Autre tenue</button>`;
   }
 
   function rendreSemaine() {
-    JOURS.forEach(([j]) => { document.getElementById("jour-" + j).checked = etat.jours.includes(j); });
-    const jours = joursPlanifies();
-    const liste = document.getElementById("liste-semaine");
+    JOURS.forEach(([j]) => { F("jour-" + j).checked = etat.jours.includes(j); });
+    F("intro-semaine").textContent = "Coche tes jours de travail. Chaque jour reçoit un haut différent, et les bas tournent pour montrer toute la collection. " +
+      (ETE ? "D'avril à septembre, les t-shirts passent avant les pulls." : "D'octobre à mars, les pulls passent avant les t-shirts.");
+    const jours = JOURS.filter(([j]) => etat.jours.includes(j) && etat.plan[j]);
+    const liste = F("liste-semaine");
     if (!jours.length) {
       liste.innerHTML = `<li class="vide">Coche au moins un jour de travail pour composer ta semaine.</li>`;
-      document.getElementById("bilan-semaine").textContent = "";
+      F("bilan-semaine").textContent = "";
       return;
     }
-    liste.innerHTML = jours.map(j => {
-      const t = etat.plan[j], b = PAR_ID[t.bas], h = PAR_ID[t.haut];
-      const niv = NIVEAUX[accord(b, h)];
-      const nomJour = JOURS.find(x => x[0] === j)[1];
+    liste.innerHTML = jours.map(([j, nomJour]) => {
+      const t = etat.plan[j];
       const auj = j === AUJ[0];
+      const eyebrow = `<span class="eyebrow">${esc(nomJour)}${auj ? " · aujourd'hui" : ""}</span>`;
+      if (!valide(t)) {
+        return `<li class="${auj ? "aujourdhui" : ""}"><div class="vignettes"></div><div class="ligne-corps">${eyebrow}<span class="noms"><span>Chargement des pièces ajoutées…</span></span></div><span></span></li>`;
+      }
+      const b = PAR_ID[t.bas], h = PAR_ID[t.haut], p = PAR_ID[t.pieds];
+      const niv = NIVEAUX[accord(b, h)];
       return `<li class="${auj ? "aujourdhui" : ""}">
         <div class="vignettes">
           <img src="${esc(h.image)}" alt="" width="44" height="55" loading="lazy">
           <img src="${esc(b.image)}" alt="" width="44" height="55" loading="lazy">
+          ${p ? `<img src="${esc(p.image)}" alt="" width="44" height="55" loading="lazy">` : ""}
         </div>
         <div class="ligne-corps">
-          <span class="eyebrow">${esc(nomJour)}${auj ? " · aujourd'hui" : ""}</span>
+          ${eyebrow}
           <span class="noms">${esc(h.marque)} ${esc(court(h).toLowerCase())} <span>+</span> ${esc(b.marque)} ${esc(court(b))}</span>
           <span><span class="badge ${niv.cls}">${niv.sym} ${niv.nom}</span></span>
         </div>
         <button class="btn" type="button" id="changer-${j}" data-action="changer" data-jour="${j}" aria-label="Changer la tenue de ${esc(nomJour.toLowerCase())}">Changer</button>
       </li>`;
     }).join("");
-    const pulls = new Set(jours.map(j => etat.plan[j].haut)).size;
-    const bas = new Set(jours.map(j => etat.plan[j].bas)).size;
-    document.getElementById("bilan-semaine").textContent =
-      `Cette semaine : ${pulls} pull${pulls > 1 ? "s" : ""} sur ${HAUTS.length} et ${bas} bas sur ${BAS.length} mis en avant.`;
+    const valides = jours.map(([j]) => etat.plan[j]).filter(valide);
+    const hauts = new Set(valides.map(t => t.haut)).size;
+    const bas = new Set(valides.map(t => t.bas)).size;
+    F("bilan-semaine").textContent =
+      `Cette semaine : ${hauts} haut${hauts > 1 ? "s" : ""} sur ${HAUTS.length} et ${bas} bas sur ${BAS.length} mis en avant.`;
+  }
+
+  function dateCourte(iso) {
+    const d = new Date(iso);
+    return isNaN(d) ? "" : d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+  }
+
+  let confirmation = null; // pièce dont on confirme la suppression
+
+  function fiche(a) {
+    const r = role(a);
+    let assoc = "";
+    if (r === "bas") assoc = `Va avec ${HAUTS.filter(h => accord(a, h) > 0).length} hauts sur ${HAUTS.length}`;
+    if (r === "haut") assoc = `Va avec ${BAS.filter(b => accord(b, a) > 0).length} bas sur ${BAS.length}`;
+    const texteLien = a.ajoute ? `Fiche · ${a.site} ↗` : a.officiel ? `Fiche ${a.site} ↗` : `Fiche revendeur · ${a.site} ↗`;
+    let actions = "";
+    if (a.ajoute && peutEcrire) {
+      actions = confirmation === a.id
+        ? `<div class="fiche-actions"><p>Supprimer cette pièce et sa photo ?</p>
+            <button class="btn petit danger plein" type="button" id="oui-${esc(a.id)}" data-action="confirmer-suppression" data-id="${esc(a.id)}">Supprimer</button>
+            <button class="btn petit" type="button" id="non-${esc(a.id)}" data-action="annuler-suppression">Garder</button></div>`
+        : `<div class="fiche-actions">
+            <button class="btn petit" type="button" id="modifier-${esc(a.id)}" data-action="modifier" data-id="${esc(a.id)}">Modifier</button>
+            <button class="btn petit danger" type="button" id="supprimer-${esc(a.id)}" data-action="supprimer" data-id="${esc(a.id)}">Supprimer</button></div>`;
+    }
+    return `<article class="fiche">
+      <img src="${esc(a.image)}" alt="${esc(a.marque + " " + (a.modele || singulier(a.categorie)) + ", " + a.couleur)}" width="480" height="600" loading="lazy">
+      <div class="fiche-corps">
+        <span class="eyebrow">${esc(a.marque)} · ${esc(singulier(a.categorie))}</span>
+        <strong>${esc(a.modele || singulier(a.categorie))}</strong>
+        <span class="couleur">${pastille(a)}${esc(a.couleur)}</span>
+        ${a.coupe ? `<span class="coupe">${esc(a.coupe)}</span>` : ""}
+        ${a.ref ? `<span class="mono">Réf. ${esc(a.ref)}</span>` : ""}
+        ${a.ajoute ? `<span class="tag-ajout">Ajouté${a.ajouteLe ? " le " + esc(dateCourte(a.ajouteLe)) : ""}</span>` : ""}
+        ${assoc ? `<span class="assoc">${assoc}</span>` : ""}
+        ${a.lien ? `<a href="${esc(a.lien)}" target="_blank" rel="noopener noreferrer">${esc(texteLien)}</a>` : ""}
+        ${actions}
+      </div>
+    </article>`;
   }
 
   function rendreCatalogue() {
-    const presentes = D.categories.filter(c => D.articles.some(a => a.categorie === c.id));
-    const options = [{ id: "tout", nom: "Tout", n: D.articles.length }]
-      .concat(presentes.map(c => ({ id: c.id, nom: c.nom, n: D.articles.filter(a => a.categorie === c.id).length })));
-    document.getElementById("filtres").innerHTML = options.map(o =>
+    const presentes = D.categories.filter(c => ARTICLES.some(a => a.categorie === c.id));
+    if (filtre !== "tout" && !presentes.some(c => c.id === filtre)) filtre = "tout";
+    const options = [{ id: "tout", nom: "Tout", n: ARTICLES.length }]
+      .concat(presentes.map(c => ({ id: c.id, nom: c.nom, n: ARTICLES.filter(a => a.categorie === c.id).length })));
+    F("filtres").innerHTML = options.map(o =>
       `<button type="button" id="filtre-${o.id}" data-action="filtre" data-filtre="${o.id}" aria-pressed="${o.id === filtre}">${esc(o.nom)}<b>${o.n}</b></button>`
     ).join("");
-    const liste = D.articles.filter(a => filtre === "tout" || a.categorie === filtre);
-    document.getElementById("compte-catalogue").textContent = pluriel(liste.length, "pièce");
-    document.getElementById("grille").innerHTML = liste.map(a => {
-      const n = estBas(a) ? HAUTS.filter(h => accord(a, h) > 0).length : BAS.filter(b => accord(b, a) > 0).length;
-      const total = estBas(a) ? HAUTS.length : BAS.length;
-      const avec = estBas(a) ? "pulls" : "bas";
-      const lien = a.officiel ? `Fiche ${a.site} ↗` : `Fiche revendeur · ${a.site} ↗`;
-      return `<article class="fiche">
-        <img src="${esc(a.image)}" alt="${esc(a.marque + " " + a.modele + ", " + a.couleur)}" width="480" height="600" loading="lazy">
-        <div class="fiche-corps">
-          <span class="eyebrow">${esc(a.marque)} · ${esc(CAT[a.categorie].nom.replace(/s$/, ""))}</span>
-          <strong>${esc(a.modele)}</strong>
-          <span class="couleur">${pastille(a)}${esc(a.couleur)}</span>
-          <span class="coupe">${esc(a.coupe)}</span>
-          ${a.ref ? `<span class="mono">Réf. ${esc(a.ref)}</span>` : ""}
-          <span class="assoc">Va avec ${n} ${avec} sur ${total}</span>
-          <a href="${esc(a.lien)}" target="_blank" rel="noopener noreferrer">${esc(lien)}</a>
-        </div>
-      </article>`;
-    }).join("");
+    const liste = ARTICLES.filter(a => filtre === "tout" || a.categorie === filtre);
+    F("compte-catalogue").textContent = pluriel(liste.length, "pièce");
+    F("grille").innerHTML = liste.map(fiche).join("");
   }
 
   function rendreAccords() {
     let possibles = 0;
     BAS.forEach(b => HAUTS.forEach(h => { if (accord(b, h) > 0) possibles++; }));
-    document.getElementById("compte-accords").textContent = `${possibles} tenues possibles sur ${BAS.length * HAUTS.length}`;
-    const tete = `<thead><tr><th scope="col" class="coin eyebrow">Bas \\ Pull</th>${HAUTS.map(h =>
+    F("compte-accords").textContent = `${possibles} tenues possibles sur ${BAS.length * HAUTS.length}`;
+    const tete = `<thead><tr><th scope="col" class="coin eyebrow">Bas \\ Haut</th>${HAUTS.map(h =>
       `<th scope="col"><img src="${esc(h.image)}" alt="" width="40" height="50" loading="lazy">${esc(court(h))}</th>`
     ).join("")}</tr></thead>`;
     const corps = `<tbody>${BAS.map(b => `<tr>
@@ -503,36 +790,479 @@ footer p { margin: 0; max-width: 65ch; }
       ${HAUTS.map(h => {
         const niv = NIVEAUX[accord(b, h)];
         const label = `${court(h)} avec ${court(b)} : ${niv.nom}`;
-        return `<td><button class="cell ${niv.cls}" type="button" data-action="voir" data-bas="${b.id}" data-haut="${h.id}" title="${esc(label)}" aria-label="${esc(label)}">${niv.sym}</button></td>`;
+        return `<td><button class="cell ${niv.cls}" type="button" data-action="voir" data-bas="${esc(b.id)}" data-haut="${esc(h.id)}" title="${esc(label)}" aria-label="${esc(label)}">${niv.sym}</button></td>`;
       }).join("")}
     </tr>`).join("")}</tbody>`;
-    document.getElementById("table-accords").innerHTML = tete + corps;
+    F("table-accords").innerHTML = tete + corps;
   }
 
   function rendreCompleter() {
-    const vides = D.aCompleter.filter(p => !D.articles.some(a => a.categorie === p.categorie));
-    const couvertes = D.categories.filter(c => D.articles.some(a => a.categorie === c.id)).length;
-    document.getElementById("compte-completer").textContent = `${couvertes} catégories couvertes sur ${D.categories.length}`;
-    document.getElementById("priorites").innerHTML = vides.map((p, i) => `<li>
-      <span class="rang" aria-hidden="true">${i + 1}</span>
-      <h3>${esc(CAT[p.categorie].nom)} <span class="mono">0 pièce</span></h3>
-      <p>${esc(p.pourquoi)}</p>
-      <p class="idee"><b>Idée :</b> ${esc(p.idee)}</p>
-    </li>`).join("");
+    const vides = D.aCompleter.filter(p => !ARTICLES.some(a => a.categorie === p.categorie));
+    const coeur = D.categories.filter(c => !c.optionnelle);
+    const couvertes = coeur.filter(c => ARTICLES.some(a => a.categorie === c.id)).length;
+    F("compte-completer").textContent = `${couvertes} catégories couvertes sur ${coeur.length}`;
+    F("priorites").innerHTML = vides.length
+      ? vides.map((p, i) => `<li>
+          <span class="rang" aria-hidden="true">${i + 1}</span>
+          <h3>${esc(CAT[p.categorie].nom)} <span class="mono">0 pièce</span></h3>
+          <p>${esc(p.pourquoi)}</p>
+          <p class="idee"><b>Idée :</b> ${esc(p.idee)}</p>
+        </li>`).join("")
+      : `<li class="vide">Toutes les catégories sont couvertes : tu peux t'habiller 100&nbsp;% magasin de la tête aux pieds.</li>`;
   }
 
   function rendre(...parties) {
     const focus = document.activeElement && document.activeElement.id;
     parties.forEach(f => f());
-    if (focus) { const el = document.getElementById(focus); if (el && el !== document.activeElement) el.focus({ preventScroll: true }); }
+    if (focus) {
+      const el = F(focus);
+      if (el && el !== document.activeElement) el.focus({ preventScroll: true });
+    }
+  }
+  const rendreTout = () => rendre(rendreTete, rendreTenue, rendreSemaine, rendreCatalogue, rendreAccords, rendreCompleter);
+
+  // Une photo stockée qui ne répond plus est remplacée par un aplat.
+  document.addEventListener("error", e => {
+    const img = e.target;
+    if (img && img.tagName === "IMG" && img.src !== PHOTO_ABSENTE && img.getAttribute("src")) img.src = PHOTO_ABSENTE;
+  }, true);
+
+  // ---------- capacités de la page publiée : base de données et stockage des photos ----------
+  let db = null, assets = null, peutEcrire = false;
+
+  function texte(v, max) { return typeof v === "string" ? v.trim().slice(0, max) : ""; }
+  function lienSur(v) {
+    try {
+      const u = new URL(String(v));
+      return u.protocol === "https:" || u.protocol === "http:" ? u.href : null;
+    } catch (_) { return null; }
+  }
+  // Les documents de la base sont des données : tout est vérifié avant affichage.
+  function depuisDb(doc) {
+    const d = doc.exists ? doc.data() : null;
+    if (!d) return null;
+    const categorie = texte(d.categorie, 40), teinte = texte(d.teinte, 40), imageId = texte(d.image, 64);
+    if (!possede(CAT, categorie) || !possede(T, teinte) || !ID_ASSET.test(imageId)) return null;
+    const marque = texte(d.marque, 60), couleur = texte(d.couleur, 40);
+    if (!marque || !couleur) return null;
+    const lien = d.lien ? lienSur(d.lien) : null;
+    const encolure = texte(d.encolure, 20);
+    return {
+      id: "achat-" + doc.id, docId: doc.id, ajoute: true,
+      categorie, marque, modele: texte(d.modele, 80), coupe: texte(d.coupe, 80), couleur, teinte,
+      encolure: possede(ENCOLURES, encolure) ? encolure : undefined,
+      ref: null, lien, site: lien ? new URL(lien).hostname.replace(/^www\./, "") : "",
+      image: "/_blob/" + imageId, imageId, titre: texte(d.titre, 200), ajouteLe: texte(d.ajouteLe, 40),
+    };
   }
 
+  function surSnapshot(snap) {
+    ajoutes = snap.docs.map(depuisDb).filter(Boolean)
+      .sort((x, y) => x.ajouteLe.localeCompare(y.ajouteLe) || x.docId.localeCompare(y.docId));
+    indexer();
+    if (confirmation && !PAR_ID[confirmation]) confirmation = null;
+    pret = true;
+    reconcilier();
+    rendreTout();
+  }
+
+  async function brancher() {
+    const c = window.claude;
+    if (!c || typeof c.use !== "function") return;
+    let ns = [null, null, null];
+    try { ns = await Promise.all([c.use("db"), c.use("assets"), c.use("user")]); } catch (_) { /* vue sans capacités */ }
+    [db, assets] = ns;
+    const user = ns[2];
+    if (!db) {
+      pret = true; reconcilier(); rendreTout();
+      return;
+    }
+    db.collection("achats").onSnapshot(surSnapshot, () => {
+      annonce("Les pièces ajoutées depuis la page n'ont pas pu être chargées. Recharge la page pour réessayer.");
+      pret = true; reconcilier(); rendreTout();
+    });
+    const proprio = user ? await user.isOwner() : true;
+    peutEcrire = !!assets && proprio;
+    F("ouvrir-ajout").hidden = !peutEcrire;
+    if (peutEcrire) rendre(rendreCatalogue);
+  }
+
+  function annonce(msg) { F("annonce").textContent = msg; }
+
+  // ---------- formulaire « Ajouter un achat » ----------
+  const MOTS_CATEGORIE = [
+    [/^(pantalons?|chinos?|cargos?|joggings?)$/, "pantalons"],
+    [/^jeans?$/, "jeans"],
+    [/^(pulls?|pull-overs?|pullovers?|gilets?|cardigans?|mailles?)$/, "pulls"],
+    [/^(t-?shirts?|tee-?shirts?|tees?|debardeurs?)$/, "t-shirts"],
+    [/^chemises?$/, "chemises"],
+    [/^(vestes?|blazers?|surchemises?)$/, "vestes"],
+    [/^(blousons?|doudounes?|manteaux|manteau|parkas?|bombers?|coupe-vents?)$/, "blousons"],
+    [/^(chaussures?|baskets?|sneakers?|boots?|bottines?|mocassins?)$/, "chaussures"],
+    [/^(sweats?|sweat-shirts?|sweatshirts?|hoodies?)$/, "sweats"],
+    [/^polos?$/, "polos"],
+    [/^(shorts?|bermudas?)$/, "shorts"],
+    [/^(accessoires?|casquettes?|bonnets?|ceintures?|echarpes?|sacs?|chaussettes?|portefeuilles?)$/, "accessoires"],
+  ];
+  function devinerCategorie(mot) {
+    const m = sansAccents(mot);
+    for (const [re, id] of MOTS_CATEGORIE) if (re.test(m) || re.test(m.split(" ")[0])) return id;
+    return "";
+  }
+  function devinerTeinte(couleur, categorie) {
+    const c = sansAccents(couleur);
+    if (!c) return "";
+    const jean = categorie === "jeans";
+    const haut = possede(CAT, categorie) && CAT[categorie].role === "haut";
+    const regles = [
+      [/blanc casse|ecru|creme|ivoire|off.?white/, "ecru"],
+      [/marine|navy|bleu nuit|bleu fonce|brut|indigo|rinse/, jean ? "denim-brut" : "marine"],
+      [/bleu clair|bleu ciel|ciel|bleu pale|delave clair|bleach/, jean ? "denim-clair" : "bleu-ciel"],
+      [/bleu|denim|stone/, jean ? "denim-moyen" : "bleu"],
+      [/gris clair|gris perle|perle/, "gris-clair"],
+      [/gris fonce|anthracite|charbon/, "gris-fonce"],
+      [/gris|chine/, "gris-moyen"],
+      [/noir|black/, "noir"],
+      [/blanc|white/, "blanc"],
+      [/bordeaux|lie de vin|prune|burgundy|grenat/, "bordeaux"],
+      [/rose|pink/, "rose"],
+      [/rouge|red/, "rouge"],
+      [/vert|kaki|olive|sapin|green/, "vert"],
+      [/marron|chocolat|brun|cognac|tabac|brown/, "marron"],
+      [/^beige$/, haut ? "ecru" : "beige"],
+      [/beige|camel|sable|taupe|mastic/, "beige"],
+      [/jaune|moutarde|yellow/, "jaune"],
+      [/orange|rouille|brique/, "orange"],
+      [/violet|mauve|lilas|lavande/, "violet"],
+    ];
+    for (const [re, t] of regles) if (re.test(c)) return t;
+    return "";
+  }
+  function devinerEncolure(modele, categorie) {
+    if (categorie !== "pulls" && categorie !== "sweats") return undefined;
+    const m = sansAccents(modele);
+    if (/zip|camionneur/.test(m)) return "zip";
+    if (/polo/.test(m)) return "polo";
+    if (/col v\b|v-neck/.test(m)) return "v";
+    if (/capuche|hood/.test(m)) return "capuche";
+    if (/rond|crew/.test(m)) return "rond";
+    return undefined;
+  }
+  // « Tommy Jeans - Pull - 1_4 zip - Noir.png » → marque, catégorie, modèle, couleur.
+  function analyserTitre(titre) {
+    const t = titre.replace(/\.(png|jpe?g|webp|gif|heic|heif)$/i, "").replace(/(\d)_(\d)/g, "$1/$2").trim();
+    const parts = t.split(/\s+[-–—]\s+/).map(s => s.trim()).filter(Boolean);
+    const r = { marque: parts[0] || "", categorie: "", modele: "", couleur: "" };
+    if (parts.length >= 2) r.categorie = devinerCategorie(parts[1]);
+    if (parts.length >= 4) {
+      r.couleur = parts[parts.length - 1];
+      r.modele = parts.slice(2, -1).join(" - ");
+    } else if (parts.length === 3) {
+      if (devinerTeinte(parts[2], r.categorie)) r.couleur = parts[2]; else r.modele = parts[2];
+    }
+    return r;
+  }
+
+  const CHAMPS = ["achat-marque", "achat-categorie", "achat-modele", "achat-couleur", "achat-teinte", "achat-coupe", "achat-lien"];
+  const touches = new Set();   // champs modifiés à la main : le titre ne les écrase plus
+  let edition = null;          // pièce en cours de modification
+  let photo = null;            // { img, url, w, h, fond }
+  let cadrage = { zoom: 1, x: 0, y: 0 };
+  let envoiEnCours = false;
+
+  function remplirListes() {
+    F("achat-categorie").innerHTML = `<option value="">Choisir…</option>` +
+      D.categories.map(c => `<option value="${esc(c.id)}">${esc(c.nom)}</option>`).join("");
+    F("achat-teinte").innerHTML = `<option value="">Choisir…</option>` +
+      Object.entries(T).map(([id, t]) => `<option value="${esc(id)}">${esc(t.nom)}</option>`).join("");
+  }
+  function majPastille() {
+    const t = F("achat-teinte").value;
+    F("achat-teinte-pastille").style.background = possede(T, t) ? T[t].hex : "transparent";
+  }
+  function poser(id, v) { if (!touches.has(id)) F(id).value = v; }
+  function teinteAuto() {
+    if (!touches.has("achat-teinte")) F("achat-teinte").value = devinerTeinte(F("achat-couleur").value, F("achat-categorie").value);
+    majPastille();
+  }
+  function depuisTitre() {
+    const r = analyserTitre(F("achat-titre").value);
+    poser("achat-marque", r.marque);
+    poser("achat-categorie", r.categorie);
+    poser("achat-modele", r.modele);
+    poser("achat-couleur", r.couleur);
+    teinteAuto();
+  }
+  function erreur(msg) { F("achat-erreur").textContent = msg; }
+  function succes(msg) { F("achat-ok").textContent = msg; }
+
+  // Recadrage : la photo couvre un cadre 4:5 de 480 × 600 px, déplaçable et zoomable.
+  const SORTIE = { w: 480, h: 600 };
+  function bornerCadrage() {
+    const s = Math.max(SORTIE.w / photo.w, SORTIE.h / photo.h) * cadrage.zoom;
+    const mx = Math.abs(photo.w * s - SORTIE.w) / 2, my = Math.abs(photo.h * s - SORTIE.h) / 2;
+    cadrage.x = Math.max(-mx, Math.min(mx, cadrage.x));
+    cadrage.y = Math.max(-my, Math.min(my, cadrage.y));
+    return s;
+  }
+  function dessiner() {
+    if (!photo) return;
+    const s = bornerCadrage();
+    const ctx = F("apercu-photo").getContext("2d");
+    const dw = photo.w * s, dh = photo.h * s;
+    ctx.fillStyle = photo.fond;
+    ctx.fillRect(0, 0, SORTIE.w, SORTIE.h);
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(photo.img, (SORTIE.w - dw) / 2 + cadrage.x, (SORTIE.h - dh) / 2 + cadrage.y, dw, dh);
+  }
+  function couleurDeFond(img) {
+    try {
+      const c = document.createElement("canvas");
+      c.width = 8; c.height = 8;
+      const x = c.getContext("2d");
+      x.drawImage(img, 0, 0, 8, 8);
+      const px = [[0, 0], [7, 0], [0, 7], [7, 7]].map(([i, j]) => x.getImageData(i, j, 1, 1).data);
+      const moy = k => Math.round(px.reduce((s, p) => s + p[k], 0) / px.length);
+      return `rgb(${moy(0)}, ${moy(1)}, ${moy(2)})`;
+    } catch (_) { return "#ffffff"; }
+  }
+  function oublierPhoto() {
+    if (photo) URL.revokeObjectURL(photo.url);
+    photo = null;
+    F("cadre").hidden = true;
+  }
+  function chargerPhoto(fichier) {
+    erreur("");
+    if (!/^image\//.test(fichier.type) && !/\.(png|jpe?g|webp|gif|heic|heif)$/i.test(fichier.name)) {
+      erreur("Choisis un fichier image (PNG ou JPEG).");
+      return;
+    }
+    oublierPhoto();
+    const url = URL.createObjectURL(fichier);
+    const img = new Image();
+    img.onload = () => {
+      photo = { img, url, w: img.naturalWidth, h: img.naturalHeight, fond: couleurDeFond(img) };
+      cadrage = { zoom: 1, x: 0, y: 0 };
+      F("achat-zoom").value = "1";
+      F("cadre").hidden = false;
+      dessiner();
+      if (!F("achat-titre").value.trim()) {
+        F("achat-titre").value = fichier.name.replace(/\.[^.]+$/, "").replace(/(\d)_(\d)/g, "$1/$2");
+        depuisTitre();
+      }
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      erreur("Cette photo n'a pas pu être lue. Essaie avec une capture en PNG ou en JPEG.");
+    };
+    img.src = url;
+  }
+  function exporterPhoto() {
+    return new Promise((ok, ko) => F("apercu-photo").toBlob(b => (b ? ok(b) : ko({ code: "export" })), "image/jpeg", 0.86));
+  }
+
+  function reinitialiser() {
+    F("form-achat").reset();
+    touches.clear();
+    oublierPhoto();
+    edition = null;
+    F("photo-actuelle").hidden = true;
+    F("titre-ajouter").textContent = "Ajouter un achat";
+    F("achat-envoyer").textContent = "Ajouter à la garde-robe";
+    erreur("");
+    majPastille();
+  }
+  function ouvrirPanneau() {
+    F("ajouter").hidden = false;
+    F("ajouter").scrollIntoView({ block: "start" });
+    F(edition ? "achat-titre" : "achat-photo").focus({ preventScroll: true });
+  }
+  function fermerPanneau() {
+    reinitialiser();
+    succes("");
+    F("ajouter").hidden = true;
+    F("ouvrir-ajout").focus({ preventScroll: true });
+  }
+  function ouvrirEdition(a) {
+    reinitialiser();
+    succes("");
+    edition = a;
+    F("achat-titre").value = a.titre;
+    const valeurs = { "achat-marque": a.marque, "achat-categorie": a.categorie, "achat-modele": a.modele, "achat-couleur": a.couleur, "achat-teinte": a.teinte, "achat-coupe": a.coupe, "achat-lien": a.lien || "" };
+    CHAMPS.forEach(id => { F(id).value = valeurs[id]; touches.add(id); });
+    majPastille();
+    F("photo-actuelle-img").src = a.image;
+    F("photo-actuelle").hidden = false;
+    F("titre-ajouter").textContent = "Modifier une pièce";
+    F("achat-envoyer").textContent = "Enregistrer";
+    ouvrirPanneau();
+  }
+
+  function lireFormulaire() {
+    const v = {
+      marque: F("achat-marque").value.trim(),
+      categorie: F("achat-categorie").value,
+      modele: F("achat-modele").value.trim(),
+      couleur: F("achat-couleur").value.trim(),
+      teinte: F("achat-teinte").value,
+      coupe: F("achat-coupe").value.trim(),
+      lien: F("achat-lien").value.trim(),
+    };
+    if (!v.marque) return { manque: "Indique la marque." };
+    if (!possede(CAT, v.categorie)) return { manque: "Choisis la catégorie." };
+    if (!v.couleur) return { manque: "Indique la couleur." };
+    if (!possede(T, v.teinte)) return { manque: "Choisis la couleur utilisée pour les accords." };
+    if (v.lien && !lienSur(v.lien)) return { manque: "Le lien doit commencer par https://." };
+    if (!photo && !edition) return { manque: "Ajoute une photo." };
+    v.lien = v.lien ? lienSur(v.lien) : "";
+    v.titre = F("achat-titre").value.trim() ||
+      [v.marque, singulier(v.categorie), v.modele, v.couleur].filter(Boolean).join(" - ");
+    return { v };
+  }
+
+  const pause = ms => new Promise(r => setTimeout(r, ms));
+  // Un seul nouvel essai, et seulement pour les pannes passagères.
+  async function appel(fn, codePassager) {
+    try { return await fn(); } catch (e) {
+      if (!e || e.code !== codePassager) throw e;
+      await pause(400 + Math.random() * 600);
+      return fn();
+    }
+  }
+  function messageErreur(e) {
+    const code = e && e.code;
+    const messages = {
+      too_large: "La photo est trop lourde. Choisis une image plus petite.",
+      unsupported_type: "Ce format de photo n'est pas accepté. Utilise un PNG ou un JPEG.",
+      quota_or_state: "Le stockage des photos de la page est plein. Supprime des pièces avant d'en ajouter.",
+      quota_exceeded: "La base de la page est pleine. Supprime des pièces avant d'en ajouter.",
+      rate_limited: "Trop d'envois d'un coup. Attends un instant puis réessaie.",
+      resource_exhausted: "Trop d'envois d'un coup. Attends un instant puis réessaie.",
+      upstream_auth: "Ta session a expiré. Recharge la page puis réessaie.",
+      revoked: "L'accès à la page a changé. Recharge-la.",
+      invalid_argument: "L'enregistrement a été refusé. Seul le propriétaire de la page peut ajouter des pièces.",
+      not_granted: "L'ajout de pièces n'est pas disponible dans cette vue de la page.",
+      capability_disabled: "L'ajout de pièces n'est pas disponible dans cette vue de la page.",
+      capability_removed: "L'ajout de pièces n'est pas disponible dans cette vue de la page.",
+      export: "La photo recadrée n'a pas pu être préparée. Choisis-la à nouveau.",
+    };
+    return messages[code] || "L'enregistrement n'a pas abouti. Réessaie dans un instant.";
+  }
+
+  async function envoyer(e) {
+    e.preventDefault();
+    if (envoiEnCours || !db || !assets) return;
+    const { v, manque } = lireFormulaire();
+    if (manque) { erreur(manque); return; }
+    envoiEnCours = true;
+    F("achat-envoyer").disabled = true;
+    erreur(""); succes("");
+    const enEdition = edition;
+    let nouvelleImage = null;
+    try {
+      if (photo) {
+        const blob = await exporterPhoto();
+        nouvelleImage = (await appel(() => assets.upload(blob, { type: "image/jpeg" }), "store_unavailable")).id;
+      }
+      const corps = {
+        titre: v.titre, marque: v.marque, categorie: v.categorie, modele: v.modele,
+        couleur: v.couleur, teinte: v.teinte, coupe: v.coupe, lien: v.lien,
+        image: nouvelleImage || enEdition.imageId,
+        ajouteLe: enEdition ? enEdition.ajouteLe : new Date().toISOString(),
+      };
+      const encolure = devinerEncolure(v.modele, v.categorie);
+      if (encolure) corps.encolure = encolure;
+      if (enEdition) corps.modifieLe = new Date().toISOString();
+      const ref = enEdition ? db.doc("achats/" + enEdition.docId) : db.collection("achats").doc();
+      await appel(() => ref.set(corps), "unavailable");
+      if (enEdition && nouvelleImage) assets.delete(enEdition.imageId).catch(() => {});
+      nouvelleImage = null;
+      const nom = [v.marque, v.modele || singulier(v.categorie), v.couleur].join(" ");
+      reinitialiser();
+      if (enEdition) {
+        F("ajouter").hidden = true;
+        annonce("");
+        succes("");
+        F("ouvrir-ajout").focus({ preventScroll: true });
+      } else {
+        succes(`Ajouté : ${nom}. La pièce est dans le catalogue et dans les tenues.`);
+        F("achat-photo").focus({ preventScroll: true });
+      }
+    } catch (err) {
+      if (nouvelleImage) assets.delete(nouvelleImage).catch(() => {});
+      erreur(messageErreur(err));
+    } finally {
+      envoiEnCours = false;
+      F("achat-envoyer").disabled = false;
+    }
+  }
+
+  async function supprimer(id) {
+    const a = PAR_ID[id];
+    if (!a || !a.ajoute || !db) return;
+    annonce("");
+    try {
+      await appel(() => db.doc("achats/" + a.docId).delete(), "unavailable");
+      confirmation = null;
+      if (assets) assets.delete(a.imageId).catch(() => {});
+    } catch (err) {
+      annonce("La pièce n'a pas pu être supprimée. " + messageErreur(err));
+    }
+  }
+
+  // Glisser pour cadrer (souris et doigt), flèches au clavier.
+  (function cadrageInteractif() {
+    const cv = F("apercu-photo");
+    let depart = null;
+    cv.addEventListener("pointerdown", e => {
+      if (!photo) return;
+      depart = { x: e.clientX, y: e.clientY, cx: cadrage.x, cy: cadrage.y, k: SORTIE.w / cv.clientWidth };
+      cv.setPointerCapture(e.pointerId);
+    });
+    cv.addEventListener("pointermove", e => {
+      if (!depart) return;
+      cadrage.x = depart.cx + (e.clientX - depart.x) * depart.k;
+      cadrage.y = depart.cy + (e.clientY - depart.y) * depart.k;
+      dessiner();
+    });
+    const fin = () => { depart = null; };
+    cv.addEventListener("pointerup", fin);
+    cv.addEventListener("pointercancel", fin);
+    cv.addEventListener("keydown", e => {
+      const pas = e.shiftKey ? 40 : 10;
+      const d = { ArrowLeft: [-pas, 0], ArrowRight: [pas, 0], ArrowUp: [0, -pas], ArrowDown: [0, pas] }[e.key];
+      if (!d || !photo) return;
+      e.preventDefault();
+      cadrage.x += d[0]; cadrage.y += d[1];
+      dessiner();
+    });
+    F("achat-zoom").addEventListener("input", e => { cadrage.zoom = Number(e.target.value) || 1; dessiner(); });
+  })();
+
+  F("achat-photo").addEventListener("change", e => { const f = e.target.files && e.target.files[0]; if (f) chargerPhoto(f); });
+  const depot = F("depot");
+  depot.addEventListener("dragover", e => { e.preventDefault(); depot.classList.add("survol"); });
+  depot.addEventListener("dragleave", () => depot.classList.remove("survol"));
+  depot.addEventListener("drop", e => {
+    e.preventDefault();
+    depot.classList.remove("survol");
+    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) chargerPhoto(f);
+  });
+  F("achat-titre").addEventListener("input", depuisTitre);
+  CHAMPS.forEach(id => F(id).addEventListener("input", () => {
+    touches.add(id);
+    if (id === "achat-couleur" || id === "achat-categorie") teinteAuto();
+    if (id === "achat-teinte") majPastille();
+  }));
+  F("form-achat").addEventListener("submit", envoyer);
+
   // ---------- interactions ----------
-  document.getElementById("jours").addEventListener("change", e => {
+  F("jours").addEventListener("change", e => {
     const j = e.target.value;
     if (e.target.checked) {
       if (!etat.jours.includes(j)) etat.jours.push(j);
-      etat.plan[j] = meilleure(contexteJour(j, null));
+      composerJour(j, null);
     } else {
       etat.jours = etat.jours.filter(x => x !== j);
       delete etat.plan[j];
@@ -546,29 +1276,43 @@ footer p { margin: 0; max-width: 65ch; }
     if (!el) return;
     const action = el.dataset.action;
     if (action === "recomposer") { composerSemaine(); rendre(rendreSemaine, rendreTenue); }
-    else if (action === "changer") { changerJour(el.dataset.jour); rendre(rendreSemaine, rendreTenue); }
-    else if (action === "autre") {
-      if (etat.plan[AUJ[0]]) { changerJour(AUJ[0]); rendre(rendreSemaine, rendreTenue); }
-      else { ideeDuJour = meilleure({ hautsPris: new Set(), usageBas: new Map(), voisins: [], actuel: ideeDuJour }); rendre(rendreTenue); }
+    else if (action === "changer") {
+      const j = el.dataset.jour;
+      if (valide(etat.plan[j])) { composerJour(j, etat.plan[j]); ecrire(); rendre(rendreSemaine, rendreTenue); }
     }
-    else if (action === "retour") { apercu = null; rendre(rendreTenue); document.getElementById("autre-tenue").focus({ preventScroll: true }); }
+    else if (action === "autre") {
+      if (etat.jours.includes(AUJ[0]) && valide(etat.plan[AUJ[0]])) {
+        composerJour(AUJ[0], etat.plan[AUJ[0]]); ecrire(); rendre(rendreSemaine, rendreTenue);
+      } else {
+        ideeDuJour = composer(ctxVide(ideeDuJour)) || ideeDuJour;
+        rendre(rendreTenue);
+      }
+    }
+    else if (action === "retour") { apercu = null; rendre(rendreTenue); F("autre-tenue").focus({ preventScroll: true }); }
     else if (action === "voir") {
       apercu = { bas: el.dataset.bas, haut: el.dataset.haut };
+      if (!valide(apercu)) { apercu = null; return; }
+      habiller(apercu, ctxVide(), true);
       rendre(rendreTenue);
-      document.getElementById("tenue").scrollIntoView({ block: "start" });
+      F("tenue").scrollIntoView({ block: "start" });
     }
     else if (action === "filtre") { filtre = el.dataset.filtre; rendre(rendreCatalogue); }
+    else if (action === "ouvrir-ajout") { reinitialiser(); succes(""); ouvrirPanneau(); }
+    else if (action === "fermer-ajout" || action === "annuler-ajout") fermerPanneau();
+    else if (action === "modifier") { const a = PAR_ID[el.dataset.id]; if (a && a.ajoute && peutEcrire) ouvrirEdition(a); }
+    else if (action === "supprimer") { confirmation = el.dataset.id; rendre(rendreCatalogue); const b = F("non-" + confirmation); if (b) b.focus(); }
+    else if (action === "annuler-suppression") { const id = confirmation; confirmation = null; rendre(rendreCatalogue); const b = F("supprimer-" + id); if (b) b.focus(); }
+    else if (action === "confirmer-suppression") { el.disabled = true; supprimer(el.dataset.id).then(() => rendre(rendreCatalogue)); }
   });
 
   // ---------- démarrage ----------
-  if (!joursPlanifies().length && etat.jours.length) composerSemaine();
-  else etat.jours.forEach(j => { if (!etat.plan[j]) etat.plan[j] = meilleure(contexteJour(j, null)); });
-  rendreTete();
-  rendreTenue();
-  rendreSemaine();
-  rendreCatalogue();
-  rendreAccords();
-  rendreCompleter();
+  indexer();
+  remplirListes();
+  reconcilier();
+  rendreTout();
+  brancher();
+  // Si le visualiseur ne répond pas, on n'attend pas indéfiniment les pièces ajoutées.
+  setTimeout(() => { if (!pret) { pret = true; reconcilier(); rendreTout(); } }, 12000);
 })();
 </script>
 </body>

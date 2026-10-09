@@ -8,13 +8,14 @@ Toutes les pièces achetées au magasin Blue Box depuis juin 2026. Le but : êtr
 
 Ouvre `index.html` dans un navigateur (double-clic sur le fichier, rien à installer). La page contient :
 
-- **Tenue du jour** : un pull + un bas qui vont ensemble, avec un bouton « Autre tenue ».
-- **Ma semaine** : coche tes jours de travail. Chaque jour reçoit un pull différent, et les bas tournent pour que toute la collection passe dans la semaine. Chaque jour a son bouton « Changer ».
-- **Catalogue** : les 16 pièces, filtrables par catégorie, avec le lien vers la fiche produit.
-- **Accords bas × pulls** : les 60 combinaisons possibles, notées « valeur sûre », « possible » ou « à éviter ».
+- **Ajouter un achat** (sur la page publiée, pour le propriétaire) : choisis la photo, le titre et les champs se remplissent tout seuls, recadre, valide.
+- **Tenue du jour** : un haut + un bas qui vont ensemble, plus les chaussures et un par-dessus dès que tu en as, avec un bouton « Autre tenue ».
+- **Ma semaine** : coche tes jours de travail. Chaque jour reçoit un haut différent, et les bas tournent pour que toute la collection passe dans la semaine. Chaque jour a son bouton « Changer ».
+- **Catalogue** : toutes les pièces, filtrables par catégorie, avec le lien vers la fiche produit.
+- **Accords hauts × bas** : toutes les combinaisons, notées « valeur sûre », « possible » ou « à éviter ».
 - **À compléter** : les catégories encore vides, par ordre de priorité.
 
-Les jours cochés et la semaine composée sont gardés dans le navigateur. Toutes les données sont dans `garde-robe.js`.
+Les jours cochés et la semaine composée sont gardés dans le navigateur. Les 16 premières pièces sont dans `garde-robe.js`.
 
 ## Inventaire
 
@@ -69,9 +70,27 @@ Il manque les chaussures pour qu'une tenue soit entièrement achetée au magasin
 
 ## Ajouter un achat
 
+**Depuis la page publiée (le plus simple).** Bouton « Ajouter un achat » en haut de la page :
+
+1. Choisis la photo. Si le fichier s'appelle comme tes exports Canva (`Marque - Catégorie - Modèle - Couleur.png`), le titre et tous les champs se remplissent seuls. Sinon, tape le titre au même format.
+2. Fais glisser la photo pour centrer la pièce dans le cadre, et zoome si besoin.
+3. Vérifie la catégorie et la « couleur pour les accords », puis valide.
+
+La pièce apparaît aussitôt dans le catalogue, les tenues, la semaine et le tableau des accords. Elle est enregistrée dans la page elle-même (base de données et stockage photo de la page), pas dans ce dépôt. Seul le propriétaire de la page peut ajouter, modifier ou supprimer des pièces. Les autres personnes qui ont accès à la page les voient sans pouvoir les changer.
+
+Catégories reconnues dans le titre : pantalon, jean, pull, t-shirt, chemise, veste, blouson, chaussures (et baskets, sneakers, boots…), sweat, polo, short, accessoires. Si une couleur n'est pas dans le tableau des accords, des règles générales s'appliquent : deux teintes foncées de la même famille se confondent, deux tons clairs proches manquent de contraste, deux couleurs franches sont à doser.
+
+**Dans ce dépôt.** Pour qu'une pièce fasse partie des données du dépôt :
+
 1. Mettre la capture d'écran dans `images/captures/`, et une vignette recadrée en 4:5 (480 × 600 px) dans `images/`.
 2. Ajouter la pièce dans la liste `articles` de `garde-robe.js`, en reprenant le format des autres.
-3. Pour une nouvelle couleur de bas ou de pull, ajouter aussi sa ligne ou sa colonne dans `accords`.
+3. Pour une nouvelle couleur de bas ou de haut, ajouter aussi sa ligne ou sa colonne dans `accords`.
+
+Claude peut recopier dans le dépôt les pièces ajoutées depuis la page.
+
+## Publier la page
+
+La page publiée sur claude.ai est `index.html` sans son enveloppe de document, que le visualiseur ajoute lui-même : `outils/version-artefact.sh > garde-robe-blue-box.html`, publiée avec `garde-robe.js` et `images/*.jpg`, et les capacités `db` (écriture réservée au propriétaire), `assets` et `user`.
 
 ## Notes
 

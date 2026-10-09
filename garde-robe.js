@@ -1,20 +1,26 @@
 // Garde-robe Blue Box : tout ce que j'ai acheté au magasin depuis juin 2026.
 // Source unique de données pour index.html (et pour le README).
-// Pour ajouter un achat : ajouter un objet dans `articles` et sa vignette 4:5 (480×600) dans images/.
+// Les achats ajoutés depuis le formulaire de la page sont stockés dans la page elle-même, pas ici.
+// Pour ajouter un achat dans ce fichier : un objet dans `articles` et sa vignette 4:5 (480×600) dans images/.
 
 window.GARDE_ROBE = {
   depuis: "juin 2026",
 
-  // role : "bas" et "haut" servent à composer les tenues ; les autres catégories sont à compléter.
+  // role : "bas", "haut", "pieds" (chaussures) et "dessus" (vestes, blousons) servent à composer les tenues.
+  // optionnelle : catégorie affichée seulement quand elle contient des pièces.
   categories: [
     { id: "pantalons", nom: "Pantalons", role: "bas" },
     { id: "jeans", nom: "Jeans", role: "bas" },
     { id: "pulls", nom: "Pulls", role: "haut" },
-    { id: "t-shirts", nom: "T-shirts", role: "dessous" },
-    { id: "chemises", nom: "Chemises", role: "dessous" },
+    { id: "t-shirts", nom: "T-shirts", role: "haut" },
+    { id: "chemises", nom: "Chemises", role: "haut" },
     { id: "vestes", nom: "Vestes", role: "dessus" },
     { id: "blousons", nom: "Blousons", role: "dessus" },
     { id: "chaussures", nom: "Chaussures", role: "pieds" },
+    { id: "sweats", nom: "Sweats", role: "haut", optionnelle: true },
+    { id: "polos", nom: "Polos", role: "haut", optionnelle: true },
+    { id: "shorts", nom: "Shorts", role: "bas", optionnelle: true },
+    { id: "accessoires", nom: "Accessoires", role: "aucun", optionnelle: true },
   ],
 
   // teinte : clé utilisée par le tableau des accords ci-dessous.
@@ -261,22 +267,33 @@ window.GARDE_ROBE = {
     },
   ],
 
-  // Couleur affichée dans les pastilles.
+  // Couleurs connues. clarte, neutre et famille servent aux accords des couleurs absentes du tableau `accords`.
   teintes: {
-    "beige": { nom: "Beige", hex: "#d8cab2" },
-    "denim-clair": { nom: "Denim clair", hex: "#9db8d3" },
-    "denim-moyen": { nom: "Denim moyen", hex: "#41608a" },
-    "denim-brut": { nom: "Denim brut", hex: "#1f2b46" },
-    "gris-moyen": { nom: "Gris moyen", hex: "#8a8a8d" },
-    "gris-clair": { nom: "Gris clair", hex: "#c8c6c1" },
-    "marine": { nom: "Marine", hex: "#1d2a45" },
-    "bordeaux": { nom: "Bordeaux", hex: "#5b1f35" },
-    "noir": { nom: "Noir", hex: "#161616" },
-    "ecru": { nom: "Beige écru", hex: "#efe8da" },
-    "rose": { nom: "Rose", hex: "#ecc9cc" },
+    "noir": { nom: "Noir", hex: "#161616", clarte: "fonce", neutre: true, famille: "noir" },
+    "blanc": { nom: "Blanc", hex: "#fbfbf8", clarte: "clair", neutre: true, famille: "blanc" },
+    "ecru": { nom: "Beige écru", hex: "#efe8da", clarte: "clair", neutre: true, famille: "beige" },
+    "beige": { nom: "Beige", hex: "#d8cab2", clarte: "clair", neutre: true, famille: "beige" },
+    "gris-clair": { nom: "Gris clair", hex: "#c8c6c1", clarte: "clair", neutre: true, famille: "gris" },
+    "gris-moyen": { nom: "Gris moyen", hex: "#8a8a8d", clarte: "moyen", neutre: true, famille: "gris" },
+    "gris-fonce": { nom: "Gris foncé", hex: "#45474c", clarte: "fonce", neutre: true, famille: "gris" },
+    "marine": { nom: "Marine", hex: "#1d2a45", clarte: "fonce", neutre: true, famille: "bleu" },
+    "denim-clair": { nom: "Denim clair", hex: "#9db8d3", clarte: "clair", neutre: true, famille: "bleu" },
+    "denim-moyen": { nom: "Denim moyen", hex: "#41608a", clarte: "moyen", neutre: true, famille: "bleu" },
+    "denim-brut": { nom: "Denim brut", hex: "#1f2b46", clarte: "fonce", neutre: true, famille: "bleu" },
+    "bleu-ciel": { nom: "Bleu ciel", hex: "#a9c8e8", clarte: "clair", neutre: false, famille: "bleu" },
+    "bleu": { nom: "Bleu", hex: "#2f5fb3", clarte: "moyen", neutre: false, famille: "bleu" },
+    "bordeaux": { nom: "Bordeaux", hex: "#5b1f35", clarte: "fonce", neutre: false, famille: "rouge" },
+    "rouge": { nom: "Rouge", hex: "#b3262e", clarte: "moyen", neutre: false, famille: "rouge" },
+    "rose": { nom: "Rose", hex: "#ecc9cc", clarte: "clair", neutre: false, famille: "rouge" },
+    "vert": { nom: "Vert / kaki", hex: "#5d6b3f", clarte: "moyen", neutre: false, famille: "vert" },
+    "marron": { nom: "Marron", hex: "#6b4429", clarte: "fonce", neutre: false, famille: "marron" },
+    "jaune": { nom: "Jaune / moutarde", hex: "#d4a72c", clarte: "clair", neutre: false, famille: "jaune" },
+    "orange": { nom: "Orange", hex: "#d9702b", clarte: "moyen", neutre: false, famille: "orange" },
+    "violet": { nom: "Violet", hex: "#6c4a8f", clarte: "moyen", neutre: false, famille: "violet" },
   },
 
-  // Accord bas → pull : 2 = valeur sûre, 1 = possible, 0 = à éviter.
+  // Accords choisis à la main, bas → haut : 2 = valeur sûre, 1 = possible, 0 = à éviter.
+  // Les paires absentes suivent les règles générales de index.html.
   accords: {
     "beige": { marine: 2, bordeaux: 2, noir: 2, ecru: 1, rose: 1 },
     "denim-clair": { marine: 2, bordeaux: 2, noir: 2, ecru: 2, rose: 2 },
