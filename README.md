@@ -12,6 +12,11 @@ Ouvre `index.html` dans un navigateur (double-clic sur le fichier, rien à insta
 - **Tenue du jour** : jusqu'à 5 pièces (sous-couche, pull, veste ou blouson, bas, chaussures), avec les raisons pour lesquelles elles vont ensemble et un bouton « Autre tenue ».
 - **Couches** : un réglage « 1 · un haut », « 2 · sous-couche + pull », « 3 · + veste ou blouson », réglé par défaut selon le mois (3 d'octobre à mars). Il s'applique à la tenue du jour, à la semaine et à « Je veux porter ».
 - **Je veux porter…** : choisis la pièce qui te fait envie le matin (ou « Porter avec… » depuis le catalogue). La page compose jusqu'à 5 tenues autour d'elle, explique pourquoi, et « Porter aujourd'hui » en fait ta tenue du jour.
+- **Météo du jour** : froid, frais, doux ou pluie. Elle règle les couches ; sous la pluie, les bas clairs, les vestes légères et le daim reculent.
+- **Changer une pièce** : sous chaque pièce de la tenue du jour, « Changer » remplace seulement celle-là, « Au lavage » la sort des tenues et la remplace.
+- **Je l'ai portée / Favori / J'aime / Pas pour moi** : la tenue part dans le journal, dans les favoris, ou apprend tes goûts (une association notée deux fois « pas pour moi » n'est plus proposée).
+- **Tenues favorites** : tes tenues gardées, à remettre en un geste.
+- **Journal** : le calendrier de ce que tu as porté, le détail de chaque jour, et les pièces oubliées (pas portées depuis trois semaines). Les pièces portées ces deux dernières semaines reviennent moins vite dans les propositions.
 - **Ma semaine** : coche tes jours de travail. Chaque jour reçoit un haut différent, les bas et les sous-couches tournent pour que toute la collection passe dans la semaine. Chaque jour a son bouton « Changer ».
 - **Catalogue** : toutes les pièces, filtrables par catégorie, avec le lien vers la fiche produit.
 - **Accords** : toutes les combinaisons haut × bas, et un tableau des superpositions sous-couche × haut, notées « valeur sûre », « possible » ou « à éviter ».
@@ -24,7 +29,7 @@ Ouvre `index.html` dans un navigateur (double-clic sur le fichier, rien à insta
 - Ce qui dépasse doit se distinguer : même couleur que le pull, ou deux teintes foncées, et le col disparaît. Deux couleurs franches ou deux motifs superposés : à doser.
 - Par-dessus : jean sur jean du même bleu à éviter, de deux bleus différents seulement possible ; une veste de la même couleur que le haut se fond dans la tenue.
 
-Les jours cochés et la semaine composée sont gardés dans le navigateur. Les 16 premières pièces sont dans `garde-robe.js`.
+Sur la page publiée, la semaine, le journal, les pièces au lavage, les favoris et les goûts sont enregistrés dans la page : ils sont les mêmes sur ton téléphone et ton ordinateur, et seul le propriétaire peut les modifier. Ouverte en fichier local, la page les garde dans le navigateur. Les 16 premières pièces sont dans `garde-robe.js`.
 
 ## Inventaire
 
@@ -99,7 +104,9 @@ Claude peut recopier dans le dépôt les pièces ajoutées depuis la page.
 
 ## Publier la page
 
-La page publiée sur claude.ai est `index.html` sans son enveloppe de document, que le visualiseur ajoute lui-même : `outils/version-artefact.sh > garde-robe-blue-box.html`, publiée avec `garde-robe.js` et `images/*.jpg`, et les capacités `db` (écriture réservée au propriétaire), `assets` et `user`.
+La page publiée sur claude.ai est `index.html` sans son enveloppe de document, que le visualiseur ajoute lui-même : `outils/version-artefact.sh > garde-robe-blue-box.html`, publiée avec `app.js`, `garde-robe.js` et `images/*.jpg`, et les capacités `db` (écriture réservée au propriétaire), `assets` et `user`.
+
+Dans la base de la page : `achats` (pièces ajoutées), `etat/semaine` (semaine, couches, météo, tenue du jour), `journal/AAAA-MM-JJ`, `pieces/<id>` (lavage, prix, taille), `favoris`, `gouts/accords`.
 
 ## Notes
 
