@@ -6,7 +6,8 @@
 window.GARDE_ROBE = {
   depuis: "juin 2026",
 
-  // role : "bas", "haut", "pieds" (chaussures) et "dessus" (vestes, blousons) servent à composer les tenues.
+  // role : "bas", "haut", "pieds" (chaussures) et "dessus" (vestes, blousons, manteaux) servent à composer
+  // les tenues. T-shirts, chemises et polos sont des hauts qui peuvent aussi se porter sous un pull.
   // optionnelle : catégorie affichée seulement quand elle contient des pièces.
   categories: [
     { id: "pantalons", nom: "Pantalons", role: "bas" },
@@ -16,6 +17,7 @@ window.GARDE_ROBE = {
     { id: "chemises", nom: "Chemises", role: "haut" },
     { id: "vestes", nom: "Vestes", role: "dessus" },
     { id: "blousons", nom: "Blousons", role: "dessus" },
+    { id: "manteaux", nom: "Manteaux", role: "dessus", optionnelle: true },
     { id: "chaussures", nom: "Chaussures", role: "pieds" },
     { id: "sweats", nom: "Sweats", role: "haut", optionnelle: true },
     { id: "polos", nom: "Polos", role: "haut", optionnelle: true },
@@ -290,6 +292,7 @@ window.GARDE_ROBE = {
     "jaune": { nom: "Jaune / moutarde", hex: "#d4a72c", clarte: "clair", neutre: false, famille: "jaune" },
     "orange": { nom: "Orange", hex: "#d9702b", clarte: "moyen", neutre: false, famille: "orange" },
     "violet": { nom: "Violet", hex: "#6c4a8f", clarte: "moyen", neutre: false, famille: "violet" },
+    "motif": { nom: "Motif (carreaux, rayures…)", hex: "repeating-linear-gradient(45deg, #8a8a8d 0 2px, #e9e7e2 2px 4px)", clarte: "moyen", neutre: true, famille: "motif" },
   },
 
   // Accords choisis à la main, bas → haut : 2 = valeur sûre, 1 = possible, 0 = à éviter.
@@ -328,7 +331,7 @@ window.GARDE_ROBE = {
     },
     {
       categorie: "chemises",
-      pourquoi: "Une chemise col sorti sous tes pulls col rond donne une deuxième version de chacune de ces tenues.",
+      pourquoi: "En hiver, une chemise col sorti sous tes pulls col rond ou zippés donne une deuxième version de chacune de ces tenues.",
       idee: "Une chemise Oxford blanche ou bleu ciel : elle passe sous les pulls col rond bordeaux, noir, beige et rose.",
     },
     {

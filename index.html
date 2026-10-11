@@ -156,6 +156,29 @@ h2 { margin: 0; font-family: var(--f-display); font-stretch: 112%; font-weight: 
   .slot.large figcaption { align-content: center; }
 }
 
+/* Couches et raisons */
+.couches { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; padding: 0; border: 0; }
+.couches legend { padding: 0; margin-bottom: 8px; }
+.couches .aide { flex-basis: 100%; }
+.couches .aide:empty { display: none; }
+.slot { position: relative; }
+.slot .couche { position: absolute; top: 8px; left: 8px; z-index: 1; padding: 2px 8px; border-radius: 999px; background: var(--surface); color: var(--ink); font: 600 .7rem/1.4 var(--f-mono); box-shadow: 0 0 0 1px var(--line); }
+.slot.mienne { border-color: var(--indigo); box-shadow: 0 0 0 1px var(--indigo); }
+.raisons { display: grid; gap: 6px; margin: 12px 0 0; padding: 0; list-style: none; max-width: 80ch; }
+.raisons:empty { display: none; }
+.raisons li { display: flex; align-items: baseline; gap: 8px; color: var(--muted); font-size: .92rem; }
+.raisons li .badge { flex: none; }
+.raisons li b { color: var(--ink); font-weight: 600; }
+
+/* Je veux porter */
+.pieces { display: grid; grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); gap: 6px; margin-bottom: 20px; }
+.piece { padding: 0; overflow: hidden; border: 1.5px solid var(--line); border-radius: 8px; background: var(--surface-2); cursor: pointer; }
+.piece img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; }
+.piece[aria-pressed="true"] { border-color: var(--indigo); box-shadow: 0 0 0 2px var(--indigo); }
+.choix-tete { margin: 0 0 12px; color: var(--muted); }
+.choix-tete strong { color: var(--ink); font-weight: 600; }
+.sous-titre { margin: 28px 0 10px; font-family: var(--f-display); font-stretch: 112%; font-weight: 700; font-size: 1.15rem; }
+
 /* Semaine */
 .jours { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; padding: 0; border: 0; }
 .jours legend { padding: 0; margin-bottom: 8px; font-weight: 600; }
@@ -167,14 +190,15 @@ h2 { margin: 0; font-family: var(--f-display); font-stretch: 112%; font-weight: 
 .semaine li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
 .semaine li.aujourdhui { border-color: var(--indigo); box-shadow: inset 3px 0 0 var(--indigo); }
 .semaine li.vide { display: block; padding: 20px; background: transparent; border: 1.5px dashed var(--line); color: var(--muted); }
-.vignettes { display: flex; gap: 4px; }
-.vignettes img { display: block; width: 44px; height: 55px; object-fit: cover; border-radius: 6px; background: var(--surface-2); }
+.vignettes { display: flex; }
+.vignettes img { display: block; width: 40px; height: 50px; object-fit: cover; border-radius: 6px; background: var(--surface-2); border: 2px solid var(--surface); }
+.vignettes img + img { margin-left: -12px; }
 .ligne-corps { display: grid; gap: 2px; min-width: 0; }
 .ligne-corps .noms { font-weight: 600; line-height: 1.3; }
 .ligne-corps .noms span { color: var(--muted); font-weight: 400; }
 .bilan { margin: 12px 0 0; color: var(--muted); font-size: .92rem; }
 .vide { margin: 0; padding: 20px; border: 1.5px dashed var(--line); border-radius: var(--radius); color: var(--muted); }
-@media (max-width: 420px) { .vignettes img { width: 36px; height: 45px; } }
+@media (max-width: 420px) { .vignettes img { width: 34px; height: 43px; } .vignettes img + img { margin-left: -15px; } }
 
 /* Catalogue */
 .filtres { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
@@ -315,6 +339,7 @@ footer p { margin: 0; max-width: 65ch; }
   <nav class="sommaire" aria-label="Sommaire">
     <ul>
       <li><a href="#tenue">Tenue du jour</a></li>
+      <li><a href="#choisir">Je veux porter</a></li>
       <li><a href="#semaine">Ma semaine</a></li>
       <li><a href="#catalogue">Catalogue</a></li>
       <li><a href="#accords">Accords</a></li>
@@ -327,11 +352,36 @@ footer p { margin: 0; max-width: 65ch; }
       <h2 id="titre-tenue">Tenue du jour</h2>
       <p id="date-du-jour"></p>
     </div>
+    <fieldset class="couches" id="couches-tenue">
+      <legend class="eyebrow">Couches en haut</legend>
+      <label class="puce"><input type="radio" name="couches-tenue" id="couches-tenue-1" value="1">1 · un haut</label>
+      <label class="puce"><input type="radio" name="couches-tenue" id="couches-tenue-2" value="2">2 · sous-couche + pull</label>
+      <label class="puce"><input type="radio" name="couches-tenue" id="couches-tenue-3" value="3">3 · + veste ou blouson</label>
+      <p class="aide" id="couches-aide-tenue"></p>
+    </fieldset>
     <div class="tenue" id="tenue-slots"></div>
     <div class="verdict">
       <div class="verdict-texte" id="tenue-verdict"></div>
       <div class="actions" id="tenue-actions"></div>
     </div>
+    <ul class="raisons" id="tenue-raisons"></ul>
+  </section>
+
+  <section id="choisir" aria-labelledby="titre-choisir">
+    <div class="entete-section">
+      <h2 id="titre-choisir">Je veux porter…</h2>
+    </div>
+    <p class="intro">Choisis la pièce qui te fait envie ce matin : la page compose la tenue autour d'elle et explique pourquoi elle marche.</p>
+    <fieldset class="couches" id="couches-choix">
+      <legend class="eyebrow">Couches en haut</legend>
+      <label class="puce"><input type="radio" name="couches-choix" id="couches-choix-1" value="1">1 · un haut</label>
+      <label class="puce"><input type="radio" name="couches-choix" id="couches-choix-2" value="2">2 · sous-couche + pull</label>
+      <label class="puce"><input type="radio" name="couches-choix" id="couches-choix-3" value="3">3 · + veste ou blouson</label>
+      <p class="aide" id="couches-aide-choix"></p>
+    </fieldset>
+    <div class="filtres" id="choix-filtres" role="group" aria-label="Filtrer les pièces par catégorie"></div>
+    <div class="pieces" id="choix-pieces"></div>
+    <div id="choix-resultat"></div>
   </section>
 
   <section id="semaine" aria-labelledby="titre-semaine">
@@ -376,6 +426,10 @@ footer p { margin: 0; max-width: 65ch; }
       <span class="badge no">× À éviter</span>
     </div>
     <div class="table-scroll"><table class="accords" id="table-accords"></table></div>
+    <h3 class="sous-titre">Superpositions sous-couche × haut</h3>
+    <p class="intro">Ce qui se porte sous chaque pull, sweat ou chemise ouverte. Touche une case pour voir la tenue complète.</p>
+    <p class="vide" id="superpositions-vide">Ajoute des chemises, des polos ou des t-shirts : ce tableau montrera lesquels vont sous chacun de tes pulls.</p>
+    <div class="table-scroll" id="superpositions-table"><table class="accords" id="table-superpositions"></table></div>
   </section>
 
   <section id="completer" aria-labelledby="titre-completer">
@@ -418,7 +472,7 @@ footer p { margin: 0; max-width: 65ch; }
 
   const F = id => document.getElementById(id);
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-  const sansAccents = s => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+  const sansAccents = s => String(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
   const possede = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
   const singulier = c => CAT[c].nom.replace(/s$/, "");
   const pluriel = (n, mot) => `${n} ${mot}${n > 1 ? "s" : ""}`;
@@ -426,8 +480,12 @@ footer p { margin: 0; max-width: 65ch; }
   const role = a => CAT[a.categorie].role;
 
   // ---------- pièces : celles de garde-robe.js + celles ajoutées depuis la page ----------
+  // Superpositions : un t-shirt, une chemise ou un polo peut se glisser sous un pull ou un sweat ;
+  // un t-shirt peut aussi se porter sous une chemise ouverte.
+  const SOUS_CATS = ["t-shirts", "chemises", "polos"];
+  const PULL_CATS = ["pulls", "sweats"];
   let ajoutes = [];
-  let ARTICLES, PAR_ID, BAS, HAUTS, PIEDS, DESSUS;
+  let ARTICLES, PAR_ID, BAS, HAUTS, SOUS, PIEDS, DESSUS;
   function indexer() {
     ARTICLES = D.articles.concat(ajoutes)
       .map((a, i) => [a, i])
@@ -436,6 +494,7 @@ footer p { margin: 0; max-width: 65ch; }
     PAR_ID = Object.fromEntries(ARTICLES.map(a => [a.id, a]));
     const parRole = r => ARTICLES.filter(a => role(a) === r);
     BAS = parRole("bas"); HAUTS = parRole("haut"); PIEDS = parRole("pieds"); DESSUS = parRole("dessus");
+    SOUS = ARTICLES.filter(a => SOUS_CATS.includes(a.categorie));
   }
 
   function court(a) {
@@ -445,17 +504,22 @@ footer p { margin: 0; max-width: 65ch; }
       return (m || singulier(a.categorie)) + " " + c;
     }
     if (a.categorie === "pulls") return (ENCOLURES[a.encolure] || "Pull") + " " + c;
+    if (role(a) === "pieds") return (a.modele || "Chaussures") + " " + c;
     return singulier(a.categorie) + " " + c;
   }
+  const nomComplet = a => `${a.marque} ${a.modele || singulier(a.categorie)} ${a.couleur}`;
+  const majuscule = s => s.charAt(0).toUpperCase() + s.slice(1);
 
   // ---------- accords de couleurs ----------
   // Le tableau de garde-robe.js d'abord, puis des règles générales pour les couleurs qu'il ne couvre pas.
-  function evaluer(b, h) {
-    const table = D.accords[b.teinte];
-    if (table && possede(table, h.teinte)) {
-      return { score: table[h.teinte], note: D.notesAccord[b.teinte + "/" + h.teinte] || "" };
-    }
+  const RANG_CLARTE = { clair: 0, moyen: 1, fonce: 2 };
+  function accordGeneral(b, h) {
     const tb = T[b.teinte], th = T[h.teinte];
+    if (tb.famille === "motif" || th.famille === "motif") {
+      return tb.famille === th.famille
+        ? { score: 1, note: "Deux motifs ensemble : à doser." }
+        : { score: 2, note: "Un motif avec une pièce unie : ça reste lisible." };
+    }
     if (b.teinte === h.teinte) return { score: 1, note: "Même couleur en haut et en bas : un ton sur ton à assumer." };
     if (tb.clarte === "fonce" && th.clarte === "fonce") {
       return tb.famille === th.famille
@@ -468,9 +532,95 @@ footer p { margin: 0; max-width: 65ch; }
     if (!tb.neutre && !th.neutre) return { score: 1, note: "Deux couleurs franches ensemble : à doser." };
     return { score: 2, note: "" };
   }
+  // Pourquoi une paire haut + bas fonctionne, quand rien de plus précis n'est écrit.
+  function raisonPositive(b, h) {
+    const tb = T[b.teinte], th = T[h.teinte];
+    if (!th.neutre && tb.neutre) return "Une couleur franche en haut, une base neutre en bas.";
+    if (th.neutre && !tb.neutre) return "Le bas apporte la couleur, le haut reste neutre.";
+    if (RANG_CLARTE[th.clarte] > RANG_CLARTE[tb.clarte]) return "Haut plus foncé que le bas : un contraste net.";
+    if (RANG_CLARTE[th.clarte] < RANG_CLARTE[tb.clarte]) return "Haut plus clair que le bas : un contraste net.";
+    return "Deux neutres de même intensité : sobre et facile.";
+  }
+  function evaluer(b, h) {
+    const table = D.accords[b.teinte];
+    const r = table && possede(table, h.teinte)
+      ? { score: table[h.teinte], note: D.notesAccord[b.teinte + "/" + h.teinte] || "" }
+      : accordGeneral(b, h);
+    if (r.score === 2 && !r.note) r.note = raisonPositive(b, h);
+    return r;
+  }
   const accord = (b, h) => evaluer(b, h).score;
 
-  // ---------- état local (jours cochés et semaine composée) ----------
+  // ---------- superpositions ----------
+  const aUnCol = a => a.categorie === "chemises" || a.categorie === "polos";
+  const peutEtreDessous = a => SOUS_CATS.includes(a.categorie);
+  const accepteDessous = h => PULL_CATS.includes(h.categorie) || h.categorie === "chemises";
+  function accepte(h, s) {
+    if (!h || !s || s.id === h.id) return false;
+    if (PULL_CATS.includes(h.categorie)) return peutEtreDessous(s);
+    if (h.categorie === "chemises") return s.categorie === "t-shirts";
+    return false;
+  }
+  const pire = (x, y) => (y.score < x.score ? y : x);
+  // Une sous-couche sous un haut : la forme des cols, puis ce qui dépasse (col, poignets, ouverture).
+  function superposer(s, h) {
+    if (!accepte(h, s)) return { score: 0, note: "Cette pièce ne se porte pas sous ce haut." };
+    const ts = T[s.teinte], th = T[h.teinte];
+    let r;
+    if (h.categorie === "chemises") r = { score: 2, note: "Chemise portée ouverte sur le t-shirt : décontracté." };
+    else if (aUnCol(s)) {
+      if (h.encolure === "polo") return { score: 0, note: "Deux cols l'un sur l'autre : à éviter." };
+      r = h.encolure === "capuche" ? { score: 1, note: "Un col sous une capuche : possible, mais chargé." }
+        : h.encolure === "zip" ? { score: 2, note: "Le col se glisse dans l'ouverture du zip." }
+        : h.encolure === "v" ? { score: 2, note: "Le col V laisse voir le col et le haut de la chemise." }
+        : { score: 2, note: "Col sorti sur le col rond : le classique." };
+    } else {
+      r = h.encolure === "zip" && !ts.neutre
+        ? { score: 1, note: "Un t-shirt coloré se voit dans l'ouverture du zip." }
+        : { score: 2, note: "Le t-shirt reste discret sous le pull." };
+    }
+    if (aUnCol(s) || h.categorie === "chemises") {
+      if (ts.famille === "motif" && th.famille === "motif") return pire(r, { score: 1, note: "Deux motifs superposés : à doser." });
+      if (s.teinte === h.teinte && ts.famille !== "motif") return pire(r, { score: 1, note: "Même couleur dessus et dessous : le col disparaît." });
+      if (ts.clarte === "fonce" && th.clarte === "fonce") return pire(r, { score: 1, note: "Deux teintes foncées : le col se voit à peine." });
+      if (!ts.neutre && !th.neutre) return pire(r, { score: 1, note: "Deux couleurs franches superposées : à doser." });
+    }
+    return r;
+  }
+  const estDenim = a => a.teinte.startsWith("denim-") || /\b(jean|denim|trucker)\b/i.test(a.modele);
+  // Une veste, un blouson ou un manteau par-dessus : contre le haut, et contre le bas pour le jean.
+  function surcouche(d, h, b) {
+    const td = T[d.teinte], th = T[h.teinte];
+    if (estDenim(d) && estDenim(b)) {
+      return d.teinte === b.teinte
+        ? { score: 0, note: "Jean sur jean du même bleu : à éviter." }
+        : { score: 1, note: "Jean sur jean : ça passe seulement avec deux bleus bien différents." };
+    }
+    if (d.teinte === h.teinte && td.famille !== "motif") return { score: 1, note: "Il a la même couleur que le haut et se fond dans la tenue." };
+    if (!td.neutre && !th.neutre) return { score: 1, note: "Lui et le haut sont colorés : à doser." };
+    if (td.clarte !== th.clarte) return { score: 2, note: "Il encadre le haut par contraste." };
+    return { score: 2, note: "Une couche neutre qui ne casse pas la tenue." };
+  }
+
+  // Évaluation d'une tenue complète : le niveau est celui de son accord le plus faible.
+  function noterTenue(t) {
+    const b = PAR_ID[t.bas], h = PAR_ID[t.haut], s = PAR_ID[t.dessous], d = PAR_ID[t.dessus];
+    const raisons = [];
+    const e = evaluer(b, h);
+    raisons.push({ score: e.score, titre: `${majuscule(court(h))} + ${court(b)}.`, note: e.note });
+    if (s) { const x = superposer(s, h); raisons.push({ score: x.score, titre: `${majuscule(court(s))} en sous-couche.`, note: x.note }); }
+    if (d) { const x = surcouche(d, h, b); raisons.push({ score: x.score, titre: `${majuscule(court(d))} par-dessus.`, note: x.note }); }
+    return { niveau: Math.min(...raisons.map(r => r.score)), raisons };
+  }
+
+  // ---------- état local (jours cochés, couches, semaine composée) ----------
+  const SLOTS = ["bas", "haut", "dessous", "dessus", "pieds", "accessoire"];
+  // Couches en haut du corps : 1 = un haut, 2 = sous-couche + pull, 3 = + veste, blouson ou manteau.
+  // Par défaut selon le mois : 3 d'octobre à mars, 2 en avril et septembre, 1 de mai à août.
+  function couchesDeSaison() {
+    const m = new Date().getMonth();
+    return m >= 9 || m <= 2 ? 3 : m === 3 || m === 8 ? 2 : 1;
+  }
   function lire() {
     try {
       const e = JSON.parse(localStorage.getItem(CLE));
@@ -480,92 +630,177 @@ footer p { margin: 0; max-width: 65ch; }
       for (const j of jours) {
         const t = e.plan && e.plan[j];
         if (!t || typeof t.bas !== "string" || typeof t.haut !== "string") continue;
-        plan[j] = { bas: t.bas, haut: t.haut };
-        if (typeof t.pieds === "string") plan[j].pieds = t.pieds;
-        if (typeof t.dessus === "string") plan[j].dessus = t.dessus;
+        plan[j] = {};
+        SLOTS.forEach(k => { if (typeof t[k] === "string") plan[j][k] = t[k]; });
       }
-      return { jours, plan };
+      return { jours, plan, couches: [1, 2, 3].includes(e.couches) ? e.couches : couchesDeSaison() };
     } catch (_) { return null; }
   }
   function ecrire() {
     try { localStorage.setItem(CLE, JSON.stringify(etat)); } catch (_) { /* stockage indisponible */ }
   }
 
-  let etat = lire() || { jours: ["lun", "mar", "mer", "jeu", "ven", "sam"], plan: {} };
-  let apercu = null;       // tenue choisie dans le tableau des accords
+  let etat = lire() || { jours: ["lun", "mar", "mer", "jeu", "ven", "sam"], plan: {}, couches: couchesDeSaison() };
+  let apercu = null;       // tenue choisie dans un tableau d'accords
   let ideeDuJour = null;   // tenue proposée quand aujourd'hui n'est pas travaillé
+  let portee = null;       // { t, nom } : tenue mise pour aujourd'hui depuis « Je veux porter »
   let filtre = "tout";
+  let choix = { id: null, rang: 0, filtre: "tout" };  // « Je veux porter… »
   // Pièces ajoutées depuis la page : "chargement" tant que la base n'a pas répondu de façon
   // définitive, "ok" ensuite, "indisponible" si elle ne répond pas. Tant que ce n'est pas "ok",
   // une tenue de la semaine qui cite une pièce inconnue est gardée telle quelle, jamais effacée.
   let etatAjouts = window.claude && typeof window.claude.use === "function" ? "chargement" : "ok";
 
-  const valide = t => !!(t && PAR_ID[t.bas] && PAR_ID[t.haut]);
+  const aRole = (id, r) => !!PAR_ID[id] && role(PAR_ID[id]) === r;
+  const valide = t => !!(t && aRole(t.bas, "bas") && aRole(t.haut, "haut"));
 
   // ---------- composition des tenues ----------
-  function noter(b, h, ctx) {
-    const s = accord(b, h);
-    if (s === 0 || ctx.hautsPris.has(h.id)) return -Infinity;
-    if (ctx.actuel && ctx.actuel.bas === b.id && ctx.actuel.haut === h.id) return -Infinity;
-    let n = s * 10 + Math.random() * 4;
-    n -= (ctx.usageBas.get(b.id) || 0) * 12;
-    if (HORS_SAISON.includes(h.categorie)) n -= 6;
-    if (HORS_SAISON.includes(b.categorie)) n -= 6;
-    for (const v of ctx.voisins) {
-      const hv = PAR_ID[v.haut];
-      if (v.bas === b.id) n -= 15;
-      if (hv && hv.categorie === h.categorie && hv.encolure === h.encolure) n -= 3;
-      if (hv && hv.teinte === h.teinte) n -= 4;
-    }
-    if (ctx.actuel) {
-      if (ctx.actuel.haut === h.id) n -= 8;
-      if (ctx.actuel.bas === b.id) n -= 4;
-    }
-    return n;
-  }
-  function choisirParmi(liste, usage, voisinsIds, teinteAEviter) {
+  // Une tenue : { bas, haut, dessous?, dessus?, pieds?, accessoire? } (ids des pièces).
+  function choisirParmi(liste, usage, voisinsIds, alea) {
     let choix, max = -Infinity;
     for (const a of liste) {
-      let n = Math.random() * 2 - (usage.get(a.id) || 0) * 5;
+      let n = (alea ? Math.random() * 2 : 0) - (usage.get(a.id) || 0) * 5;
       if (voisinsIds.includes(a.id)) n -= 3;
-      if (teinteAEviter && a.teinte === teinteAEviter) n -= 4;
       if (n > max) { max = n; choix = a.id; }
     }
     return choix;
   }
-  // Chaussures et par-dessus : complète la tenue s'il en manque ou si la pièce a disparu.
-  function habiller(t, ctx, forcer) {
-    let change = false;
-    if (forcer || (PIEDS.length ? !PAR_ID[t.pieds] : t.pieds)) {
-      const p = choisirParmi(PIEDS, ctx.usagePieds, ctx.voisins.map(v => v.pieds), null);
-      if (p) t.pieds = p; else delete t.pieds;
-      change = true;
+  // Sans hasard : des chaussures neutres et d'une autre couleur que le bas.
+  function chaussuresPour(b) {
+    let choix, max = -Infinity;
+    for (const p of PIEDS) {
+      const n = (T[p.teinte].neutre ? 2 : 0) + (p.teinte !== b.teinte ? 1 : 0);
+      if (n > max) { max = n; choix = p.id; }
     }
-    if (forcer || (DESSUS.length ? !PAR_ID[t.dessus] : t.dessus)) {
-      const d = choisirParmi(DESSUS, ctx.usageDessus, ctx.voisins.map(v => v.dessus), PAR_ID[t.haut].teinte);
-      if (d) t.dessus = d; else delete t.dessus;
+    return choix;
+  }
+  // Nombre de couches visé, plafonné à ce que la garde-robe permet.
+  const cible = () => 1 + (etat.couches >= 2 && SOUS.length ? 1 : 0) + (etat.couches >= 3 && DESSUS.length ? 1 : 0);
+
+  // Toutes les tenues qui respectent les contraintes (pièces imposées), de la meilleure à la moins bonne.
+  function generer(contraintes, ctx, alea) {
+    const c = contraintes || {};
+    const listeBas = c.bas ? [PAR_ID[c.bas]] : BAS;
+    const listeHauts = c.haut ? [PAR_ID[c.haut]] : HAUTS;
+    const sousImpose = c.dessous ? PAR_ID[c.dessous] : null;
+    const dessusImpose = c.dessus ? PAR_ID[c.dessus] : null;
+    const objectif = cible();
+    const voisinsSous = ctx.voisins.map(v => v.dessous);
+    const res = [];
+    for (const h of listeHauts) {
+      if (!h || ctx.hautsPris.has(h.id)) continue;
+      let sous = [null];
+      if (sousImpose) { if (!accepte(h, sousImpose)) continue; sous = [sousImpose]; }
+      else if (etat.couches >= 2 && accepteDessous(h)) sous = sous.concat(SOUS.filter(s => accepte(h, s)));
+      const dessus = dessusImpose ? [dessusImpose] : etat.couches >= 3 ? [null].concat(DESSUS) : [null];
+      for (const b of listeBas) {
+        if (!b) continue;
+        if (ctx.actuel && ctx.actuel.bas === b.id && ctx.actuel.haut === h.id) continue;
+        const s1 = accord(b, h);
+        if (!s1) continue;
+        let base = s1 * 10 - (ctx.usageBas.get(b.id) || 0) * 12;
+        if (HORS_SAISON.includes(h.categorie)) base -= 6;
+        if (HORS_SAISON.includes(b.categorie)) base -= 6;
+        for (const v of ctx.voisins) {
+          const hv = PAR_ID[v.haut];
+          if (v.bas === b.id) base -= 15;
+          if (hv && hv.categorie === h.categorie && hv.encolure === h.encolure) base -= 3;
+          if (hv && hv.teinte === h.teinte) base -= 4;
+        }
+        if (ctx.actuel) {
+          if (ctx.actuel.haut === h.id) base -= 8;
+          if (ctx.actuel.bas === b.id) base -= 4;
+        }
+        for (const s of sous) {
+          let ns = base;
+          if (s) {
+            const s2 = superposer(s, h).score;
+            if (!s2) continue;
+            ns += s2 * 6 - (ctx.usageDessous.get(s.id) || 0) * 6 - (voisinsSous.includes(s.id) ? 4 : 0);
+          }
+          for (const d of dessus) {
+            let n = ns;
+            if (d) {
+              const s3 = surcouche(d, h, b).score;
+              if (!s3) continue;
+              n += s3 * 4 - (ctx.usageDessus.get(d.id) || 0) * 2;
+            }
+            const couches = 1 + (s ? 1 : 0) + (d ? 1 : 0);
+            if (couches < objectif) n -= (objectif - couches) * 9;
+            if (alea) n += Math.random() * 4;
+            const t = { bas: b.id, haut: h.id };
+            if (s) t.dessous = s.id;
+            if (d) t.dessus = d.id;
+            res.push({ n, t });
+          }
+        }
+      }
+    }
+    return res.sort((x, y) => y.n - x.n);
+  }
+
+  function composer(ctx) {
+    const r = generer({}, ctx, true)[0];
+    if (!r) return null;
+    const p = choisirParmi(PIEDS, ctx.usagePieds, ctx.voisins.map(v => v.pieds), true);
+    if (p) r.t.pieds = p;
+    return r.t;
+  }
+  // Si tous les hauts sont déjà pris dans la semaine, on accepte d'en reporter un.
+  const composerAvecRepli = ctx => composer(ctx) || composer(Object.assign({}, ctx, { hautsPris: new Set() }));
+
+  // La meilleure pièce d'une liste selon un score d'accord, en faisant tourner les pièces.
+  function meilleurePiece(liste, score, usage, poids, voisinsIds) {
+    let choix = null, max = -Infinity;
+    for (const a of liste) {
+      const s = score(a);
+      if (!s) continue;
+      let n = s * 10 - (usage.get(a.id) || 0) * poids + Math.random() * 3;
+      if (voisinsIds.includes(a.id)) n -= 4;
+      if (n > max) { max = n; choix = a.id; }
+    }
+    return choix;
+  }
+  // Complète une tenue sans toucher à son haut ni à son bas : pièces disparues retirées, puis
+  // sous-couche et par-dessus selon les couches choisies, et chaussures.
+  function completer(t, ctx) {
+    let change = false;
+    const h = PAR_ID[t.haut], b = PAR_ID[t.bas];
+    const retirer = k => { delete t[k]; change = true; };
+    if (t.dessous && !accepte(h, PAR_ID[t.dessous])) retirer("dessous");
+    if (t.dessus && !aRole(t.dessus, "dessus")) retirer("dessus");
+    if (t.pieds && !aRole(t.pieds, "pieds")) retirer("pieds");
+    if (t.accessoire && !PAR_ID[t.accessoire]) retirer("accessoire");
+    if (!t.dessous && etat.couches >= 2 && accepteDessous(h)) {
+      const s = meilleurePiece(SOUS.filter(x => accepte(h, x)), x => superposer(x, h).score, ctx.usageDessous, 6, ctx.voisins.map(v => v.dessous));
+      if (s) { t.dessous = s; change = true; }
+    }
+    if (!t.dessus && etat.couches >= 3) {
+      const d = meilleurePiece(DESSUS, x => surcouche(x, h, b).score, ctx.usageDessus, 2, ctx.voisins.map(v => v.dessus));
+      if (d) { t.dessus = d; change = true; }
+    }
+    if (!t.pieds && PIEDS.length) {
+      t.pieds = choisirParmi(PIEDS, ctx.usagePieds, ctx.voisins.map(v => v.pieds), true);
       change = true;
     }
     return change;
   }
-  function composer(ctx) {
-    let choix = null, max = -Infinity;
-    for (const b of BAS) for (const h of HAUTS) {
-      const n = noter(b, h, ctx);
-      if (n > max) { max = n; choix = { bas: b.id, haut: h.id }; }
-    }
-    if (choix) habiller(choix, ctx, true);
-    return choix;
+  // Après un changement du nombre de couches : retire les couches en trop, ajoute celles qui manquent.
+  function ajusterCouches(t, ctx) {
+    if (etat.couches < 2) delete t.dessous;
+    if (etat.couches < 3) delete t.dessus;
+    completer(t, ctx);
   }
-  // Si tous les hauts sont déjà pris dans la semaine, on accepte d'en reporter un.
-  const composerAvecRepli = ctx => composer(ctx) || composer(Object.assign({}, ctx, { hautsPris: new Set() }));
 
   function compter(entrees, cle) {
     const m = new Map();
     entrees.forEach(t => { if (t[cle]) m.set(t[cle], (m.get(t[cle]) || 0) + 1); });
     return m;
   }
-  const ctxVide = actuel => ({ hautsPris: new Set(), usageBas: new Map(), usagePieds: new Map(), usageDessus: new Map(), voisins: [], actuel: actuel || null });
+  const ctxVide = actuel => ({
+    hautsPris: new Set(), usageBas: new Map(), usageDessous: new Map(), usageDessus: new Map(), usagePieds: new Map(),
+    voisins: [], actuel: actuel || null,
+  });
   function contexteJour(j, actuel) {
     const ordre = JOURS.map(x => x[0]).filter(x => x === j || valide(etat.plan[x]));
     const i = ordre.indexOf(j);
@@ -573,8 +808,9 @@ footer p { margin: 0; max-width: 65ch; }
     return {
       hautsPris: new Set(autres.map(t => t.haut)),
       usageBas: compter(autres, "bas"),
-      usagePieds: compter(autres, "pieds"),
+      usageDessous: compter(autres, "dessous"),
       usageDessus: compter(autres, "dessus"),
+      usagePieds: compter(autres, "pieds"),
       voisins: [etat.plan[ordre[i - 1]], etat.plan[ordre[i + 1]]].filter(Boolean),
       actuel: actuel || null,
     };
@@ -602,14 +838,61 @@ footer p { margin: 0; max-width: 65ch; }
       if (!t) { composerJour(j, null); change = true; continue; }
       if (!sur) continue; // ses pièces sont peut-être seulement pas encore chargées
       if (!valide(t)) { delete etat.plan[j]; composerJour(j, null); change = true; continue; }
-      if (habiller(t, contexteJour(j, null), false)) change = true;
+      if (completer(t, contexteJour(j, null))) change = true;
     }
     if (change) ecrire();
     if (sur) {
       if (apercu && !valide(apercu)) apercu = null;
-      if (apercu) habiller(apercu, ctxVide(), false);
-      if (ideeDuJour && valide(ideeDuJour)) habiller(ideeDuJour, ctxVide(), false);
+      if (apercu) completer(apercu, ctxVide());
+      if (ideeDuJour && valide(ideeDuJour)) completer(ideeDuJour, ctxVide());
+      if (choix.id && !PAR_ID[choix.id]) choix = { id: null, rang: 0, filtre: choix.filtre };
     }
+  }
+  function changerCouches(n) {
+    if (![1, 2, 3].includes(n) || n === etat.couches) return;
+    etat.couches = n;
+    JOURS.forEach(([j]) => { if (valide(etat.plan[j])) ajusterCouches(etat.plan[j], contexteJour(j, null)); });
+    if (valide(ideeDuJour)) ajusterCouches(ideeDuJour, ctxVide());
+    if (valide(apercu)) ajusterCouches(apercu, ctxVide());
+    choix.rang = 0;
+    ecrire();
+  }
+
+  // « Je veux porter… » : les meilleures tenues autour d'une pièce, sans hasard, toutes différentes.
+  function suggestionsAutour(a) {
+    const r = role(a);
+    const essais = r === "bas" ? [{ bas: a.id }]
+      : r === "haut" ? [{ haut: a.id }].concat(etat.couches >= 2 && peutEtreDessous(a) ? [{ dessous: a.id }] : [])
+      : r === "dessus" ? [{ dessus: a.id }]
+      : [{}]; // chaussures et accessoires : les meilleures tenues, avec la pièce en plus
+    const toutes = essais.flatMap(c => generer(c, ctxVide(), false)).sort((x, y) => y.n - x.n);
+    // Deux suggestions doivent différer par la pièce qui compte le plus à côté de celle choisie.
+    const cle = t => r === "bas" ? t.haut
+      : r === "haut" ? (t.haut === a.id ? "bas:" + t.bas : "haut:" + t.haut)
+      : r === "dessus" ? t.haut
+      : t.haut + "|" + t.bas;
+    const vues = new Set(), liste = [];
+    for (const x of toutes) {
+      const k = cle(x.t);
+      if (vues.has(k)) continue;
+      vues.add(k);
+      const t = Object.assign({}, x.t);
+      if (r === "pieds") t.pieds = a.id;
+      else if (PIEDS.length) t.pieds = chaussuresPour(PAR_ID[t.bas]);
+      if (r === "aucun") t.accessoire = a.id;
+      liste.push(t);
+      if (liste.length === 5) break;
+    }
+    return liste;
+  }
+  // La meilleure tenue qui contient des pièces imposées (cases des tableaux d'accords).
+  function meilleureAvec(contraintes) {
+    const r = generer(contraintes, ctxVide(), false)[0];
+    const t = r ? Object.assign({}, r.t) : Object.assign({}, contraintes);
+    if (!valide(t)) return null;
+    if (!r) completer(t, ctxVide());
+    else if (PIEDS.length) t.pieds = chaussuresPour(PAR_ID[t.bas]);
+    return t;
   }
 
   // ---------- rendu ----------
@@ -617,11 +900,13 @@ footer p { margin: 0; max-width: 65ch; }
     const marques = {};
     ARTICLES.forEach(a => { marques[a.marque] = (marques[a.marque] || 0) + 1; });
     const parMarque = Object.entries(marques).sort((x, y) => y[1] - x[1]).map(([m, n]) => `${esc(m)} ${n}`).join(" · ");
-    let possibles = 0, sures = 0;
+    let possibles = 0, sures = 0, superpositions = 0;
     BAS.forEach(b => HAUTS.forEach(h => { const s = accord(b, h); if (s > 0) possibles++; if (s === 2) sures++; }));
+    HAUTS.forEach(h => SOUS.forEach(s => { if (accepte(h, s) && superposer(s, h).score > 0) superpositions++; }));
     F("sur-titre").textContent = `Achats magasin depuis ${D.depuis}`;
     F("resume").innerHTML =
-      `<strong>${pluriel(ARTICLES.length, "pièce")}</strong> (${parMarque}). De quoi composer <strong>${pluriel(possibles, "tenue")}</strong> haut + bas, dont ${sures} valeur${sures > 1 ? "s" : ""} sûre${sures > 1 ? "s" : ""}. ` +
+      `<strong>${pluriel(ARTICLES.length, "pièce")}</strong> (${parMarque}). De quoi composer <strong>${pluriel(possibles, "tenue")}</strong> haut + bas, dont ${sures} valeur${sures > 1 ? "s" : ""} sûre${sures > 1 ? "s" : ""}` +
+      (superpositions ? `, et ${pluriel(superpositions, "superposition")} sous-couche + haut. ` : ". ") +
       (PIEDS.length
         ? `Avec ${PIEDS.length > 1 ? "tes chaussures" : "ta paire de chaussures"}, chaque tenue peut être 100&nbsp;% magasin.`
         : `Il manque encore les chaussures pour une tenue 100&nbsp;% magasin.`);
@@ -633,62 +918,120 @@ footer p { margin: 0; max-width: 65ch; }
     F("date-du-jour").textContent = new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
   }
 
-  function slot(a, large) {
-    return `<figure class="slot${large ? " large" : ""}">
-      <img src="${esc(a.image)}" alt="${esc(a.marque + " " + (a.modele || singulier(a.categorie)) + ", " + a.couleur)}" width="480" height="600">
+  function slot(a, etiquette, opts) {
+    const o = opts || {};
+    return `<figure class="slot${o.large ? " large" : ""}${o.mienne ? " mienne" : ""}">
+      <span class="couche">${esc(etiquette)}</span>
+      <img src="${esc(a.image)}" alt="${esc(nomComplet(a))}" width="480" height="600">
       <figcaption>
         <span class="eyebrow">${esc(a.marque)}</span>
         <strong>${esc(a.modele || singulier(a.categorie))}</strong>
         <span class="couleur">${pastille(a)}${esc(a.couleur)}</span>
+        ${o.mienne ? `<span class="tag-ajout">Ta pièce</span>` : ""}
       </figcaption>
     </figure>`;
   }
+  // Les pièces d'une tenue dans l'ordre où on les enfile : couches de la peau vers l'extérieur,
+  // puis le bas, les chaussures et l'accessoire.
+  function piecesTenue(t) {
+    const couches = [["dessous", "Sous-couche"], ["haut", null], ["dessus", "Par-dessus"]].filter(([k]) => PAR_ID[t[k]]);
+    const pieces = couches.map(([k, nom], i) => {
+      const a = PAR_ID[t[k]];
+      const libelle = nom || singulier(a.categorie);
+      return { a, etiquette: couches.length > 1 ? `${i + 1} · ${libelle}` : libelle };
+    });
+    pieces.push({ a: PAR_ID[t.bas], etiquette: "Bas" });
+    if (PAR_ID[t.pieds]) pieces.push({ a: PAR_ID[t.pieds], etiquette: "Chaussures" });
+    if (PAR_ID[t.accessoire]) pieces.push({ a: PAR_ID[t.accessoire], etiquette: "Accessoire" });
+    return pieces;
+  }
+  const CHAUSSURES_A_TROUVER = `<div class="slot pieds">
+      <span class="eyebrow">Chaussures</span>
+      <strong>Pas encore de paire du magasin</strong>
+      <p>C'est la prochaine pièce à trouver. <a href="#completer">Voir l'idée</a></p>
+    </div>`;
+  // Sur téléphone, deux pièces par ligne : une pièce seule sur sa ligne prend toute la largeur.
+  function grilleTenue(t, mienne) {
+    const pieces = piecesTenue(t);
+    const k = pieces.length;
+    let html = pieces.map((p, i) => slot(p.a, p.etiquette, { large: k % 2 === 1 && i === k - 1, mienne: p.a.id === mienne })).join("");
+    if (!PAR_ID[t.pieds]) html += CHAUSSURES_A_TROUVER;
+    return { html, n: k + (PAR_ID[t.pieds] ? 0 : 1) };
+  }
+  function listeRaisons(ev) {
+    return ev.raisons.map(r => {
+      const niv = NIVEAUX[r.score];
+      return `<li><span class="badge ${niv.cls}" title="${niv.nom}">${niv.sym}</span><span><b>${esc(r.titre)}</b> ${esc(r.note)}</span></li>`;
+    }).join("");
+  }
+  function badgesTenue(t, ev) {
+    const niv = NIVEAUX[ev.niveau];
+    return `<span class="badge ${niv.cls}">${niv.sym} ${niv.nom}</span>` +
+      (PAR_ID[t.pieds] ? `<span class="badge complet">100&nbsp;% magasin</span>` : "");
+  }
+  function aideCouches() {
+    if (etat.couches >= 2 && !SOUS.length) return "Ajoute des chemises ou des t-shirts pour avoir une sous-couche.";
+    if (etat.couches >= 3 && !DESSUS.length) return "Ajoute une veste, un blouson ou un manteau pour la 3e couche.";
+    return "";
+  }
+  function rendreCouches(suffixe) {
+    [1, 2, 3].forEach(n => { F(`couches-${suffixe}-${n}`).checked = etat.couches === n; });
+    F(`couches-aide-${suffixe}`).textContent = aideCouches();
+  }
 
   function tenueAffichee() {
-    if (apercu && valide(apercu)) return { t: apercu, contexte: "Choisie dans le tableau des accords." };
+    if (apercu && valide(apercu)) return { t: apercu, contexte: "Choisie dans un tableau d'accords." };
     apercu = null;
     const prevue = etat.plan[AUJ[0]];
     let contexte = `${AUJ[1]} n'est pas coché dans ta semaine, voici quand même une idée.`;
     if (etat.jours.includes(AUJ[0]) && prevue) {
-      if (valide(prevue)) return { t: prevue, contexte: `Prévue dans ta semaine pour ${AUJ[1].toLowerCase()}.` };
+      if (valide(prevue)) {
+        return { t: prevue, contexte: portee && portee.t === prevue ? `Composée autour de : ${portee.nom}.` : `Prévue dans ta semaine pour ${AUJ[1].toLowerCase()}.` };
+      }
       if (etatAjouts === "chargement") return null;
       contexte = "Ta tenue prévue aujourd'hui utilise une pièce ajoutée qui n'a pas pu être chargée. Voici une autre idée.";
     }
     if (!valide(ideeDuJour)) ideeDuJour = composerAvecRepli(ctxVide());
+    if (ideeDuJour && portee && portee.t === ideeDuJour) contexte = `Composée autour de : ${portee.nom}.`;
     return ideeDuJour ? { t: ideeDuJour, contexte } : null;
   }
 
   function rendreTenue() {
+    rendreCouches("tenue");
     const r = tenueAffichee();
     if (!r) {
       F("tenue-slots").style.setProperty("--n", 1);
       F("tenue-slots").innerHTML = `<p class="vide">Chargement des pièces ajoutées…</p>`;
       F("tenue-verdict").innerHTML = "";
       F("tenue-actions").innerHTML = "";
+      F("tenue-raisons").innerHTML = "";
       return;
     }
     const { t, contexte } = r;
-    const b = PAR_ID[t.bas], h = PAR_ID[t.haut], p = PAR_ID[t.pieds], d = PAR_ID[t.dessus];
-    const ev = evaluer(b, h), niv = NIVEAUX[ev.score];
-    const n = 3 + (d ? 1 : 0);
-    let html = slot(h) + slot(b);
-    html += p
-      ? slot(p, n === 3)
-      : `<div class="slot pieds">
-          <span class="eyebrow">Chaussures</span>
-          <strong>Pas encore de paire du magasin</strong>
-          <p>C'est la prochaine pièce à trouver. <a href="#completer">Voir l'idée</a></p>
-        </div>`;
-    if (d) html += slot(d, !p);
-    F("tenue-slots").style.setProperty("--n", n);
-    F("tenue-slots").innerHTML = html;
-    F("tenue-verdict").innerHTML =
-      `<span class="badge ${niv.cls}">${niv.sym} ${niv.nom}</span>` +
-      (p ? `<span class="badge complet">100&nbsp;% magasin</span>` : "") +
-      `<p>${esc(ev.note || contexte)}</p>`;
+    const g = grilleTenue(t, null), ev = noterTenue(t);
+    F("tenue-slots").style.setProperty("--n", g.n);
+    F("tenue-slots").innerHTML = g.html;
+    F("tenue-verdict").innerHTML = badgesTenue(t, ev) + `<p>${esc(contexte)}</p>`;
+    F("tenue-raisons").innerHTML = listeRaisons(ev);
     F("tenue-actions").innerHTML = apercu
       ? `<button class="btn" type="button" id="retour-tenue" data-action="retour">Revenir à la tenue du jour</button>`
       : `<button class="btn primaire" type="button" id="autre-tenue" data-action="autre">Autre tenue</button>`;
+  }
+
+  // Une ligne compacte : vignettes superposées, noms, niveau, et un bouton.
+  function ligneTenue(t, eyebrow, bouton, classe) {
+    const b = PAR_ID[t.bas], h = PAR_ID[t.haut], s = PAR_ID[t.dessous], d = PAR_ID[t.dessus];
+    const niv = NIVEAUX[noterTenue(t).niveau];
+    const vignettes = piecesTenue(t).map(p => `<img src="${esc(p.a.image)}" alt="" width="40" height="50" loading="lazy">`).join("");
+    return `<li class="${classe || ""}">
+      <div class="vignettes">${vignettes}</div>
+      <div class="ligne-corps">
+        ${eyebrow}
+        <span class="noms">${esc(h.marque)} ${esc(court(h).toLowerCase())}${s ? ` <span>sur</span> ${esc(court(s).toLowerCase())}` : ""} <span>+</span> ${esc(b.marque)} ${esc(court(b))}${d ? ` <span>·</span> ${esc(court(d).toLowerCase())}` : ""}</span>
+        <span><span class="badge ${niv.cls}">${niv.sym} ${niv.nom}</span></span>
+      </div>
+      ${bouton}
+    </li>`;
   }
 
   function rendreSemaine() {
@@ -706,35 +1049,65 @@ footer p { margin: 0; max-width: 65ch; }
       const t = etat.plan[j];
       const auj = j === AUJ[0];
       const eyebrow = `<span class="eyebrow">${esc(nomJour)}${auj ? " · aujourd'hui" : ""}</span>`;
+      const bouton = `<button class="btn" type="button" id="changer-${j}" data-action="changer" data-jour="${j}" aria-label="Changer la tenue de ${esc(nomJour.toLowerCase())}">Changer</button>`;
       if (!valide(t)) {
         const message = etatAjouts === "chargement"
           ? "Chargement des pièces ajoutées…"
           : "Cette tenue utilise une pièce ajoutée qui n'a pas pu être chargée.";
-        const bouton = etatAjouts === "chargement" ? "<span></span>"
-          : `<button class="btn" type="button" id="changer-${j}" data-action="changer" data-jour="${j}" aria-label="Changer la tenue de ${esc(nomJour.toLowerCase())}">Changer</button>`;
-        return `<li class="${auj ? "aujourdhui" : ""}"><div class="vignettes"></div><div class="ligne-corps">${eyebrow}<span class="noms"><span>${message}</span></span></div>${bouton}</li>`;
+        return `<li class="${auj ? "aujourdhui" : ""}"><div class="vignettes"></div><div class="ligne-corps">${eyebrow}<span class="noms"><span>${message}</span></span></div>${etatAjouts === "chargement" ? "<span></span>" : bouton}</li>`;
       }
-      const b = PAR_ID[t.bas], h = PAR_ID[t.haut], p = PAR_ID[t.pieds];
-      const niv = NIVEAUX[accord(b, h)];
-      return `<li class="${auj ? "aujourdhui" : ""}">
-        <div class="vignettes">
-          <img src="${esc(h.image)}" alt="" width="44" height="55" loading="lazy">
-          <img src="${esc(b.image)}" alt="" width="44" height="55" loading="lazy">
-          ${p ? `<img src="${esc(p.image)}" alt="" width="44" height="55" loading="lazy">` : ""}
-        </div>
-        <div class="ligne-corps">
-          ${eyebrow}
-          <span class="noms">${esc(h.marque)} ${esc(court(h).toLowerCase())} <span>+</span> ${esc(b.marque)} ${esc(court(b))}</span>
-          <span><span class="badge ${niv.cls}">${niv.sym} ${niv.nom}</span></span>
-        </div>
-        <button class="btn" type="button" id="changer-${j}" data-action="changer" data-jour="${j}" aria-label="Changer la tenue de ${esc(nomJour.toLowerCase())}">Changer</button>
-      </li>`;
+      return ligneTenue(t, eyebrow, bouton, auj ? "aujourdhui" : "");
     }).join("");
     const valides = jours.map(([j]) => etat.plan[j]).filter(valide);
     const hauts = new Set(valides.map(t => t.haut)).size;
     const bas = new Set(valides.map(t => t.bas)).size;
+    const sous = new Set(valides.map(t => t.dessous).filter(Boolean)).size;
     F("bilan-semaine").textContent =
-      `Cette semaine : ${hauts} haut${hauts > 1 ? "s" : ""} sur ${HAUTS.length} et ${bas} bas sur ${BAS.length} mis en avant.`;
+      `Cette semaine : ${hauts} haut${hauts > 1 ? "s" : ""} sur ${HAUTS.length} et ${bas} bas sur ${BAS.length} mis en avant` +
+      (SOUS.length ? `, avec ${sous} sous-couche${sous > 1 ? "s" : ""} sur ${SOUS.length}.` : ".");
+  }
+
+  function rendreChoix() {
+    rendreCouches("choix");
+    const presentes = D.categories.filter(c => ARTICLES.some(a => a.categorie === c.id));
+    if (choix.filtre !== "tout" && !presentes.some(c => c.id === choix.filtre)) choix.filtre = "tout";
+    F("choix-filtres").innerHTML = [{ id: "tout", nom: "Tout" }].concat(presentes).map(c =>
+      `<button type="button" id="choix-filtre-${c.id}" data-action="choix-filtre" data-filtre="${c.id}" aria-pressed="${c.id === choix.filtre}">${esc(c.nom)}</button>`
+    ).join("");
+    F("choix-pieces").innerHTML = ARTICLES.filter(a => choix.filtre === "tout" || a.categorie === choix.filtre).map(a =>
+      `<button type="button" class="piece" id="piece-${esc(a.id)}" data-action="choisir" data-id="${esc(a.id)}" aria-pressed="${a.id === choix.id}" title="${esc(nomComplet(a))}" aria-label="${esc(nomComplet(a))}">
+        <img src="${esc(a.image)}" alt="" width="56" height="70" loading="lazy">
+      </button>`
+    ).join("");
+    const zone = F("choix-resultat");
+    const a = PAR_ID[choix.id];
+    if (!a) {
+      zone.innerHTML = `<p class="vide">Touche la pièce qui te fait envie : la meilleure tenue autour d'elle s'affiche ici, avec d'autres idées.</p>`;
+      return;
+    }
+    const liste = suggestionsAutour(a);
+    if (!liste.length) {
+      zone.innerHTML = `<p class="vide">Aucune tenue ne fonctionne autour de ${esc(nomComplet(a))} pour l'instant.</p>`;
+      return;
+    }
+    if (choix.rang >= liste.length) choix.rang = 0;
+    const t = liste[choix.rang];
+    const g = grilleTenue(t, a.id), ev = noterTenue(t);
+    const autres = liste.map((x, i) => [x, i]).filter(([, i]) => i !== choix.rang);
+    zone.innerHTML = `
+      <p class="choix-tete">Autour de : <strong>${esc(nomComplet(a))}</strong></p>
+      <div class="tenue" style="--n:${g.n}">${g.html}</div>
+      <div class="verdict">
+        <div class="verdict-texte">${badgesTenue(t, ev)}<p>Suggestion ${choix.rang + 1} sur ${liste.length}</p></div>
+        <div class="actions">
+          ${liste.length > 1 ? `<button class="btn" type="button" id="choix-autre" data-action="choix-autre">Autre suggestion</button>` : ""}
+          <button class="btn primaire" type="button" id="choix-porter" data-action="choix-porter">Porter aujourd'hui</button>
+        </div>
+      </div>
+      <ul class="raisons">${listeRaisons(ev)}</ul>
+      ${autres.length ? `<h3 class="sous-titre">Autres idées autour de cette pièce</h3>
+        <ol class="semaine">${autres.map(([x, i]) => ligneTenue(x, `<span class="eyebrow">Suggestion ${i + 1}</span>`,
+          `<button class="btn" type="button" id="choix-voir-${i}" data-action="choix-voir" data-rang="${i}">Voir</button>`)).join("")}</ol>` : ""}`;
   }
 
   function dateCourte(iso) {
@@ -747,23 +1120,32 @@ footer p { margin: 0; max-width: 65ch; }
 
   function fiche(a) {
     const r = role(a);
-    let assoc = "";
-    if (r === "bas") assoc = `Va avec ${HAUTS.filter(h => accord(a, h) > 0).length} hauts sur ${HAUTS.length}`;
-    if (r === "haut") assoc = `Va avec ${BAS.filter(b => accord(b, a) > 0).length} bas sur ${BAS.length}`;
+    const assoc = [];
+    if (r === "bas") assoc.push(`Va avec ${HAUTS.filter(h => accord(a, h) > 0).length} hauts sur ${HAUTS.length}`);
+    if (r === "haut") assoc.push(`Va avec ${BAS.filter(b => accord(b, a) > 0).length} bas sur ${BAS.length}`);
+    if (peutEtreDessous(a)) {
+      const n = HAUTS.filter(h => accepte(h, a) && superposer(a, h).score > 0).length;
+      if (n) assoc.push(`se glisse sous ${pluriel(n, "haut")}`);
+    }
+    if (accepteDessous(a) && SOUS.length) {
+      const n = SOUS.filter(s => accepte(a, s) && superposer(s, a).score > 0).length;
+      if (n) assoc.push(`accepte ${pluriel(n, "sous-couche")}`);
+    }
     const texteLien = a.ajoute ? `Fiche · ${a.site} ↗` : a.officiel ? `Fiche ${a.site} ↗` : `Fiche revendeur · ${a.site} ↗`;
-    let actions = "";
+    const porter = `<button class="btn petit" type="button" id="porter-${esc(a.id)}" data-action="choisir" data-id="${esc(a.id)}" data-depuis="catalogue">Porter avec…</button>`;
+    let actions = `<div class="fiche-actions">${porter}</div>`;
     if (a.ajoute && peutEcrire) {
       actions = confirmation === a.id
         ? `<div class="fiche-actions"><p>Supprimer cette pièce et sa photo ?</p>
             ${erreurSuppression && erreurSuppression.id === a.id ? `<p class="form-erreur" role="alert">${esc(erreurSuppression.message)}</p>` : ""}
             <button class="btn petit danger plein" type="button" id="oui-${esc(a.id)}" data-action="confirmer-suppression" data-id="${esc(a.id)}">Supprimer</button>
             <button class="btn petit" type="button" id="non-${esc(a.id)}" data-action="annuler-suppression">Garder</button></div>`
-        : `<div class="fiche-actions">
+        : `<div class="fiche-actions">${porter}
             <button class="btn petit" type="button" id="modifier-${esc(a.id)}" data-action="modifier" data-id="${esc(a.id)}">Modifier</button>
             <button class="btn petit danger" type="button" id="supprimer-${esc(a.id)}" data-action="supprimer" data-id="${esc(a.id)}">Supprimer</button></div>`;
     }
     return `<article class="fiche">
-      <img src="${esc(a.image)}" alt="${esc(a.marque + " " + (a.modele || singulier(a.categorie)) + ", " + a.couleur)}" width="480" height="600" loading="lazy">
+      <img src="${esc(a.image)}" alt="${esc(nomComplet(a))}" width="480" height="600" loading="lazy">
       <div class="fiche-corps">
         <span class="eyebrow">${esc(a.marque)} · ${esc(singulier(a.categorie))}</span>
         <strong>${esc(a.modele || singulier(a.categorie))}</strong>
@@ -771,7 +1153,7 @@ footer p { margin: 0; max-width: 65ch; }
         ${a.coupe ? `<span class="coupe">${esc(a.coupe)}</span>` : ""}
         ${a.ref ? `<span class="mono">Réf. ${esc(a.ref)}</span>` : ""}
         ${a.ajoute ? `<span class="tag-ajout">Ajouté${a.ajouteLe ? " le " + esc(dateCourte(a.ajouteLe)) : ""}</span>` : ""}
-        ${assoc ? `<span class="assoc">${assoc}</span>` : ""}
+        ${assoc.length ? `<span class="assoc">${majuscule(assoc.join(" · ").toLowerCase())}</span>` : ""}
         ${a.lien ? `<a href="${esc(a.lien)}" target="_blank" rel="noopener noreferrer">${esc(texteLien)}</a>` : ""}
         ${actions}
       </div>
@@ -791,22 +1173,35 @@ footer p { margin: 0; max-width: 65ch; }
     F("grille").innerHTML = liste.map(fiche).join("");
   }
 
+  function tableAccords(lignes, colonnes, note, action, attributs, coin) {
+    const tete = `<thead><tr><th scope="col" class="coin eyebrow">${coin}</th>${colonnes.map(h =>
+      `<th scope="col"><img src="${esc(h.image)}" alt="" width="40" height="50" loading="lazy">${esc(court(h))}</th>`
+    ).join("")}</tr></thead>`;
+    const corps = `<tbody>${lignes.map(l => `<tr>
+      <th scope="row"><span class="lig"><img src="${esc(l.image)}" alt="" width="32" height="40" loading="lazy">${esc(court(l))}</span></th>
+      ${colonnes.map(c => {
+        const niv = NIVEAUX[note(l, c)];
+        const label = `${court(c)} avec ${court(l)} : ${niv.nom}`;
+        return `<td><button class="cell ${niv.cls}" type="button" data-action="${action}" ${attributs(l, c)} title="${esc(label)}" aria-label="${esc(label)}">${niv.sym}</button></td>`;
+      }).join("")}
+    </tr>`).join("")}</tbody>`;
+    return tete + corps;
+  }
+
   function rendreAccords() {
     let possibles = 0;
     BAS.forEach(b => HAUTS.forEach(h => { if (accord(b, h) > 0) possibles++; }));
     F("compte-accords").textContent = `${possibles} tenues possibles sur ${BAS.length * HAUTS.length}`;
-    const tete = `<thead><tr><th scope="col" class="coin eyebrow">Bas \\ Haut</th>${HAUTS.map(h =>
-      `<th scope="col"><img src="${esc(h.image)}" alt="" width="40" height="50" loading="lazy">${esc(court(h))}</th>`
-    ).join("")}</tr></thead>`;
-    const corps = `<tbody>${BAS.map(b => `<tr>
-      <th scope="row"><span class="lig"><img src="${esc(b.image)}" alt="" width="32" height="40" loading="lazy">${esc(court(b))}</span></th>
-      ${HAUTS.map(h => {
-        const niv = NIVEAUX[accord(b, h)];
-        const label = `${court(h)} avec ${court(b)} : ${niv.nom}`;
-        return `<td><button class="cell ${niv.cls}" type="button" data-action="voir" data-bas="${esc(b.id)}" data-haut="${esc(h.id)}" title="${esc(label)}" aria-label="${esc(label)}">${niv.sym}</button></td>`;
-      }).join("")}
-    </tr>`).join("")}</tbody>`;
-    F("table-accords").innerHTML = tete + corps;
+    F("table-accords").innerHTML = tableAccords(BAS, HAUTS, accord, "voir",
+      (b, h) => `data-bas="${esc(b.id)}" data-haut="${esc(h.id)}"`, "Bas \\ Haut");
+    const porteurs = HAUTS.filter(accepteDessous);
+    const avecSous = SOUS.length && porteurs.length;
+    F("superpositions-vide").hidden = !!avecSous;
+    F("superpositions-table").hidden = !avecSous;
+    if (avecSous) {
+      F("table-superpositions").innerHTML = tableAccords(SOUS, porteurs, (s, h) => (accepte(h, s) ? superposer(s, h).score : 0), "voir-sup",
+        (s, h) => `data-dessous="${esc(s.id)}" data-haut="${esc(h.id)}"`, "Sous-couche \\ Haut");
+    }
   }
 
   function rendreCompleter() {
@@ -832,7 +1227,7 @@ footer p { margin: 0; max-width: 65ch; }
       if (el && el !== document.activeElement) el.focus({ preventScroll: true });
     }
   }
-  const rendreTout = () => rendre(rendreTete, rendreTenue, rendreSemaine, rendreCatalogue, rendreAccords, rendreCompleter);
+  const rendreTout = () => rendre(rendreTete, rendreTenue, rendreChoix, rendreSemaine, rendreCatalogue, rendreAccords, rendreCompleter);
 
   // Une photo stockée qui ne répond plus est remplacée par un aplat.
   document.addEventListener("error", e => {
@@ -942,7 +1337,8 @@ footer p { margin: 0; max-width: 65ch; }
     [/^(t-?shirts?|tee-?shirts?|tees?|debardeurs?)$/, "t-shirts"],
     [/^chemises?$/, "chemises"],
     [/^(vestes?|blazers?|surchemises?)$/, "vestes"],
-    [/^(blousons?|doudounes?|manteaux|manteau|parkas?|bombers?|coupe-vents?)$/, "blousons"],
+    [/^(blousons?|doudounes?|bombers?|coupe-vents?|perfectos?)$/, "blousons"],
+    [/^(manteaux|manteau|parkas?|cabans?|trenchs?|pardessus)$/, "manteaux"],
     [/^(chaussures?|baskets?|sneakers?|boots?|bottines?|mocassins?)$/, "chaussures"],
     [/^(sweats?|sweat-shirts?|sweatshirts?|hoodies?)$/, "sweats"],
     [/^polos?$/, "polos"],
@@ -954,12 +1350,14 @@ footer p { margin: 0; max-width: 65ch; }
     for (const [re, id] of MOTS_CATEGORIE) if (re.test(m) || re.test(m.split(" ")[0])) return id;
     return "";
   }
-  function devinerTeinte(couleur, categorie) {
+  function devinerTeinte(couleur, categorie, modele) {
     const c = sansAccents(couleur);
     if (!c) return "";
-    const jean = categorie === "jeans";
+    // Un jean, ou une pièce en denim (veste en jean, trucker), prend les teintes de denim.
+    const jean = categorie === "jeans" || /\b(jean|denim|trucker)\b/.test(sansAccents(modele || ""));
     const haut = possede(CAT, categorie) && CAT[categorie].role === "haut";
     const regles = [
+      ["carreaux|raye|rayee|rayures|motif|imprime|vichy|tartan|ecossais|camouflage|fleuri", "motif"],
       ["blanc casse|ecru|creme|ivoire|off.?white", "ecru"],
       ["marine|navy|bleu nuit|bleu fonce|brut|indigo|rinse", jean ? "denim-brut" : "marine"],
       ["bleu clair|bleu ciel|ciel|bleu pale|delave clair|bleach", jean ? "denim-clair" : "bleu-ciel"],
@@ -993,7 +1391,7 @@ footer p { margin: 0; max-width: 65ch; }
     if (/rond|crew/.test(m)) return "rond";
     return undefined;
   }
-  const COULEUR_EN_TETE = /^(noire?|blanc|blanche|bleu|gris|grise|beige|rouge|rose|verte?|kaki|marine|bordeaux|ecru|creme|ivoire|marron|chocolat|camel|sable|taupe|jaune|moutarde|orange|violet|mauve|brut|anthracite|olive|black|white|navy)s?\b/;
+  const COULEUR_EN_TETE = /^(noire?|blanc|blanche|bleu|gris|grise|beige|rouge|rose|verte?|kaki|marine|bordeaux|ecru|creme|ivoire|marron|chocolat|camel|sable|taupe|jaune|moutarde|orange|violet|mauve|brut|anthracite|olive|black|white|navy|carreaux|raye|rayee|rayures|vichy|motif)s?\b/;
   // « Tommy Jeans - Pull - 1_4 zip - Noir.png » → marque, catégorie, modèle, couleur.
   function analyserTitre(titre) {
     const t = titre.replace(/\.(png|jpe?g|webp|gif|heic|heif)$/i, "").replace(/(\d)_(\d)/g, "$1/$2").trim();
@@ -1030,7 +1428,7 @@ footer p { margin: 0; max-width: 65ch; }
   }
   function poser(id, v) { if (!touches.has(id)) F(id).value = v; }
   function teinteAuto() {
-    if (!touches.has("achat-teinte")) F("achat-teinte").value = devinerTeinte(F("achat-couleur").value, F("achat-categorie").value);
+    if (!touches.has("achat-teinte")) F("achat-teinte").value = devinerTeinte(F("achat-couleur").value, F("achat-categorie").value, F("achat-modele").value);
     majPastille();
   }
   function depuisTitre() {
@@ -1386,7 +1784,7 @@ footer p { margin: 0; max-width: 65ch; }
   F("achat-titre").addEventListener("input", depuisTitre);
   CHAMPS.forEach(id => F(id).addEventListener("input", () => {
     touches.add(id);
-    if (id === "achat-couleur" || id === "achat-categorie") teinteAuto();
+    if (id === "achat-couleur" || id === "achat-categorie" || id === "achat-modele") teinteAuto();
     if (id === "achat-teinte") majPastille();
   }));
   F("form-achat").addEventListener("submit", envoyer);
@@ -1405,6 +1803,27 @@ footer p { margin: 0; max-width: 65ch; }
     rendre(rendreSemaine, rendreTenue);
   });
 
+  ["tenue", "choix"].forEach(suffixe => F(`couches-${suffixe}`).addEventListener("change", e => {
+    changerCouches(Number(e.target.value));
+    rendre(rendreTenue, rendreChoix, rendreSemaine);
+  }));
+
+  function choisirPiece(id, depuisCatalogue) {
+    if (!PAR_ID[id]) return;
+    choix.id = id;
+    choix.rang = 0;
+    if (depuisCatalogue && choix.filtre !== "tout" && PAR_ID[id].categorie !== choix.filtre) choix.filtre = "tout";
+    rendre(rendreChoix);
+    if (depuisCatalogue) {
+      F("choisir").scrollIntoView({ block: "start" });
+      const b = F("piece-" + id);
+      if (b) b.focus({ preventScroll: true });
+    } else if (F("choix-resultat").getBoundingClientRect().top > window.innerHeight * 0.7) {
+      // Sur téléphone, la tenue s'affiche sous la grille : on l'amène à l'écran.
+      F("choix-resultat").scrollIntoView({ block: "start" });
+    }
+  }
+
   document.addEventListener("click", e => {
     const el = e.target.closest("[data-action]");
     if (!el) return;
@@ -1421,6 +1840,7 @@ footer p { margin: 0; max-width: 65ch; }
       rendre(rendreSemaine, rendreTenue);
     }
     else if (action === "autre") {
+      portee = null;
       if (etat.jours.includes(AUJ[0]) && valide(etat.plan[AUJ[0]])) {
         composerJour(AUJ[0], etat.plan[AUJ[0]]); ecrire(); rendre(rendreSemaine, rendreTenue);
       } else {
@@ -1434,12 +1854,39 @@ footer p { margin: 0; max-width: 65ch; }
       const b = F("autre-tenue");
       if (b) b.focus({ preventScroll: true });
     }
-    else if (action === "voir") {
-      apercu = { bas: el.dataset.bas, haut: el.dataset.haut };
-      if (!valide(apercu)) { apercu = null; return; }
-      habiller(apercu, ctxVide(), true);
+    else if (action === "voir" || action === "voir-sup") {
+      const contraintes = action === "voir"
+        ? { bas: el.dataset.bas, haut: el.dataset.haut }
+        : { dessous: el.dataset.dessous, haut: el.dataset.haut };
+      const t = meilleureAvec(contraintes);
+      if (!t) return;
+      apercu = t;
       rendre(rendreTenue);
       F("tenue").scrollIntoView({ block: "start" });
+    }
+    else if (action === "choisir") choisirPiece(el.dataset.id, el.dataset.depuis === "catalogue");
+    else if (action === "choix-filtre") { choix.filtre = el.dataset.filtre; rendre(rendreChoix); }
+    else if (action === "choix-autre") { choix.rang++; rendre(rendreChoix); }
+    else if (action === "choix-voir") {
+      choix.rang = Number(el.dataset.rang) || 0;
+      rendre(rendreChoix);
+      F("choix-resultat").scrollIntoView({ block: "start" });
+      const b = F("choix-porter");
+      if (b) b.focus({ preventScroll: true });
+    }
+    else if (action === "choix-porter") {
+      const a = PAR_ID[choix.id];
+      const liste = a ? suggestionsAutour(a) : [];
+      const t = liste[choix.rang];
+      if (!t) return;
+      apercu = null;
+      if (etat.jours.includes(AUJ[0])) { etat.plan[AUJ[0]] = t; ecrire(); }
+      else ideeDuJour = t;
+      portee = { t, nom: nomComplet(a) };
+      rendre(rendreTenue, rendreSemaine);
+      F("tenue").scrollIntoView({ block: "start" });
+      const b = F("autre-tenue");
+      if (b) b.focus({ preventScroll: true });
     }
     else if (action === "filtre") { filtre = el.dataset.filtre; rendre(rendreCatalogue); }
     else if (action === "ouvrir-ajout") { reinitialiser(); succes(""); ouvrirPanneau(); }

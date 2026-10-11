@@ -9,11 +9,20 @@ Toutes les pièces achetées au magasin Blue Box depuis juin 2026. Le but : êtr
 Ouvre `index.html` dans un navigateur (double-clic sur le fichier, rien à installer). La page contient :
 
 - **Ajouter un achat** (sur la page publiée, pour le propriétaire) : choisis la photo, le titre et les champs se remplissent tout seuls, recadre, valide.
-- **Tenue du jour** : un haut + un bas qui vont ensemble, plus les chaussures et un par-dessus dès que tu en as, avec un bouton « Autre tenue ».
-- **Ma semaine** : coche tes jours de travail. Chaque jour reçoit un haut différent, et les bas tournent pour que toute la collection passe dans la semaine. Chaque jour a son bouton « Changer ».
+- **Tenue du jour** : jusqu'à 5 pièces (sous-couche, pull, veste ou blouson, bas, chaussures), avec les raisons pour lesquelles elles vont ensemble et un bouton « Autre tenue ».
+- **Couches** : un réglage « 1 · un haut », « 2 · sous-couche + pull », « 3 · + veste ou blouson », réglé par défaut selon le mois (3 d'octobre à mars). Il s'applique à la tenue du jour, à la semaine et à « Je veux porter ».
+- **Je veux porter…** : choisis la pièce qui te fait envie le matin (ou « Porter avec… » depuis le catalogue). La page compose jusqu'à 5 tenues autour d'elle, explique pourquoi, et « Porter aujourd'hui » en fait ta tenue du jour.
+- **Ma semaine** : coche tes jours de travail. Chaque jour reçoit un haut différent, les bas et les sous-couches tournent pour que toute la collection passe dans la semaine. Chaque jour a son bouton « Changer ».
 - **Catalogue** : toutes les pièces, filtrables par catégorie, avec le lien vers la fiche produit.
-- **Accords hauts × bas** : toutes les combinaisons, notées « valeur sûre », « possible » ou « à éviter ».
+- **Accords** : toutes les combinaisons haut × bas, et un tableau des superpositions sous-couche × haut, notées « valeur sûre », « possible » ou « à éviter ».
 - **À compléter** : les catégories encore vides, par ordre de priorité.
+
+### Les règles de superposition
+
+- Un t-shirt, une chemise ou un polo se porte sous un pull ou un sweat ; un t-shirt se porte aussi sous une chemise ouverte.
+- Col de chemise sorti sur un col rond, glissé dans un zip ou visible dans un col V : valeur sûre. Sous une capuche : possible. Sous un pull col polo : à éviter (deux cols l'un sur l'autre).
+- Ce qui dépasse doit se distinguer : même couleur que le pull, ou deux teintes foncées, et le col disparaît. Deux couleurs franches ou deux motifs superposés : à doser.
+- Par-dessus : jean sur jean du même bleu à éviter, de deux bleus différents seulement possible ; une veste de la même couleur que le haut se fond dans la tenue.
 
 Les jours cochés et la semaine composée sont gardés dans le navigateur. Les 16 premières pièces sont dans `garde-robe.js`.
 
@@ -78,7 +87,7 @@ Il manque les chaussures pour qu'une tenue soit entièrement achetée au magasin
 
 La pièce apparaît aussitôt dans le catalogue, les tenues, la semaine et le tableau des accords. Elle est enregistrée dans la page elle-même (base de données et stockage photo de la page), pas dans ce dépôt. Seul le propriétaire de la page peut ajouter, modifier ou supprimer des pièces. Les autres personnes qui ont accès à la page les voient sans pouvoir les changer.
 
-Catégories reconnues dans le titre : pantalon, jean, pull, t-shirt, chemise, veste, blouson, chaussures (et baskets, sneakers, boots…), sweat, polo, short, accessoires. Si une couleur n'est pas dans le tableau des accords, des règles générales s'appliquent : deux teintes foncées de la même famille se confondent, deux tons clairs proches manquent de contraste, deux couleurs franches sont à doser.
+Catégories reconnues dans le titre : pantalon, jean, pull, t-shirt, chemise, veste, blouson, manteau (et parka, caban, trench), chaussures (et baskets, sneakers, boots…), sweat, polo, short, accessoires. Une couleur « à carreaux », « rayée » ou « imprimée » est classée en motif. Si une couleur n'est pas dans le tableau des accords, des règles générales s'appliquent : deux teintes foncées de la même famille se confondent, deux tons clairs proches manquent de contraste, deux couleurs franches sont à doser.
 
 **Dans ce dépôt.** Pour qu'une pièce fasse partie des données du dépôt :
 
