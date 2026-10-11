@@ -162,7 +162,8 @@ h2 { margin: 0; font-family: var(--f-display); font-stretch: 112%; font-weight: 
 .couches .aide { flex-basis: 100%; }
 .couches .aide:empty { display: none; }
 .slot { position: relative; }
-.slot .couche { position: absolute; top: 8px; left: 8px; z-index: 1; padding: 2px 8px; border-radius: 999px; background: var(--surface); color: var(--ink); font: 600 .7rem/1.4 var(--f-mono); box-shadow: 0 0 0 1px var(--line); }
+.slot .couche { position: absolute; top: 8px; left: 8px; z-index: 1; max-width: calc(100% - 16px); overflow: hidden; padding: 2px 8px; border-radius: 999px; background: var(--surface); color: var(--ink); font: 600 .7rem/1.4 var(--f-mono); white-space: nowrap; text-overflow: ellipsis; box-shadow: 0 0 0 1px var(--line); }
+@media (min-width: 561px) and (max-width: 900px) { .tenue[data-n="6"] { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .slot.mienne { border-color: var(--indigo); box-shadow: 0 0 0 1px var(--indigo); }
 .raisons { display: grid; gap: 6px; margin: 12px 0 0; padding: 0; list-style: none; max-width: 80ch; }
 .raisons:empty { display: none; }
@@ -175,6 +176,7 @@ h2 { margin: 0; font-family: var(--f-display); font-stretch: 112%; font-weight: 
 .piece { padding: 0; overflow: hidden; border: 1.5px solid var(--line); border-radius: 8px; background: var(--surface-2); cursor: pointer; }
 .piece img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; }
 .piece[aria-pressed="true"] { border-color: var(--indigo); box-shadow: 0 0 0 2px var(--indigo); }
+#choix-resultat { scroll-margin-top: 60px; }
 .choix-tete { margin: 0 0 12px; color: var(--muted); }
 .choix-tete strong { color: var(--ink); font-weight: 600; }
 .sous-titre { margin: 28px 0 10px; font-family: var(--f-display); font-stretch: 112%; font-weight: 700; font-size: 1.15rem; }
@@ -199,6 +201,13 @@ h2 { margin: 0; font-family: var(--f-display); font-stretch: 112%; font-weight: 
 .bilan { margin: 12px 0 0; color: var(--muted); font-size: .92rem; }
 .vide { margin: 0; padding: 20px; border: 1.5px dashed var(--line); border-radius: var(--radius); color: var(--muted); }
 @media (max-width: 420px) { .vignettes img { width: 34px; height: 43px; } .vignettes img + img { margin-left: -15px; } }
+@media (max-width: 480px) {
+  /* Sur téléphone : vignettes et bouton sur une rangée, les noms sur toute la largeur en dessous. */
+  .semaine li { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "vignettes bouton" "corps corps"; row-gap: 8px; }
+  .semaine li > .vignettes { grid-area: vignettes; }
+  .semaine li > .ligne-corps { grid-area: corps; }
+  .semaine li > :last-child { grid-area: bouton; }
+}
 
 /* Catalogue */
 .filtres { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
@@ -213,7 +222,7 @@ h2 { margin: 0; font-family: var(--f-display); font-stretch: 112%; font-weight: 
 .fiche-corps strong { font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
 .fiche-corps .coupe { color: var(--muted); font-size: .86rem; line-height: 1.3; }
 .fiche-corps .assoc { font-size: .84rem; }
-.fiche-corps .tag-ajout { font: 500 .72rem/1.3 var(--f-mono); color: var(--rivet); }
+.tag-ajout { font: 500 .72rem/1.3 var(--f-mono); color: var(--rivet); }
 .fiche-corps a { margin-top: auto; padding-top: 6px; font-size: .86rem; font-weight: 600; text-decoration: none; overflow-wrap: anywhere; }
 .fiche-corps a:hover { text-decoration: underline; }
 .fiche-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: auto; padding-top: 8px; }
@@ -231,12 +240,13 @@ table.accords { width: 100%; min-width: 820px; border-collapse: separate; border
 .accords .coin, .accords tbody th { position: sticky; left: 0; z-index: 1; padding-inline: 10px; background: var(--surface); text-align: left; border-right: 1px solid var(--line); }
 .accords .coin { vertical-align: bottom; }
 .accords tbody th .lig { display: flex; align-items: center; gap: 8px; font-size: .86rem; font-weight: 600; white-space: nowrap; }
-.accords tbody th img { width: 32px; height: 40px; object-fit: cover; border-radius: 4px; background: var(--surface-2); }
+.accords tbody th img { flex: none; width: 32px; height: 40px; object-fit: cover; border-radius: 4px; background: var(--surface-2); }
 .cell { width: 36px; height: 36px; border: 0; border-radius: 50%; font: 600 .78rem var(--f-mono); cursor: pointer; }
 .cell.ok { background: var(--ok-soft); color: var(--ok); }
 .cell.maybe { background: var(--maybe-soft); color: var(--maybe); }
 .cell.no { background: var(--no-soft); color: var(--no); }
 .cell:hover { box-shadow: 0 0 0 2px currentColor; }
+.cell.na { display: inline-grid; place-items: center; color: var(--muted); cursor: default; box-shadow: none; }
 
 /* À compléter */
 .priorites { display: grid; margin: 0; padding: 0; list-style: none; }
@@ -455,7 +465,7 @@ footer p { margin: 0; max-width: 65ch; }
   const T = D.teintes;
   const CAT = Object.fromEntries(D.categories.map(c => [c.id, c]));
   const ORDRE_CAT = Object.fromEntries(D.categories.map((c, i) => [c.id, i]));
-  const ENCOLURES = { zip: "Zippé", rond: "Col rond", polo: "Col polo", v: "Col V", capuche: "Capuche" };
+  const ENCOLURES = { zip: "Zippé", rond: "Col rond", polo: "Col polo", v: "Col V", capuche: "Capuche", roule: "Col roulé" };
   const NIVEAUX = {
     2: { nom: "Valeur sûre", cls: "ok", sym: "●●" },
     1: { nom: "Possible", cls: "maybe", sym: "●" },
@@ -464,8 +474,8 @@ footer p { margin: 0; max-width: 65ch; }
   const JOURS = [["lun", "Lundi"], ["mar", "Mardi"], ["mer", "Mercredi"], ["jeu", "Jeudi"], ["ven", "Vendredi"], ["sam", "Samedi"], ["dim", "Dimanche"]];
   const AUJ = JOURS[(new Date().getDay() + 6) % 7];
   // D'avril à septembre, les t-shirts passent devant les pulls ; le reste de l'année, l'inverse.
-  const ETE = new Date().getMonth() >= 3 && new Date().getMonth() <= 8;
-  const HORS_SAISON = ETE ? ["pulls", "sweats"] : ["t-shirts", "polos", "shorts"];
+  // En une couche, les t-shirts passent devant les pulls ; avec plusieurs couches, l'inverse.
+  const horsSaison = () => (etat.couches === 1 ? ["pulls", "sweats"] : ["t-shirts", "polos", "shorts"]);
   const CLE = "garde-robe-bluebox:v1";
   const ID_ASSET = /^[A-Za-z0-9_-]{8,64}$/;
   const PHOTO_ABSENTE = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 5"><rect width="4" height="5" fill="#9aa3b5" fill-opacity=".25"/></svg>');
@@ -474,7 +484,7 @@ footer p { margin: 0; max-width: 65ch; }
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   const sansAccents = s => String(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
   const possede = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
-  const singulier = c => CAT[c].nom.replace(/s$/, "");
+  const singulier = c => CAT[c].nom.replace(/aux$/, "au").replace(/s$/, "");
   const pluriel = (n, mot) => `${n} ${mot}${n > 1 ? "s" : ""}`;
   const pastille = a => `<i class="pastille" style="background:${esc(T[a.teinte].hex)}"></i>`;
   const role = a => CAT[a.categorie].role;
@@ -497,14 +507,16 @@ footer p { margin: 0; max-width: 65ch; }
     SOUS = ARTICLES.filter(a => SOUS_CATS.includes(a.categorie));
   }
 
-  function court(a) {
+  // Nom court d'une pièce ; « t‑shirt » garde son trait d'union en fin de ligne.
+  const court = a => nomCourt(a).replace(/-/g, "\u2011");
+  function nomCourt(a) {
     const c = a.couleur.toLowerCase();
     if (role(a) === "bas") {
       const m = a.modele.replace(/^(pantalon|jean|short)s? /i, "").split(" ")[0].replace("™", "");
       return (m || singulier(a.categorie)) + " " + c;
     }
     if (a.categorie === "pulls") return (ENCOLURES[a.encolure] || "Pull") + " " + c;
-    if (role(a) === "pieds") return (a.modele || "Chaussures") + " " + c;
+    if (role(a) === "pieds" || role(a) === "aucun") return (a.modele || singulier(a.categorie)) + " " + c;
     return singulier(a.categorie) + " " + c;
   }
   const nomComplet = a => `${a.marque} ${a.modele || singulier(a.categorie)} ${a.couleur}`;
@@ -563,43 +575,65 @@ footer p { margin: 0; max-width: 65ch; }
   }
   const pire = (x, y) => (y.score < x.score ? y : x);
   // Une sous-couche sous un haut : la forme des cols, puis ce qui dépasse (col, poignets, ouverture).
+  // Deux couleurs « franches » : ni neutres, ni claires (un bleu ciel ou un rose pâle passe partout).
+  const franche = t => !t.neutre && t.clarte !== "clair";
   function superposer(s, h) {
     if (!accepte(h, s)) return { score: 0, note: "Cette pièce ne se porte pas sous ce haut." };
     const ts = T[s.teinte], th = T[h.teinte];
-    let r;
-    if (h.categorie === "chemises") r = { score: 2, note: "Chemise portée ouverte sur le t-shirt : décontracté." };
-    else if (aUnCol(s)) {
-      if (h.encolure === "polo") return { score: 0, note: "Deux cols l'un sur l'autre : à éviter." };
-      r = h.encolure === "capuche" ? { score: 1, note: "Un col sous une capuche : possible, mais chargé." }
-        : h.encolure === "zip" ? { score: 2, note: "Le col se glisse dans l'ouverture du zip." }
-        : h.encolure === "v" ? { score: 2, note: "Le col V laisse voir le col et le haut de la chemise." }
-        : { score: 2, note: "Col sorti sur le col rond : le classique." };
-    } else {
-      r = h.encolure === "zip" && !ts.neutre
-        ? { score: 1, note: "Un t-shirt coloré se voit dans l'ouverture du zip." }
-        : { score: 2, note: "Le t-shirt reste discret sous le pull." };
+    if (h.categorie === "chemises") {
+      const r = { score: 2, note: "Chemise portée ouverte sur le t-shirt : décontracté." };
+      if (ts.famille === "motif" && th.famille === "motif") return pire(r, { score: 1, note: "Deux motifs l'un sur l'autre : à doser." });
+      if (s.teinte === h.teinte && ts.famille !== "motif") return pire(r, { score: 1, note: "Même couleur : la chemise ouverte se fond sur le t-shirt." });
+      if (ts.clarte === "fonce" && th.clarte === "fonce") return pire(r, { score: 1, note: "Deux teintes foncées : peu de contraste entre chemise et t-shirt." });
+      if (franche(ts) && franche(th)) return pire(r, { score: 1, note: "Chemise et t-shirt tous deux colorés : à doser." });
+      return r;
     }
-    if (aUnCol(s) || h.categorie === "chemises") {
-      if (ts.famille === "motif" && th.famille === "motif") return pire(r, { score: 1, note: "Deux motifs superposés : à doser." });
-      if (s.teinte === h.teinte && ts.famille !== "motif") return pire(r, { score: 1, note: "Même couleur dessus et dessous : le col disparaît." });
-      if (ts.clarte === "fonce" && th.clarte === "fonce") return pire(r, { score: 1, note: "Deux teintes foncées : le col se voit à peine." });
-      if (!ts.neutre && !th.neutre) return pire(r, { score: 1, note: "Deux couleurs franches superposées : à doser." });
+    const sous = "sous le " + singulier(h.categorie).toLowerCase();
+    if (!aUnCol(s)) {
+      if (h.encolure === "zip" && franche(ts)) return { score: 1, note: "Un t-shirt coloré se voit dans l'ouverture du zip." };
+      if (h.encolure === "v") return franche(ts)
+        ? { score: 1, note: "Un t-shirt coloré se voit dans le col V." }
+        : { score: 2, note: "Le t-shirt se devine juste dans le col V." };
+      return { score: 2, note: `Le t-shirt reste discret ${sous}.` };
     }
+    if (h.encolure === "polo") return { score: 0, note: "Deux cols l'un sur l'autre : à éviter." };
+    if (h.encolure === "roule") return { score: 0, note: "Un col ne passe pas sous un col roulé." };
+    const r = h.encolure === "capuche" ? { score: 1, note: "Un col sous une capuche : possible, mais chargé." }
+      : h.encolure === "zip" ? { score: 2, note: "Le col se glisse dans l'ouverture du zip." }
+      : h.encolure === "v" ? { score: 2, note: "Le col V laisse voir le col de la sous-couche." }
+      : { score: 2, note: `Col sorti ${h.encolure === "rond" ? "sur le col rond" : sous} : le classique.` };
+    if (ts.famille === "motif" && th.famille === "motif") return pire(r, { score: 1, note: "Deux motifs superposés : à doser." });
+    if (s.teinte === h.teinte && ts.famille !== "motif") return pire(r, { score: 1, note: "Même couleur dessus et dessous : le col disparaît." });
+    if (ts.clarte === "fonce" && th.clarte === "fonce") return pire(r, { score: 1, note: "Deux teintes foncées : le col se voit à peine." });
+    if (franche(ts) && franche(th)) return pire(r, { score: 1, note: "Deux couleurs franches superposées : à doser." });
     return r;
   }
   const estDenim = a => a.teinte.startsWith("denim-") || /\b(jean|denim|trucker)\b/i.test(a.modele);
-  // Une veste, un blouson ou un manteau par-dessus : contre le haut, et contre le bas pour le jean.
-  function surcouche(d, h, b) {
+  // Une veste, un blouson ou un manteau par-dessus : contre le haut et la sous-couche, et contre le
+  // bas pour le jean sur jean (seulement entre deux denims bleus : un jean gris ou noir va très bien).
+  function surcouche(d, h, b, s) {
     const td = T[d.teinte], th = T[h.teinte];
-    if (estDenim(d) && estDenim(b)) {
+    if (estDenim(d) && estDenim(b) && td.famille === "bleu" && T[b.teinte].famille === "bleu") {
       return d.teinte === b.teinte
         ? { score: 0, note: "Jean sur jean du même bleu : à éviter." }
         : { score: 1, note: "Jean sur jean : ça passe seulement avec deux bleus bien différents." };
     }
-    if (d.teinte === h.teinte && td.famille !== "motif") return { score: 1, note: "Il a la même couleur que le haut et se fond dans la tenue." };
-    if (!td.neutre && !th.neutre) return { score: 1, note: "Lui et le haut sont colorés : à doser." };
-    if (td.clarte !== th.clarte) return { score: 2, note: "Il encadre le haut par contraste." };
+    if (td.famille === "motif" && (th.famille === "motif" || (s && T[s.teinte].famille === "motif"))) {
+      return { score: 1, note: "Deux motifs visibles l'un sur l'autre : à doser." };
+    }
+    if (d.teinte === h.teinte && td.famille !== "motif") return { score: 1, note: "Même couleur que le haut : la couche s'y fond." };
+    if (franche(td) && franche(th)) return { score: 1, note: "Couche et haut tous deux colorés : à doser." };
+    if (td.clarte !== th.clarte) return { score: 2, note: "Encadre le haut par contraste." };
     return { score: 2, note: "Une couche neutre qui ne casse pas la tenue." };
+  }
+  // Chaussures ou accessoire de couleur : une seule touche de couleur ressort, deux se disputent
+  // (même deux rouges différents) ; la même couleur que le haut fait un rappel voulu.
+  function touche(x, t) {
+    if (!franche(T[x.teinte])) return null;
+    const couleurs = [t.haut, t.dessous, t.dessus].map(id => PAR_ID[id]).filter(a => a && franche(T[a.teinte]));
+    if (couleurs.some(a => a.teinte !== x.teinte)) return { score: 1, note: "Deux couleurs franches avec le haut : à doser." };
+    if (couleurs.length) return { score: 2, note: "Rappel de la couleur du haut : l'ensemble reste cohérent." };
+    return { score: 2, note: "Une seule touche de couleur : elle ressort sur une base neutre." };
   }
 
   // Évaluation d'une tenue complète : le niveau est celui de son accord le plus faible.
@@ -609,7 +643,11 @@ footer p { margin: 0; max-width: 65ch; }
     const e = evaluer(b, h);
     raisons.push({ score: e.score, titre: `${majuscule(court(h))} + ${court(b)}.`, note: e.note });
     if (s) { const x = superposer(s, h); raisons.push({ score: x.score, titre: `${majuscule(court(s))} en sous-couche.`, note: x.note }); }
-    if (d) { const x = surcouche(d, h, b); raisons.push({ score: x.score, titre: `${majuscule(court(d))} par-dessus.`, note: x.note }); }
+    if (d) { const x = surcouche(d, h, b, s); raisons.push({ score: x.score, titre: `${majuscule(court(d))} par-dessus.`, note: x.note }); }
+    [["pieds", "aux pieds"], ["accessoire", "en accessoire"]].forEach(([k, ou]) => {
+      const a = PAR_ID[t[k]], x = a && touche(a, t);
+      if (x) raisons.push({ score: x.score, titre: `${majuscule(court(a))} ${ou}.`, note: x.note });
+    });
     return { niveau: Math.min(...raisons.map(r => r.score)), raisons };
   }
 
@@ -621,6 +659,14 @@ footer p { margin: 0; max-width: 65ch; }
     const m = new Date().getMonth();
     return m >= 9 || m <= 2 ? 3 : m === 3 || m === 8 ? 2 : 1;
   }
+  const AUJ_DATE = (d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`)(new Date());
+  // Une tenue lue du stockage : seulement des ids (une chaîne vide = couche volontairement absente).
+  function nettoyerTenue(t) {
+    if (!t || typeof t.bas !== "string" || typeof t.haut !== "string") return null;
+    const n = {};
+    SLOTS.forEach(k => { if (typeof t[k] === "string") n[k] = t[k]; });
+    return n;
+  }
   function lire() {
     try {
       const e = JSON.parse(localStorage.getItem(CLE));
@@ -628,22 +674,31 @@ footer p { margin: 0; max-width: 65ch; }
       const jours = JOURS.map(x => x[0]).filter(j => e.jours.includes(j));
       const plan = {};
       for (const j of jours) {
-        const t = e.plan && e.plan[j];
-        if (!t || typeof t.bas !== "string" || typeof t.haut !== "string") continue;
-        plan[j] = {};
-        SLOTS.forEach(k => { if (typeof t[k] === "string") plan[j][k] = t[k]; });
+        const t = nettoyerTenue(e.plan && e.plan[j]);
+        if (t) plan[j] = t;
       }
-      return { jours, plan, couches: [1, 2, 3].includes(e.couches) ? e.couches : couchesDeSaison() };
+      // Le nombre de couches suit la saison tant qu'il n'a pas été choisi à la main.
+      const choisies = e.couchesChoisies === true && [1, 2, 3].includes(e.couches);
+      const idee = e.idee && e.idee.date === AUJ_DATE ? nettoyerTenue(e.idee.t) : null;
+      const portee = e.portee && e.portee.date === AUJ_DATE && typeof e.portee.id === "string" ? { date: AUJ_DATE, id: e.portee.id } : null;
+      return {
+        jours, plan,
+        couches: choisies ? e.couches : couchesDeSaison(), couchesChoisies: choisies,
+        idee: idee ? { date: AUJ_DATE, t: idee } : null, portee,
+      };
     } catch (_) { return null; }
   }
   function ecrire() {
     try { localStorage.setItem(CLE, JSON.stringify(etat)); } catch (_) { /* stockage indisponible */ }
   }
 
-  let etat = lire() || { jours: ["lun", "mar", "mer", "jeu", "ven", "sam"], plan: {}, couches: couchesDeSaison() };
+  let etat = lire() || { jours: ["lun", "mar", "mer", "jeu", "ven", "sam"], plan: {}, couches: couchesDeSaison(), couchesChoisies: false, idee: null, portee: null };
   let apercu = null;       // tenue choisie dans un tableau d'accords
-  let ideeDuJour = null;   // tenue proposée quand aujourd'hui n'est pas travaillé
-  let portee = null;       // { t, nom } : tenue mise pour aujourd'hui depuis « Je veux porter »
+  // Idée du jour (quand aujourd'hui n'est pas coché) et pièce « portée aujourd'hui » : gardées pour la journée.
+  const ideeDuJour = () => (etat.idee && etat.idee.date === AUJ_DATE ? etat.idee.t : null);
+  const poserIdee = t => { etat.idee = t ? { date: AUJ_DATE, t } : null; };
+  const porteeId = () => (etat.portee && etat.portee.date === AUJ_DATE && PAR_ID[etat.portee.id] ? etat.portee.id : null);
+  const contient = (t, id) => !!(t && id && SLOTS.some(k => t[k] === id));
   let filtre = "tout";
   let choix = { id: null, rang: 0, filtre: "tout" };  // « Je veux porter… »
   // Pièces ajoutées depuis la page : "chargement" tant que la base n'a pas répondu de façon
@@ -674,9 +729,6 @@ footer p { margin: 0; max-width: 65ch; }
     }
     return choix;
   }
-  // Nombre de couches visé, plafonné à ce que la garde-robe permet.
-  const cible = () => 1 + (etat.couches >= 2 && SOUS.length ? 1 : 0) + (etat.couches >= 3 && DESSUS.length ? 1 : 0);
-
   // Toutes les tenues qui respectent les contraintes (pièces imposées), de la meilleure à la moins bonne.
   function generer(contraintes, ctx, alea) {
     const c = contraintes || {};
@@ -684,8 +736,8 @@ footer p { margin: 0; max-width: 65ch; }
     const listeHauts = c.haut ? [PAR_ID[c.haut]] : HAUTS;
     const sousImpose = c.dessous ? PAR_ID[c.dessous] : null;
     const dessusImpose = c.dessus ? PAR_ID[c.dessus] : null;
-    const objectif = cible();
     const voisinsSous = ctx.voisins.map(v => v.dessous);
+    const hors = horsSaison();
     const res = [];
     for (const h of listeHauts) {
       if (!h || ctx.hautsPris.has(h.id)) continue;
@@ -693,14 +745,17 @@ footer p { margin: 0; max-width: 65ch; }
       if (sousImpose) { if (!accepte(h, sousImpose)) continue; sous = [sousImpose]; }
       else if (etat.couches >= 2 && accepteDessous(h)) sous = sous.concat(SOUS.filter(s => accepte(h, s)));
       const dessus = dessusImpose ? [dessusImpose] : etat.couches >= 3 ? [null].concat(DESSUS) : [null];
+      // Une couche manquante ne compte que si ce haut pouvait la recevoir.
+      const objectif = 1 + (sous.length > 1 || sousImpose ? 1 : 0) + (dessus.length > 1 || dessusImpose ? 1 : 0);
       for (const b of listeBas) {
         if (!b) continue;
         if (ctx.actuel && ctx.actuel.bas === b.id && ctx.actuel.haut === h.id) continue;
         const s1 = accord(b, h);
         if (!s1) continue;
         let base = s1 * 10 - (ctx.usageBas.get(b.id) || 0) * 12;
-        if (HORS_SAISON.includes(h.categorie)) base -= 6;
-        if (HORS_SAISON.includes(b.categorie)) base -= 6;
+        if (hors.includes(h.categorie)) base -= 6;
+        if (hors.includes(b.categorie)) base -= 6;
+        if (etat.couches >= 2 && PULL_CATS.includes(h.categorie)) base += 3; // en hiver, le pull mène
         for (const v of ctx.voisins) {
           const hv = PAR_ID[v.haut];
           if (v.bas === b.id) base -= 15;
@@ -717,20 +772,22 @@ footer p { margin: 0; max-width: 65ch; }
             const s2 = superposer(s, h).score;
             if (!s2) continue;
             ns += s2 * 6 - (ctx.usageDessous.get(s.id) || 0) * 6 - (voisinsSous.includes(s.id) ? 4 : 0);
+            if (ctx.hautsAilleurs.has(s.id)) ns -= 8; // déjà portée en haut un autre jour
           }
           for (const d of dessus) {
             let n = ns;
             if (d) {
-              const s3 = surcouche(d, h, b).score;
+              const s3 = surcouche(d, h, b, s).score;
               if (!s3) continue;
               n += s3 * 4 - (ctx.usageDessus.get(d.id) || 0) * 2;
             }
             const couches = 1 + (s ? 1 : 0) + (d ? 1 : 0);
             if (couches < objectif) n -= (objectif - couches) * 9;
             if (alea) n += Math.random() * 4;
+            // Une chaîne vide marque une couche laissée de côté exprès : elle ne sera pas complétée plus tard.
             const t = { bas: b.id, haut: h.id };
-            if (s) t.dessous = s.id;
-            if (d) t.dessus = d.id;
+            if (s) t.dessous = s.id; else if (sous.length > 1) t.dessous = "";
+            if (d) t.dessus = d.id; else if (dessus.length > 1) t.dessus = "";
             res.push({ n, t });
           }
         }
@@ -767,16 +824,18 @@ footer p { margin: 0; max-width: 65ch; }
     let change = false;
     const h = PAR_ID[t.haut], b = PAR_ID[t.bas];
     const retirer = k => { delete t[k]; change = true; };
-    if (t.dessous && !accepte(h, PAR_ID[t.dessous])) retirer("dessous");
-    if (t.dessus && !aRole(t.dessus, "dessus")) retirer("dessus");
+    // Une couche devenue impossible ou « à éviter » (pièce supprimée ou modifiée) est retirée…
+    if (t.dessous && (!accepte(h, PAR_ID[t.dessous]) || !superposer(PAR_ID[t.dessous], h).score)) retirer("dessous");
+    if (t.dessus && (!aRole(t.dessus, "dessus") || !surcouche(PAR_ID[t.dessus], h, b, PAR_ID[t.dessous]).score)) retirer("dessus");
     if (t.pieds && !aRole(t.pieds, "pieds")) retirer("pieds");
     if (t.accessoire && !PAR_ID[t.accessoire]) retirer("accessoire");
-    if (!t.dessous && etat.couches >= 2 && accepteDessous(h)) {
+    // … puis remplacée ; une couche laissée de côté exprès (chaîne vide) le reste.
+    if (t.dessous === undefined && etat.couches >= 2 && accepteDessous(h)) {
       const s = meilleurePiece(SOUS.filter(x => accepte(h, x)), x => superposer(x, h).score, ctx.usageDessous, 6, ctx.voisins.map(v => v.dessous));
       if (s) { t.dessous = s; change = true; }
     }
-    if (!t.dessus && etat.couches >= 3) {
-      const d = meilleurePiece(DESSUS, x => surcouche(x, h, b).score, ctx.usageDessus, 2, ctx.voisins.map(v => v.dessus));
+    if (t.dessus === undefined && etat.couches >= 3) {
+      const d = meilleurePiece(DESSUS, x => surcouche(x, h, b, PAR_ID[t.dessous]).score, ctx.usageDessus, 2, ctx.voisins.map(v => v.dessus));
       if (d) { t.dessus = d; change = true; }
     }
     if (!t.pieds && PIEDS.length) {
@@ -785,12 +844,6 @@ footer p { margin: 0; max-width: 65ch; }
     }
     return change;
   }
-  // Après un changement du nombre de couches : retire les couches en trop, ajoute celles qui manquent.
-  function ajusterCouches(t, ctx) {
-    if (etat.couches < 2) delete t.dessous;
-    if (etat.couches < 3) delete t.dessus;
-    completer(t, ctx);
-  }
 
   function compter(entrees, cle) {
     const m = new Map();
@@ -798,7 +851,7 @@ footer p { margin: 0; max-width: 65ch; }
     return m;
   }
   const ctxVide = actuel => ({
-    hautsPris: new Set(), usageBas: new Map(), usageDessous: new Map(), usageDessus: new Map(), usagePieds: new Map(),
+    hautsPris: new Set(), hautsAilleurs: new Set(), usageBas: new Map(), usageDessous: new Map(), usageDessus: new Map(), usagePieds: new Map(),
     voisins: [], actuel: actuel || null,
   });
   function contexteJour(j, actuel) {
@@ -806,7 +859,9 @@ footer p { margin: 0; max-width: 65ch; }
     const i = ordre.indexOf(j);
     const autres = ordre.filter(x => x !== j).map(x => etat.plan[x]);
     return {
-      hautsPris: new Set(autres.map(t => t.haut)),
+      // Une pièce portée en haut ou en sous-couche un autre jour n'est pas reprise comme haut.
+      hautsPris: new Set(autres.flatMap(t => [t.haut, t.dessous]).filter(Boolean)),
+      hautsAilleurs: new Set(autres.map(t => t.haut)),
       usageBas: compter(autres, "bas"),
       usageDessous: compter(autres, "dessous"),
       usageDessus: compter(autres, "dessus"),
@@ -838,22 +893,49 @@ footer p { margin: 0; max-width: 65ch; }
       if (!t) { composerJour(j, null); change = true; continue; }
       if (!sur) continue; // ses pièces sont peut-être seulement pas encore chargées
       if (!valide(t)) { delete etat.plan[j]; composerJour(j, null); change = true; continue; }
+      if (retirerCouchesEnTrop(t)) change = true;
       if (completer(t, contexteJour(j, null))) change = true;
     }
-    if (change) ecrire();
     if (sur) {
       if (apercu && !valide(apercu)) apercu = null;
       if (apercu) completer(apercu, ctxVide());
-      if (ideeDuJour && valide(ideeDuJour)) completer(ideeDuJour, ctxVide());
+      const idee = ideeDuJour();
+      if (idee && valide(idee) && (retirerCouchesEnTrop(idee) | completer(idee, ctxVide()))) change = true;
       if (choix.id && !PAR_ID[choix.id]) choix = { id: null, rang: 0, filtre: choix.filtre };
+      if (etat.portee && !porteeId()) { etat.portee = null; change = true; }
     }
+    if (change) ecrire();
+  }
+  // Couches au-delà du réglage (par exemple quand la saison change) ; la pièce portée aujourd'hui reste.
+  function retirerCouchesEnTrop(t) {
+    const garder = porteeId();
+    let change = false;
+    if (etat.couches < 2 && t.dessous !== undefined && t.dessous !== garder) { delete t.dessous; change = true; }
+    if (etat.couches < 3 && t.dessus !== undefined && t.dessus !== garder) { delete t.dessus; change = true; }
+    return change;
   }
   function changerCouches(n) {
     if (![1, 2, 3].includes(n) || n === etat.couches) return;
     etat.couches = n;
-    JOURS.forEach(([j]) => { if (valide(etat.plan[j])) ajusterCouches(etat.plan[j], contexteJour(j, null)); });
-    if (valide(ideeDuJour)) ajusterCouches(ideeDuJour, ctxVide());
-    if (valide(apercu)) ajusterCouches(apercu, ctxVide());
+    etat.couchesChoisies = true;
+    const sur = etatAjouts === "ok";
+    const pid = porteeId();
+    const ajuster = (t, ctx) => {
+      if (!valide(t)) return t;
+      // La tenue portée aujourd'hui est recomposée autour de la pièce choisie.
+      if (sur && pid && contient(t, pid)) {
+        const n2 = suggestionsAutour(PAR_ID[pid])[0];
+        if (n2) return n2;
+      }
+      if (n < 2 || t.dessous === "") delete t.dessous;
+      if (n < 3 || t.dessus === "") delete t.dessus;
+      // Pendant le chargement, les pièces ajoutées sont inconnues : on ne complète qu'ensuite.
+      if (sur) completer(t, ctx);
+      return t;
+    };
+    JOURS.forEach(([j]) => { if (etat.plan[j]) etat.plan[j] = ajuster(etat.plan[j], contexteJour(j, null)); });
+    if (ideeDuJour()) poserIdee(ajuster(ideeDuJour(), ctxVide()));
+    if (apercu) apercu = ajuster(apercu, ctxVide());
     choix.rang = 0;
     ecrire();
   }
@@ -864,30 +946,46 @@ footer p { margin: 0; max-width: 65ch; }
     const essais = r === "bas" ? [{ bas: a.id }]
       : r === "haut" ? [{ haut: a.id }].concat(etat.couches >= 2 && peutEtreDessous(a) ? [{ dessous: a.id }] : [])
       : r === "dessus" ? [{ dessus: a.id }]
-      : [{}]; // chaussures et accessoires : les meilleures tenues, avec la pièce en plus
-    const toutes = essais.flatMap(c => generer(c, ctxVide(), false)).sort((x, y) => y.n - x.n);
-    // Deux suggestions doivent différer par la pièce qui compte le plus à côté de celle choisie.
-    const cle = t => r === "bas" ? t.haut
-      : r === "haut" ? (t.haut === a.id ? "bas:" + t.bas : "haut:" + t.haut)
-      : r === "dessus" ? t.haut
-      : t.haut + "|" + t.bas;
-    const vues = new Set(), liste = [];
-    for (const x of toutes) {
-      const k = cle(x.t);
-      if (vues.has(k)) continue;
-      vues.add(k);
-      const t = Object.assign({}, x.t);
+      : [{}]; // chaussures et accessoires : les tenues où leur couleur trouve sa place
+    let toutes = essais.flatMap(c => generer(c, ctxVide(), false));
+    if (r === "pieds" || r === "aucun") {
+      toutes = toutes.map(x => { const k = touche(a, x.t); return { n: x.n + (k ? k.score : 2) * 6, t: x.t }; });
+    }
+    toutes.sort((x, y) => y.n - x.n);
+    // Choix glouton : chaque suggestion paie les pièces déjà vues dans les précédentes,
+    // pour varier le bas, le haut, la sous-couche et le par-dessus.
+    const vus = { bas: new Map(), haut: new Map(), dessous: new Map(), dessus: new Map() };
+    const poids = { bas: 8, haut: 7, dessous: 6, dessus: 3 };
+    const pris = new Set(), liste = [];
+    const candidats = toutes.slice(0, 400);
+    while (liste.length < 5) {
+      let meilleur = null, max = -Infinity;
+      for (const x of candidats) {
+        if (pris.has(x)) continue;
+        let n = x.n;
+        for (const k in vus) if (x.t[k]) n -= (vus[k].get(x.t[k]) || 0) * poids[k];
+        if (n > max) { max = n; meilleur = x; }
+      }
+      if (!meilleur) break;
+      pris.add(meilleur);
+      for (const k in vus) if (meilleur.t[k]) vus[k].set(meilleur.t[k], (vus[k].get(meilleur.t[k]) || 0) + 1);
+      const t = Object.assign({}, meilleur.t);
       if (r === "pieds") t.pieds = a.id;
       else if (PIEDS.length) t.pieds = chaussuresPour(PAR_ID[t.bas]);
       if (r === "aucun") t.accessoire = a.id;
       liste.push(t);
-      if (liste.length === 5) break;
     }
     return liste;
   }
   // La meilleure tenue qui contient des pièces imposées (cases des tableaux d'accords).
   function meilleureAvec(contraintes) {
     const r = generer(contraintes, ctxVide(), false)[0];
+    if (!r && contraintes.dessous) {
+      // Superposition « à éviter » : on la montre quand même, sur la meilleure tenue de ce haut.
+      const t = meilleureAvec({ haut: contraintes.haut });
+      if (t) t.dessous = contraintes.dessous;
+      return t;
+    }
     const t = r ? Object.assign({}, r.t) : Object.assign({}, contraintes);
     if (!valide(t)) return null;
     if (!r) completer(t, ctxVide());
@@ -980,20 +1078,25 @@ footer p { margin: 0; max-width: 65ch; }
   }
 
   function tenueAffichee() {
+    const pid = porteeId();
+    const autour = t => (contient(t, pid) ? `Composée autour de : ${nomComplet(PAR_ID[pid])}.` : null);
     if (apercu && valide(apercu)) return { t: apercu, contexte: "Choisie dans un tableau d'accords." };
     apercu = null;
     const prevue = etat.plan[AUJ[0]];
     let contexte = `${AUJ[1]} n'est pas coché dans ta semaine, voici quand même une idée.`;
     if (etat.jours.includes(AUJ[0]) && prevue) {
-      if (valide(prevue)) {
-        return { t: prevue, contexte: portee && portee.t === prevue ? `Composée autour de : ${portee.nom}.` : `Prévue dans ta semaine pour ${AUJ[1].toLowerCase()}.` };
-      }
+      if (valide(prevue)) return { t: prevue, contexte: autour(prevue) || `Prévue dans ta semaine pour ${AUJ[1].toLowerCase()}.` };
       if (etatAjouts === "chargement") return null;
       contexte = "Ta tenue prévue aujourd'hui utilise une pièce ajoutée qui n'a pas pu être chargée. Voici une autre idée.";
     }
-    if (!valide(ideeDuJour)) ideeDuJour = composerAvecRepli(ctxVide());
-    if (ideeDuJour && portee && portee.t === ideeDuJour) contexte = `Composée autour de : ${portee.nom}.`;
-    return ideeDuJour ? { t: ideeDuJour, contexte } : null;
+    let t = ideeDuJour();
+    if (!valide(t)) {
+      if (t && etatAjouts === "chargement") return null; // l'idée enregistrée attend ses pièces ajoutées
+      t = composerAvecRepli(ctxVide());
+      poserIdee(t);
+      ecrire();
+    }
+    return t ? { t, contexte: autour(t) || contexte } : null;
   }
 
   function rendreTenue() {
@@ -1010,6 +1113,7 @@ footer p { margin: 0; max-width: 65ch; }
     const { t, contexte } = r;
     const g = grilleTenue(t, null), ev = noterTenue(t);
     F("tenue-slots").style.setProperty("--n", g.n);
+    F("tenue-slots").dataset.n = g.n;
     F("tenue-slots").innerHTML = g.html;
     F("tenue-verdict").innerHTML = badgesTenue(t, ev) + `<p>${esc(contexte)}</p>`;
     F("tenue-raisons").innerHTML = listeRaisons(ev);
@@ -1037,7 +1141,7 @@ footer p { margin: 0; max-width: 65ch; }
   function rendreSemaine() {
     JOURS.forEach(([j]) => { F("jour-" + j).checked = etat.jours.includes(j); });
     F("intro-semaine").textContent = "Coche tes jours de travail. Chaque jour reçoit un haut différent, et les bas tournent pour montrer toute la collection. " +
-      (ETE ? "D'avril à septembre, les t-shirts passent avant les pulls." : "D'octobre à mars, les pulls passent avant les t-shirts.");
+      (etat.couches === 1 ? "En une couche, les t-shirts passent avant les pulls." : "Avec plusieurs couches, les pulls passent avant les t-shirts portés seuls.");
     const jours = JOURS.filter(([j]) => etat.jours.includes(j) && etat.plan[j]);
     const liste = F("liste-semaine");
     if (!jours.length) {
@@ -1096,7 +1200,7 @@ footer p { margin: 0; max-width: 65ch; }
     const autres = liste.map((x, i) => [x, i]).filter(([, i]) => i !== choix.rang);
     zone.innerHTML = `
       <p class="choix-tete">Autour de : <strong>${esc(nomComplet(a))}</strong></p>
-      <div class="tenue" style="--n:${g.n}">${g.html}</div>
+      <div class="tenue" style="--n:${g.n}" data-n="${g.n}">${g.html}</div>
       <div class="verdict">
         <div class="verdict-texte">${badgesTenue(t, ev)}<p>Suggestion ${choix.rang + 1} sur ${liste.length}</p></div>
         <div class="actions">
@@ -1180,7 +1284,9 @@ footer p { margin: 0; max-width: 65ch; }
     const corps = `<tbody>${lignes.map(l => `<tr>
       <th scope="row"><span class="lig"><img src="${esc(l.image)}" alt="" width="32" height="40" loading="lazy">${esc(court(l))}</span></th>
       ${colonnes.map(c => {
-        const niv = NIVEAUX[note(l, c)];
+        const score = note(l, c);
+        if (score === null) return `<td><span class="cell na" title="Ne se porte pas ainsi">–</span></td>`;
+        const niv = NIVEAUX[score];
         const label = `${court(c)} avec ${court(l)} : ${niv.nom}`;
         return `<td><button class="cell ${niv.cls}" type="button" data-action="${action}" ${attributs(l, c)} title="${esc(label)}" aria-label="${esc(label)}">${niv.sym}</button></td>`;
       }).join("")}
@@ -1199,7 +1305,7 @@ footer p { margin: 0; max-width: 65ch; }
     F("superpositions-vide").hidden = !!avecSous;
     F("superpositions-table").hidden = !avecSous;
     if (avecSous) {
-      F("table-superpositions").innerHTML = tableAccords(SOUS, porteurs, (s, h) => (accepte(h, s) ? superposer(s, h).score : 0), "voir-sup",
+      F("table-superpositions").innerHTML = tableAccords(SOUS, porteurs, (s, h) => (accepte(h, s) ? superposer(s, h).score : null), "voir-sup",
         (s, h) => `data-dessous="${esc(s.id)}" data-haut="${esc(h.id)}"`, "Sous-couche \\ Haut");
     }
   }
@@ -1257,7 +1363,8 @@ footer p { margin: 0; max-width: 65ch; }
     const marque = texte(d.marque, 60), couleur = texte(d.couleur, 40);
     if (!marque || !couleur) return null;
     const lien = d.lien ? lienSur(d.lien) : null;
-    const encolure = texte(d.encolure, 20);
+    // Les pièces enregistrées avant qu'un col soit reconnu retrouvent leur encolure depuis le modèle.
+    const encolure = texte(d.encolure, 20) || devinerEncolure(texte(d.modele, 80), categorie) || "";
     return {
       id: "achat-" + doc.id, docId: doc.id, ajoute: true,
       categorie, marque, modele: texte(d.modele, 80), coupe: texte(d.coupe, 80), couleur, teinte,
@@ -1388,6 +1495,7 @@ footer p { margin: 0; max-width: 65ch; }
     if (/polo/.test(m)) return "polo";
     if (/col v\b|v-neck/.test(m)) return "v";
     if (/capuche|hood/.test(m)) return "capuche";
+    if (/roule|turtle|cheminee|col montant/.test(m)) return "roule";
     if (/rond|crew/.test(m)) return "rond";
     return undefined;
   }
@@ -1794,7 +1902,9 @@ footer p { margin: 0; max-width: 65ch; }
     const j = e.target.value;
     if (e.target.checked) {
       if (!etat.jours.includes(j)) etat.jours.push(j);
-      composerJour(j, null);
+      // Cocher aujourd'hui garde la tenue déjà affichée (l'idée du jour, ou la tenue portée).
+      if (j === AUJ[0] && valide(ideeDuJour())) { etat.plan[j] = ideeDuJour(); poserIdee(null); }
+      else composerJour(j, null);
     } else {
       etat.jours = etat.jours.filter(x => x !== j);
       delete etat.plan[j];
@@ -1804,8 +1914,11 @@ footer p { margin: 0; max-width: 65ch; }
   });
 
   ["tenue", "choix"].forEach(suffixe => F(`couches-${suffixe}`).addEventListener("change", e => {
+    // Le réglage touché reste sous le doigt même si la tenue au-dessus change de hauteur.
+    const repere = F(`couches-${suffixe}`), avant = repere.getBoundingClientRect().top;
     changerCouches(Number(e.target.value));
     rendre(rendreTenue, rendreChoix, rendreSemaine);
+    window.scrollBy(0, repere.getBoundingClientRect().top - avant);
   }));
 
   function choisirPiece(id, depuisCatalogue) {
@@ -1815,7 +1928,8 @@ footer p { margin: 0; max-width: 65ch; }
     if (depuisCatalogue && choix.filtre !== "tout" && PAR_ID[id].categorie !== choix.filtre) choix.filtre = "tout";
     rendre(rendreChoix);
     if (depuisCatalogue) {
-      F("choisir").scrollIntoView({ block: "start" });
+      // Depuis le catalogue, on arrive directement sur la tenue proposée.
+      F("choix-resultat").scrollIntoView({ block: "start" });
       const b = F("piece-" + id);
       if (b) b.focus({ preventScroll: true });
     } else if (F("choix-resultat").getBoundingClientRect().top > window.innerHeight * 0.7) {
@@ -1840,13 +1954,11 @@ footer p { margin: 0; max-width: 65ch; }
       rendre(rendreSemaine, rendreTenue);
     }
     else if (action === "autre") {
-      portee = null;
-      if (etat.jours.includes(AUJ[0]) && valide(etat.plan[AUJ[0]])) {
-        composerJour(AUJ[0], etat.plan[AUJ[0]]); ecrire(); rendre(rendreSemaine, rendreTenue);
-      } else {
-        ideeDuJour = composer(ctxVide(ideeDuJour)) || ideeDuJour;
-        rendre(rendreTenue);
-      }
+      etat.portee = null;
+      if (etat.jours.includes(AUJ[0]) && valide(etat.plan[AUJ[0]])) composerJour(AUJ[0], etat.plan[AUJ[0]]);
+      else poserIdee(composer(ctxVide(ideeDuJour())) || ideeDuJour());
+      ecrire();
+      rendre(rendreSemaine, rendreTenue);
     }
     else if (action === "retour") {
       apercu = null;
@@ -1880,9 +1992,10 @@ footer p { margin: 0; max-width: 65ch; }
       const t = liste[choix.rang];
       if (!t) return;
       apercu = null;
-      if (etat.jours.includes(AUJ[0])) { etat.plan[AUJ[0]] = t; ecrire(); }
-      else ideeDuJour = t;
-      portee = { t, nom: nomComplet(a) };
+      if (etat.jours.includes(AUJ[0])) etat.plan[AUJ[0]] = t;
+      else poserIdee(t);
+      etat.portee = { date: AUJ_DATE, id: a.id };
+      ecrire();
       rendre(rendreTenue, rendreSemaine);
       F("tenue").scrollIntoView({ block: "start" });
       const b = F("autre-tenue");
