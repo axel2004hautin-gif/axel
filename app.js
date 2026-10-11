@@ -42,7 +42,7 @@
       .map((a, i) => [a, i])
       .sort((x, y) => ORDRE_CAT[x[0].categorie] - ORDRE_CAT[y[0].categorie] || x[1] - y[1])
       .map(x => x[0]);
-    PAR_ID = Object.fromEntries(ARTICLES.map(a => [a.id, a]));
+    PAR_ID = Object.assign(Object.create(null), Object.fromEntries(ARTICLES.map(a => [a.id, a])));
     const parRole = r => ARTICLES.filter(a => role(a) === r);
     BAS = parRole("bas"); HAUTS = parRole("haut"); PIEDS = parRole("pieds"); DESSUS = parRole("dessus");
     SOUS = ARTICLES.filter(a => SOUS_CATS.includes(a.categorie));
@@ -203,7 +203,8 @@
   // "lecture" : quelqu'un d'autre regarde la page, sans pouvoir écrire.
   let modeDonnees = window.claude && typeof window.claude.use === "function" ? "attente" : "local";
   let peutEcrireDonnees = false;
-  const donnees = { journal: {}, pieces: {}, favoris: {}, gouts: {} };
+  const vide = () => Object.create(null);
+  const donnees = { journal: vide(), pieces: vide(), favoris: vide(), gouts: vide() };
   const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
   const METEOS = {
     froid: { nom: "Froid", couches: 3, aide: "Froid : sous-couche, pull et veste ou manteau." },
@@ -232,7 +233,7 @@
     return tenue ? { tenue, ajouteLe: texte(d.ajouteLe, 40) } : null;
   }
   function lireGouts(d) {
-    const g = {};
+    const g = vide();
     if (d && d.paires && typeof d.paires === "object") {
       for (const [k, v] of Object.entries(d.paires)) {
         if (k.length <= 200 && Number.isInteger(v) && v >= -3 && v <= 3 && v) g[k] = v;
@@ -240,6 +241,10 @@
     }
     return g;
   }
+  let journalLu = false;             // premier instantané du journal reçu (page publiée)
+  const journalPret = () => modeDonnees === "local" || journalLu;
+  let goutsPrets = false;            // goûts lus de façon définitive (page publiée)
+  const goutsDisponibles = () => modeDonnees !== "base" || goutsPrets;
   const LECTEURS = { journal: lireEntreeJournal, pieces: lireMeta, favoris: lireFavori };
 
   function lireDonneesLocales() {
@@ -272,17 +277,22 @@
     return JSON.parse(JSON.stringify(v));
   }
   function appliquerLocal(collection, id, v) {
-    if (collection === "gouts") donnees.gouts = v ? Object.assign({}, v.paires) : {};
+    if (collection === "gouts") donnees.gouts = Object.assign(vide(), v ? v.paires : null);
     else if (possede(donnees, collection)) {
       if (v) donnees[collection][id] = v; else delete donnees[collection][id];
       if (collection === "journal") indexerJournal();
     }
+  }
+  function valeurLocale(collection, id) {
+    if (collection === "gouts") return { paires: Object.assign({}, donnees.gouts) };
+    return possede(donnees, collection) && possede(donnees[collection], id) ? donnees[collection][id] : null;
   }
   const filesEcriture = new Map();
   // Enregistre (ou supprime avec null) un document : l'écran change tout de suite, la base suit,
   // une écriture à la fois par document.
   function enregistrer(collection, id, valeur) {
     if (!peutNoter() && collection !== "etat") return Promise.reject({ code: "lecture" });
+    const precedente = valeurLocale(collection, id);
     appliquerLocal(collection, id, valeur);
     if (modeDonnees === "local") { if (collection !== "etat") ecrireDonneesLocales(); return Promise.resolve(); }
     if (modeDonnees !== "base" || !peutEcrireDonnees) return Promise.reject({ code: "lecture" });
@@ -292,6 +302,8 @@
     const suite = avant.catch(() => {}).then(() => appel(() => (corps ? db.doc(chemin).set(corps) : db.doc(chemin).delete()), ["unavailable"]));
     filesEcriture.set(chemin, suite);
     return suite.catch(err => {
+      // Rien n'a été enregistré : l'écran revient à l'état d'avant, sauf si une écriture plus récente suit.
+      if (filesEcriture.get(chemin) === suite) { appliquerLocal(collection, id, precedente); planifierRendu(); }
       toast(CODES_DROITS.includes(err && err.code) ? "Seul le propriétaire de la page peut enregistrer." : "L'enregistrement n'a pas abouti. Réessaie dans un instant.", "erreur");
       throw err;
     });
@@ -328,7 +340,7 @@
     for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0;
     return "f" + h.toString(36);
   }
-  const copieTenue = t => { const n = {}; SLOTS.forEach(k => { if (t[k]) n[k] = t[k]; }); return n; };
+  const copieTenue = t => { const n = {}; SLOTS.forEach(k => { if (typeof t[k] === "string") n[k] = t[k]; }); return n; };
   // Les jours de la semaine en cours, du lundi au dimanche, en dates.
   const INDEX_AUJ = JOURS.findIndex(x => x[0] === AUJ[0]);
   function dateSemaine(i) {
@@ -362,12 +374,22 @@
     const m = new Date().getMonth();
     return m >= 9 || m <= 2 ? 3 : m === 3 || m === 8 ? 2 : 1;
   }
-  const AUJ_DATE = (d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`)(new Date());
+  const dateDe = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const AUJ_DATE = dateDe(new Date());
+  // Une page restée ouverte passe minuit : elle se recharge plutôt que d'écrire sur la veille.
+  let rechargement = false;
+  function jourChange() {
+    if (rechargement || dateDe(new Date()) === AUJ_DATE) return rechargement;
+    rechargement = true;
+    location.reload();
+    return true;
+  }
   // Une tenue lue du stockage : seulement des ids (une chaîne vide = couche volontairement absente).
   function nettoyerTenue(t) {
     if (!t || typeof t.bas !== "string" || typeof t.haut !== "string") return null;
     const n = {};
-    SLOTS.forEach(k => { if (typeof t[k] === "string") n[k] = t[k]; });
+    SLOTS.forEach(k => { if (typeof t[k] === "string" && /^[A-Za-z0-9_-]{0,80}$/.test(t[k])) n[k] = t[k]; });
+    if (!n.bas || !n.haut) return null;
     return n;
   }
   function lireEtat(e) {
@@ -379,14 +401,18 @@
         const t = nettoyerTenue(e.plan && e.plan[j]);
         if (t) plan[j] = t;
       }
-      // Le nombre de couches suit la saison tant qu'il n'a pas été choisi à la main.
-      const choisies = e.couchesChoisies === true && [1, 2, 3].includes(e.couches);
+      // Le nombre de couches suit la saison tant qu'il n'a pas été choisi à la main ; la météo
+      // l'impose pour son jour seulement.
+      const valeur = n => [1, 2, 3].includes(n);
+      const choisies = e.couchesChoisies === true && valeur(e.couches);
+      const manuelles = choisies ? (valeur(e.couchesManuelles) ? e.couchesManuelles : e.couches) : null;
       const idee = e.idee && e.idee.date === AUJ_DATE ? nettoyerTenue(e.idee.t) : null;
       const portee = e.portee && e.portee.date === AUJ_DATE && typeof e.portee.id === "string" ? { date: AUJ_DATE, id: e.portee.id } : null;
       const meteo = e.meteo && e.meteo.date === AUJ_DATE && possede(METEOS, e.meteo.valeur) ? { date: AUJ_DATE, valeur: e.meteo.valeur } : null;
       return {
         jours, plan,
-        couches: choisies ? e.couches : couchesDeSaison(), couchesChoisies: choisies,
+        couches: meteo && e.couchesMeteo === AUJ_DATE && valeur(e.couches) ? e.couches : choisies ? manuelles : couchesDeSaison(),
+        couchesChoisies: choisies, couchesManuelles: manuelles, couchesMeteo: meteo && e.couchesMeteo === AUJ_DATE ? AUJ_DATE : null,
         idee: idee ? { date: AUJ_DATE, t: idee } : null, portee, meteo,
         majLe: nombre(e.majLe, 0, 1e15) || 0,
       };
@@ -400,18 +426,18 @@
   }
   // La semaine est partagée entre appareils par la base. L'heure de modification les départage ;
   // une semaine composée automatiquement avant d'avoir lu la base n'écrase pas celle qui y est.
-  let syncPrete = false, minuteurSync = null;
+  let syncPrete = false, minuteurSync = null, gesteAvantSync = false;
   function ecrire() {
-    if (modeDonnees === "local" || modeDonnees === "lecture" || syncPrete) etat.majLe = Date.now();
+    if (modeDonnees === "local" || modeDonnees === "lecture" || syncPrete) etat.majLe = Math.max(Date.now(), (etat.majLe || 0) + 1);
     sauverLocal();
     programmerSync();
   }
   function programmerSync() {
-    if (modeDonnees !== "base" || !peutEcrireDonnees || !syncPrete) return;
+    if (modeDonnees !== "base" || !peutEcrireDonnees || !syncPrete || jourChange()) return;
     clearTimeout(minuteurSync);
     minuteurSync = setTimeout(() => { enregistrer("etat", "semaine", etat).catch(() => {}); }, 700);
   }
-  const cleEtat = e => JSON.stringify([e.jours, e.plan, e.couches, e.couchesChoisies, e.idee, e.portee, e.meteo]);
+  const cleEtat = e => JSON.stringify([e.jours, e.plan, e.couches, e.couchesChoisies, e.couchesManuelles, e.couchesMeteo, e.idee, e.portee, e.meteo]);
   function surEtatDistant(snap) {
     const definitif = !(snap.metadata && snap.metadata.fromCache);
     const distant = snap.exists ? lireEtat(snap.data()) : null;
@@ -420,13 +446,18 @@
       if (cleEtat(distant) !== cleEtat(etat)) {
         etat = distant;
         sauverLocal();
-        if (etatAjouts === "ok") reconcilier();
+        if (etatAjouts === "ok") reconcilier(true);
         planifierRendu();
       } else etat.majLe = majDistant;
     }
     if (definitif && modeDonnees === "base" && !syncPrete) {
       syncPrete = true;
       if (!distant || majDistant < (etat.majLe || 0)) { etat.majLe = etat.majLe || Date.now(); programmerSync(); }
+      else if (gesteAvantSync && majDistant === (etat.majLe || 0) && cleEtat(distant) !== cleEtat(etat)) {
+        etat.majLe = Math.max(Date.now(), majDistant + 1);
+        sauverLocal();
+        programmerSync();
+      }
     }
   }
 
@@ -435,8 +466,11 @@
   // Idée du jour (quand aujourd'hui n'est pas coché) et pièce « portée aujourd'hui » : gardées pour la journée.
   const ideeDuJour = () => (etat.idee && etat.idee.date === AUJ_DATE ? etat.idee.t : null);
   const poserIdee = t => { etat.idee = t ? { date: AUJ_DATE, t } : null; };
-  const porteeId = () => (etat.portee && etat.portee.date === AUJ_DATE && PAR_ID[etat.portee.id] ? etat.portee.id : null);
+  const tenueDuJourBrute = () => (etat.jours.includes(AUJ[0]) && valide(etat.plan[AUJ[0]]) ? etat.plan[AUJ[0]] : ideeDuJour());
+  const porteeId = () => (etat.portee && etat.portee.date === AUJ_DATE && PAR_ID[etat.portee.id] && contient(tenueDuJourBrute(), etat.portee.id) ? etat.portee.id : null);
   const contient = (t, id) => !!(t && id && SLOTS.some(k => t[k] === id));
+  // La tenue affichée est-elle celle notée au journal aujourd'hui ?
+  const noteeAujourdhui = t => { const e = donnees.journal[AUJ_DATE]; return !!(e && t && cleTenue(e.tenue) === cleTenue(t)); };
   let filtre = "tout";
   let choix = { id: null, rang: 0, filtre: "tout" };  // « Je veux porter… »
   // Pièces ajoutées depuis la page : "chargement" tant que la base n'a pas répondu de façon
@@ -484,10 +518,10 @@
     const dessusImpose = c.dessus ? PAR_ID[c.dessus] : null;
     const voisinsSous = ctx.voisins.map(v => v.dessous);
     const hors = horsSaison();
-    const pluie = meteoDuJour() === "pluie";
+    const pluie = ctx.pluie !== undefined ? ctx.pluie : meteoDuJour() === "pluie";
     const res = [];
     for (const h of listeHauts) {
-      if (!h || ctx.hautsPris.has(h.id)) continue;
+      if (!h || (!c.haut && ctx.hautsPris.has(h.id))) continue;
       let sous = [null];
       if (sousImpose) { if (!accepte(h, sousImpose)) continue; sous = [sousImpose]; }
       else if (etat.couches >= 2 && accepteDessous(h)) sous = sous.concat(SOUS.filter(s => libre(s) && accepte(h, s)));
@@ -592,16 +626,16 @@
     if (t.accessoire && !PAR_ID[t.accessoire]) retirer("accessoire");
     // … puis remplacée ; une couche laissée de côté exprès (chaîne vide) le reste.
     if (t.dessous === undefined && etat.couches >= 2 && accepteDessous(h)) {
-      const s = meilleurePiece(SOUS.filter(x => accepte(h, x)), x => superposer(x, h).score, ctx.usageDessous, 6, ctx.voisins.map(v => v.dessous));
+      const s = meilleurePiece(SOUS.filter(x => accepte(h, x) && gout("sh:" + x.id + "|" + h.id) > -2), x => superposer(x, h).score, ctx.usageDessous, 6, ctx.voisins.map(v => v.dessous));
       if (s) { t.dessous = s; change = true; }
     }
     if (t.dessus === undefined && etat.couches >= 3) {
-      const d = meilleurePiece(DESSUS, x => surcouche(x, h, b, PAR_ID[t.dessous]).score, ctx.usageDessus, 2, ctx.voisins.map(v => v.dessus));
+      const d = meilleurePiece(DESSUS.filter(x => gout("dh:" + x.id + "|" + h.id) > -2), x => surcouche(x, h, b, PAR_ID[t.dessous]).score, ctx.usageDessus, 2, ctx.voisins.map(v => v.dessus));
       if (d) { t.dessus = d; change = true; }
     }
     if (!t.pieds && PIEDS.length) {
-      t.pieds = choisirParmi(PIEDS, ctx.usagePieds, ctx.voisins.map(v => v.pieds), true);
-      change = true;
+      const p = choisirParmi(PIEDS, ctx.usagePieds, ctx.voisins.map(v => v.pieds), true);
+      if (p) { t.pieds = p; change = true; }
     }
     return change;
   }
@@ -630,6 +664,7 @@
       voisins: [etat.plan[ordre[i - 1]], etat.plan[ordre[i + 1]]].filter(Boolean),
       actuel: actuel || null,
       exclus: new Set(),
+      pluie: j === AUJ[0] && meteoDuJour() === "pluie",
     };
   }
   function composerJour(j, actuel) {
@@ -639,11 +674,16 @@
   }
   function composerSemaine() {
     etat.plan = {};
-    JOURS.forEach(([j]) => { if (etat.jours.includes(j)) composerJour(j, null); });
+    // Les jours déjà portés gardent la tenue notée au journal.
+    JOURS.forEach(([j], i) => {
+      const e = i <= INDEX_AUJ ? donnees.journal[dateSemaine(i)] : null;
+      if (etat.jours.includes(j) && e && valide(e.tenue)) etat.plan[j] = copieTenue(e.tenue);
+    });
+    JOURS.forEach(([j]) => { if (etat.jours.includes(j) && !etat.plan[j]) composerJour(j, null); });
     ecrire();
   }
   // Remet la semaine d'aplomb quand des pièces arrivent, changent ou disparaissent.
-  function reconcilier() {
+  function reconcilier(distant) {
     const sur = etatAjouts === "ok";
     let change = false;
     for (const [j] of JOURS) {
@@ -655,19 +695,20 @@
       if (!t) { composerJour(j, null); change = true; continue; }
       if (!sur) continue; // ses pièces sont peut-être seulement pas encore chargées
       if (!valide(t)) { delete etat.plan[j]; composerJour(j, null); change = true; continue; }
-      if (retirerCouchesEnTrop(t)) change = true;
-      if (completer(t, contexteJour(j, null))) change = true;
+      if (!noteeAujourdhui(t) && retirerCouchesEnTrop(t)) change = true;
+      if (!noteeAujourdhui(t) && completer(t, contexteJour(j, null))) change = true;
     }
     if (sur) {
       if (apercu && !valide(apercu)) apercu = null;
       if (apercu) completer(apercu, ctxVide());
       const idee = ideeDuJour();
-      if (idee && valide(idee) && (retirerCouchesEnTrop(idee) | completer(idee, ctxVide()))) change = true;
+      if (idee && valide(idee) && !noteeAujourdhui(idee) && (retirerCouchesEnTrop(idee) | completer(idee, ctxVide()))) change = true;
       if (choix.id && !PAR_ID[choix.id]) choix = { id: null, rang: 0, filtre: choix.filtre };
       if (etat.portee && !porteeId()) { etat.portee = null; change = true; }
       if (remplacerIndispo()) change = true;
     }
-    if (change) ecrire();
+    // Venue d'un autre appareil, la donnée y a déjà été réparée : on n'envoie rien en retour.
+    if (change) { if (distant) sauverLocal(); else ecrire(); }
   }
   // Une tenue qui contient une pièce au lavage : on recompose si c'est le haut ou le bas, sinon on
   // remplace seulement la pièce. Les jours passés et la tenue déjà notée aujourd'hui ne bougent pas.
@@ -678,16 +719,40 @@
     if (change) completer(t, ctx);
     return change;
   }
+  // Seules les pièces au lavage sont remplacées, la pièce choisie reste.
+  function reparerAutour(t, ctx, pid) {
+    let n = t, change = false;
+    for (const k of SLOTS) {
+      if (!n[k] || n[k] === pid || !auLavage(n[k])) continue;
+      const r = remplacerPiece(n, k, Object.assign({}, ctx));
+      if (r) n = r;
+      else if (k !== "bas" && k !== "haut") { n = copieTenue(n); delete n[k]; }
+      else continue;
+      change = true;
+    }
+    return change ? n : null;
+  }
   function remplacerIndispo() {
+    if (!journalPret()) return false;
     let change = false;
-    const noteAujourdhui = !!donnees.journal[AUJ_DATE];
+    // La pièce choisie (« Je veux porter ») : si elle-même part au lavage, la tenue est recomposée.
+    if (etat.portee && auLavage(etat.portee.id)) { etat.portee = null; change = true; }
+    const pid = porteeId();
     JOURS.forEach(([j], i) => {
       const t = etat.plan[j];
-      if (i < INDEX_AUJ || !valide(t) || (i === INDEX_AUJ && noteAujourdhui)) return;
+      if (i < INDEX_AUJ || !valide(t) || (i === INDEX_AUJ && noteeAujourdhui(t))) return;
+      if (i === INDEX_AUJ && pid && contient(t, pid)) {
+        const n = reparerAutour(t, contexteJour(j, null), pid);
+        if (n) { etat.plan[j] = n; change = true; }
+        return;
+      }
       if (reparer(t, contexteJour(j, null), () => composerJour(j, null))) change = true;
     });
     const idee = ideeDuJour();
-    if (!noteAujourdhui && valide(idee) && reparer(idee, ctxVide(), () => poserIdee(composerAvecRepli(ctxVide())))) change = true;
+    if (!noteeAujourdhui(idee) && valide(idee) && pid && contient(idee, pid)) {
+      const n = reparerAutour(idee, ctxVide(), pid);
+      if (n) { poserIdee(n); change = true; }
+    } else if (!noteeAujourdhui(idee) && valide(idee) && reparer(idee, ctxVide(), () => poserIdee(composerAvecRepli(ctxVide())))) change = true;
     if (etat.portee && auLavage(etat.portee.id)) { etat.portee = null; change = true; }
     return change;
   }
@@ -701,7 +766,12 @@
       if (!p) return null;
       return Object.assign(copieTenue(t), { pieds: p });
     }
-    if (k === "accessoire") { const n = copieTenue(t); delete n.accessoire; return n; }
+    if (k === "accessoire") {
+      // Un autre accessoire : d'abord ceux dont la couleur ne se dispute pas avec le haut.
+      const rang = x => { const s = touche(x, t); return (s ? s.score : 2) + Math.random(); };
+      const autres = ARTICLES.filter(x => role(x) === "aucun" && x.id !== t.accessoire && dispo(x)).sort((x, y) => rang(y) - rang(x));
+      return autres.length ? Object.assign(copieTenue(t), { accessoire: autres[0].id }) : null;
+    }
     // Le haut change : la sous-couche peut ne plus convenir, on la laisse choisir à nouveau.
     if (k === "haut") delete garder.dessous;
     // On garde les autres couches tant que c'est possible, sinon on les laisse se rechoisir.
@@ -710,6 +780,14 @@
     let liste = generer(garder, ctx, true);
     while (!liste.some(convient) && relacher.length) { delete garder[relacher.shift()]; liste = generer(garder, ctx, true); }
     const r = liste.find(convient);
+    if (!r && (k === "dessous" || k === "dessus")) {
+      // Le réglage de couches est plus bas que la tenue : on choisit la couche directement.
+      const h = PAR_ID[t.haut], b = PAR_ID[t.bas];
+      const id = k === "dessous"
+        ? meilleurePiece(SOUS.filter(x => x.id !== t[k] && accepte(h, x) && gout("sh:" + x.id + "|" + h.id) > -2), x => superposer(x, h).score, ctx.usageDessous, 6, [])
+        : meilleurePiece(DESSUS.filter(x => x.id !== t[k] && gout("dh:" + x.id + "|" + h.id) > -2), x => surcouche(x, h, b, PAR_ID[t.dessous]).score, ctx.usageDessus, 2, []);
+      return id ? Object.assign(copieTenue(t), { [k]: id }) : null;
+    }
     if (!r) return null;
     const n = Object.assign({}, r.t);
     ["pieds", "accessoire"].forEach(x => { if (t[x] && x !== k) n[x] = t[x]; });
@@ -724,14 +802,19 @@
     if (etat.couches < 3 && t.dessus !== undefined && t.dessus !== garder) { delete t.dessus; change = true; }
     return change;
   }
-  function changerCouches(n) {
-    if (![1, 2, 3].includes(n) || n === etat.couches) return;
+  function changerCouches(n, parMeteo) {
+    if (![1, 2, 3].includes(n)) return;
+    // Un choix à la main est gardé ; celui de la météo ne vaut que pour aujourd'hui.
+    const reglage = () => JSON.stringify([etat.couchesChoisies, etat.couchesManuelles, etat.couchesMeteo]);
+    const avant = reglage();
+    if (parMeteo) etat.couchesMeteo = AUJ_DATE;
+    else { etat.couchesChoisies = true; etat.couchesManuelles = n; etat.couchesMeteo = null; }
+    if (n === etat.couches) { if (reglage() !== avant) ecrire(); return; }
     etat.couches = n;
-    etat.couchesChoisies = true;
     const sur = etatAjouts === "ok";
     const pid = porteeId();
     const ajuster = (t, ctx) => {
-      if (!valide(t)) return t;
+      if (!valide(t) || noteeAujourdhui(t)) return t;
       // La tenue portée aujourd'hui est recomposée autour de la pièce choisie.
       if (sur && pid && contient(t, pid)) {
         const n2 = suggestionsAutour(PAR_ID[pid])[0];
@@ -830,8 +913,8 @@
     const o = opts || {};
     // Sur la tenue du jour : changer cette pièce seulement, ou la mettre au lavage (et la remplacer).
     const actions = o.k ? `<span class="slot-actions">
-        <button class="lien-action" type="button" id="slot-changer-${o.k}" data-action="slot-changer" data-slot="${o.k}">Changer</button>
-        ${peutNoter() && o.k !== "accessoire" ? `<button class="lien-action" type="button" id="slot-lavage-${o.k}" data-action="slot-lavage" data-slot="${o.k}">Au lavage</button>` : ""}
+        <button class="lien-action" type="button" id="slot-changer-${o.k}" data-action="slot-changer" data-slot="${o.k}" aria-label="Changer : ${esc(nomComplet(a))}">Changer</button>
+        ${peutNoter() && o.k !== "accessoire" ? `<button class="lien-action" type="button" id="slot-lavage-${o.k}" data-action="slot-lavage" data-slot="${o.k}" aria-label="Mettre au lavage : ${esc(nomComplet(a))}">Au lavage</button>` : ""}
       </span>` : "";
     return `<figure class="slot${o.large ? " large" : ""}${o.mienne ? " mienne" : ""}${auLavage(a.id) ? " lavage" : ""}">
       <span class="couche">${esc(etiquette)}</span>
@@ -870,8 +953,11 @@
     const pieces = piecesTenue(t);
     const k = pieces.length;
     let html = pieces.map((p, i) => slot(p.a, p.etiquette, { large: k % 2 === 1 && i === k - 1, mienne: p.a.id === mienne, k: avecActions ? p.k : null })).join("");
-    if (!PAR_ID[t.pieds]) html += CHAUSSURES_A_TROUVER;
-    return { html, n: k + (PAR_ID[t.pieds] ? 0 : 1) };
+    // Pas de paire du magasin : la prochaine à trouver ; des paires, mais toutes au lavage : on le dit.
+    const encart = PAR_ID[t.pieds] ? "" : !PIEDS.length ? CHAUSSURES_A_TROUVER
+      : !PIEDS.some(dispo) ? `<div class="slot pieds"><span class="eyebrow">Chaussures</span><strong>Au lavage</strong><p>Ta paire du magasin revient bientôt.</p></div>` : "";
+    html += encart;
+    return { html, n: k + (encart ? 1 : 0) };
   }
   function listeRaisons(ev) {
     return ev.raisons.map(r => {
@@ -894,13 +980,15 @@
     F(`couches-aide-${suffixe}`).textContent = aideCouches();
   }
 
+  let ideeProvisoire = null;
   function tenueAffichee() {
     const pid = porteeId();
     const autour = t => (contient(t, pid) ? `Composée autour de : ${nomComplet(PAR_ID[pid])}.` : null);
     if (apercu && valide(apercu)) return { t: apercu, contexte: "Choisie dans un tableau d'accords." };
     apercu = null;
     const prevue = etat.plan[AUJ[0]];
-    let contexte = `${AUJ[1]} n'est pas coché dans ta semaine, voici quand même une idée.`;
+    let contexte = etat.jours.includes(AUJ[0]) ? "Pas de tenue prévue aujourd'hui dans ta semaine : voici une idée."
+      : `${AUJ[1]} n'est pas coché dans ta semaine, voici quand même une idée.`;
     if (etat.jours.includes(AUJ[0]) && prevue) {
       if (valide(prevue)) return { t: prevue, contexte: autour(prevue) || `Prévue dans ta semaine pour ${AUJ[1].toLowerCase()}.` };
       if (etatAjouts === "chargement") return null;
@@ -909,6 +997,12 @@
     let t = ideeDuJour();
     if (!valide(t)) {
       if (t && etatAjouts === "chargement") return null; // l'idée enregistrée attend ses pièces ajoutées
+      if (t && etatAjouts === "indisponible") {
+        // Les pièces ajoutées n'ont pas pu être chargées : on montre une autre idée sans toucher
+        // à celle enregistrée, qui reviendra telle quelle quand la base répondra.
+        if (!valide(ideeProvisoire)) ideeProvisoire = composerAvecRepli(ctxVide());
+        return ideeProvisoire ? { t: ideeProvisoire, contexte: "Ta tenue du jour utilise une pièce ajoutée qui n'a pas pu être chargée. Voici une autre idée en attendant." } : null;
+      }
       t = composerAvecRepli(ctxVide());
       poserIdee(t);
       ecrire();
@@ -921,7 +1015,7 @@
     const r = tenueAffichee();
     if (!r) {
       F("tenue-slots").style.setProperty("--n", 1);
-      F("tenue-slots").innerHTML = `<p class="vide">Chargement des pièces ajoutées…</p>`;
+      F("tenue-slots").innerHTML = `<p class="vide">${etatAjouts === "chargement" ? "Chargement des pièces ajoutées…" : "Aucune tenue possible : trop de pièces sont au lavage."}</p>`;
       F("tenue-verdict").innerHTML = "";
       F("tenue-actions").innerHTML = "";
       F("tenue-raisons").innerHTML = "";
@@ -993,7 +1087,9 @@
       const eyebrow = `<span class="eyebrow">${esc(nomJour)}${auj ? " · aujourd'hui" : ""}</span>`;
       const i = JOURS.findIndex(x => x[0] === j), date = dateSemaine(i), note = donnees.journal[date];
       const porte = peutNoter() && i <= INDEX_AUJ && valide(t)
-        ? `<button class="btn" type="button" id="porte-${j}" data-action="porte-jour" data-jour="${j}" aria-pressed="${!!note && cleTenue(note.tenue) === cleTenue(t)}" aria-label="Noter la tenue de ${esc(nomJour.toLowerCase())} comme portée">Portée</button>` : "";
+        ? (note && cleTenue(note.tenue) !== cleTenue(t)
+          ? `<button class="btn" type="button" id="porte-${j}" data-action="porte-jour" data-jour="${j}" aria-label="Remplacer la tenue notée de ${esc(nomJour.toLowerCase())} par celle-ci">Remplacer</button>`
+          : `<button class="btn" type="button" id="porte-${j}" data-action="porte-jour" data-jour="${j}" aria-pressed="${!!note}" aria-label="Noter la tenue de ${esc(nomJour.toLowerCase())} comme portée">Portée</button>`) : "";
       const bouton = `<span class="ligne-actions">${porte}<button class="btn" type="button" id="changer-${j}" data-action="changer" data-jour="${j}" aria-label="Changer la tenue de ${esc(nomJour.toLowerCase())}">Changer</button></span>`;
       if (!valide(t)) {
         const message = etatAjouts === "chargement"
@@ -1096,7 +1192,7 @@
     }
     F("journal-grille").innerHTML = cases.join("");
     const pieces = new Set();
-    duMois.forEach(e => SLOTS.forEach(k => { if (e.tenue[k]) pieces.add(e.tenue[k]); }));
+    duMois.forEach(e => SLOTS.forEach(k => { if (PAR_ID[e.tenue[k]]) pieces.add(e.tenue[k]); }));
     F("journal-bilan").textContent = duMois.length
       ? `${pluriel(duMois.length, "tenue")} notée${duMois.length > 1 ? "s" : ""} en ${nomMois.split(" ")[0]} · ${pluriel(pieces.size, "pièce")} différente${pieces.size > 1 ? "s" : ""} portée${pieces.size > 1 ? "s" : ""}.`
       : `Rien de noté en ${nomMois.split(" ")[0]} pour l'instant.`;
@@ -1111,7 +1207,8 @@
           <button class="btn" type="button" id="journal-retirer" data-action="journal-retirer">Retirer du journal</button>` : ""}
           ${jourJournal !== AUJ_DATE ? `<button class="btn" type="button" id="journal-reporter" data-action="journal-reporter">Porter à nouveau aujourd'hui</button>` : ""}</div></div>`;
     } else if (e) {
-      detail += `<p class="vide">${etatAjouts === "chargement" ? "Chargement des pièces ajoutées…" : "Une pièce de cette tenue n'existe plus."}</p>`;
+      detail += `<p class="vide">${etatAjouts === "chargement" ? "Chargement des pièces ajoutées…" : "Une pièce de cette tenue n'existe plus."}</p>` +
+        (peutNoter() && etatAjouts !== "chargement" ? `<div class="actions"><button class="btn" type="button" id="journal-retirer" data-action="journal-retirer">Retirer du journal</button></div>` : "");
     } else {
       detail += `<p class="vide">Rien de noté ce jour-là.${jourJournal === AUJ_DATE && peutNoter() ? " Touche « Je l'ai portée » sur la tenue du jour." : ""}</p>`;
     }
@@ -1136,7 +1233,7 @@
   }
 
   function dateCourte(iso) {
-    const d = new Date(iso);
+    const d = new Date(DATE_RE.test(iso) ? midi(iso) : iso);
     return isNaN(d) ? "" : d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
   }
 
@@ -1366,15 +1463,19 @@
 
   function abonnerDonnees() {
     const collection = nom => db.collection(nom).onSnapshot(snap => {
-      const m = {};
+      const m = vide();
       snap.docs.forEach(doc => { const x = doc.exists && LECTEURS[nom](doc.id, doc.data()); if (x) m[doc.id] = x; });
       donnees[nom] = m;
-      if (nom === "journal") indexerJournal();
-      if (nom === "pieces" && etatAjouts === "ok") reconcilier();
+      if (nom === "journal") { indexerJournal(); journalLu = true; }
+      if ((nom === "pieces" || nom === "journal") && etatAjouts === "ok") reconcilier(true);
       planifierRendu();
     }, () => toast("Une partie de tes données n'a pas pu être chargée. Recharge la page.", "erreur"));
     ["journal", "pieces", "favoris"].forEach(collection);
-    db.doc("gouts/accords").onSnapshot(snap => { donnees.gouts = lireGouts(snap.exists ? snap.data() : null); planifierRendu(); }, () => {});
+    db.doc("gouts/accords").onSnapshot(snap => {
+      donnees.gouts = lireGouts(snap.exists ? snap.data() : null);
+      if (!(snap.metadata && snap.metadata.fromCache)) goutsPrets = true;
+      planifierRendu();
+    }, () => { goutsPrets = false; });
     db.doc("etat/semaine").onSnapshot(surEtatDistant, () => {});
   }
 
@@ -1863,6 +1964,10 @@
   // Mettre une tenue pour aujourd'hui (depuis « Je veux porter », un favori ou le journal).
   function porterAujourdhui(t, pieceId) {
     apercu = null;
+    // Une pièce qu'on choisit de porter n'est plus au lavage.
+    const sorties = SLOTS.map(k => t[k]).filter(id => id && auLavage(id) && PAR_ID[id]);
+    if (peutNoter()) sorties.forEach(id => enregistrer("pieces", id, Object.assign({}, donnees.pieces[id], { lavage: false })).catch(() => {}));
+    if (sorties.length) toast(`De retour du lavage : ${sorties.map(id => nomComplet(PAR_ID[id])).join(", ")}.`);
     const n = copieTenue(t);
     if (etat.jours.includes(AUJ[0])) etat.plan[AUJ[0]] = n;
     else poserIdee(n);
@@ -1886,7 +1991,7 @@
     else poserIdee(n);
   }
   function noterGouts(t, delta) {
-    const paires = Object.assign({}, donnees.gouts);
+    const paires = Object.assign(vide(), donnees.gouts);
     const cles = ["hb:" + t.haut + "|" + t.bas];
     if (t.dessous) cles.push("sh:" + t.dessous + "|" + t.haut);
     if (t.dessus) cles.push("dh:" + t.dessus + "|" + t.haut);
@@ -1908,10 +2013,10 @@
     const v = e.target.value;
     if (!possede(METEOS, v)) return;
     etat.meteo = { date: AUJ_DATE, valeur: v };
-    changerCouches(METEOS[v].couches);
+    changerCouches(METEOS[v].couches, true);
     // La tenue du jour s'adapte, sauf si elle est déjà notée ou choisie autour d'une pièce.
-    const t = tenueAffichee();
-    if (t && !donnees.journal[AUJ_DATE] && !porteeId() && !apercu) {
+    const prevue = etat.jours.includes(AUJ[0]) && valide(etat.plan[AUJ[0]]) ? etat.plan[AUJ[0]] : ideeDuJour();
+    if (valide(prevue) && !noteeAujourdhui(prevue) && !porteeId()) {
       if (etat.jours.includes(AUJ[0]) && valide(etat.plan[AUJ[0]])) composerJour(AUJ[0], null);
       else poserIdee(composerAvecRepli(ctxVide()));
     }
@@ -2014,6 +2119,7 @@
       else { enregistrer("favoris", id, { tenue: copieTenue(t), ajouteLe: new Date().toISOString() }).catch(() => {}); toast("Ajoutée aux favoris."); }
       rendre(rendreTenue, rendreChoix, rendreFavoris, rendreJournal);
     }
+    else if ((action === "aime" || action === "aime-pas") && !goutsDisponibles()) toast("Tes goûts sont encore en chargement : réessaie dans un instant.", "erreur");
     else if (action === "aime") {
       const t = tenueDe(el.dataset.cible);
       if (t && valide(t)) { noterGouts(t, 1).catch(() => {}); toast("Noté : ces associations reviendront plus souvent."); rendre(rendreTenue); }
@@ -2038,6 +2144,15 @@
       if (action === "slot-lavage") {
         const meta = Object.assign({ lavage: false, prix: null, achatLe: null, taille: "" }, donnees.pieces[id], { lavage: true });
         enregistrer("pieces", id, meta).catch(() => {});
+        if (noteeAujourdhui(t)) {
+          // Déjà portée aujourd'hui : la tenue notée reste telle quelle, la pièce sort des prochaines.
+          reconcilier();
+          toast(`Au lavage : ${nomComplet(PAR_ID[id])}. Ta tenue d'aujourd'hui reste notée au journal.`);
+          rendreTout();
+          const b = F(`slot-changer-${k}`);
+          if (b) b.focus({ preventScroll: true });
+          return;
+        }
       }
       const n = remplacerPiece(t, k, ctx);
       if (n) {
@@ -2045,13 +2160,13 @@
         remplacerTenueDuJour(n);
         if (action === "slot-lavage") reconcilier();
         ecrire();
-        toast(action === "slot-lavage" ? `${nomComplet(PAR_ID[id])} est au lavage : pièce remplacée.` : "Pièce changée.");
+        toast(action === "slot-lavage" ? `Au lavage : ${nomComplet(PAR_ID[id])}. La tenue a été ajustée.` : "Pièce changée.");
       } else {
         if (action === "slot-lavage") { reconcilier(); ecrire(); }
-        toast(action === "slot-lavage" ? `${nomComplet(PAR_ID[id])} est au lavage, mais rien ne la remplace.` : "Aucune autre pièce ne va à cette place.");
+        toast(action === "slot-lavage" ? `Au lavage : ${nomComplet(PAR_ID[id])}. Aucune pièce disponible pour la remplacer.` : "Aucune autre pièce ne va à cette place.");
       }
       rendreTout();
-      const b = F(`slot-changer-${k}`);
+      const b = F(`slot-changer-${k}`) || F("autre-tenue") || F("porte");
       if (b) b.focus({ preventScroll: true });
     }
     else if (action === "lavage") {
@@ -2060,8 +2175,8 @@
       const lavage = !auLavage(id);
       const meta = Object.assign({ lavage: false, prix: null, achatLe: null, taille: "" }, donnees.pieces[id], { lavage });
       enregistrer("pieces", id, meta).catch(() => {});
-      if (lavage) reconcilier();
-      toast(lavage ? `${nomComplet(PAR_ID[id])} est au lavage : elle sort des tenues.` : `${nomComplet(PAR_ID[id])} est de retour.`);
+      reconcilier();
+      toast(lavage ? `Au lavage : ${nomComplet(PAR_ID[id])}. Hors des tenues jusqu'à son retour.` : `De retour du lavage : ${nomComplet(PAR_ID[id])}.`);
       rendreTout();
     }
     else if (action === "journal-prec" || action === "journal-suiv") {
@@ -2069,6 +2184,7 @@
       const d = new Date(an, mois - 1 + (action === "journal-prec" ? -1 : 1), 1, 12);
       moisJournal = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       rendre(rendreJournal);
+      if (F(action).disabled) F(action === "journal-suiv" ? "journal-prec" : "journal-suiv").focus({ preventScroll: true });
     }
     else if (action === "journal-jour") { jourJournal = el.dataset.date; rendre(rendreJournal); }
     else if (action === "journal-retirer") {
@@ -2076,6 +2192,7 @@
       enregistrer("journal", jourJournal, null).catch(() => {});
       toast("Retirée du journal.");
       rendre(rendreTenue, rendreSemaine, rendreJournal, rendreCatalogue);
+      const b = F("journal-" + jourJournal); if (b) b.focus({ preventScroll: true });
     }
     else if (action === "journal-reporter") {
       const e = donnees.journal[jourJournal];
@@ -2086,9 +2203,13 @@
       if (f && valide(f.tenue)) porterAujourdhui(f.tenue, null);
     }
     else if (action === "fav-retirer") {
+      const suivant = el.closest("li") && (el.closest("li").nextElementSibling || el.closest("li").previousElementSibling);
+      const cible = suivant && suivant.querySelector("[data-action=fav-retirer]") ? suivant.querySelector("[data-action=fav-retirer]").id : null;
       enregistrer("favoris", el.dataset.id, null).catch(() => {});
       toast("Retirée des favoris.");
       rendre(rendreTenue, rendreChoix, rendreFavoris, rendreJournal);
+      const b = (cible && F(cible)) || F("titre-favoris");
+      if (b) { if (!b.matches("button")) b.tabIndex = -1; b.focus({ preventScroll: true }); }
     }
     else if (action === "filtre") { filtre = el.dataset.filtre; rendre(rendreCatalogue); }
     else if (action === "ouvrir-ajout") { reinitialiser(); succes(""); ouvrirPanneau(); }
@@ -2115,6 +2236,15 @@
       });
     }
   });
+
+  // Au retour sur la page, et avant chaque geste : si la date a changé, on recharge d'abord.
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") jourChange(); });
+  window.addEventListener("focus", jourChange);
+  window.addEventListener("pageshow", jourChange);
+  ["click", "change", "submit"].forEach(type => document.addEventListener(type, e => {
+    if (jourChange()) { e.preventDefault(); e.stopImmediatePropagation(); return; }
+    if (modeDonnees !== "local" && !syncPrete) gesteAvantSync = true;
+  }, true));
 
   // ---------- démarrage ----------
   if (modeDonnees === "local") lireDonneesLocales();

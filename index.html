@@ -195,7 +195,7 @@ h2 { margin: 0; font-family: var(--f-display); font-stretch: 112%; font-weight: 
 .oubliees li.vide { display: block; background: transparent; border-style: dashed; color: var(--muted); }
 .oubliees img { width: 40px; height: 50px; object-fit: cover; border-radius: 6px; background: var(--surface-2); }
 .oubliees li span { display: grid; gap: 2px; min-width: 0; }
-.toast { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 30; max-width: calc(100% - 32px); margin: 0; padding: 10px 16px; border-radius: 10px; background: var(--ink); color: var(--bg); font-weight: 600; transform: translateX(-50%); box-shadow: 0 6px 24px rgba(0, 0, 0, .2); }
+.toast { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 30; width: max-content; max-width: calc(100% - 32px); pointer-events: none; text-align: center; margin: 0; padding: 10px 16px; border-radius: 10px; background: var(--ink); color: var(--bg); font-weight: 600; transform: translateX(-50%); box-shadow: 0 6px 24px rgba(0, 0, 0, .2); }
 .toast.erreur { background: var(--no); color: var(--surface); }
 
 /* Je veux porter */
@@ -234,6 +234,9 @@ h2 { margin: 0; font-family: var(--f-display); font-stretch: 112%; font-weight: 
   .semaine li > .vignettes { grid-area: vignettes; }
   .semaine li > .ligne-corps { grid-area: corps; }
   .semaine li > :last-child { grid-area: bouton; }
+  /* Deux boutons ou plus : ils passent sous les noms, les vignettes gardent leur place. */
+  .semaine li:has(> .ligne-actions > :nth-child(2)) { grid-template-columns: minmax(0, 1fr); grid-template-areas: "vignettes" "corps" "bouton"; }
+  .semaine li > .ligne-actions { justify-content: flex-start; }
 }
 
 /* Catalogue */
