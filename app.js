@@ -1055,6 +1055,8 @@
       F("tenue-verdict").innerHTML = "";
       F("tenue-actions").innerHTML = "";
       F("tenue-raisons").innerHTML = "";
+      F("tenue-plus").innerHTML = "";
+      rendreAvis();
       return;
     }
     const { t, contexte } = r;
@@ -1083,6 +1085,12 @@
     }
     if (!apercu) boutons.push(`<button class="btn${ecrit ? "" : " primaire"}" type="button" id="autre-tenue" data-action="autre">Autre tenue</button>`);
     F("tenue-actions").innerHTML = boutons.join("");
+    // L'avis d'abord : s'il ne vaut plus pour cette tenue, il s'efface et le bouton revient.
+    rendreAvis();
+    // Deuxième rangée, plus discrète : ce qu'on fait de la tenue au-delà de la porter.
+    const plus = [];
+    if (sample) plus.push(`<button class="lien-action" type="button" id="avis-tenue" data-action="avis-tenue" aria-disabled="${!!(avis && avis.enCours)}">Avis du styliste</button>`);
+    F("tenue-plus").innerHTML = plus.join("");
   }
   function rendreMeteo() {
     const m = meteoDuJour();
@@ -1723,6 +1731,314 @@
     rendreCoutPort();
   }
 
+  // ---------- styliste : Claude dans la page, sur le compte de la personne qui regarde ----------
+  // Chaque demande part d'un clic ; la première demande d'une visite demande l'accord de la personne.
+  let sample = null;                   // la fonction de la capacité, ou null : pas de styliste ici
+  let etatStyliste = window.claude && typeof window.claude.use === "function" ? "attente" : "absent";
+  let stylisteImages = false;          // cette vue peut montrer une photo à Claude
+  const CODES_ABSENCE = ["not_granted", "sampling_disabled", "not_declared", "capability_disabled", "capability_removed"];
+  function messageStyliste(e) {
+    return {
+      rate_limited: "Trop de demandes d'un coup : réessaie dans un moment.",
+      session_expired: "Ta session Claude a expiré : recharge la page.",
+      refused: "Claude n'a pas voulu répondre à cette demande : reformule-la.",
+      empty_completion: "Pas de réponse : reformule ta question plus simplement.",
+      prompt_too_large: "La demande est trop longue : raccourcis-la.",
+      image_rejected: "Cette photo n'a pas pu être lue : choisis-en une autre.",
+      images_unavailable: "Cette vue ne peut pas montrer de photo à Claude.",
+      invalid_json: "La photo n'a pas pu être analysée. Réessaie.",
+    }[e && e.code] || "La réponse a été interrompue. Réessaie dans un instant.";
+  }
+  // Un refus définitif (accès refusé, Claude indisponible) retire le styliste de la vue.
+  function echecStyliste(e) {
+    const code = e && e.code;
+    if (CODES_ABSENCE.includes(code)) {
+      sample = null; stylisteImages = false; etatStyliste = "refuse";
+      if (ctlStyliste) ctlStyliste.abort();
+      rendreBoutonPhoto();
+      planifierRendu();
+      return "";
+    }
+    if (code === "images_unavailable") { stylisteImages = false; planifierRendu(); }
+    return code === "cancelled" ? "" : messageStyliste(e);
+  }
+
+  // Ce que Claude sait : la garde-robe, l'état des pièces, la semaine passée, la météo, les envies.
+  function lignePiece(a) {
+    const ports = PORTS.get(a.id) || 0;
+    return `- ${a.id} : ${singulier(a.categorie).toLowerCase()} ${a.marque} ${a.modele || ""} ${a.couleur}`.replace(/\s+/g, " ") +
+      ` (teinte ${T[a.teinte].nom.toLowerCase()}${a.encolure ? ", " + ENCOLURES[a.encolure].toLowerCase() : ""})` +
+      `${auLavage(a.id) ? " · AU LAVAGE" : ""} · ${ports ? `portée ${ports} fois` : "jamais portée"}`;
+  }
+  const decrireTenue = t => SLOTS.filter(k => t[k] && PAR_ID[t[k]]).map(k => `${k} = ${t[k]}`).join(", ");
+  function contexteStyliste() {
+    const m = meteoDuJour();
+    const recents = Object.values(donnees.journal)
+      .filter(e => { const n = ecartJours(AUJ_DATE, e.date); return n >= 0 && n <= 7; })
+      .sort((x, y) => y.date.localeCompare(x.date))
+      .map(e => `- ${e.date} : ${decrireTenue(e.tenue)}`);
+    const envies = Object.values(donnees.envies).slice(0, 15)
+      .map(e => `- ${e.titre || `${singulier(e.categorie).toLowerCase()} ${T[e.teinte].nom.toLowerCase()}`}${e.prix ? ` (${euros(e.prix)})` : ""}`);
+    return [
+      `Aujourd'hui : ${dateLongue(AUJ_DATE)}.${m ? ` Météo : ${METEOS[m].nom.toLowerCase()}.` : ""} Tenues en ${pluriel(etat.couches, "couche")} en haut.`,
+      "Garde-robe (identifiant : pièce) :", ...ARTICLES.map(lignePiece),
+      recents.length ? "Tenues portées ces 7 derniers jours :\n" + recents.join("\n") : "Rien de noté au journal ces 7 derniers jours.",
+      envies.length ? "Pièces repérées au magasin, pas encore achetées :\n" + envies.join("\n") : "",
+    ].filter(Boolean).join("\n");
+  }
+  const CONSIGNES = `Tu es le styliste personnel d'une personne qui travaille dans un magasin de prêt-à-porter Blue Box. Au travail, elle ne porte que des pièces achetées au magasin, pour mettre la collection en valeur ; c'est aussi son style.
+Réponds en français, en la tutoyant, de façon concrète et brève (8 phrases au plus), en texte simple : pas de titres ni de gras ; des tirets si tu fais une liste.
+Appuie-toi sur sa garde-robe ci-dessous. Ne propose que des pièces de la liste, sauf si on te demande quoi acheter. N'utilise jamais une pièce marquée AU LAVAGE ; évite celles portées ces derniers jours quand c'est possible.
+Quand tu proposes une tenue faite de ses pièces, termine ta réponse par une ligne par tenue (trois au plus), exactement au format :
+TENUE: bas=<id>; haut=<id>; dessous=<id>; dessus=<id>; pieds=<id>
+avec seulement des identifiants de la liste, en omettant les places vides (dessous : la pièce portée sous le haut ; dessus : veste, blouson ou manteau).`;
+
+  // Les tenues proposées par Claude : lues dans les lignes « TENUE: », vérifiées avant d'être montrées.
+  // Seule la forme machine exacte compte (« Tenue : … » en prose reste du texte).
+  const LIGNE_TENUE = /^TENUE:\s*((?:bas|haut|dessous|dessus|pieds)=.*)$/gm;
+  function tenuesDansTexte(texte) {
+    const res = [];
+    for (const [, corps] of String(texte).matchAll(LIGNE_TENUE)) {
+      const t = {};
+      let inconnue = false;
+      corps.split(";").forEach(morceau => {
+        const [k, v] = morceau.split("=").map(x => (x || "").trim());
+        if (!["bas", "haut", "dessous", "dessus", "pieds"].includes(k)) return;
+        // Une pièce inventée invalide toute la ligne : pas de tenue amputée en silence.
+        if (possede(PAR_ID, v)) t[k] = v; else inconnue = true;
+      });
+      if (!inconnue && tenueCoherente(t) && !res.some(x => cleTenue(x) === cleTenue(t))) res.push(t);
+    }
+    return res.slice(0, 3);
+  }
+  function tenueCoherente(t) {
+    const h = PAR_ID[t.haut], s = PAR_ID[t.dessous], d = PAR_ID[t.dessus], p = PAR_ID[t.pieds];
+    return valide(t) && (!s || accepte(h, s)) && (!d || role(d) === "dessus") && (!p || role(p) === "pieds")
+      && SLOTS.every(k => !t[k] || !auLavage(t[k]));
+  }
+  // Le texte affiché, sans les lignes « TENUE: » (ni leur début pendant que la réponse s'écrit).
+  function texteVisible(texte) {
+    let s = String(texte).replace(LIGNE_TENUE, "");
+    const fin = s.slice(s.lastIndexOf("\n") + 1);
+    if (fin && (fin.startsWith("TENUE:") || "TENUE:".startsWith(fin))) s = s.slice(0, s.lastIndexOf("\n") + 1);
+    return s.replace(/\*\*(.+?)\*\*/g, "$1").replace(/\n{3,}/g, "\n\n").trim();
+  }
+  function tenuesProposees(tenues, prefixe) {
+    return tenues.length ? `<ol class="semaine">${tenues.map((t, i) => ligneTenue(t,
+      `<span class="eyebrow">Proposée par le styliste</span>`,
+      `<span class="ligne-actions"><button class="btn petit" type="button" id="${prefixe}-${i}" data-action="styliste-porter" data-source="${prefixe}" data-i="${i}">Porter aujourd'hui</button></span>`)).join("")}</ol>` : "";
+  }
+
+  // Conversation : gardée le temps de la visite ; Claude ne se souvient de rien entre deux demandes.
+  let conversation = [];               // { role: "user" | "assistant", texte, tenues?, erreur?, enCours? }
+  let ctlStyliste = null;
+  const IDEES = [
+    "Quelle tenue pour une grosse journée en magasin ?",
+    "Qu'est-ce que je devrais acheter ensuite ?",
+    "Comment varier avec mes pulls zippés ?",
+    "Quelles pièces je ne mets pas assez ?",
+  ];
+  function rendreStyliste() {
+    const pret = etatStyliste === "pret";
+    F("styliste-zone").hidden = !pret;
+    F("styliste-absent").hidden = pret || etatStyliste === "attente";
+    F("styliste-absent").textContent = etatStyliste === "refuse"
+      ? "Le styliste n'est pas disponible : Claude n'est pas autorisé pour cette page ou ce compte."
+      : "Le styliste fonctionne dans la page publiée, ouverte sur Claude.";
+    F("styliste-nouveau").hidden = !pret || !conversation.length;
+    if (!pret) return;
+    const enCours = !!ctlStyliste;
+    F("styliste-idees").innerHTML = IDEES.map((q, i) =>
+      `<button class="puce-idee" type="button" id="idee-${i}" data-action="styliste-idee" data-i="${i}"${enCours ? " disabled" : ""}>${esc(q)}</button>`).join("");
+    // aria-disabled plutôt que disabled : le bouton garde le focus pendant la réponse.
+    F("styliste-envoyer").setAttribute("aria-disabled", String(enCours));
+    F("styliste-stop").hidden = !enCours;
+    F("conversation").innerHTML = conversation.map((m, i) => m.role === "user"
+      ? `<li class="message moi${m.exclue ? " exclue" : ""}"><p>${esc(m.texte)}</p></li>`
+      : `<li class="message claude">
+          <p${m.enCours && !m.texte ? ` class="reflexion"` : ""}>${esc(m.enCours && !m.texte ? "Le styliste réfléchit…" : texteVisible(m.texte))}</p>
+          ${m.erreur ? `<p class="form-erreur">${esc(m.erreur)}</p>` : ""}
+          ${m.enCours ? "" : tenuesProposees(m.tenues || [], "conv-" + i)}
+        </li>`).join("");
+  }
+  async function demanderStyliste(question) {
+    question = String(question || "").trim().slice(0, 1000);
+    if (!question || !sample || ctlStyliste) return;
+    conversation.push({ role: "user", texte: question });
+    const reponse = { role: "assistant", texte: "", enCours: true };
+    conversation.push(reponse);
+    // Les consignes et la garde-robe ouvrent toujours l'échange ; les plus anciens messages tombent.
+    const tours = conversation.slice(0, -1).filter(m => !m.exclue && m.texte).slice(-10)
+      .map(m => ({ role: m.role, content: m.texte }))
+      .filter(m => m.content);
+    while (tours.length && tours[0].role !== "user") tours.shift();
+    const entree = [{ role: "user", content: CONSIGNES + "\n\n" + contexteStyliste() }].concat(tours);
+    const ctl = ctlStyliste = new AbortController();
+    rendre(rendreStyliste);
+    try {
+      const r = await sample(entree, {
+        signal: ctl.signal, cache: false,
+        onText: ({ text }) => { reponse.texte = text; rendreMessageEnCours(reponse); },
+      });
+      reponse.texte = r.text;
+      if (r.truncated) reponse.erreur = "Réponse coupée : pose une question plus courte.";
+    } catch (e) {
+      reponse.texte = e && e.text ? e.text : "";
+      reponse.erreur = echecStyliste(e) || (e && e.code === "cancelled" ? "Arrêtée." : "");
+      reponse.interrompue = true;
+      // Claude a refusé cette question : la renvoyer ferait refuser toutes les suivantes.
+      if (e && e.code === "refused") { const q = conversation[conversation.indexOf(reponse) - 1]; if (q) q.exclue = true; }
+    }
+    reponse.enCours = false;
+    // Une réponse coupée ou interrompue peut finir au milieu d'une ligne TENUE : on n'en lit aucune.
+    reponse.tenues = reponse.interrompue || reponse.erreur ? [] : tenuesDansTexte(reponse.texte);
+    if (ctlStyliste === ctl) ctlStyliste = null;
+    // Le focus était sur « Arrêter » ou « Demander » : il passe à la réponse plutôt que de se perdre.
+    const actif = document.activeElement;
+    const perdu = !actif || actif === document.body || ["styliste-stop", "styliste-envoyer"].includes(actif.id);
+    rendre(rendreStyliste);
+    if (perdu && etatStyliste === "pret") {
+      const li = F("conversation").lastElementChild;
+      const b = li && li.querySelector("button");
+      if (b) b.focus({ preventScroll: true });
+      else if (li) { li.tabIndex = -1; li.focus({ preventScroll: true }); }
+    }
+  }
+  // Pendant l'écriture, seul le dernier message change : le reste de la page ne bouge pas.
+  function rendreMessageEnCours(m) {
+    const li = F("conversation").lastElementChild;
+    const p = li && li.querySelector("p");
+    if (!p || conversation[conversation.length - 1] !== m) return;
+    p.classList.remove("reflexion");
+    p.textContent = texteVisible(m.texte) || "…";
+  }
+
+  // Avis du styliste sur la tenue du jour : court, rapide, pour la tenue affichée seulement.
+  let avis = null;                     // { cle, texte, tenues, erreur, enCours, ctl }
+  async function demanderAvis() {
+    const r = tenueAffichee();
+    if (!sample || !r || (avis && avis.enCours)) return;
+    const t = r.t, ev = noterTenue(t);
+    const courant = avis = { cle: cleTenue(t), texte: "", tenues: [], erreur: "", enCours: true, ctl: new AbortController() };
+    rendre(rendreTenue);
+    const consigne = `${CONSIGNES}\n\n${contexteStyliste()}\n\nLa page propose cette tenue pour aujourd'hui : ${decrireTenue(t)}.\n` +
+      `Son verdict : ${NIVEAUX[ev.niveau].nom}. ${ev.raisons.map(x => x.titre + " " + x.note).join(" ")}\n` +
+      `Donne ton avis en trois phrases au plus : ce qui fonctionne, ce qui pourrait coincer, et une retouche simple avec ses pièces si elle améliore la tenue (dans ce cas seulement, ajoute la ligne TENUE de la variante).`;
+    try {
+      const res = await sample(consigne, {
+        signal: courant.ctl.signal, modelTier: "quick",
+        onText: ({ text }) => {
+          courant.texte = text;
+          // Seul le texte change : le bouton « Arrêter » reste en place (focus et clics gardés).
+          const p = avis === courant && F("avis-styliste").querySelector(".avis-texte");
+          if (p) { p.classList.remove("reflexion"); p.textContent = texteVisible(text) || "…"; }
+        },
+      });
+      courant.texte = res.text;
+      if (res.truncated) courant.interrompu = true;
+    } catch (e) {
+      courant.texte = e && e.text ? e.text : "";
+      courant.erreur = echecStyliste(e);
+      courant.interrompu = true;
+    }
+    courant.enCours = false;
+    courant.tenues = courant.interrompu ? [] : tenuesDansTexte(courant.texte).filter(x => cleTenue(x) !== courant.cle);
+    if (avis !== courant) return;
+    const surStop = document.activeElement && document.activeElement.id === "avis-stop";
+    rendre(rendreTenue);
+    if (surStop) { const b = F("avis-0") || F("avis-tenue"); if (b) b.focus({ preventScroll: true }); }
+  }
+  function rendreAvis() {
+    const zone = F("avis-styliste");
+    const r = tenueAffichee();
+    // L'avis ne vaut que pour la tenue qu'il commente.
+    if (avis && (!r || cleTenue(r.t) !== avis.cle)) { if (avis.enCours) avis.ctl.abort(); avis = null; }
+    if (!avis || !sample && !avis.texte && !avis.erreur) { zone.hidden = true; zone.innerHTML = ""; return; }
+    zone.hidden = false;
+    zone.innerHTML = `<p class="eyebrow">Avis du styliste</p>
+      <p class="avis-texte${avis.enCours && !avis.texte ? " reflexion" : ""}">${esc(avis.enCours && !avis.texte ? "Le styliste regarde ta tenue…" : texteVisible(avis.texte))}</p>
+      ${avis.erreur ? `<p class="form-erreur">${esc(avis.erreur)}</p>` : ""}
+      ${avis.enCours ? `<button class="btn petit" type="button" id="avis-stop" data-action="avis-stop">Arrêter</button>` : tenuesProposees(avis.tenues, "avis")}`;
+  }
+
+  // Reconnaissance de la photo à l'ajout : Claude remplit les champs encore vides.
+  let analysePhoto = null;             // AbortController de l'analyse en cours
+  function rendreBoutonPhoto() {
+    const b = F("achat-claude");
+    // En modification, les champs sont déjà remplis : Claude n'aurait rien à compléter.
+    b.hidden = !(sample && stylisteImages && photo && !edition);
+    b.disabled = !!analysePhoto || envoiEnCours;
+    b.textContent = analysePhoto ? "Claude regarde la photo…" : "Remplir avec Claude";
+  }
+  const PROMPT_PHOTO = () => `Voici la photo d'un vêtement, d'une paire de chaussures ou d'un accessoire acheté dans un magasin de prêt-à-porter. Identifie-le pour remplir une fiche.
+Réponds uniquement par un objet JSON de cette forme :
+{"categorie": "...", "teinte": "...", "couleur": "...", "modele": "...", "marque": "...", "coupe": "..."}
+- categorie : un identifiant parmi ${D.categories.map(c => c.id).join(", ")}
+- teinte : la couleur dominante, un identifiant parmi ${Object.keys(T).join(", ")} (motif pour des carreaux ou des rayures)
+- couleur : la couleur comme sur une étiquette, en français, courte (ex. « Bleu marine », « Écru »)
+- modele : le type ou le col, court (ex. « Oxford », « 1/4 zip », « Col rond », « Slim »), sinon ""
+- marque : seulement si un logo ou une étiquette est lisible sur la photo, sinon ""
+- coupe : si elle se voit (ex. « Droite », « Ajustée »), sinon ""`;
+  async function analyserPhoto() {
+    if (!sample || !stylisteImages || !photo || analysePhoto || envoiEnCours) return;
+    const pourPhoto = photo;
+    const ctl = analysePhoto = new AbortController();
+    F("achat-claude-etat").textContent = "";
+    rendreBoutonPhoto();
+    let message = "";
+    try {
+      const blob = await exporterPhoto();
+      const r = await sample.json(PROMPT_PHOTO(), { images: [blob], modelTier: "quick", signal: ctl.signal });
+      // La photo a pu changer, ou le formulaire se fermer, pendant l'analyse.
+      if (photo !== pourPhoto) return;
+      const { n, utiles } = remplirDepuisPhoto(r);
+      message = n ? `Claude a rempli ${pluriel(n, "champ")} : vérifie avant d'ajouter.`
+        : utiles ? "Les champs étaient déjà remplis : rien n'a changé."
+        : "Claude n'a pas reconnu la pièce : remplis les champs à la main.";
+    } catch (e) {
+      if (photo !== pourPhoto) return;
+      if (e && e.code === "capability_removed") {
+        // sample.json absent de cette vue : seule la reconnaissance de photo disparaît.
+        stylisteImages = false;
+        message = "La reconnaissance de photo n'est pas disponible dans cette vue.";
+      } else message = e && e.code === "export" ? messageErreur(e) : echecStyliste(e);
+    } finally {
+      if (analysePhoto === ctl) analysePhoto = null;
+      rendreBoutonPhoto();
+    }
+    F("achat-claude-etat").textContent = message;
+  }
+  function remplirDepuisPhoto(r) {
+    if (!r || typeof r !== "object" || Array.isArray(r)) return { n: 0, utiles: 0 };
+    const categorie = possede(CAT, r.categorie) ? r.categorie : "";
+    const valeurs = {
+      "achat-categorie": categorie, "achat-teinte": possede(T, r.teinte) ? r.teinte : "",
+      "achat-couleur": texte(r.couleur, 40), "achat-modele": texte(r.modele, 80),
+      "achat-marque": texte(r.marque, 60), "achat-coupe": texte(r.coupe, 80),
+    };
+    let n = 0, utiles = 0;
+    for (const [id, v] of Object.entries(valeurs)) {
+      if (!v) continue;
+      utiles++;
+      // Un champ rempli par Claude est traité comme rempli à la main : le titre ne l'écrase plus.
+      if (!touches.has(id) && !F(id).value.trim()) { F(id).value = v; touches.add(id); n++; }
+    }
+    majPastille();
+    return { n, utiles };
+  }
+
+  async function brancherStyliste() {
+    if (etatStyliste !== "attente") return;
+    let s = null;
+    try { s = await window.claude.use("sample"); } catch (_) { s = null; }
+    if (typeof s !== "function") { etatStyliste = "absent"; rendre(rendreStyliste); return; }
+    sample = s;
+    const limites = await s.limits().catch(() => null);
+    stylisteImages = !!(limites && limites.images);
+    etatStyliste = "pret";
+    rendre(rendreStyliste, rendreTenue, rendreBoutonPhoto);
+  }
+
   function rendre(...parties) {
     const focus = document.activeElement && document.activeElement.id;
     parties.forEach(f => f());
@@ -1731,7 +2047,7 @@
       if (el && el !== document.activeElement) el.focus({ preventScroll: true });
     }
   }
-  const rendreTout = () => rendre(rendreTete, rendreMeteo, rendreTenue, rendreChoix, rendreFavoris, rendreSemaine, rendreJournal, rendreCatalogue, rendreAccords, rendreCompleter, rendreAcheter);
+  const rendreTout = () => rendre(rendreTete, rendreMeteo, rendreTenue, rendreChoix, rendreFavoris, rendreSemaine, rendreJournal, rendreCatalogue, rendreAccords, rendreCompleter, rendreAcheter, rendreStyliste);
 
   // Une photo stockée qui ne répond plus est remplacée par un aplat.
   document.addEventListener("error", e => {
@@ -2016,6 +2332,9 @@
     if (photo) URL.revokeObjectURL(photo.url);
     photo = null;
     F("cadre").hidden = true;
+    if (analysePhoto) analysePhoto.abort();
+    F("achat-claude-etat").textContent = "";
+    rendreBoutonPhoto();
   }
   function chargerPhoto(fichier) {
     erreur("");
@@ -2032,6 +2351,7 @@
       F("achat-zoom").value = "1";
       F("cadre").hidden = false;
       dessiner();
+      rendreBoutonPhoto();
       // Le nom de fichier ne sert de titre que s'il suit le format Canva (pas « IMG_2041 »).
       const actuel = F("achat-titre").value.trim();
       if (!actuel || actuel === titreAuto) {
@@ -2167,6 +2487,7 @@
     F("achat-envoyer").textContent = oui ? "Envoi…" : edition ? "Enregistrer" : "Ajouter à la garde-robe";
     F("fermer-ajout").disabled = oui;
     F("achat-annuler").disabled = oui;
+    rendreBoutonPhoto();
   }
 
   async function envoyer(e) {
@@ -2532,6 +2853,20 @@
     if (p) p.textContent = erreurCout;
   }
 
+  // Styliste
+  F("form-styliste").addEventListener("submit", e => {
+    e.preventDefault();
+    const q = F("styliste-question").value;
+    if (!q.trim() || ctlStyliste) return;
+    F("styliste-question").value = "";
+    demanderStyliste(q);
+    const li = F("conversation").lastElementChild;
+    if (li) li.scrollIntoView({ block: "nearest" });
+  });
+  F("styliste-question").addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); F("form-styliste").requestSubmit(); }
+  });
+
   document.addEventListener("click", e => {
     const el = e.target.closest("[data-action]");
     if (!el) return;
@@ -2695,6 +3030,28 @@
       if (b) { if (!b.matches("button")) b.tabIndex = -1; b.focus({ preventScroll: true }); }
     }
     else if (action === "filtre") { filtre = el.dataset.filtre; rendre(rendreCatalogue); }
+    else if (action === "styliste-idee") {
+      const q = IDEES[Number(el.dataset.i)];
+      if (q && !ctlStyliste) { demanderStyliste(q); F("styliste-stop").focus({ preventScroll: true }); }
+    }
+    else if (action === "styliste-stop") { if (ctlStyliste) ctlStyliste.abort(); F("styliste-question").focus(); }
+    else if (action === "styliste-nouveau") {
+      if (ctlStyliste) ctlStyliste.abort();
+      ctlStyliste = null;
+      conversation = [];
+      rendre(rendreStyliste);
+      F("styliste-question").focus();
+    }
+    else if (action === "styliste-porter") {
+      const source = el.dataset.source || "";
+      const liste = source === "avis" ? (avis ? avis.tenues : [])
+        : /^conv-\d+$/.test(source) && conversation[Number(source.slice(5))] ? conversation[Number(source.slice(5))].tenues || [] : [];
+      const t = liste[Number(el.dataset.i)];
+      if (t && tenueCoherente(t)) porterAujourdhui(t, null);
+    }
+    else if (action === "avis-tenue") demanderAvis();
+    else if (action === "avis-stop") { if (avis && avis.enCours) avis.ctl.abort(); }
+    else if (action === "achat-claude") analyserPhoto();
     else if (action === "simul-effacer") { viderSimulateur(); rendre(rendreSimulateur); F("simul-titre").focus(); }
     else if (action === "simuler" || action === "envie-simuler") {
       const e2 = action === "envie-simuler" ? donnees.envies[el.dataset.id] : null;
@@ -2774,6 +3131,7 @@
   reconcilier();
   rendreTout();
   brancher();
+  brancherStyliste();
   // Si la base tarde trop, on cesse d'afficher « Chargement » (sans rien effacer de la semaine).
   setTimeout(() => {
     if (etatAjouts === "chargement") { etatAjouts = "indisponible"; reconcilier(); rendreTout(); }

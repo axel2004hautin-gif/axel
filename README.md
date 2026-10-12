@@ -16,6 +16,7 @@ Ouvre `index.html` dans un navigateur (double-clic sur le fichier, rien à insta
 - **Changer une pièce** : sous chaque pièce de la tenue du jour, « Changer » remplace seulement celle-là, « Au lavage » la sort des tenues et la remplace.
 - **Je l'ai portée / Favori / J'aime / Pas pour moi** : la tenue part dans le journal, dans les favoris, ou apprend tes goûts (une association notée deux fois « pas pour moi » n'est plus proposée).
 - **Tenues favorites** : tes tenues gardées, à remettre en un geste.
+- **Styliste** (page publiée) : pose tes questions à Claude, qui connaît ta garde-robe, ton journal, tes envies et la météo du jour ; les tenues qu'il propose se portent en un geste. « Avis du styliste » commente la tenue du jour, et « Remplir avec Claude » reconnaît la pièce sur la photo dans le formulaire d'ajout. Chaque demande utilise ton propre compte Claude et demande ton accord la première fois.
 - **Journal** : le calendrier de ce que tu as porté, le détail de chaque jour, et les pièces oubliées (pas portées depuis trois semaines). Les pièces portées ces deux dernières semaines reviennent moins vite dans les propositions.
 - **Ma semaine** : coche tes jours de travail. Chaque jour reçoit un haut différent, les bas et les sous-couches tournent pour que toute la collection passe dans la semaine. Chaque jour a son bouton « Changer ».
 - **Catalogue** : toutes les pièces, filtrables par catégorie, avec le lien vers la fiche produit.
@@ -105,7 +106,7 @@ Claude peut recopier dans le dépôt les pièces ajoutées depuis la page.
 
 ## Publier la page
 
-La page publiée sur claude.ai est `index.html` sans son enveloppe de document, que le visualiseur ajoute lui-même : `outils/version-artefact.sh > garde-robe-blue-box.html`, publiée avec `app.js`, `garde-robe.js` et `images/*.jpg`, et les capacités `db` (écriture réservée au propriétaire), `assets` et `user`.
+La page publiée sur claude.ai est `index.html` sans son enveloppe de document, que le visualiseur ajoute lui-même : `outils/version-artefact.sh > garde-robe-blue-box.html`, publiée avec `app.js`, `garde-robe.js` et `images/*.jpg`, et les capacités `db` (écriture réservée au propriétaire), `assets`, `user` et `sample` (avec images).
 
 Dans la base de la page : `achats` (pièces ajoutées), `etat/semaine` (semaine, couches, météo, tenue du jour), `journal/AAAA-MM-JJ`, `pieces/<id>` (lavage, prix payé, date d'achat, taille), `favoris`, `gouts/accords`, `envies`, `reglages/general` (remise, budget).
 
