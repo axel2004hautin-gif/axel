@@ -312,7 +312,7 @@ footer p { margin: 0; max-width: 65ch; }
 .classement > li.vide { display: block; padding: 20px; background: transparent; border: 1.5px dashed var(--line); color: var(--muted); }
 .classement img { width: 40px; height: 50px; object-fit: cover; border-radius: 6px; background: var(--surface-2); }
 .classement .rang { min-width: 1.4em; font: 700 .9rem var(--f-mono); color: var(--muted); text-align: center; }
-.classement-corps { display: grid; gap: 2px; min-width: 0; }
+.classement-corps { display: grid; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
 .classement-corps s { color: var(--muted); }
 .sans-prix { margin-top: 10px; }
 .sans-prix summary { padding: 8px 0; color: var(--indigo); font-weight: 600; cursor: pointer; }
@@ -393,6 +393,8 @@ footer p { margin: 0; max-width: 65ch; }
   .barres li { grid-template-columns: minmax(0, 1fr) auto; row-gap: 2px; }
   .barre-nom { grid-column: 1 / -1; white-space: normal; }
 }
+.resume, .classement-corps .aide, .operation, #op-etat, .slot figcaption > *, .look-corps > *, .simul-tete strong { overflow-wrap: anywhere; }
+.tete > * { min-width: 0; }
 </style>
 </head>
 <body>

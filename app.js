@@ -16,7 +16,7 @@
   const AUJ = JOURS[(new Date().getDay() + 6) % 7];
   // D'avril à septembre, les t-shirts passent devant les pulls ; le reste de l'année, l'inverse.
   // En une couche, les t-shirts passent devant les pulls ; avec plusieurs couches, l'inverse.
-  const horsSaison = () => (etat.couches === 1 ? ["pulls", "sweats"] : ["t-shirts", "polos", "shorts"]);
+  const horsSaison = n => (n === 1 ? ["pulls", "sweats"] : ["t-shirts", "polos", "shorts"]);
   const CLE = "garde-robe-bluebox:v1";
   const ID_ASSET = /^[A-Za-z0-9_-]{8,64}$/;
   const PHOTO_ABSENTE = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 5"><rect width="4" height="5" fill="#9aa3b5" fill-opacity=".25"/></svg>');
@@ -229,6 +229,7 @@
     };
   }
   function lireFavori(id, d) {
+    if (!/^[A-Za-z0-9_-]{1,64}$/.test(id)) return null;
     const tenue = d && nettoyerTenue(d.tenue);
     return tenue ? { tenue, ajouteLe: texte(d.ajouteLe, 40) } : null;
   }
@@ -244,6 +245,7 @@
   let journalLu = false;             // premier instantané du journal reçu (page publiée)
   const journalPret = () => modeDonnees === "local" || journalLu;
   let goutsPrets = false;            // goûts lus de façon définitive (page publiée)
+  let reglagesLus = false;           // réglages lus de façon définitive (page publiée)
   const goutsDisponibles = () => modeDonnees !== "base" || goutsPrets;
   // Une envie : une pièce repérée au magasin, pas encore achetée.
   const ID_DOC = /^[A-Za-z0-9_-]{1,64}$/;
@@ -348,16 +350,43 @@
     const suite = avant.catch(() => {}).then(() => appel(() => (corps ? db.doc(chemin).set(corps) : db.doc(chemin).delete()), ["unavailable"]));
     filesEcriture.set(chemin, suite);
     const resultat = suite.catch(err => {
-      // Rien n'a été enregistré : l'écran revient à l'état d'avant, sauf si une écriture plus récente suit.
-      if (filesEcriture.get(chemin) === suite) { appliquerLocal(collection, id, precedente); planifierRendu(); }
+      // Rien n'a été enregistré : l'écran revient à l'état d'avant, puis à ce que la base contient
+      // vraiment (une écriture précédente de la file, ou une réponse perdue, a pu aboutir).
+      if (filesEcriture.get(chemin) === suite) { appliquerLocal(collection, id, precedente); planifierRendu(); relire(collection, id); }
       toast(CODES_DROITS.includes(err && err.code) ? "Seul le propriétaire de la page peut enregistrer." : "L'enregistrement n'a pas abouti. Réessaie dans un instant.", "erreur");
       throw err;
     });
-    const fin = () => { if (filesEcriture.get(chemin) === suite) filesEcriture.delete(chemin); };
+    const fin = () => {
+      if (filesEcriture.get(chemin) !== suite) return;
+      filesEcriture.delete(chemin);
+      // Un instantané arrivé pendant l'écriture (un autre appareil) est appliqué maintenant.
+      const suspendu = enSuspens.get(chemin);
+      if (suspendu) { enSuspens.delete(chemin); suspendu(); }
+    };
     suite.then(fin, fin);
     return resultat;
   }
   const enAttente = chemin => filesEcriture.has(chemin);
+  const enSuspens = new Map();
+  // Instantané d'un document : différé tant qu'une écriture locale de ce document est en cours.
+  function surDocument(chemin, appliquer) {
+    return snap => {
+      if (enAttente(chemin)) { enSuspens.set(chemin, () => appliquer(snap)); return; }
+      appliquer(snap);
+    };
+  }
+  // Relit un document après un échec : l'écran montre ce que la base contient vraiment.
+  function relire(collection, id) {
+    if (!db || collection === "etat") return;
+    const chemin = collection + "/" + id;
+    db.doc(chemin).get().then(s => {
+      if (enAttente(chemin)) return;
+      const d = s.exists ? s.data() : null;
+      const v = possede(LECTEURS, collection) ? (d && LECTEURS[collection](id, d)) : collection === "gouts" ? { paires: lireGouts(d) } : d;
+      appliquerLocal(collection, id, v || null);
+      planifierRendu();
+    }).catch(() => {});
+  }
 
   // Journal : nombre de ports, dernier port, et fraîcheur sur deux semaines pour la rotation.
   let RECENCE = new Map(), PORTS = new Map(), DERNIER = new Map();
@@ -385,6 +414,13 @@
   const gout = cle => donnees.gouts[cle] || 0;
   const meteoDuJour = () => (etat.meteo && etat.meteo.date === AUJ_DATE ? etat.meteo.valeur : null);
   const cleTenue = t => SLOTS.map(k => t[k] || "").join("|");
+  // Le document favori d'une tenue : d'abord sous son id habituel, sinon par le contenu de la tenue
+  // (un favori écrit hors de la page peut porter un autre id).
+  function favoriDe(t) {
+    const id = idTenue(t);
+    if (donnees.favoris[id]) return id;
+    return Object.keys(donnees.favoris).find(k => idTenue(donnees.favoris[k].tenue) === id) || null;
+  }
   // Identifiant stable d'une tenue (pour les favoris), sans l'accessoire.
   function idTenue(t) {
     let h = 5381;
@@ -426,12 +462,33 @@
     const m = new Date().getMonth();
     return m >= 9 || m <= 2 ? 3 : m === 3 || m === 8 ? 2 : 1;
   }
+  // Couches d'un jour : la météo ne règle que celles d'aujourd'hui ; les autres jours suivent le
+  // réglage fait à la main, sinon la saison.
+  const couchesHorsMeteo = () => (etat.couchesChoisies && [1, 2, 3].includes(etat.couchesManuelles) ? etat.couchesManuelles : couchesDeSaison());
+  const couchesLe = date => (!date || date === AUJ_DATE ? etat.couches : couchesHorsMeteo());
   const dateDe = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   const AUJ_DATE = dateDe(new Date());
   // Une page restée ouverte passe minuit : elle se recharge plutôt que d'écrire sur la veille.
   let rechargement = false;
-  function jourChange() {
+  // Une saisie en cours (achat, simulateur, question au styliste, opération, photo du lookbook)
+  // n'est jamais perdue : on la laisse finir, la page se recharge au geste suivant.
+  const ZONES_SAISIE = ["ajouter", "form-simul", "form-styliste", "form-operation", "form-look"];
+  function saisieEnCours() {
+    const rempli = id => F(id) && F(id).value && F(id).value.trim();
+    return (F("ajouter") && !F("ajouter").hidden) || rempli("simul-titre") || rempli("simul-prix") || rempli("styliste-question")
+      || (typeof opBrouillon !== "undefined" && opBrouillon) || (F("look-photo") && F("look-photo").files && F("look-photo").files.length > 0);
+  }
+  let avertiDate = false;
+  function jourChange(e) {
     if (rechargement || dateDe(new Date()) === AUJ_DATE) return rechargement;
+    if (saisieEnCours()) {
+      // Sans geste (retour sur l'onglet, données reçues) : on attend, sans rien appliquer ni envoyer.
+      if (!e) return true;
+      // Dans la zone de saisie, le geste passe (ajouter l'achat, envoyer la question…).
+      if (e.target && e.target.closest && ZONES_SAISIE.some(z => e.target.closest("#" + z))) return false;
+      // Ailleurs : un avertissement d'abord ; au geste suivant, la page se met à jour.
+      if (!avertiDate) { avertiDate = true; toast("La date a changé : termine ta saisie. Au prochain geste ailleurs, la page se mettra à jour."); return true; }
+    }
     rechargement = true;
     location.reload();
     return true;
@@ -440,7 +497,7 @@
   function nettoyerTenue(t) {
     if (!t || typeof t.bas !== "string" || typeof t.haut !== "string") return null;
     const n = {};
-    SLOTS.forEach(k => { if (typeof t[k] === "string" && /^[A-Za-z0-9_-]{0,80}$/.test(t[k])) n[k] = t[k]; });
+    SLOTS.forEach(k => { if (typeof t[k] === "string" && /^[A-Za-z0-9_.~:@+-]{0,210}$/.test(t[k])) n[k] = t[k]; });
     if (!n.bas || !n.haut) return null;
     return n;
   }
@@ -448,8 +505,14 @@
     {
       if (!e || !Array.isArray(e.jours)) return null;
       const jours = JOURS.map(x => x[0]).filter(j => e.jours.includes(j));
+      // La semaine composée est celle de ce lundi : celle d'une semaine passée repart de zéro (les
+      // jours déjà portés reprennent la tenue notée au journal, les autres suivent la rotation).
+      const lundi = dateSemaine(0);
+      // (Une semaine enregistrée avant ce repère est datée par sa dernière modification, si elle en a une.)
+      const modifiee = nombre(e.majLe, 0, 1e15) || 0;
+      const memeSemaine = e.semaine === lundi || (e.semaine === undefined && (!modifiee || modifiee >= Date.parse(lundi + "T00:00:00")));
       const plan = {};
-      for (const j of jours) {
+      for (const j of memeSemaine ? jours : []) {
         const t = nettoyerTenue(e.plan && e.plan[j]);
         if (t) plan[j] = t;
       }
@@ -461,11 +524,12 @@
       const idee = e.idee && e.idee.date === AUJ_DATE ? nettoyerTenue(e.idee.t) : null;
       const portee = e.portee && e.portee.date === AUJ_DATE && typeof e.portee.id === "string" ? { date: AUJ_DATE, id: e.portee.id } : null;
       const meteo = e.meteo && e.meteo.date === AUJ_DATE && possede(METEOS, e.meteo.valeur) ? { date: AUJ_DATE, valeur: e.meteo.valeur } : null;
+      const choisie = e.choisie && e.choisie.date === AUJ_DATE ? { date: AUJ_DATE } : null;
       return {
-        jours, plan,
+        jours, plan, semaine: lundi,
         couches: meteo && e.couchesMeteo === AUJ_DATE && valeur(e.couches) ? e.couches : choisies ? manuelles : couchesDeSaison(),
         couchesChoisies: choisies, couchesManuelles: manuelles, couchesMeteo: meteo && e.couchesMeteo === AUJ_DATE ? AUJ_DATE : null,
-        idee: idee ? { date: AUJ_DATE, t: idee } : null, portee, meteo,
+        idee: idee ? { date: AUJ_DATE, t: idee } : null, portee, meteo, choisie,
         majLe: nombre(e.majLe, 0, 1e15) || 0,
       };
     }
@@ -489,14 +553,18 @@
     clearTimeout(minuteurSync);
     minuteurSync = setTimeout(() => { enregistrer("etat", "semaine", etat).catch(() => {}); }, 700);
   }
-  const cleEtat = e => JSON.stringify([e.jours, e.plan, e.couches, e.couchesChoisies, e.couchesManuelles, e.couchesMeteo, e.idee, e.portee, e.meteo]);
+  const cleEtat = e => JSON.stringify([e.jours, e.plan, e.couches, e.couchesChoisies, e.couchesManuelles, e.couchesMeteo, e.idee, e.portee, e.meteo, e.choisie]);
   function surEtatDistant(snap) {
+    if (jourChange()) return; // la page se recharge (ou attend la fin d'une saisie) avant de lire quoi que ce soit
     const definitif = !(snap.metadata && snap.metadata.fromCache);
     const distant = snap.exists ? lireEtat(snap.data()) : null;
     const majDistant = distant ? distant.majLe : 0;
     if (distant && (majDistant > (etat.majLe || 0) || modeDonnees === "lecture")) {
       if (cleEtat(distant) !== cleEtat(etat)) {
+        if (!syncPrete && gesteAvantSync && modeDonnees === "base") toast("Ta semaine vient d'être mise à jour depuis ton autre appareil : refais ton dernier choix si besoin.");
         etat = distant;
+        composeeAvantBase = false; // la semaine vient de la base, pas d'une composition à l'aveugle
+        joursAveugles.clear();
         sauverLocal();
         if (etatAjouts === "ok") reconcilier(true);
         planifierRendu();
@@ -505,7 +573,9 @@
     if (definitif && modeDonnees === "base" && !syncPrete) {
       syncPrete = true;
       if (!distant || majDistant < (etat.majLe || 0)) { etat.majLe = etat.majLe || Date.now(); programmerSync(); }
-      else if (gesteAvantSync && majDistant === (etat.majLe || 0) && cleEtat(distant) !== cleEtat(etat)) {
+      // Même version des deux côtés, mais ce navigateur a avancé (un geste, ou une tenue composée
+      // pendant le chargement) : il l'envoie, pour que les deux appareils montrent la même semaine.
+      else if (majDistant === (etat.majLe || 0) && cleEtat(distant) !== cleEtat(etat)) {
         etat.majLe = Math.max(Date.now(), majDistant + 1);
         sauverLocal();
         programmerSync();
@@ -513,12 +583,14 @@
     }
   }
 
-  let etat = lire() || { jours: ["lun", "mar", "mer", "jeu", "ven", "sam"], plan: {}, couches: couchesDeSaison(), couchesChoisies: false, idee: null, portee: null, meteo: null, majLe: 0 };
+  let etat = lire() || { jours: ["lun", "mar", "mer", "jeu", "ven", "sam"], plan: {}, semaine: dateSemaine(0), couches: couchesDeSaison(), couchesChoisies: false, idee: null, portee: null, meteo: null, majLe: 0 };
   let apercu = null;       // tenue choisie dans un tableau d'accords
   // Idée du jour (quand aujourd'hui n'est pas coché) et pièce « portée aujourd'hui » : gardées pour la journée.
   const ideeDuJour = () => (etat.idee && etat.idee.date === AUJ_DATE ? etat.idee.t : null);
   const poserIdee = t => { etat.idee = t ? { date: AUJ_DATE, t } : null; };
   const tenueDuJourBrute = () => (etat.jours.includes(AUJ[0]) && valide(etat.plan[AUJ[0]]) ? etat.plan[AUJ[0]] : ideeDuJour());
+  // La tenue du jour a été choisie à la main : la page ne la recompose plus d'elle-même aujourd'hui.
+  const choisieAujourdhui = () => !!(etat.choisie && etat.choisie.date === AUJ_DATE);
   const porteeId = () => (etat.portee && etat.portee.date === AUJ_DATE && PAR_ID[etat.portee.id] && contient(tenueDuJourBrute(), etat.portee.id) ? etat.portee.id : null);
   const contient = (t, id) => !!(t && id && SLOTS.some(k => t[k] === id));
   // La tenue affichée est-elle celle notée au journal aujourd'hui ?
@@ -537,13 +609,16 @@
   // Une tenue : { bas, haut, dessous?, dessus?, pieds?, accessoire? } (ids des pièces).
   // Sous la pluie, pas de daim ni de toile aux pieds.
   const craintLaPluie = a => meteoDuJour() === "pluie" && /\b(daim|suede|toile|canvas)\b/i.test(sansAccents(a.modele + " " + a.coupe));
-  function choisirParmi(liste, usage, voisinsIds, alea) {
+  function choisirParmi(liste, usage, voisinsIds, alea, date) {
     let choix, max = -Infinity;
+    const op = bonusOperation(date);
     for (const a of liste) {
       if (!dispo(a)) continue;
-      let n = (alea ? Math.random() * 2 : 0) - (usage.get(a.id) || 0) * 5;
+      // Pendant une opération, les chaussures de la marque reviennent chaque jour (+30 contre 5 par
+      // jour déjà porté) ; sous la pluie, le daim et la toile restent au placard (-40).
+      let n = (alea ? Math.random() * 2 : 0) - (usage.get(a.id) || 0) * 5 + op(a) * 30;
       if (voisinsIds.includes(a.id)) n -= 3;
-      if (craintLaPluie(a)) n -= 10;
+      if (craintLaPluie(a)) n -= 40;
       if (n > max) { max = n; choix = a.id; }
     }
     return choix;
@@ -553,7 +628,7 @@
     let choix, max = -Infinity;
     for (const p of PIEDS) {
       if (!dispo(p)) continue;
-      const n = (T[p.teinte].neutre ? 2 : 0) + (p.teinte !== b.teinte ? 1 : 0) - (craintLaPluie(p) ? 10 : 0);
+      const n = (T[p.teinte].neutre ? 2 : 0) + (p.teinte !== b.teinte ? 1 : 0) - (craintLaPluie(p) ? 10 : 0) + bonusOperation()(p) * 5;
       if (n > max) { max = n; choix = p.id; }
     }
     return choix;
@@ -569,7 +644,8 @@
     const sousImpose = c.dessous ? PAR_ID[c.dessous] : null;
     const dessusImpose = c.dessus ? PAR_ID[c.dessus] : null;
     const voisinsSous = ctx.voisins.map(v => v.dessous);
-    const hors = horsSaison();
+    const nc = couchesLe(ctx.date);
+    const hors = horsSaison(nc);
     const pluie = ctx.pluie !== undefined ? ctx.pluie : meteoDuJour() === "pluie";
     const op = bonusOperation(ctx.date);
     const res = [];
@@ -577,8 +653,8 @@
       if (!h || (!c.haut && ctx.hautsPris.has(h.id))) continue;
       let sous = [null];
       if (sousImpose) { if (!accepte(h, sousImpose)) continue; sous = [sousImpose]; }
-      else if (etat.couches >= 2 && accepteDessous(h)) sous = sous.concat(SOUS.filter(s => libre(s) && accepte(h, s)));
-      const dessus = dessusImpose ? [dessusImpose] : etat.couches >= 3 ? [null].concat(DESSUS.filter(libre)) : [null];
+      else if (nc >= 2 && accepteDessous(h)) sous = sous.concat(SOUS.filter(s => libre(s) && accepte(h, s)));
+      const dessus = dessusImpose ? [dessusImpose] : nc >= 3 ? [null].concat(DESSUS.filter(libre)) : [null];
       // Une couche manquante ne compte que si ce haut pouvait la recevoir.
       const objectif = 1 + (sous.length > 1 || sousImpose ? 1 : 0) + (dessus.length > 1 || dessusImpose ? 1 : 0);
       for (const b of listeBas) {
@@ -586,23 +662,25 @@
         if (ctx.actuel && ctx.actuel.bas === b.id && ctx.actuel.haut === h.id) continue;
         const s1 = accord(b, h);
         if (!s1) continue;
-        let base = s1 * 10 - (ctx.usageBas.get(b.id) || 0) * 12;
+        // Pendant une opération, un bas de la marque peut revenir plusieurs jours : la rotation compte 4 fois moins.
+        const rotation = op(b) ? 0.25 : 1;
+        let base = s1 * 10 - (ctx.usageBas.get(b.id) || 0) * 12 * rotation;
         if (hors.includes(h.categorie)) base -= 6;
         if (hors.includes(b.categorie)) base -= 6;
-        if (etat.couches >= 2 && PULL_CATS.includes(h.categorie)) base += 3; // en hiver, le pull mène
+        if (nc >= 2 && PULL_CATS.includes(h.categorie)) base += 3; // en hiver, le pull mène
         // Rotation sur deux semaines d'après le journal, et goûts notés (J'aime / Pas pour moi).
         base -= fraicheur(h.id) * 10 + fraicheur(b.id) * 6;
         const gHB = gout("hb:" + h.id + "|" + b.id);
         if (gHB <= -2) continue;
         base += gHB * 3;
         // L'opération du moment passe avant la rotation de la semaine (bas déjà porté -12, la veille -15).
-        base += op(h) * 12 + op(b) * 20;
-        // Les bas clairs craignent les éclaboussures : la pluie passe avant la rotation de la semaine
-        // (un bas déjà porté un autre jour coûte 12, la veille 15) et avant l'opération magasin (+20).
-        if (pluie && T[b.teinte].clarte === "clair") base -= 60;
+        base += op(h) * 12 + op(b) * 40;
+        // Les bas clairs craignent les éclaboussures : la pluie passe avant tout le reste, rotation de la
+        // semaine et opération magasin (+40) comprises, même avec un meilleur accord (jusqu'à +20).
+        if (pluie && T[b.teinte].clarte === "clair") base -= 80;
         for (const v of ctx.voisins) {
           const hv = PAR_ID[v.haut];
-          if (v.bas === b.id) base -= 15;
+          if (v.bas === b.id) base -= 15 * rotation;
           if (hv && hv.categorie === h.categorie && hv.encolure === h.encolure) base -= 3;
           if (hv && hv.teinte === h.teinte) base -= 4;
         }
@@ -650,7 +728,7 @@
   function composer(ctx) {
     const r = generer({}, ctx, true)[0];
     if (!r) return null;
-    const p = choisirParmi(PIEDS, ctx.usagePieds, ctx.voisins.map(v => v.pieds), true);
+    const p = choisirParmi(PIEDS, ctx.usagePieds, ctx.voisins.map(v => v.pieds), true, ctx.date);
     if (p) r.t.pieds = p;
     return r.t;
   }
@@ -658,13 +736,13 @@
   const composerAvecRepli = ctx => composer(ctx) || composer(Object.assign({}, ctx, { hautsPris: new Set() }));
 
   // La meilleure pièce d'une liste selon un score d'accord, en faisant tourner les pièces.
-  function meilleurePiece(liste, score, usage, poids, voisinsIds) {
+  function meilleurePiece(liste, score, usage, poids, voisinsIds, bonus) {
     let choix = null, max = -Infinity;
     for (const a of liste) {
       if (!dispo(a)) continue;
       const s = score(a);
       if (!s) continue;
-      let n = s * 10 - (usage.get(a.id) || 0) * poids + Math.random() * 3;
+      let n = s * 10 - (usage.get(a.id) || 0) * poids + Math.random() * 3 + (bonus ? bonus(a) : 0);
       if (voisinsIds.includes(a.id)) n -= 4;
       if (n > max) { max = n; choix = a.id; }
     }
@@ -674,24 +752,28 @@
   // sous-couche et par-dessus selon les couches choisies, et chaussures.
   function completer(t, ctx) {
     let change = false;
+    // Les mêmes préférences que generer : l'opération du moment, et sous la pluie blouson ou manteau.
+    const op = bonusOperation(ctx.date);
+    const pluie = ctx.pluie !== undefined ? ctx.pluie : meteoDuJour() === "pluie";
     const h = PAR_ID[t.haut], b = PAR_ID[t.bas];
     const retirer = k => { delete t[k]; change = true; };
     // Une couche devenue impossible ou « à éviter » (pièce supprimée ou modifiée) est retirée…
     if (t.dessous && (!accepte(h, PAR_ID[t.dessous]) || !superposer(PAR_ID[t.dessous], h).score)) retirer("dessous");
     if (t.dessus && (!aRole(t.dessus, "dessus") || !surcouche(PAR_ID[t.dessus], h, b, PAR_ID[t.dessous]).score)) retirer("dessus");
     if (t.pieds && !aRole(t.pieds, "pieds")) retirer("pieds");
-    if (t.accessoire && !PAR_ID[t.accessoire]) retirer("accessoire");
+    if (t.accessoire && !aRole(t.accessoire, "aucun")) retirer("accessoire");
     // … puis remplacée ; une couche laissée de côté exprès (chaîne vide) le reste.
-    if (t.dessous === undefined && etat.couches >= 2 && accepteDessous(h)) {
-      const s = meilleurePiece(SOUS.filter(x => accepte(h, x) && gout("sh:" + x.id + "|" + h.id) > -2), x => superposer(x, h).score, ctx.usageDessous, 6, ctx.voisins.map(v => v.dessous));
+    if (t.dessous === undefined && couchesLe(ctx.date) >= 2 && accepteDessous(h)) {
+      const s = meilleurePiece(SOUS.filter(x => accepte(h, x) && gout("sh:" + x.id + "|" + h.id) > -2), x => superposer(x, h).score, ctx.usageDessous, 6, ctx.voisins.map(v => v.dessous), x => op(x) * 4);
       if (s) { t.dessous = s; change = true; }
     }
-    if (t.dessus === undefined && etat.couches >= 3) {
-      const d = meilleurePiece(DESSUS.filter(x => gout("dh:" + x.id + "|" + h.id) > -2), x => surcouche(x, h, b, PAR_ID[t.dessous]).score, ctx.usageDessus, 2, ctx.voisins.map(v => v.dessus));
+    if (t.dessus === undefined && couchesLe(ctx.date) >= 3) {
+      const d = meilleurePiece(DESSUS.filter(x => gout("dh:" + x.id + "|" + h.id) > -2), x => surcouche(x, h, b, PAR_ID[t.dessous]).score, ctx.usageDessus, 2, ctx.voisins.map(v => v.dessus),
+        x => op(x) * 8 + (pluie ? (x.categorie === "vestes" ? -3 : 3) : 0));
       if (d) { t.dessus = d; change = true; }
     }
     if (!t.pieds && PIEDS.length) {
-      const p = choisirParmi(PIEDS, ctx.usagePieds, ctx.voisins.map(v => v.pieds), true);
+      const p = choisirParmi(PIEDS, ctx.usagePieds, ctx.voisins.map(v => v.pieds), true, ctx.date);
       if (p) { t.pieds = p; change = true; }
     }
     return change;
@@ -730,8 +812,14 @@
     if (t) etat.plan[j] = t;
     else if (!actuel) delete etat.plan[j];
   }
+  // La tenue notée au journal pour un jour de la semaine déjà commencé (aujourd'hui compris).
+  function tenueDuJournal(i) {
+    const e = i >= 0 && i <= INDEX_AUJ ? donnees.journal[dateSemaine(i)] : null;
+    return e && valide(e.tenue) ? copieTenue(e.tenue) : null;
+  }
   function composerSemaine() {
     etat.plan = {};
+    etat.choisie = null;
     // Les jours déjà portés gardent la tenue notée au journal.
     JOURS.forEach(([j], i) => {
       const e = i <= INDEX_AUJ ? donnees.journal[dateSemaine(i)] : null;
@@ -744,23 +832,33 @@
   function reconcilier(distant) {
     const sur = etatAjouts === "ok";
     let change = false;
-    for (const [j] of JOURS) {
+    for (const [i, [j]] of JOURS.entries()) {
       const t = etat.plan[j];
       if (!etat.jours.includes(j)) {
         if (t) { delete etat.plan[j]; change = true; }
         continue;
       }
-      if (!t) { composerJour(j, null); if (j === AUJ[0] && modeDonnees === "attente") composeeAvantBase = true; change = true; continue; }
+      if (!t) {
+        // Un jour déjà porté reprend la tenue notée ; un jour passé attend que le journal soit lu.
+        const notee = tenueDuJournal(i);
+        if (notee) etat.plan[j] = notee;
+        else if (i < INDEX_AUJ && !journalPret()) continue;
+        else { composerJour(j, null); noterAveugle(j); }
+        change = true;
+        continue;
+      }
       if (!sur) continue; // ses pièces sont peut-être seulement pas encore chargées
       if (!valide(t)) { delete etat.plan[j]; composerJour(j, null); change = true; continue; }
-      if (!noteeAujourdhui(t) && retirerCouchesEnTrop(t)) change = true;
-      if (!noteeAujourdhui(t) && completer(t, contexteJour(j, null))) change = true;
+      // Jours passés, tenue notée ou choisie aujourd'hui : on n'y touche plus.
+      const fige = i < INDEX_AUJ || noteeAujourdhui(t) || (i === INDEX_AUJ && choisieAujourdhui());
+      if (!fige && retirerCouchesEnTrop(t, couchesLe(dateSemaine(i)))) change = true;
+      if (!fige && completer(t, contexteJour(j, null))) change = true;
     }
     if (sur) {
       if (apercu && !valide(apercu)) apercu = null;
       if (apercu) completer(apercu, ctxVide());
       const idee = ideeDuJour();
-      if (idee && valide(idee) && !noteeAujourdhui(idee) && (retirerCouchesEnTrop(idee) | completer(idee, ctxVide()))) change = true;
+      if (idee && valide(idee) && !noteeAujourdhui(idee) && !choisieAujourdhui() && (retirerCouchesEnTrop(idee) | completer(idee, ctxVide()))) change = true;
       if (choix.id && !PAR_ID[choix.id]) choix = { id: null, rang: 0, filtre: choix.filtre };
       if (etat.portee && !porteeId()) { etat.portee = null; change = true; }
       if (remplacerIndispo()) change = true;
@@ -782,7 +880,7 @@
     let n = t, change = false;
     for (const k of SLOTS) {
       if (!n[k] || n[k] === pid || !auLavage(n[k])) continue;
-      const r = remplacerPiece(n, k, Object.assign({}, ctx));
+      const r = remplacerPiece(n, k, Object.assign({}, ctx), pid);
       if (r) n = r;
       else if (k !== "bas" && k !== "haut") { n = copieTenue(n); delete n[k]; }
       else continue;
@@ -799,7 +897,7 @@
     JOURS.forEach(([j], i) => {
       const t = etat.plan[j];
       if (i < INDEX_AUJ || !valide(t) || (i === INDEX_AUJ && noteeAujourdhui(t))) return;
-      if (i === INDEX_AUJ && pid && contient(t, pid)) {
+      if (i === INDEX_AUJ && ((pid && contient(t, pid)) || choisieAujourdhui())) {
         const n = reparerAutour(t, contexteJour(j, null), pid);
         if (n) { etat.plan[j] = n; change = true; }
         return;
@@ -807,7 +905,7 @@
       if (reparer(t, contexteJour(j, null), () => composerJour(j, null))) change = true;
     });
     const idee = ideeDuJour();
-    if (!noteeAujourdhui(idee) && valide(idee) && pid && contient(idee, pid)) {
+    if (!noteeAujourdhui(idee) && valide(idee) && ((pid && contient(idee, pid)) || choisieAujourdhui())) {
       const n = reparerAutour(idee, ctxVide(), pid);
       if (n) { poserIdee(n); change = true; }
     } else if (!noteeAujourdhui(idee) && valide(idee) && reparer(idee, ctxVide(), () => poserIdee(composerAvecRepli(ctxVide())))) change = true;
@@ -815,12 +913,12 @@
     return change;
   }
   // « Changer » sur une pièce de la tenue : la suivante qui va le mieux avec les autres pièces.
-  function remplacerPiece(t, k, ctx) {
+  function remplacerPiece(t, k, ctx, garderId) {
     const garder = {};
     ["bas", "haut", "dessous", "dessus"].forEach(x => { if (x !== k && t[x]) garder[x] = t[x]; });
     ctx.exclus = new Set([t[k]]);
     if (k === "pieds") {
-      const p = choisirParmi(PIEDS.filter(x => x.id !== t.pieds), ctx.usagePieds, [], true);
+      const p = choisirParmi(PIEDS.filter(x => x.id !== t.pieds), ctx.usagePieds, [], true, ctx.date);
       if (!p) return null;
       return Object.assign(copieTenue(t), { pieds: p });
     }
@@ -831,10 +929,10 @@
       return autres.length ? Object.assign(copieTenue(t), { accessoire: autres[0].id }) : null;
     }
     // Le haut change : la sous-couche peut ne plus convenir, on la laisse choisir à nouveau.
-    if (k === "haut") delete garder.dessous;
+    if (k === "haut" && garder.dessous !== garderId) delete garder.dessous;
     // On garde les autres couches tant que c'est possible, sinon on les laisse se rechoisir.
     const convient = x => (k === "dessous" || k === "dessus" ? !!x.t[k] : true);
-    const relacher = ["dessus", "dessous"].filter(x => x !== k && garder[x]);
+    const relacher = ["dessus", "dessous"].filter(x => x !== k && garder[x] && garder[x] !== garderId);
     let liste = generer(garder, ctx, true);
     while (!liste.some(convient) && relacher.length) { delete garder[relacher.shift()]; liste = generer(garder, ctx, true); }
     const r = liste.find(convient);
@@ -853,11 +951,11 @@
     return n;
   }
   // Couches au-delà du réglage (par exemple quand la saison change) ; la pièce portée aujourd'hui reste.
-  function retirerCouchesEnTrop(t) {
+  function retirerCouchesEnTrop(t, n = etat.couches) {
     const garder = porteeId();
     let change = false;
-    if (etat.couches < 2 && t.dessous !== undefined && t.dessous !== garder) { delete t.dessous; change = true; }
-    if (etat.couches < 3 && t.dessus !== undefined && t.dessus !== garder) { delete t.dessus; change = true; }
+    if (n < 2 && t.dessous !== undefined && t.dessous !== garder) { delete t.dessous; change = true; }
+    if (n < 3 && t.dessus !== undefined && t.dessus !== garder) { delete t.dessus; change = true; }
     return change;
   }
   function changerCouches(n, parMeteo) {
@@ -884,7 +982,8 @@
       if (sur) completer(t, ctx);
       return t;
     };
-    JOURS.forEach(([j]) => { if (etat.plan[j]) etat.plan[j] = ajuster(etat.plan[j], contexteJour(j, null)); });
+    // Les jours déjà passés gardent la tenue qu'ils avaient ; la météo ne touche qu'aujourd'hui.
+    JOURS.forEach(([j], i) => { if (etat.plan[j] && (parMeteo ? i === INDEX_AUJ : i >= INDEX_AUJ)) etat.plan[j] = ajuster(etat.plan[j], contexteJour(j, null)); });
     if (ideeDuJour()) poserIdee(ajuster(ideeDuJour(), ctxVide()));
     if (apercu) apercu = ajuster(apercu, ctxVide());
     choix.rang = 0;
@@ -998,7 +1097,7 @@
     });
     pieces.push({ a: PAR_ID[t.bas], k: "bas", etiquette: "Bas" });
     if (PAR_ID[t.pieds]) pieces.push({ a: PAR_ID[t.pieds], k: "pieds", etiquette: "Chaussures" });
-    if (PAR_ID[t.accessoire]) pieces.push({ a: PAR_ID[t.accessoire], k: "accessoire", etiquette: "Accessoire" });
+    if (aRole(t.accessoire, "aucun")) pieces.push({ a: PAR_ID[t.accessoire], k: "accessoire", etiquette: "Accessoire" });
     return pieces;
   }
   const CHAUSSURES_A_TROUVER = `<div class="slot pieds">
@@ -1063,7 +1162,7 @@
       }
       t = composerAvecRepli(ctxVide());
       poserIdee(t);
-      if (modeDonnees === "attente") composeeAvantBase = true;
+      noterAveugle(AUJ[0]);
       ecrire();
     }
     return t ? { t, contexte: autour(t) || contexte } : null;
@@ -1093,7 +1192,7 @@
     const dejaNotee = note && cleTenue(note.tenue) === cleTenue(t);
     F("tenue-verdict").innerHTML = badgesTenue(t, ev) +
       (dejaNotee ? `<span class="badge porte">Portée aujourd'hui</span>` : "") +
-      (donnees.favoris[idTenue(t)] ? `<span class="badge favori">Favori</span>` : "") + `<p>${esc(contexte)}</p>`;
+      (favoriDe(t) ? `<span class="badge favori">Favori</span>` : "") + `<p>${esc(contexte)}</p>`;
     F("tenue-raisons").innerHTML = listeRaisons(ev);
     const ecrit = peutNoter();
     const boutons = [];
@@ -1104,7 +1203,7 @@
         : `<button class="btn primaire" type="button" id="porte" data-action="porte" aria-pressed="false">${note ? "Remplacer dans le journal" : "Je l'ai portée"}</button>`);
     }
     if (ecrit) {
-      boutons.push(`<button class="btn" type="button" id="favori-tenue" data-action="favori" data-cible="tenue" aria-pressed="${!!donnees.favoris[idTenue(t)]}">Favori</button>`);
+      boutons.push(`<button class="btn" type="button" id="favori-tenue" data-action="favori" data-cible="tenue" aria-pressed="${!!favoriDe(t)}">Favori</button>`);
       boutons.push(`<button class="btn" type="button" id="aime-tenue" data-action="aime" data-cible="tenue">J'aime</button>`);
       if (!apercu) boutons.push(`<button class="btn" type="button" id="aime-pas" data-action="aime-pas">Pas pour moi</button>`);
     }
@@ -1113,8 +1212,8 @@
     // L'avis d'abord : s'il ne vaut plus pour cette tenue, il s'efface et le bouton revient.
     rendreAvis();
     // Deuxième rangée, plus discrète : ce qu'on fait de la tenue au-delà de la porter.
-    const plus = [`<button class="lien-action" type="button" id="carte-tenue" data-action="carte">Carte à partager</button>`];
-    if (sample) plus.push(`<button class="lien-action" type="button" id="avis-tenue" data-action="avis-tenue" aria-disabled="${!!(avis && avis.enCours)}">Avis du styliste</button>`);
+    const plus = apercu ? [] : [`<button class="lien-action" type="button" id="carte-tenue" data-action="carte">Carte à partager</button>`];
+    if (sample && !apercu) plus.push(`<button class="lien-action" type="button" id="avis-tenue" data-action="avis-tenue" aria-disabled="${!!(avis && avis.enCours)}">Avis du styliste</button>`);
     F("tenue-plus").innerHTML = plus.join("");
   }
   function rendreMeteo() {
@@ -1211,7 +1310,7 @@
         <div class="verdict-texte">${badgesTenue(t, ev)}<p>Suggestion ${choix.rang + 1} sur ${liste.length}</p></div>
         <div class="actions">
           ${liste.length > 1 ? `<button class="btn" type="button" id="choix-autre" data-action="choix-autre">Autre suggestion</button>` : ""}
-          ${peutNoter() ? `<button class="btn" type="button" id="favori-choix" data-action="favori" data-cible="choix" aria-pressed="${!!donnees.favoris[idTenue(t)]}">Favori</button>` : ""}
+          ${peutNoter() ? `<button class="btn" type="button" id="favori-choix" data-action="favori" data-cible="choix" aria-pressed="${!!favoriDe(t)}">Favori</button>` : ""}
           <button class="btn primaire" type="button" id="choix-porter" data-action="choix-porter">Porter aujourd'hui</button>
         </div>
       </div>
@@ -1229,12 +1328,12 @@
       return;
     }
     F("liste-favoris").innerHTML = liste.map(([id, f]) => {
-      const retirer = peutNoter() ? `<button class="btn" type="button" id="fav-retirer-${id}" data-action="fav-retirer" data-id="${id}">Retirer</button>` : "";
+      const retirer = peutNoter() ? `<button class="btn" type="button" id="fav-retirer-${esc(id)}" data-action="fav-retirer" data-id="${esc(id)}">Retirer</button>` : "";
       const eyebrow = `<span class="eyebrow">Favori${f.ajouteLe ? " depuis le " + esc(dateCourte(f.ajouteLe)) : ""}</span>`;
       if (!valide(f.tenue)) {
         return `<li><div class="vignettes"></div><div class="ligne-corps">${eyebrow}<span class="noms"><span>${etatAjouts === "chargement" ? "Chargement des pièces ajoutées…" : "Une pièce de cette tenue n'existe plus."}</span></span></div><span class="ligne-actions">${retirer}</span></li>`;
       }
-      return ligneTenue(f.tenue, eyebrow, `<span class="ligne-actions"><button class="btn" type="button" id="fav-porter-${id}" data-action="fav-porter" data-id="${id}">Porter aujourd'hui</button>${retirer}</span>`);
+      return ligneTenue(f.tenue, eyebrow, `<span class="ligne-actions"><button class="btn" type="button" id="fav-porter-${esc(id)}" data-action="fav-porter" data-id="${esc(id)}">Porter aujourd'hui</button>${retirer}</span>`);
     }).join("");
   }
 
@@ -1272,7 +1371,7 @@
       const g = grilleTenue(e.tenue, null), ev = noterTenue(e.tenue);
       detail += `<div class="tenue" style="--n:${g.n}" data-n="${g.n}">${g.html}</div>
         <div class="verdict"><div class="verdict-texte">${badgesTenue(e.tenue, ev)}${e.meteo ? `<p>Météo : ${esc(METEOS[e.meteo].nom.toLowerCase())}</p>` : ""}</div>
-        <div class="actions">${peutNoter() ? `<button class="btn" type="button" id="journal-favori" data-action="favori" data-cible="journal" aria-pressed="${!!donnees.favoris[idTenue(e.tenue)]}">Favori</button>
+        <div class="actions">${peutNoter() ? `<button class="btn" type="button" id="journal-favori" data-action="favori" data-cible="journal" aria-pressed="${!!favoriDe(e.tenue)}">Favori</button>
           <button class="btn" type="button" id="journal-retirer" data-action="journal-retirer">Retirer du journal</button>` : ""}
           ${jourJournal !== AUJ_DATE ? `<button class="btn" type="button" id="journal-reporter" data-action="journal-reporter">Porter à nouveau aujourd'hui</button>` : ""}</div></div>`;
     } else if (e) {
@@ -1570,7 +1669,8 @@
     // Seul un titre au format Canva (« Marque - Catégorie - Modèle - Couleur ») est analysé ;
     // un nom libre reste un simple libellé.
     const titre = F("simul-titre").value;
-    simulAnalyse = /\s[-–—]\s/.test(titre) ? analyserTitre(titre) : null;
+    const analyse = /\s[-–—]\s/.test(titre) ? analyserTitre(titre) : null;
+    simulAnalyse = analyse && analyse.categorie ? analyse : null;
     if (!simulAnalyse) return;
     const r = simulAnalyse;
     if (!simulTouches.has("simul-categorie") && r.categorie) F("simul-categorie").value = r.categorie;
@@ -1632,7 +1732,7 @@
     memo.set(nom, { cle, val });
     return val;
   }
-  const cleGarderobe = () => ARTICLES.map(a => a.id + ":" + a.teinte + ":" + (a.encolure || "")).join("|");
+  const cleGarderobe = () => ARTICLES.map(a => [a.id, a.categorie, a.marque, a.teinte, a.encolure || ""].join(":")).join("|");
   function rendreMeilleursAchats() {
     const liste = memoiser("meilleurs-achats", cleGarderobe(), meilleursAchats);
     F("meilleurs-achats").innerHTML = liste.length ? liste.map(({ p, a }, i) => `<li>
@@ -1676,7 +1776,8 @@
     const r = donnees.reglages;
     if (document.activeElement !== F("reglage-remise")) F("reglage-remise").value = r.remise ? String(r.remise) : "";
     if (document.activeElement !== F("reglage-budget")) F("reglage-budget").value = r.budget ? saisie(r.budget) : "";
-    F("reglage-remise").disabled = F("reglage-budget").disabled = !peutNoter();
+    // Pas de saisie avant la lecture des réglages enregistrés : l'autre valeur serait remise à 0.
+    F("reglage-remise").disabled = F("reglage-budget").disabled = !peutNoter() || (modeDonnees === "base" && !reglagesLus);
     const nomMois = new Date(midi(AUJ_DATE)).toLocaleDateString("fr-FR", { month: "long" });
     const d = depensesDuMois(AUJ_DATE.slice(0, 7));
     const depense = d.n ? `${esc(euros(d.total))} dépensés en ${nomMois} (${pluriel(d.n, "pièce")})` : `Rien de noté en ${nomMois}`;
@@ -1802,6 +1903,8 @@
       .filter(e => { const n = ecartJours(AUJ_DATE, e.date); return n >= 0 && n <= 7; })
       .sort((x, y) => y.date.localeCompare(x.date))
       .map(e => `- ${e.date} : ${decrireTenue(e.tenue)}`);
+    const pasPourMoi = Object.entries(donnees.gouts).filter(([, v]) => v <= -2).slice(0, 30)
+      .map(([k]) => "- " + k.slice(3).split("|").join(" avec "));
     const envies = Object.values(donnees.envies).slice(0, 15)
       .map(e => `- ${e.titre || `${singulier(e.categorie).toLowerCase()} ${T[e.teinte].nom.toLowerCase()}`}${e.prix ? ` (${euros(e.prix)})` : ""}`);
     return [
@@ -1809,6 +1912,9 @@
       "Garde-robe (identifiant : pièce) :", ...ARTICLES.map(lignePiece),
       recents.length ? "Tenues portées ces 7 derniers jours :\n" + recents.join("\n") : "Rien de noté au journal ces 7 derniers jours.",
       envies.length ? "Pièces repérées au magasin, pas encore achetées :\n" + envies.join("\n") : "",
+      operationActive() ? `Opération magasin en cours : mets la marque ${operationActive().marque} en avant dans tes tenues${operationActive().fin ? ` (jusqu'au ${operationActive().fin})` : ""}.` : "",
+      m === "pluie" ? "Il pleut : pas de bas clair (beige, gris clair, jean clair)." : "",
+      pasPourMoi.length ? "Associations notées « pas pour moi », à ne jamais proposer :\n" + pasPourMoi.join("\n") : "",
     ].filter(Boolean).join("\n");
   }
   const CONSIGNES = `Tu es le styliste personnel d'une personne qui travaille dans un magasin de prêt-à-porter Blue Box. Au travail, elle ne porte que des pièces achetées au magasin, pour mettre la collection en valeur ; c'est aussi son style.
@@ -1829,6 +1935,8 @@ avec seulement des identifiants de la liste, en omettant les places vides (desso
       corps.split(";").forEach(morceau => {
         const [k, v] = morceau.split("=").map(x => (x || "").trim());
         if (!["bas", "haut", "dessous", "dessus", "pieds"].includes(k)) return;
+        // Une place laissée vide (« pieds= », « dessus=aucun ») est simplement absente.
+        if (k !== "bas" && k !== "haut" && /^(|aucun|aucune|rien|-|none|null)$/i.test(v)) return;
         // Une pièce inventée invalide toute la ligne : pas de tenue amputée en silence.
         if (possede(PAR_ID, v)) t[k] = v; else inconnue = true;
       });
@@ -1848,8 +1956,10 @@ avec seulement des identifiants de la liste, en omettant les places vides (desso
     if (fin && (fin.startsWith("TENUE:") || "TENUE:".startsWith(fin))) s = s.slice(0, s.lastIndexOf("\n") + 1);
     return s.replace(/\*\*(.+?)\*\*/g, "$1").replace(/\n{3,}/g, "\n\n").trim();
   }
-  function tenuesProposees(tenues, prefixe) {
-    return tenues.length ? `<ol class="semaine">${tenues.map((t, i) => ligneTenue(t,
+  function tenuesProposees(tenuesBrutes, prefixe) {
+    // Revérifiées à chaque rendu : une pièce partie au lavage depuis la réponse retire la tenue.
+    const tenues = tenuesBrutes.map((t, i) => ({ t, i })).filter(x => tenueCoherente(x.t));
+    return tenues.length ? `<ol class="semaine">${tenues.map(({ t, i }) => ligneTenue(t,
       `<span class="eyebrow">Proposée par le styliste</span>`,
       `<span class="ligne-actions"><button class="btn petit" type="button" id="${prefixe}-${i}" data-action="styliste-porter" data-source="${prefixe}" data-i="${i}">Porter aujourd'hui</button></span>`)).join("")}</ol>` : "";
   }
@@ -1960,7 +2070,7 @@ avec seulement des identifiants de la liste, en omettant les places vides (desso
         },
       });
       courant.texte = res.text;
-      if (res.truncated) courant.interrompu = true;
+      if (res.truncated) { courant.interrompu = true; courant.erreur = "Avis coupé : redemande-le dans un instant."; }
     } catch (e) {
       courant.texte = e && e.text ? e.text : "";
       courant.erreur = echecStyliste(e);
@@ -2082,6 +2192,32 @@ Réponds uniquement par un objet JSON de cette forme :
     return op && operationEnCours(op, date) && marquePortable(op.marque) ? op : null;
   }
   let composeeAvantBase = false;       // tenue du jour composée avant que l'opération soit lue
+  const joursAveugles = new Set();     // jours suivants composés avant que l'opération soit lue
+  let operationLue = false;
+  // Composée avant de connaître l'opération : elle la suivra quand l'opération arrivera.
+  function noterAveugle(j) {
+    if (operationLue || modeDonnees === "local") return;
+    if (j === AUJ[0]) composeeAvantBase = true; else joursAveugles.add(j);
+  }
+  // L'opération (puis le journal) arrive : les tenues composées à l'aveugle la suivent. Une semaine
+  // venue de la base entre-temps efface ces marques (surEtatDistant) ; une tenue choisie ou notée
+  // n'est jamais recomposée (recomposerAujourdhui). Vrai si la page vient d'être redessinée.
+  function suivreOperation() {
+    if (!operationLue || !journalPret()) return false;
+    const aveugles = [...joursAveugles];
+    joursAveugles.clear();
+    let change = false;
+    aveugles.forEach(j => {
+      const i = JOURS.findIndex(x => x[0] === j);
+      if (i > INDEX_AUJ && etat.jours.includes(j) && valide(etat.plan[j]) && operationActive(dateSemaine(i))) { composerJour(j, null); change = true; }
+    });
+    if (change) ecrire();
+    if (!composeeAvantBase) return false;
+    composeeAvantBase = false;
+    if (!operationActive()) return false;
+    recomposerAujourdhui();
+    return true;
+  }
   const marques = () => [...new Set(ARTICLES.filter(a => role(a) !== "aucun").map(a => a.marque))].sort((x, y) => x.localeCompare(y, "fr"));
   function rendreOperation() {
     const op = donnees.operation, active = operationActive();
@@ -2094,7 +2230,7 @@ Réponds uniquement par un objet JSON de cette forme :
       F("op-titre").value = op ? op.titre : "";
       F("op-fin").value = op && op.fin ? op.fin : "";
     }
-    ["op-marque", "op-titre", "op-fin", "op-enregistrer"].forEach(id => { F(id).disabled = !peutNoter(); });
+    ["op-marque", "op-titre", "op-fin", "op-enregistrer"].forEach(id => { F(id).disabled = !peutNoter() || (modeDonnees === "base" && !operationLue); });
     F("op-arreter").hidden = !op || !peutNoter();
     // « 16 oct. » finit déjà par un point : pas de second point derrière.
     const phrase = s => s.replace(/\.?$/, ".");
@@ -2378,7 +2514,7 @@ Réponds uniquement par un objet JSON de cette forme :
     lookConfirme = null;
     try {
       await enregistrer("lookbook", id, null);
-      if (!Object.values(donnees.lookbook).some(x => x.image === l.image)) supprimerPhoto(l.image, true);
+      if (!imageCitee(l.image, null, id)) supprimerPhoto(l.image, true);
     } catch (_) { /* le toast d'enregistrer prévient déjà */ }
     rendre(rendreLookbook);
   }
@@ -2585,32 +2721,27 @@ Réponds uniquement par un objet JSON de cette forme :
       const m = vide();
       snap.docs.forEach(doc => { const x = doc.exists && LECTEURS[nom](doc.id, doc.data()); if (x) m[doc.id] = x; });
       donnees[nom] = m;
-      if (nom === "journal") { indexerJournal(); journalLu = true; }
+      if (nom === "journal") { indexerJournal(); journalLu = true; if (suivreOperation()) return; }
       if ((nom === "pieces" || nom === "journal") && etatAjouts === "ok") reconcilier(true);
       planifierRendu();
     }, () => toast("Une partie de tes données n'a pas pu être chargée. Recharge la page.", "erreur"));
     ["journal", "pieces", "favoris", "envies", "lookbook"].forEach(collection);
-    db.doc("vitrine/operation").onSnapshot(snap => {
-      if (enAttente("vitrine/operation")) return;
+    db.doc("vitrine/operation").onSnapshot(surDocument("vitrine/operation", snap => {
       donnees.operation = lireOperation(snap.exists ? snap.data() : null);
       // La tenue du jour a été composée avant de connaître l'opération : elle la suit maintenant.
-      if (!(snap.metadata && snap.metadata.fromCache) && composeeAvantBase) {
-        composeeAvantBase = false;
-        if (operationActive()) { recomposerAujourdhui(); return; }
-      }
+      if (!(snap.metadata && snap.metadata.fromCache)) { operationLue = true; if (suivreOperation()) return; }
       planifierRendu();
-    }, () => {});
-    db.doc("reglages/general").onSnapshot(snap => {
-      if (enAttente("reglages/general")) return; // l'écran montre déjà l'écriture en cours
+    }), () => {});
+    db.doc("reglages/general").onSnapshot(surDocument("reglages/general", snap => {
       donnees.reglages = lireReglages(snap.exists ? snap.data() : null);
+      if (!(snap.metadata && snap.metadata.fromCache)) reglagesLus = true;
       planifierRendu();
-    }, () => {});
-    db.doc("gouts/accords").onSnapshot(snap => {
-      if (enAttente("gouts/accords")) return;
+    }), () => {});
+    db.doc("gouts/accords").onSnapshot(surDocument("gouts/accords", snap => {
       donnees.gouts = lireGouts(snap.exists ? snap.data() : null);
       if (!(snap.metadata && snap.metadata.fromCache)) goutsPrets = true;
       planifierRendu();
-    }, () => { goutsPrets = false; });
+    }), () => { goutsPrets = false; });
     db.doc("etat/semaine").onSnapshot(surEtatDistant, () => {});
   }
 
@@ -2912,6 +3043,11 @@ Réponds uniquement par un objet JSON de cette forme :
 
   const CODES_DROITS = ["invalid_argument", "not_granted", "capability_disabled", "capability_removed"];
 
+  // Une image encore citée par une autre pièce ou par le lookbook ne doit pas être effacée.
+  function imageCitee(id, saufDocId, saufLook) {
+    return ajoutes.some(a => a.imageId === id && a.docId !== saufDocId)
+      || Object.entries(donnees.lookbook || {}).some(([k, l]) => l.image === id && k !== saufLook);
+  }
   // Supprime une photo qu'aucune pièce ne cite plus ; prévient si le stockage refuse.
   function supprimerPhoto(id, silencieux) {
     return appel(() => assets.delete(id), ["store_unavailable", "rate_limited"]).catch(() => {
@@ -2976,7 +3112,7 @@ Réponds uniquement par un objet JSON de cette forme :
       if (echec && CODES_DROITS.includes(echec.code)) passerEnLecture();
       return;
     }
-    if (enEdition && nouvelleImage) supprimerPhoto(courant.imageId);
+    if (enEdition && nouvelleImage && !imageCitee(courant.imageId, courant.docId)) supprimerPhoto(courant.imageId);
     noterAchat(enEdition ? enEdition.id : "achat-" + ref.id, v);
     if (envieAchetee && !enEdition) enregistrer("envies", envieAchetee, null).catch(() => {});
     const nom = [v.marque, v.modele || singulier(v.categorie), v.couleur].join(" ");
@@ -3042,7 +3178,7 @@ Réponds uniquement par un objet JSON de cette forme :
     }
     confirmation = null;
     if (edition && edition.id === id) { fermerPanneau(); annonce("La pièce que tu modifiais a été supprimée."); }
-    if (assets) {
+    if (assets && !imageCitee(a.imageId, a.docId)) {
       appel(() => assets.delete(a.imageId), ["store_unavailable", "rate_limited"])
         .catch(() => annonce("La pièce est supprimée, mais sa photo n'a pas pu être effacée du stockage de la page."));
     }
@@ -3130,7 +3266,11 @@ Réponds uniquement par un objet JSON de cette forme :
       if (!etat.jours.includes(j)) etat.jours.push(j);
       // Cocher aujourd'hui garde la tenue déjà affichée (l'idée du jour, ou la tenue portée).
       if (j === AUJ[0] && valide(ideeDuJour())) { etat.plan[j] = ideeDuJour(); poserIdee(null); }
-      else composerJour(j, null);
+      else {
+        // Un jour déjà porté reprend la tenue notée au journal.
+        const notee = tenueDuJournal(JOURS.findIndex(x => x[0] === j));
+        if (notee) etat.plan[j] = notee; else composerJour(j, null);
+      }
     } else {
       etat.jours = etat.jours.filter(x => x !== j);
       delete etat.plan[j];
@@ -3144,12 +3284,19 @@ Réponds uniquement par un objet JSON de cette forme :
     apercu = null;
     // Une pièce qu'on choisit de porter n'est plus au lavage.
     const sorties = SLOTS.map(k => t[k]).filter(id => id && auLavage(id) && PAR_ID[id]);
-    if (peutNoter()) sorties.forEach(id => enregistrer("pieces", id, Object.assign({}, donnees.pieces[id], { lavage: false })).catch(() => {}));
-    if (sorties.length) toast(`De retour du lavage : ${sorties.map(id => nomComplet(PAR_ID[id])).join(", ")}.`);
-    const n = copieTenue(t);
+    let n = copieTenue(t);
+    if (peutNoter()) {
+      sorties.forEach(id => enregistrer("pieces", id, Object.assign({}, donnees.pieces[id], { lavage: false })).catch(() => {}));
+      if (sorties.length) toast(`De retour du lavage : ${sorties.map(id => nomComplet(PAR_ID[id])).join(", ")}.`);
+    } else if (sorties.length) n = reparerAutour(n, ctxVide(), pieceId) || n; // en lecture, rien ne sort du lavage
+    // La tenue choisie ne change plus d'elle-même : couches absentes marquées vides, chaussures ajoutées.
+    if (n.dessous === undefined && accepteDessous(PAR_ID[n.haut])) n.dessous = "";
+    if (n.dessus === undefined) n.dessus = "";
+    if (!n.pieds && PIEDS.some(dispo)) { const p = chaussuresPour(PAR_ID[n.bas]); if (p) n.pieds = p; }
     if (etat.jours.includes(AUJ[0])) etat.plan[AUJ[0]] = n;
     else poserIdee(n);
     etat.portee = pieceId ? { date: AUJ_DATE, id: pieceId } : null;
+    etat.choisie = { date: AUJ_DATE };
     ecrire();
     rendre(rendreTenue, rendreSemaine);
     F("tenue").scrollIntoView({ block: "start" });
@@ -3194,9 +3341,14 @@ Réponds uniquement par un objet JSON de cette forme :
     changerCouches(METEOS[v].couches, true);
     // La tenue du jour s'adapte, sauf si elle est déjà notée ou choisie autour d'une pièce.
     const prevue = etat.jours.includes(AUJ[0]) && valide(etat.plan[AUJ[0]]) ? etat.plan[AUJ[0]] : ideeDuJour();
-    if (valide(prevue) && !noteeAujourdhui(prevue) && !porteeId()) {
+    if (valide(prevue) && !noteeAujourdhui(prevue) && !porteeId() && !choisieAujourdhui()) {
       if (etat.jours.includes(AUJ[0]) && valide(etat.plan[AUJ[0]])) composerJour(AUJ[0], null);
       else poserIdee(composerAvecRepli(ctxVide()));
+    } else if (v === "pluie" && valide(prevue) && !noteeAujourdhui(prevue) && T[PAR_ID[prevue.bas].teinte].clarte === "clair" && prevue.bas !== porteeId()) {
+      // Tenue choisie à la main : on garde le choix, seul le bas clair laisse la place à un bas foncé.
+      const ctx = etat.jours.includes(AUJ[0]) && valide(etat.plan[AUJ[0]]) ? contexteJour(AUJ[0], null) : ctxVide();
+      const n = remplacerPiece(prevue, "bas", ctx, porteeId());
+      if (n && T[PAR_ID[n.bas].teinte].clarte !== "clair") { remplacerTenueDuJour(n); toast("Pluie : bas clair remplacé par un bas foncé."); }
     }
     ecrire();
     rendre(rendreMeteo, rendreTenue, rendreChoix, rendreSemaine);
@@ -3301,20 +3453,34 @@ Réponds uniquement par un objet JSON de cette forme :
     F("op-erreur").textContent = msg;
     if (msg) return;
     opBrouillon = false;
-    const avant = (operationActive() || {}).marque;
+    const avant = (operationActive() || {}).marque, ancienne = donnees.operation;
     enregistrer("vitrine", "operation", { marque, titre: F("op-titre").value.trim().slice(0, 80), fin: fin || null }).catch(() => {});
-    // Un simple changement de nom ou de date ne change rien aux tenues : on ne recompose pas.
-    if ((operationActive() || {}).marque !== avant) recomposerAujourdhui(); else rendre(rendreTenue, rendreVitrine);
+    recomposerJoursSuivants(ancienne);
+    // Un simple changement de nom ne change rien aux tenues : on ne recompose pas.
+    if ((operationActive() || {}).marque !== avant) recomposerAujourdhui(); else rendre(rendreTenue, rendreVitrine, rendreSemaine);
     toast(`Opération lancée : les tenues mettent ${marque} en avant.`);
   });
   ["input", "change"].forEach(type => F("form-operation").addEventListener(type, () => { opBrouillon = true; }));
   F("op-marque").addEventListener("change", () => {
     if (!F("op-titre").value.trim() && F("op-marque").value) F("op-titre").placeholder = "Semaine " + F("op-marque").value;
   });
+  // Les jours suivants de la semaine dont la marque mise en avant change (lancement, autre marque,
+  // nouvelle date de fin, arrêt) sont recomposés ; les autres gardent leur tenue.
+  function recomposerJoursSuivants(ancienne) {
+    const marqueLe = (op, d) => (op && operationEnCours(op, d) && marquePortable(op.marque) ? op.marque : null);
+    let change = false;
+    JOURS.forEach(([j], i) => {
+      const d = dateSemaine(i);
+      if (i <= INDEX_AUJ || !etat.jours.includes(j) || marqueLe(ancienne, d) === marqueLe(donnees.operation, d)) return;
+      composerJour(j, null);
+      change = true;
+    });
+    if (change) ecrire();
+  }
   // La tenue du jour suit l'opération, sauf si elle est déjà notée ou choisie autour d'une pièce.
   function recomposerAujourdhui() {
     const prevue = etat.jours.includes(AUJ[0]) && valide(etat.plan[AUJ[0]]) ? etat.plan[AUJ[0]] : ideeDuJour();
-    if (valide(prevue) && !noteeAujourdhui(prevue) && !porteeId()) {
+    if (valide(prevue) && journalPret() && !noteeAujourdhui(prevue) && !porteeId() && !choisieAujourdhui()) {
       if (etat.jours.includes(AUJ[0]) && valide(etat.plan[AUJ[0]])) composerJour(AUJ[0], null);
       else poserIdee(composerAvecRepli(ctxVide()));
       ecrire();
@@ -3346,6 +3512,7 @@ Réponds uniquement par un objet JSON de cette forme :
     if (action === "recomposer") { composerSemaine(); rendre(rendreSemaine, rendreTenue); }
     else if (action === "changer") {
       const j = el.dataset.jour;
+      if (j === AUJ[0]) etat.choisie = null;
       if (valide(etat.plan[j])) composerJour(j, etat.plan[j]);
       else if (etatAjouts !== "chargement") { delete etat.plan[j]; composerJour(j, null); }
       else return;
@@ -3354,6 +3521,7 @@ Réponds uniquement par un objet JSON de cette forme :
     }
     else if (action === "autre") {
       etat.portee = null;
+      etat.choisie = null;
       apercu = null;
       if (etat.jours.includes(AUJ[0]) && valide(etat.plan[AUJ[0]])) composerJour(AUJ[0], etat.plan[AUJ[0]]);
       else poserIdee(composer(ctxVide(ideeDuJour())) || ideeDuJour());
@@ -3402,8 +3570,8 @@ Réponds uniquement par un objet JSON de cette forme :
     else if (action === "favori") {
       const t = tenueDe(el.dataset.cible);
       if (!t || !valide(t)) return;
-      const id = idTenue(t);
-      if (donnees.favoris[id]) { enregistrer("favoris", id, null).catch(() => {}); toast("Retirée des favoris."); }
+      const existant = favoriDe(t), id = existant || idTenue(t);
+      if (existant) { enregistrer("favoris", id, null).catch(() => {}); toast("Retirée des favoris."); }
       else { enregistrer("favoris", id, { tenue: copieTenue(t), ajouteLe: new Date().toISOString() }).catch(() => {}); toast("Ajoutée aux favoris."); }
       rendre(rendreTenue, rendreChoix, rendreFavoris, rendreJournal);
     }
@@ -3417,6 +3585,7 @@ Réponds uniquement par un objet JSON de cette forme :
       if (!r) return;
       noterGouts(r.t, -1).catch(() => {});
       etat.portee = null;
+      etat.choisie = null;
       if (etat.jours.includes(AUJ[0]) && valide(etat.plan[AUJ[0]])) composerJour(AUJ[0], etat.plan[AUJ[0]]);
       else poserIdee(composer(ctxVide(ideeDuJour())) || ideeDuJour());
       ecrire();
@@ -3442,7 +3611,7 @@ Réponds uniquement par un objet JSON de cette forme :
           return;
         }
       }
-      const n = remplacerPiece(t, k, ctx);
+      const n = remplacerPiece(t, k, ctx, porteeId());
       if (n) {
         if (etat.portee && etat.portee.id === id) etat.portee = null;
         remplacerTenueDuJour(n);
@@ -3518,16 +3687,18 @@ Réponds uniquement par un objet JSON de cette forme :
         : /^conv-\d+$/.test(source) && conversation[Number(source.slice(5))] ? conversation[Number(source.slice(5))].tenues || [] : [];
       const t = liste[Number(el.dataset.i)];
       if (t && tenueCoherente(t)) porterAujourdhui(t, null);
+      else if (t) { toast("Cette tenue n'est plus possible (une pièce est au lavage ou a changé)."); rendre(rendreStyliste, rendreTenue); }
     }
     else if (action === "avis-tenue") demanderAvis();
     else if (action === "avis-stop") { if (avis && avis.enCours) avis.ctl.abort(); }
     else if (action === "achat-claude") analyserPhoto();
     else if (action === "op-arreter") {
       opBrouillon = false;
-      const avant = (operationActive() || {}).marque;
+      const avant = (operationActive() || {}).marque, ancienne = donnees.operation;
       enregistrer("vitrine", "operation", null).catch(() => {});
       F("op-erreur").textContent = "";
-      if (avant) recomposerAujourdhui(); else rendre(rendreTenue, rendreVitrine);
+      recomposerJoursSuivants(ancienne);
+      if (avant) recomposerAujourdhui(); else rendre(rendreTenue, rendreVitrine, rendreSemaine);
       toast("Opération arrêtée.");
       F("op-marque").focus();
     }
@@ -3601,10 +3772,10 @@ Réponds uniquement par un objet JSON de cette forme :
 
   // Au retour sur la page, et avant chaque geste : si la date a changé, on recharge d'abord.
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") jourChange(); });
-  window.addEventListener("focus", jourChange);
-  window.addEventListener("pageshow", jourChange);
+  window.addEventListener("focus", () => jourChange());
+  window.addEventListener("pageshow", () => jourChange());
   ["click", "change", "submit"].forEach(type => document.addEventListener(type, e => {
-    if (jourChange()) { e.preventDefault(); e.stopImmediatePropagation(); return; }
+    if (jourChange(e)) { e.preventDefault(); e.stopImmediatePropagation(); return; }
     if (modeDonnees !== "local" && !syncPrete) gesteAvantSync = true;
   }, true));
 

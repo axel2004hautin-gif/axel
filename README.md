@@ -12,17 +12,17 @@ Ouvre `index.html` dans un navigateur (double-clic sur le fichier, rien à insta
 - **Tenue du jour** : jusqu'à 5 pièces (sous-couche, pull, veste ou blouson, bas, chaussures), avec les raisons pour lesquelles elles vont ensemble et un bouton « Autre tenue ».
 - **Couches** : un réglage « 1 · un haut », « 2 · sous-couche + pull », « 3 · + veste ou blouson », réglé par défaut selon le mois (3 d'octobre à mars). Il s'applique à la tenue du jour, à la semaine et à « Je veux porter ».
 - **Je veux porter…** : choisis la pièce qui te fait envie le matin (ou « Porter avec… » depuis le catalogue). La page compose jusqu'à 5 tenues autour d'elle, explique pourquoi, et « Porter aujourd'hui » en fait ta tenue du jour.
-- **Météo du jour** : froid, frais, doux ou pluie. Elle règle les couches ; sous la pluie, les bas clairs, les vestes légères et le daim reculent.
+- **Météo du jour** : froid, frais, doux ou pluie. Elle règle les couches d'aujourd'hui seulement (les autres jours de la semaine gardent les leurs) ; sous la pluie, les bas clairs, les vestes légères et le daim reculent.
 - **Changer une pièce** : sous chaque pièce de la tenue du jour, « Changer » remplace seulement celle-là, « Au lavage » la sort des tenues et la remplace.
 - **Je l'ai portée / Favori / J'aime / Pas pour moi** : la tenue part dans le journal, dans les favoris, ou apprend tes goûts (une association notée deux fois « pas pour moi » n'est plus proposée).
-- **Tenues favorites** : tes tenues gardées, à remettre en un geste.
+- **Tenues favorites** : tes tenues gardées, à remettre en un geste. Une tenue remise à la main (favori, styliste, journal) reste celle que tu as choisie : la météo ou une opération ne la recomposent pas ; sous la pluie, seul un bas clair est remplacé par un bas foncé.
 - **Styliste** (page publiée) : pose tes questions à Claude, qui connaît ta garde-robe, ton journal, tes envies et la météo du jour ; les tenues qu'il propose se portent en un geste. « Avis du styliste » commente la tenue du jour, et « Remplir avec Claude » reconnaît la pièce sur la photo dans le formulaire d'ajout. Chaque demande utilise ton propre compte Claude et demande ton accord la première fois.
 - **Journal** : le calendrier de ce que tu as porté, le détail de chaque jour, et les pièces oubliées (pas portées depuis trois semaines). Les pièces portées ces deux dernières semaines reviennent moins vite dans les propositions.
-- **Ma semaine** : coche tes jours de travail. Chaque jour reçoit un haut différent, les bas et les sous-couches tournent pour que toute la collection passe dans la semaine. Chaque jour a son bouton « Changer ».
+- **Ma semaine** : coche tes jours de travail. Chaque jour reçoit un haut différent, les bas et les sous-couches tournent pour que toute la collection passe dans la semaine. Chaque jour a son bouton « Changer ». Chaque lundi, la semaine repart de zéro : les jours déjà portés reprennent la tenue notée au journal, les autres sont recomposés avec la rotation. Les jours passés ne sont plus modifiés.
 - **Catalogue** : toutes les pièces, filtrables par catégorie, avec le lien vers la fiche produit.
 - **Accords** : toutes les combinaisons haut × bas, et un tableau des superpositions sous-couche × haut, notées « valeur sûre », « possible » ou « à éviter ».
 - **À compléter** : les catégories encore vides, par ordre de priorité.
-- **Mettre en avant** : l'opération du moment au magasin (une marque mise en avant jusqu'à une date : les tenues la favorisent et un bandeau le rappelle), la carte à partager de la tenue du jour (image 1080 × 1350 pour une story), le lookbook de tes photos en tenue rangées avec la tenue notée ce jour-là, et les statistiques du journal (pièces les plus portées, marques, couleurs, jours par mois), exportables en tableur.
+- **Mettre en avant** : l'opération du moment au magasin (une marque mise en avant jusqu'à une date : les tenues de la semaine la favorisent jusqu'à cette date, ses bas et ses chaussures peuvent revenir plusieurs jours, et un bandeau le rappelle), la carte à partager de la tenue du jour (image 1080 × 1350 pour une story), le lookbook de tes photos en tenue rangées avec la tenue notée ce jour-là, et les statistiques du journal (pièces les plus portées, marques, couleurs, jours par mois), exportables en tableur.
 - **Acheter malin** : avant de passer en caisse, le simulateur « Et si j'achetais… » montre ce qu'une pièce t'apporterait (nouvelles tenues, superpositions, et les tenues elles-mêmes), avec le prix par nouvelle tenue. Viennent ensuite les achats qui t'apporteraient le plus, ta liste d'envies classée selon le rapport prix / nouvelles tenues (« Je l'ai acheté » ouvre le formulaire d'ajout pré-rempli), ta remise employé, ton budget du mois et le coût par port de chaque pièce (prix payé ÷ nombre de fois portée).
 
 ### Les règles de superposition
@@ -109,7 +109,7 @@ Claude peut recopier dans le dépôt les pièces ajoutées depuis la page.
 
 La page publiée sur claude.ai est `index.html` sans son enveloppe de document, que le visualiseur ajoute lui-même : `outils/version-artefact.sh > garde-robe-blue-box.html`, publiée avec `app.js`, `garde-robe.js` et `images/*.jpg`, et les capacités `db` (écriture réservée au propriétaire), `assets`, `user`, `sample` (avec images) et `downloads`.
 
-Dans la base de la page : `achats` (pièces ajoutées), `etat/semaine` (semaine, couches, météo, tenue du jour), `journal/AAAA-MM-JJ`, `pieces/<id>` (lavage, prix payé, date d'achat, taille), `favoris`, `gouts/accords`, `envies`, `reglages/general` (remise, budget), `vitrine/operation`, `lookbook`.
+Dans la base de la page : `achats` (pièces ajoutées), `etat/semaine` (semaine datée de son lundi, couches, météo, tenue du jour et si elle a été choisie à la main), `journal/AAAA-MM-JJ`, `pieces/<id>` (lavage, prix payé, date d'achat, taille), `favoris`, `gouts/accords`, `envies`, `reglages/general` (remise, budget), `vitrine/operation`, `lookbook`.
 
 ## Notes
 
