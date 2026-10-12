@@ -204,7 +204,7 @@
   let modeDonnees = window.claude && typeof window.claude.use === "function" ? "attente" : "local";
   let peutEcrireDonnees = false;
   const vide = () => Object.create(null);
-  const donnees = { journal: vide(), pieces: vide(), favoris: vide(), gouts: vide(), envies: vide(), reglages: { remise: 0, budget: 0 } };
+  const donnees = { journal: vide(), pieces: vide(), favoris: vide(), gouts: vide(), envies: vide(), reglages: { remise: 0, budget: 0 }, operation: null, lookbook: vide() };
   const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
   const METEOS = {
     froid: { nom: "Froid", couches: 3, aide: "Froid : sous-couche, pull et veste ou manteau." },
@@ -263,7 +263,18 @@
       budget: (d && nombre(d.budget, 0, 100000)) || 0,
     };
   }
-  const LECTEURS = { journal: lireEntreeJournal, pieces: lireMeta, favoris: lireFavori, envies: lireEnvie };
+  function lireOperation(d) {
+    const marque = d ? texte(d.marque, 60) : "";
+    if (!marque) return null;
+    return { marque, titre: texte(d.titre, 80), fin: typeof d.fin === "string" && DATE_RE.test(d.fin) ? d.fin : null };
+  }
+  function lireLook(id, d) {
+    if (!ID_DOC.test(id) || !d) return null;
+    const image = texte(d.image, 64), date = texte(d.date, 10);
+    if (!ID_ASSET.test(image) || !DATE_RE.test(date)) return null;
+    return { image, date, legende: texte(d.legende, 140), ajouteLe: texte(d.ajouteLe, 40) };
+  }
+  const LECTEURS = { journal: lireEntreeJournal, pieces: lireMeta, favoris: lireFavori, envies: lireEnvie, lookbook: lireLook };
 
   function lireDonneesLocales() {
     try {
@@ -276,13 +287,14 @@
       }
       donnees.gouts = lireGouts(e.gouts);
       donnees.reglages = lireReglages(e.reglages);
+      donnees.operation = lireOperation(e.operation);
     } catch (_) { /* rien d'enregistré */ }
   }
   function ecrireDonneesLocales() {
     try {
       localStorage.setItem(CLE_DONNEES, JSON.stringify({
         journal: donnees.journal, pieces: donnees.pieces, favoris: donnees.favoris, gouts: { paires: donnees.gouts },
-        envies: donnees.envies, reglages: donnees.reglages,
+        envies: donnees.envies, reglages: donnees.reglages, operation: donnees.operation,
       }));
     } catch (_) { /* stockage indisponible */ }
   }
@@ -302,11 +314,14 @@
       };
     }
     if (collection === "reglages") return { remise: v.remise || 0, budget: v.budget || 0, majLe: maintenant };
+    if (collection === "vitrine") return { marque: v.marque, titre: v.titre || "", fin: v.fin || null, majLe: maintenant };
+    if (collection === "lookbook") return { image: v.image, date: v.date, legende: v.legende || "", ajouteLe: v.ajouteLe || maintenant };
     return JSON.parse(JSON.stringify(v));
   }
   function appliquerLocal(collection, id, v) {
     if (collection === "gouts") donnees.gouts = Object.assign(vide(), v ? v.paires : null);
     else if (collection === "reglages") donnees.reglages = lireReglages(v);
+    else if (collection === "vitrine") donnees.operation = lireOperation(v);
     else if (possede(donnees, collection)) {
       if (v) donnees[collection][id] = v; else delete donnees[collection][id];
       if (collection === "journal") indexerJournal();
@@ -315,6 +330,7 @@
   function valeurLocale(collection, id) {
     if (collection === "gouts") return { paires: Object.assign({}, donnees.gouts) };
     if (collection === "reglages") return Object.assign({}, donnees.reglages);
+    if (collection === "vitrine") return donnees.operation;
     return possede(donnees, collection) && possede(donnees[collection], id) ? donnees[collection][id] : null;
   }
   const filesEcriture = new Map();
@@ -347,7 +363,9 @@
   let RECENCE = new Map(), PORTS = new Map(), DERNIER = new Map();
   const midi = date => Date.parse(date + "T12:00:00");
   const ecartJours = (a, b) => Math.round((midi(a) - midi(b)) / 864e5);
+  let versionJournal = 0;
   function indexerJournal() {
+    versionJournal++;
     RECENCE = new Map(); PORTS = new Map(); DERNIER = new Map();
     for (const e of Object.values(donnees.journal)) {
       const jours = ecartJours(AUJ_DATE, e.date);
@@ -553,6 +571,7 @@
     const voisinsSous = ctx.voisins.map(v => v.dessous);
     const hors = horsSaison();
     const pluie = ctx.pluie !== undefined ? ctx.pluie : meteoDuJour() === "pluie";
+    const op = bonusOperation(ctx.date);
     const res = [];
     for (const h of listeHauts) {
       if (!h || (!c.haut && ctx.hautsPris.has(h.id))) continue;
@@ -576,9 +595,11 @@
         const gHB = gout("hb:" + h.id + "|" + b.id);
         if (gHB <= -2) continue;
         base += gHB * 3;
+        // L'opération du moment passe avant la rotation de la semaine (bas déjà porté -12, la veille -15).
+        base += op(h) * 12 + op(b) * 20;
         // Les bas clairs craignent les éclaboussures : la pluie passe avant la rotation de la semaine
-        // (un bas déjà porté un autre jour coûte 12, la veille 15).
-        if (pluie && T[b.teinte].clarte === "clair") base -= 40;
+        // (un bas déjà porté un autre jour coûte 12, la veille 15) et avant l'opération magasin (+20).
+        if (pluie && T[b.teinte].clarte === "clair") base -= 60;
         for (const v of ctx.voisins) {
           const hv = PAR_ID[v.haut];
           if (v.bas === b.id) base -= 15;
@@ -598,7 +619,7 @@
             if (ctx.hautsAilleurs.has(s.id)) ns -= 8; // déjà portée en haut un autre jour
             const gSH = gout("sh:" + s.id + "|" + h.id);
             if (gSH <= -2) continue;
-            ns += gSH * 2 - fraicheur(s.id) * 5;
+            ns += gSH * 2 - fraicheur(s.id) * 5 + op(s) * 4;
           }
           for (const d of dessus) {
             let n = ns;
@@ -608,7 +629,7 @@
               n += s3 * 4 - (ctx.usageDessus.get(d.id) || 0) * 2 - fraicheur(d.id);
               const gDH = gout("dh:" + d.id + "|" + h.id);
               if (gDH <= -2) continue;
-              n += gDH * 2;
+              n += gDH * 2 + op(d) * 8;
               if (pluie) n += d.categorie === "vestes" ? -3 : 3;
             }
             const couches = 1 + (s ? 1 : 0) + (d ? 1 : 0);
@@ -701,6 +722,7 @@
       actuel: actuel || null,
       exclus: new Set(),
       pluie: j === AUJ[0] && meteoDuJour() === "pluie",
+      date: dateSemaine(JOURS.findIndex(x => x[0] === j)),
     };
   }
   function composerJour(j, actuel) {
@@ -728,7 +750,7 @@
         if (t) { delete etat.plan[j]; change = true; }
         continue;
       }
-      if (!t) { composerJour(j, null); change = true; continue; }
+      if (!t) { composerJour(j, null); if (j === AUJ[0] && modeDonnees === "attente") composeeAvantBase = true; change = true; continue; }
       if (!sur) continue; // ses pièces sont peut-être seulement pas encore chargées
       if (!valide(t)) { delete etat.plan[j]; composerJour(j, null); change = true; continue; }
       if (!noteeAujourdhui(t) && retirerCouchesEnTrop(t)) change = true;
@@ -1041,6 +1063,7 @@
       }
       t = composerAvecRepli(ctxVide());
       poserIdee(t);
+      if (modeDonnees === "attente") composeeAvantBase = true;
       ecrire();
     }
     return t ? { t, contexte: autour(t) || contexte } : null;
@@ -1061,6 +1084,8 @@
     }
     const { t, contexte } = r;
     const g = grilleTenue(t, null, !apercu), ev = noterTenue(t);
+    rendreBandeau();
+    if ((carte && carte.cle !== cleTenue(t)) || (carteEnCours && carteEnCours !== cleTenue(t))) fermerCarte();
     F("tenue-slots").style.setProperty("--n", g.n);
     F("tenue-slots").dataset.n = g.n;
     F("tenue-slots").innerHTML = g.html;
@@ -1088,7 +1113,7 @@
     // L'avis d'abord : s'il ne vaut plus pour cette tenue, il s'efface et le bouton revient.
     rendreAvis();
     // Deuxième rangée, plus discrète : ce qu'on fait de la tenue au-delà de la porter.
-    const plus = [];
+    const plus = [`<button class="lien-action" type="button" id="carte-tenue" data-action="carte">Carte à partager</button>`];
     if (sample) plus.push(`<button class="lien-action" type="button" id="avis-tenue" data-action="avis-tenue" aria-disabled="${!!(avis && avis.enCours)}">Avis du styliste</button>`);
     F("tenue-plus").innerHTML = plus.join("");
   }
@@ -2027,6 +2052,11 @@ Réponds uniquement par un objet JSON de cette forme :
     return { n, utiles };
   }
 
+  async function brancherTelechargements() {
+    if (!window.claude || typeof window.claude.use !== "function") return;
+    try { downloads = await window.claude.use("downloads"); } catch (_) { downloads = null; }
+    if (downloads) rendre(rendreStats);
+  }
   async function brancherStyliste() {
     if (etatStyliste !== "attente") return;
     let s = null;
@@ -2039,6 +2069,404 @@ Réponds uniquement par un objet JSON de cette forme :
     rendre(rendreStyliste, rendreTenue, rendreBoutonPhoto);
   }
 
+  // ---------- mettre en avant : opération magasin, carte à partager, lookbook, statistiques ----------
+  let downloads = null;                // capacité d'enregistrement de fichiers, ou null
+  // Opération magasin : une marque mise en avant jusqu'à une date ; les tenues la favorisent.
+  let opBrouillon = false;             // le formulaire de l'opération a été touché depuis le dernier envoi
+  // Active à une date (aujourd'hui par défaut) : pas encore finie, et la marque a encore une pièce
+  // qui entre dans les tenues (un accessoire seul ne peut pas être mis en avant).
+  const marquePortable = m => ARTICLES.some(a => a.marque === m && role(a) !== "aucun");
+  const operationEnCours = (op, date) => !op.fin || (date || AUJ_DATE) <= op.fin;
+  function operationActive(date) {
+    const op = donnees.operation;
+    return op && operationEnCours(op, date) && marquePortable(op.marque) ? op : null;
+  }
+  let composeeAvantBase = false;       // tenue du jour composée avant que l'opération soit lue
+  const marques = () => [...new Set(ARTICLES.filter(a => role(a) !== "aucun").map(a => a.marque))].sort((x, y) => x.localeCompare(y, "fr"));
+  function rendreOperation() {
+    const op = donnees.operation, active = operationActive();
+    const liste = marques();
+    // Une saisie en cours n'est jamais écrasée par un rendu (instantané de la base, autre appareil).
+    const choisie = opBrouillon ? F("op-marque").value : op ? op.marque : "";
+    F("op-marque").innerHTML = `<option value="">Choisir…</option>` + liste.concat(op && !liste.includes(op.marque) ? [op.marque] : [])
+      .map(m => `<option value="${esc(m)}"${m === choisie ? " selected" : ""}>${esc(m)}</option>`).join("");
+    if (!opBrouillon) {
+      F("op-titre").value = op ? op.titre : "";
+      F("op-fin").value = op && op.fin ? op.fin : "";
+    }
+    ["op-marque", "op-titre", "op-fin", "op-enregistrer"].forEach(id => { F(id).disabled = !peutNoter(); });
+    F("op-arreter").hidden = !op || !peutNoter();
+    // « 16 oct. » finit déjà par un point : pas de second point derrière.
+    const phrase = s => s.replace(/\.?$/, ".");
+    F("op-etat").textContent = active
+      ? phrase(`En cours : ${active.titre || "opération " + active.marque}${active.fin ? `, jusqu'au ${dateCourte(active.fin)}` : ""}`) + ` Les tenues mettent ${active.marque} en avant.`
+      : op && operationEnCours(op) ? `En pause : plus aucune pièce ${op.marque} à porter dans la garde-robe.`
+      : op ? phrase(`L'opération ${op.titre ? "« " + op.titre + " » " : ""}est terminée${op.fin ? ` depuis le ${dateCourte(op.fin)}` : ""}`) : "Aucune opération en cours.";
+    rendreBandeau();
+  }
+  function rendreBandeau() {
+    const active = operationActive(), bandeau = F("operation-bandeau");
+    bandeau.hidden = !active;
+    bandeau.textContent = active ? `${active.titre || "Opération " + active.marque} : les tenues mettent ${active.marque} en avant.` : "";
+  }
+  // Un point de plus par pièce de la marque mise en avant, pondéré par sa place dans la tenue.
+  function bonusOperation(date) {
+    const op = operationActive(date);
+    return op ? a => (a && a.marque === op.marque ? 1 : 0) : () => 0;
+  }
+
+  // Carte à partager : la tenue dessinée en 1080 × 1350, prête pour une story ou un message.
+  let carte = null;                    // { url, blob, nom }
+  function chargerImage(src) {
+    return new Promise(ok => {
+      const img = new Image();
+      img.onload = () => ok(img);
+      img.onerror = () => ok(null);
+      img.src = src;
+    });
+  }
+  function couvrir(g, img, x, y, w, h) {
+    const r = Math.max(w / img.naturalWidth, h / img.naturalHeight);
+    const sw = w / r, sh = h / r;
+    g.drawImage(img, (img.naturalWidth - sw) / 2, (img.naturalHeight - sh) / 2, sw, sh, x, y, w, h);
+  }
+  function arrondi(g, x, y, w, h, r) {
+    g.beginPath();
+    if (g.roundRect) g.roundRect(x, y, w, h, r); else g.rect(x, y, w, h);
+  }
+  // Sans photos (fichier local, ou photos protégées) : une silhouette de la couleur de la pièce.
+  function silhouetteCanvas(g, a, x, y, w, h) {
+    const motif = a.teinte === "motif";
+    const hex = !motif && /^#[0-9a-f]{6}$/i.test(T[a.teinte].hex) ? T[a.teinte].hex : "#9aa0a8";
+    const s = Math.min(w * 0.8 / 100, h * 0.8 / 110);
+    g.save();
+    g.translate(x + (w - 100 * s) / 2, y + (h - 110 * s) / 2);
+    g.scale(s, s);
+    const p = new Path2D(SILHOUETTES[role(a)] || SILHOUETTES.haut);
+    g.fillStyle = hex; g.fill(p);
+    g.lineWidth = 1.2; g.strokeStyle = "#7d8492"; g.stroke(p);
+    g.restore();
+  }
+  async function dessinerCarte(t, sansPhotos) {
+    const W = 1080, H = 1350, M = 64, GAP = 24;
+    const cv = document.createElement("canvas");
+    cv.width = W; cv.height = H;
+    const g = cv.getContext("2d");
+    const css = getComputedStyle(document.documentElement);
+    const police = (v, repli) => css.getPropertyValue(v).trim() || repli;
+    const fDisplay = police("--f-display", "system-ui, sans-serif"), fBody = police("--f-body", "system-ui, sans-serif"), fMono = police("--f-mono", "monospace");
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    const couper = (s, max) => {
+      if (g.measureText(s).width <= max) return s;
+      while (s.length > 1 && g.measureText(s + "…").width > max) s = s.slice(0, -1);
+      return s + "…";
+    };
+    g.fillStyle = "#f3f1ec"; g.fillRect(0, 0, W, H);
+    g.fillStyle = "#5b6170"; g.font = `600 26px ${fMono}`;
+    g.fillText("TENUE DU JOUR · 100 % BLUE BOX", M, M + 26);
+    g.fillStyle = "#14161c"; g.font = `800 60px ${fDisplay}`;
+    g.fillText(couper(majuscule(dateLongue(AUJ_DATE)), W - 2 * M), M, M + 104);
+    // Les pièces, de haut en bas : une rangée jusqu'à trois, deux rangées au-delà.
+    const pieces = piecesTenue(t);
+    const n = pieces.length, cols = n <= 3 ? n : n === 4 ? 2 : 3, rangs = Math.ceil(n / cols);
+    const haut0 = M + 150, bas0 = H - M - 110, LABEL = 84;
+    let w = (W - 2 * M - (cols - 1) * GAP) / cols;
+    const h = Math.min(w * 1.25, (bas0 - haut0 - rangs * LABEL - (rangs - 1) * GAP) / rangs);
+    // Hauteur limitée : la case se rétrécit pour garder les photos en 4:5 (cols et bas visibles).
+    if (h < w * 1.25) w = h / 1.25;
+    const images = sansPhotos ? [] : await Promise.all(pieces.map(p => chargerImage(p.a.image)));
+    pieces.forEach((p, i) => {
+      const r = Math.floor(i / cols), c = i % cols;
+      const dansRang = Math.min(cols, n - r * cols);
+      const decale = (W - 2 * M - (dansRang * w + (dansRang - 1) * GAP)) / 2;
+      const x = M + decale + c * (w + GAP), y = haut0 + r * (h + LABEL + GAP);
+      g.save();
+      arrondi(g, x, y, w, h, 18);
+      g.fillStyle = "#ffffff"; g.fill(); g.clip();
+      if (images[i]) couvrir(g, images[i], x, y, w, h);
+      else silhouetteCanvas(g, p.a, x, y, w, h);
+      g.restore();
+      g.fillStyle = "#5b6170"; g.font = `600 22px ${fMono}`;
+      g.fillText(couper(p.a.marque.toUpperCase(), w), x, y + h + 34);
+      g.fillStyle = "#14161c"; g.font = `600 28px ${fBody}`;
+      g.fillText(couper(majuscule(court(p.a)), w), x, y + h + 70);
+    });
+    const niv = NIVEAUX[noterTenue(t).niveau];
+    const op = operationActive();
+    g.fillStyle = "#14161c"; g.font = `700 30px ${fBody}`;
+    g.fillText(`${niv.sym} ${niv.nom}`, M, H - M - 40);
+    if (op) {
+      g.fillStyle = "#5b6170"; g.font = `600 24px ${fMono}`;
+      g.fillText(couper((op.titre || "Opération " + op.marque).toUpperCase(), W - 2 * M), M, H - M);
+    }
+    return new Promise((ok, ko) => {
+      try { cv.toBlob(b => (b ? ok(b) : ko({ code: "export" })), "image/jpeg", 0.9); }
+      catch (e) { ko({ code: e && e.name === "SecurityError" ? "protegee" : "export" }); }
+    });
+  }
+  let jetonCarte = 0, carteEnCours = null;
+  async function creerCarte() {
+    const r = tenueAffichee();
+    if (!r) return;
+    const jeton = ++jetonCarte;
+    carteEnCours = cleTenue(r.t);
+    F("carte-zone").hidden = false;
+    F("carte-aide").textContent = "Préparation de la carte…";
+    F("carte-enregistrer").hidden = true;
+    try {
+      // Dans le fichier local, les photos ne peuvent pas être recopiées : silhouettes d'emblée.
+      let blob;
+      try { blob = await dessinerCarte(r.t, location.protocol === "file:"); }
+      catch (e) { if (e && e.code === "protegee") blob = await dessinerCarte(r.t, true); else throw e; }
+      // La tenue a changé pendant le dessin : cette carte ne correspond plus à rien.
+      if (jeton !== jetonCarte) return;
+      carteEnCours = null;
+      if (carte) URL.revokeObjectURL(carte.url);
+      carte = { blob, url: URL.createObjectURL(blob), nom: `tenue-${AUJ_DATE}.jpg`, cle: cleTenue(r.t) };
+      F("carte-img").src = carte.url;
+      F("carte-img").hidden = false;
+      F("carte-enregistrer").hidden = !downloads;
+      F("carte-aide").textContent = downloads ? "" : "Appuie longuement sur l'image (ou clic droit) pour l'enregistrer.";
+      (downloads ? F("carte-enregistrer") : F("carte-fermer")).focus({ preventScroll: true });
+      F("carte-zone").scrollIntoView({ block: "nearest" });
+    } catch (_) {
+      if (jeton !== jetonCarte) return;
+      carteEnCours = null;
+      F("carte-img").hidden = true;
+      F("carte-aide").textContent = "La carte n'a pas pu être dessinée. Réessaie, ou fais une capture d'écran de la tenue.";
+    }
+  }
+  function fermerCarte() {
+    jetonCarte++;
+    carteEnCours = null;
+    F("carte-zone").hidden = true;
+    F("carte-img").removeAttribute("src");
+    if (carte) URL.revokeObjectURL(carte.url);
+    carte = null;
+  }
+  const MESSAGES_TELECHARGEMENT = {
+    declined: "",
+    rate_limited: "Une demande d'enregistrement est déjà ouverte.",
+    too_large: "Le fichier est trop lourd pour être enregistré ici.",
+    extension_not_enabled: "Ce format de fichier n'est pas disponible ici.",
+    rejected_extension: "Ce format de fichier n'est pas disponible ici.",
+    bad_request: "L'enregistrement n'a pas abouti.",
+    transform_error: "L'enregistrement n'a pas abouti.",
+  };
+  async function enregistrerFichier(nom, data, zone) {
+    if (!downloads) return;
+    try {
+      await downloads.save({ filename: nom, data });
+      if (zone) zone.textContent = "Enregistré.";
+    } catch (e) {
+      const code = e && e.code;
+      if (!possede(MESSAGES_TELECHARGEMENT, code)) {
+        // unavailable, not_granted, capability_* et tout code inconnu : plus d'enregistrement dans cette vue.
+        downloads = null;
+        F("carte-enregistrer").hidden = true;
+        if (!F("carte-zone").hidden) F("carte-aide").textContent = "Appuie longuement sur l'image (ou clic droit) pour l'enregistrer.";
+        if (zone && zone !== F("carte-aide")) zone.textContent = "L'enregistrement n'est pas disponible ici.";
+        planifierRendu();
+        return;
+      }
+      if (zone) zone.textContent = MESSAGES_TELECHARGEMENT[code];
+    }
+  }
+
+  // Lookbook : les photos de toi en tenue, rangées par date, liées au journal du jour.
+  let lookConfirme = null, lookEnvoi = false;
+  function rendreLookbook() {
+    const ok = peutEcrire && peutNoter();
+    F("form-look").hidden = !ok;
+    F("look-indispo").textContent = ok ? "" : modeDonnees === "local"
+      ? "Le lookbook fonctionne dans la page publiée sur Claude, où les photos sont stockées."
+      : modeDonnees === "lecture" ? "" : "Chargement…";
+    if (ok && !F("look-date").value) F("look-date").value = AUJ_DATE;
+    F("look-envoyer").disabled = lookEnvoi;
+    F("look-envoyer").textContent = lookEnvoi ? "Envoi…" : "Ajouter au lookbook";
+    const looks = Object.entries(donnees.lookbook).sort((x, y) => y[1].date.localeCompare(x[1].date) || y[1].ajouteLe.localeCompare(x[1].ajouteLe));
+    F("compte-lookbook").textContent = looks.length ? pluriel(looks.length, "photo") : "";
+    F("lookbook").innerHTML = looks.length ? looks.map(([id, l]) => {
+      const e = donnees.journal[l.date];
+      const vignettes = e && valide(e.tenue) ? piecesTenue(e.tenue).map(p => `<img src="${esc(p.a.image)}" alt="" width="28" height="35" loading="lazy">`).join("") : "";
+      const actions = !ok ? "" : lookConfirme === id
+        ? `<span class="ligne-actions"><button class="btn petit danger plein" type="button" id="look-oui-${esc(id)}" data-action="look-supprimer" data-id="${esc(id)}">Supprimer</button><button class="btn petit" type="button" id="look-non-${esc(id)}" data-action="look-garder" data-id="${esc(id)}">Garder</button></span>`
+        : `<button class="lien-action" type="button" id="look-retirer-${esc(id)}" data-action="look-retirer" data-id="${esc(id)}">Retirer</button>`;
+      return `<li>
+        <img class="look-photo" src="/_blob/${esc(l.image)}" alt="${esc(l.legende || "Tenue du " + dateLongue(l.date))}" width="540" height="675" loading="lazy">
+        <div class="look-corps">
+          <span class="eyebrow">${esc(majuscule(dateLongue(l.date)))}</span>
+          ${l.legende ? `<span>${esc(l.legende)}</span>` : ""}
+          ${vignettes ? `<span class="vignettes look-tenue" title="Tenue notée au journal ce jour-là">${vignettes}</span>` : ""}
+          ${actions}
+        </div>
+      </li>`;
+    }).join("") : `<li class="vide">${ok ? "Ajoute une photo de toi en tenue : elle se range ici avec la tenue notée au journal ce jour-là." : "Aucune photo pour l'instant."}</li>`;
+  }
+  // La photo est réduite à 1350 px de haut au plus avant l'envoi.
+  function reduirePhoto(fichier) {
+    return new Promise((ok, ko) => {
+      const url = URL.createObjectURL(fichier);
+      const img = new Image();
+      img.onload = () => {
+        const r = Math.min(1, 1350 / Math.max(img.naturalWidth, img.naturalHeight));
+        const cv = document.createElement("canvas");
+        cv.width = Math.round(img.naturalWidth * r); cv.height = Math.round(img.naturalHeight * r);
+        const g = cv.getContext("2d");
+        g.fillStyle = "#ffffff"; g.fillRect(0, 0, cv.width, cv.height); // un PNG détouré ne vire pas au noir
+        g.drawImage(img, 0, 0, cv.width, cv.height);
+        URL.revokeObjectURL(url);
+        cv.toBlob(b => (b ? ok(b) : ko({ code: "export" })), "image/jpeg", 0.85);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); ko({ code: "lecture" }); };
+      img.src = url;
+    });
+  }
+  async function ajouterLook(e) {
+    e.preventDefault();
+    if (lookEnvoi || !peutEcrire || !peutNoter()) return;
+    const fichier = F("look-photo").files && F("look-photo").files[0];
+    const date = F("look-date").value;
+    const msg = !fichier ? "Choisis une photo."
+      : !DATE_RE.test(date) || date > AUJ_DATE ? "Choisis une date passée ou aujourd'hui." : "";
+    F("look-erreur").textContent = msg;
+    if (msg) return;
+    lookEnvoi = true;
+    rendreLookbook();
+    let imageId = null, id = null, valeur = null;
+    const reussi = () => {
+      F("form-look").reset();
+      F("look-date").value = AUJ_DATE;
+      toast("Photo ajoutée au lookbook.");
+    };
+    try {
+      const blob = await reduirePhoto(fichier);
+      imageId = (await appel(() => assets.upload(blob, { type: "image/jpeg" }), ["store_unavailable"])).id;
+      id = idNouveau();
+      valeur = { image: imageId, date, legende: F("look-legende").value.trim().slice(0, 140), ajouteLe: new Date().toISOString() };
+      await enregistrer("lookbook", id, valeur);
+      reussi();
+    } catch (err) {
+      // Une écriture peut aboutir même si sa réponse se perd : on relit avant d'effacer la photo.
+      let ecrit = false;
+      if (imageId && id && db) {
+        const lu = await db.doc("lookbook/" + id).get().catch(() => null);
+        if (lu && lu.exists && lu.data().image === imageId) ecrit = true;
+        else if (lu) supprimerPhoto(imageId, true);
+        // Sans réponse, la photo reste : mieux vaut une image en trop qu'une entrée sans image.
+      } else if (imageId) supprimerPhoto(imageId, true);
+      if (ecrit) { appliquerLocal("lookbook", id, valeur); reussi(); }
+      else {
+        F("look-erreur").textContent = messageLook(err);
+        if (err && CODES_DROITS.includes(err.code)) passerEnLecture();
+      }
+    } finally {
+      lookEnvoi = false;
+      rendre(rendreLookbook);
+    }
+  }
+  function messageLook(err) {
+    const code = err && err.code;
+    if (code === "lecture") return "Cette photo n'a pas pu être lue. Essaie en JPEG ou en PNG.";
+    if (code === "quota_or_state") return "Le stockage des photos est plein : retire des photos du lookbook avant d'en ajouter.";
+    if (CODES_DROITS.includes(code)) return "Seul le propriétaire de la page peut ajouter des photos au lookbook.";
+    return messageErreur(err);
+  }
+  async function supprimerLook(id) {
+    const l = donnees.lookbook[id];
+    if (!l) return;
+    lookConfirme = null;
+    try {
+      await enregistrer("lookbook", id, null);
+      if (!Object.values(donnees.lookbook).some(x => x.image === l.image)) supprimerPhoto(l.image, true);
+    } catch (_) { /* le toast d'enregistrer prévient déjà */ }
+    rendre(rendreLookbook);
+  }
+
+  // Statistiques tirées du journal.
+  function barres(lignes) {
+    if (!lignes.length) return `<p class="aide">Les pièces notées ont été supprimées depuis.</p>`;
+    const max = lignes[0].n;
+    return `<ol class="barres">${lignes.map(x => `<li title="${esc(x.nom)} : ${esc(x.valeur || String(x.n))}">
+      <span class="barre-nom">${x.pastille || ""}${esc(x.nom)}</span>
+      <span class="barre" aria-hidden="true"><i style="width:${max ? Math.max(2, x.n / max * 100).toFixed(1) : 0}%"></i></span>
+      <b>${esc(x.valeur || String(x.n))}</b>
+    </li>`).join("")}</ol>`;
+  }
+  function statistiques() {
+    // Une pièce supprimée depuis ne fait pas disparaître la journée : seules ses lignes sont sautées.
+    const entrees = Object.values(donnees.journal);
+    const ports = new Map(), parMarque = new Map(), parTeinte = new Map(), parMois = new Map();
+    for (const e of entrees) {
+      parMois.set(e.date.slice(0, 7), (parMois.get(e.date.slice(0, 7)) || 0) + 1);
+      for (const k of SLOTS) {
+        const a = PAR_ID[e.tenue[k]];
+        if (!a) continue;
+        ports.set(a.id, (ports.get(a.id) || 0) + 1);
+        parMarque.set(a.marque, (parMarque.get(a.marque) || 0) + 1);
+      }
+      const h = PAR_ID[e.tenue.haut];
+      if (h) parTeinte.set(h.teinte, (parTeinte.get(h.teinte) || 0) + 1);
+    }
+    return { entrees, ports, parMarque, parTeinte, parMois };
+  }
+  function rendreStats() {
+    const s = memoiser("stats", versionJournal + "|" + cleGarderobe(), statistiques);
+    F("export-journal").hidden = !downloads || !s.entrees.length;
+    if (!s.entrees.length) {
+      F("stats").innerHTML = `<p class="vide">Note tes tenues avec « Je l'ai portée » : les statistiques apparaissent ici dès le premier jour.</p>`;
+      return;
+    }
+    const portables = ARTICLES.filter(a => role(a) !== "aucun");
+    const portees = portables.filter(a => s.ports.has(a.id)).length;
+    const mois = AUJ_DATE.slice(0, 7);
+    const top = [...s.ports.entries()].map(([id, n]) => ({ a: PAR_ID[id], n })).sort((x, y) => y.n - x.n).slice(0, 5);
+    const totalPorts = [...s.parMarque.values()].reduce((x, y) => x + y, 0);
+    const marquesL = [...s.parMarque.entries()].sort((x, y) => y[1] - x[1])
+      .map(([nom, n]) => ({ nom, n, valeur: Math.round(n / totalPorts * 100) + " %" }));
+    const teintes = [...s.parTeinte.entries()].sort((x, y) => y[1] - x[1]).slice(0, 6)
+      .map(([t, n]) => ({ nom: T[t].nom, n, pastille: `<i class="pastille" style="background:${esc(T[t].hex)}"></i>` }));
+    // Les six derniers mois, même vides.
+    const moisL = [];
+    const d = new Date(midi(AUJ_DATE)); d.setDate(1);
+    for (let i = 0; i < 6; i++) {
+      const cle = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      moisL.unshift({ cle, nom: d.toLocaleDateString("fr-FR", { month: "short" }), n: s.parMois.get(cle) || 0 });
+      d.setMonth(d.getMonth() - 1);
+    }
+    const maxMois = Math.max(1, ...moisL.map(x => x.n));
+    F("stats").innerHTML = `
+      <div class="chiffres">
+        <p><b>${s.entrees.length}</b><span>${s.entrees.length > 1 ? "jours notés" : "jour noté"}</span></p>
+        <p><b>${s.parMois.get(mois) || 0}</b><span>ce mois-ci</span></p>
+        <p><b>${portees}/${portables.length}</b><span>pièces déjà portées</span></p>
+        <p><b>${Object.keys(donnees.favoris).length}</b><span>${Object.keys(donnees.favoris).length > 1 ? "tenues favorites" : "tenue favorite"}</span></p>
+      </div>
+      <div class="stats-grille">
+        <div><h4>Les plus portées</h4>${barres(top.map(x => ({ nom: `${x.a.marque} ${role(x.a) === "bas" ? court(x.a) : court(x.a).toLowerCase()}`, n: x.n, valeur: x.n + " fois" })))}</div>
+        <div><h4>Par marque</h4>${barres(marquesL)}</div>
+        <div><h4>Couleurs des hauts</h4>${barres(teintes)}</div>
+        <div><h4>Jours notés par mois</h4>
+          <ol class="colonnes">${moisL.map(x => `<li title="${esc(x.nom)} : ${pluriel(x.n, "jour")}"><b>${x.n}</b><span class="colonne" aria-hidden="true"><i style="height:${(x.n / maxMois * 100).toFixed(1)}%"></i></span><span>${esc(x.nom)}</span></li>`).join("")}</ol>
+        </div>
+      </div>`;
+  }
+  // Le journal en tableur (séparateur « ; » et BOM pour que les accents s'ouvrent bien).
+  function journalCsv() {
+    // Une valeur qui commence par = + - @ serait lue comme une formule par le tableur.
+    const champ = v => { let s = String(v); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; return `"${s.replace(/"/g, '""')}"`; };
+    const tete = ["Date", "Météo", "Bas", "Haut", "Sous-couche", "Par-dessus", "Chaussures", "Accessoire"];
+    const nom = id => (!id ? "" : PAR_ID[id] ? nomComplet(PAR_ID[id]) : "(pièce supprimée)");
+    const lignes = Object.values(donnees.journal).sort((x, y) => x.date.localeCompare(y.date))
+      .map(e => [e.date, e.meteo ? METEOS[e.meteo].nom : "", ...["bas", "haut", "dessous", "dessus", "pieds", "accessoire"].map(k => nom(e.tenue[k]))]);
+    return "﻿" + [tete].concat(lignes).map(l => l.map(champ).join(";")).join("\r\n") + "\r\n";
+  }
+  function rendreVitrine() {
+    rendreOperation();
+    rendreLookbook();
+    rendreStats();
+  }
+
   function rendre(...parties) {
     const focus = document.activeElement && document.activeElement.id;
     parties.forEach(f => f());
@@ -2047,7 +2475,7 @@ Réponds uniquement par un objet JSON de cette forme :
       if (el && el !== document.activeElement) el.focus({ preventScroll: true });
     }
   }
-  const rendreTout = () => rendre(rendreTete, rendreMeteo, rendreTenue, rendreChoix, rendreFavoris, rendreSemaine, rendreJournal, rendreCatalogue, rendreAccords, rendreCompleter, rendreAcheter, rendreStyliste);
+  const rendreTout = () => rendre(rendreTete, rendreMeteo, rendreTenue, rendreChoix, rendreFavoris, rendreSemaine, rendreJournal, rendreCatalogue, rendreAccords, rendreCompleter, rendreAcheter, rendreStyliste, rendreVitrine);
 
   // Une photo stockée qui ne répond plus est remplacée par un aplat.
   document.addEventListener("error", e => {
@@ -2161,7 +2589,17 @@ Réponds uniquement par un objet JSON de cette forme :
       if ((nom === "pieces" || nom === "journal") && etatAjouts === "ok") reconcilier(true);
       planifierRendu();
     }, () => toast("Une partie de tes données n'a pas pu être chargée. Recharge la page.", "erreur"));
-    ["journal", "pieces", "favoris", "envies"].forEach(collection);
+    ["journal", "pieces", "favoris", "envies", "lookbook"].forEach(collection);
+    db.doc("vitrine/operation").onSnapshot(snap => {
+      if (enAttente("vitrine/operation")) return;
+      donnees.operation = lireOperation(snap.exists ? snap.data() : null);
+      // La tenue du jour a été composée avant de connaître l'opération : elle la suit maintenant.
+      if (!(snap.metadata && snap.metadata.fromCache) && composeeAvantBase) {
+        composeeAvantBase = false;
+        if (operationActive()) { recomposerAujourdhui(); return; }
+      }
+      planifierRendu();
+    }, () => {});
     db.doc("reglages/general").onSnapshot(snap => {
       if (enAttente("reglages/general")) return; // l'écran montre déjà l'écriture en cours
       donnees.reglages = lireReglages(snap.exists ? snap.data() : null);
@@ -2853,6 +3291,38 @@ Réponds uniquement par un objet JSON de cette forme :
     if (p) p.textContent = erreurCout;
   }
 
+  // Mettre en avant
+  F("form-operation").addEventListener("submit", e => {
+    e.preventDefault();
+    if (!peutNoter()) return;
+    const marque = F("op-marque").value, fin = F("op-fin").value;
+    const msg = !marque ? "Choisis la marque à mettre en avant."
+      : fin && (!DATE_RE.test(fin) || fin < AUJ_DATE) ? "La date de fin doit être aujourd'hui ou plus tard." : "";
+    F("op-erreur").textContent = msg;
+    if (msg) return;
+    opBrouillon = false;
+    const avant = (operationActive() || {}).marque;
+    enregistrer("vitrine", "operation", { marque, titre: F("op-titre").value.trim().slice(0, 80), fin: fin || null }).catch(() => {});
+    // Un simple changement de nom ou de date ne change rien aux tenues : on ne recompose pas.
+    if ((operationActive() || {}).marque !== avant) recomposerAujourdhui(); else rendre(rendreTenue, rendreVitrine);
+    toast(`Opération lancée : les tenues mettent ${marque} en avant.`);
+  });
+  ["input", "change"].forEach(type => F("form-operation").addEventListener(type, () => { opBrouillon = true; }));
+  F("op-marque").addEventListener("change", () => {
+    if (!F("op-titre").value.trim() && F("op-marque").value) F("op-titre").placeholder = "Semaine " + F("op-marque").value;
+  });
+  // La tenue du jour suit l'opération, sauf si elle est déjà notée ou choisie autour d'une pièce.
+  function recomposerAujourdhui() {
+    const prevue = etat.jours.includes(AUJ[0]) && valide(etat.plan[AUJ[0]]) ? etat.plan[AUJ[0]] : ideeDuJour();
+    if (valide(prevue) && !noteeAujourdhui(prevue) && !porteeId()) {
+      if (etat.jours.includes(AUJ[0]) && valide(etat.plan[AUJ[0]])) composerJour(AUJ[0], null);
+      else poserIdee(composerAvecRepli(ctxVide()));
+      ecrire();
+    }
+    rendre(rendreTenue, rendreSemaine, rendreVitrine);
+  }
+  F("form-look").addEventListener("submit", ajouterLook);
+
   // Styliste
   F("form-styliste").addEventListener("submit", e => {
     e.preventDefault();
@@ -3052,6 +3522,22 @@ Réponds uniquement par un objet JSON de cette forme :
     else if (action === "avis-tenue") demanderAvis();
     else if (action === "avis-stop") { if (avis && avis.enCours) avis.ctl.abort(); }
     else if (action === "achat-claude") analyserPhoto();
+    else if (action === "op-arreter") {
+      opBrouillon = false;
+      const avant = (operationActive() || {}).marque;
+      enregistrer("vitrine", "operation", null).catch(() => {});
+      F("op-erreur").textContent = "";
+      if (avant) recomposerAujourdhui(); else rendre(rendreTenue, rendreVitrine);
+      toast("Opération arrêtée.");
+      F("op-marque").focus();
+    }
+    else if (action === "carte") creerCarte();
+    else if (action === "carte-fermer") { fermerCarte(); const b = F("carte-tenue"); if (b) b.focus({ preventScroll: true }); }
+    else if (action === "carte-enregistrer") { if (carte) enregistrerFichier(carte.nom, carte.blob, F("carte-aide")); }
+    else if (action === "look-retirer") { lookConfirme = el.dataset.id; rendre(rendreLookbook); const b = F("look-non-" + lookConfirme); if (b) b.focus(); }
+    else if (action === "look-garder") { const id = lookConfirme; lookConfirme = null; rendre(rendreLookbook); const b = F("look-retirer-" + id); if (b) b.focus(); }
+    else if (action === "look-supprimer") { supprimerLook(el.dataset.id); F("look-photo").focus({ preventScroll: true }); }
+    else if (action === "export-journal") enregistrerFichier(`journal-tenues-${AUJ_DATE}.csv`, journalCsv(), F("export-etat"));
     else if (action === "simul-effacer") { viderSimulateur(); rendre(rendreSimulateur); F("simul-titre").focus(); }
     else if (action === "simuler" || action === "envie-simuler") {
       const e2 = action === "envie-simuler" ? donnees.envies[el.dataset.id] : null;
@@ -3132,6 +3618,7 @@ Réponds uniquement par un objet JSON de cette forme :
   rendreTout();
   brancher();
   brancherStyliste();
+  brancherTelechargements();
   // Si la base tarde trop, on cesse d'afficher « Chargement » (sans rien effacer de la semaine).
   setTimeout(() => {
     if (etatAjouts === "chargement") { etatAjouts = "indisponible"; reconcilier(); rendreTout(); }

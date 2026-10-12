@@ -351,6 +351,48 @@ footer p { margin: 0; max-width: 65ch; }
 .tenue-plus:empty { display: none; }
 .lien-action:disabled, .lien-action[aria-disabled="true"], .btn[aria-disabled="true"] { opacity: .6; cursor: default; }
 .message.moi.exclue { opacity: .6; text-decoration: line-through; }
+
+/* mettre en avant */
+.operation { margin: 0 0 14px; padding: 10px 14px; border-radius: var(--radius); background: var(--rivet-soft); color: var(--rivet); font-weight: 600; }
+.operation-form, .look-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.operation-form .actions, .operation-form .aide, .operation-form .form-erreur, .look-form .actions, .look-form .form-erreur { grid-column: 1 / -1; }
+.look-form input[type="file"] { width: 100%; max-width: 100%; font: .9rem var(--f-body); color: var(--muted); }
+.entete-sous { margin: 28px 0 10px; }
+.entete-sous .sous-titre { margin: 0; }
+.lookbook { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); gap: 12px; margin: 12px 0 0; padding: 0; list-style: none; }
+.lookbook li { display: flex; flex-direction: column; overflow: hidden; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.lookbook li.vide { grid-column: 1 / -1; display: block; padding: 20px; background: transparent; border: 1.5px dashed var(--line); color: var(--muted); }
+.look-photo { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; background: var(--surface-2); }
+.look-corps { display: grid; gap: 4px; padding: 10px 12px 12px; min-width: 0; }
+.look-tenue img { width: 28px; height: 35px; }
+.look-tenue img + img { margin-left: -8px; }
+.look-corps .lien-action { justify-self: start; }
+.carte { display: grid; gap: 10px; justify-items: start; margin-top: 14px; padding: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.carte img { width: min(100%, 360px); height: auto; aspect-ratio: 4 / 5; border-radius: 10px; box-shadow: 0 4px 18px rgba(0, 0, 0, .12); }
+.chiffres { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 18px; }
+.chiffres p { display: grid; gap: 2px; margin: 0; padding: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.chiffres b { font: 650 1.6rem/1.1 var(--f-body); }
+.chiffres span { color: var(--muted); font-size: .85rem; }
+.stats-grille { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 28px; }
+.stats-grille h4 { margin: 0 0 8px; font-size: .95rem; }
+.barres { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.barres li { display: grid; grid-template-columns: minmax(0, 11rem) minmax(0, 1fr) auto; align-items: center; gap: 10px; font-size: .88rem; }
+.barre-nom { display: inline-flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.barre { height: 10px; border-radius: 2px; background: var(--surface-2); overflow: hidden; }
+.barre i { display: block; height: 100%; border-radius: 0 4px 4px 0; background: var(--indigo); }
+.barres b { font: 500 .8rem var(--f-mono); font-variant-numeric: tabular-nums; color: var(--muted); }
+.colonnes { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; height: 150px; margin: 0; padding: 0; list-style: none; }
+.colonnes li { display: grid; grid-template-rows: auto 1fr auto; justify-items: center; gap: 4px; min-width: 0; font-size: .8rem; color: var(--muted); }
+.colonnes b { font: 500 .8rem var(--f-mono); color: var(--ink); }
+.colonne { display: flex; align-items: flex-end; width: 100%; max-width: 40px; border-bottom: 1px solid var(--line); }
+.colonne i { display: block; width: 100%; border-radius: 4px 4px 0 0; background: var(--indigo); }
+@media (max-width: 640px) {
+  .operation-form, .look-form { grid-template-columns: minmax(0, 1fr); }
+  .chiffres { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stats-grille { grid-template-columns: minmax(0, 1fr); }
+  .barres li { grid-template-columns: minmax(0, 1fr) auto; row-gap: 2px; }
+  .barre-nom { grid-column: 1 / -1; white-space: normal; }
+}
 </style>
 </head>
 <body>
@@ -464,6 +506,7 @@ footer p { margin: 0; max-width: 65ch; }
       <li><a href="#accords">Accords</a></li>
       <li><a href="#completer">À compléter</a></li>
       <li><a href="#acheter">Acheter malin</a></li>
+      <li><a href="#vitrine">Mettre en avant</a></li>
     </ul>
   </nav>
 
@@ -472,6 +515,7 @@ footer p { margin: 0; max-width: 65ch; }
       <h2 id="titre-tenue">Tenue du jour</h2>
       <p id="date-du-jour"></p>
     </div>
+    <p class="operation" id="operation-bandeau" hidden></p>
     <fieldset class="couches" id="meteo">
       <legend class="eyebrow">Météo du jour</legend>
       <label class="puce"><input type="radio" name="meteo" id="meteo-froid" value="froid">Froid</label>
@@ -495,6 +539,14 @@ footer p { margin: 0; max-width: 65ch; }
     <ul class="raisons" id="tenue-raisons"></ul>
     <div class="tenue-plus" id="tenue-plus"></div>
     <div class="avis" id="avis-styliste" aria-live="polite" hidden></div>
+    <div class="carte" id="carte-zone" hidden>
+      <img id="carte-img" alt="Carte de la tenue du jour, prête à partager" width="1080" height="1350" hidden>
+      <p class="aide" id="carte-aide" role="status"></p>
+      <div class="actions">
+        <button class="btn primaire" type="button" id="carte-enregistrer" data-action="carte-enregistrer" hidden>Enregistrer l'image</button>
+        <button class="btn" type="button" id="carte-fermer" data-action="carte-fermer">Fermer</button>
+      </div>
+    </div>
   </section>
 
   <section id="choisir" aria-labelledby="titre-choisir">
@@ -686,6 +738,65 @@ footer p { margin: 0; max-width: 65ch; }
       <summary id="cout-sans-titre"></summary>
       <ul class="classement" id="cout-sans-prix"></ul>
     </details>
+  </section>
+
+  <section id="vitrine" aria-labelledby="titre-vitrine">
+    <div class="entete-section">
+      <h2 id="titre-vitrine">Mettre en avant</h2>
+    </div>
+    <p class="intro">Ce qui sert la collection au-delà de la tenue : l'opération du moment au magasin, tes photos en tenue et ce que dit ton journal.</p>
+
+    <h3 class="sous-titre" id="titre-operation">Opération magasin</h3>
+    <form class="operation-form" id="form-operation" novalidate aria-labelledby="titre-operation">
+      <div class="champ">
+        <label for="op-marque">Marque mise en avant</label>
+        <select id="op-marque"></select>
+      </div>
+      <div class="champ">
+        <label for="op-titre">Nom <span class="aide">(facultatif)</span></label>
+        <input type="text" id="op-titre" maxlength="80" autocomplete="off" placeholder="Semaine Tommy Jeans">
+      </div>
+      <div class="champ">
+        <label for="op-fin">Jusqu'au <span class="aide">(facultatif)</span></label>
+        <input type="date" id="op-fin">
+      </div>
+      <div class="actions">
+        <button class="btn primaire" type="submit" id="op-enregistrer">Lancer l'opération</button>
+        <button class="btn" type="button" id="op-arreter" data-action="op-arreter" hidden>Arrêter</button>
+      </div>
+      <p class="aide" id="op-etat"></p>
+      <p class="form-erreur" id="op-erreur" role="alert"></p>
+    </form>
+
+    <div class="entete-section entete-sous">
+      <h3 class="sous-titre" id="titre-lookbook">Lookbook</h3>
+      <p id="compte-lookbook"></p>
+    </div>
+    <form class="look-form" id="form-look" novalidate aria-labelledby="titre-lookbook" hidden>
+      <div class="champ">
+        <label for="look-photo">Photo de toi en tenue</label>
+        <input type="file" id="look-photo" accept="image/*">
+      </div>
+      <div class="champ">
+        <label for="look-date">Portée le</label>
+        <input type="date" id="look-date">
+      </div>
+      <div class="champ">
+        <label for="look-legende">Légende <span class="aide">(facultatif)</span></label>
+        <input type="text" id="look-legende" maxlength="140" autocomplete="off" placeholder="Premier jour de l'opération denim">
+      </div>
+      <div class="actions"><button class="btn primaire" type="submit" id="look-envoyer">Ajouter au lookbook</button></div>
+      <p class="form-erreur" id="look-erreur" role="alert"></p>
+    </form>
+    <p class="aide" id="look-indispo"></p>
+    <ul class="lookbook" id="lookbook"></ul>
+
+    <div class="entete-section entete-sous">
+      <h3 class="sous-titre">Statistiques</h3>
+      <button class="btn petit" type="button" id="export-journal" data-action="export-journal" hidden>Exporter le journal (.csv)</button>
+    </div>
+    <p class="aide" id="export-etat" role="status"></p>
+    <div id="stats"></div>
   </section>
 
   <footer>
