@@ -204,7 +204,7 @@
   let modeDonnees = window.claude && typeof window.claude.use === "function" ? "attente" : "local";
   let peutEcrireDonnees = false;
   const vide = () => Object.create(null);
-  const donnees = { journal: vide(), pieces: vide(), favoris: vide(), gouts: vide() };
+  const donnees = { journal: vide(), pieces: vide(), favoris: vide(), gouts: vide(), envies: vide(), reglages: { remise: 0, budget: 0 } };
   const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
   const METEOS = {
     froid: { nom: "Froid", couches: 3, aide: "Froid : sous-couche, pull et veste ou manteau." },
@@ -245,24 +245,44 @@
   const journalPret = () => modeDonnees === "local" || journalLu;
   let goutsPrets = false;            // goûts lus de façon définitive (page publiée)
   const goutsDisponibles = () => modeDonnees !== "base" || goutsPrets;
-  const LECTEURS = { journal: lireEntreeJournal, pieces: lireMeta, favoris: lireFavori };
+  // Une envie : une pièce repérée au magasin, pas encore achetée.
+  const ID_DOC = /^[A-Za-z0-9_-]{1,64}$/;
+  function lireEnvie(id, d) {
+    if (!ID_DOC.test(id) || !d) return null;
+    const categorie = texte(d.categorie, 40), teinte = texte(d.teinte, 40), encolure = texte(d.encolure, 20);
+    if (!possede(CAT, categorie) || !possede(T, teinte)) return null;
+    return {
+      titre: texte(d.titre, 200), categorie, teinte, encolure: possede(ENCOLURES, encolure) ? encolure : "",
+      marque: texte(d.marque, 60), modele: texte(d.modele, 80), couleur: texte(d.couleur, 40),
+      prix: nombre(d.prix, 0, 100000), lien: (d.lien && lienSur(d.lien)) || "", ajouteLe: texte(d.ajouteLe, 40),
+    };
+  }
+  function lireReglages(d) {
+    return {
+      remise: d && Number.isInteger(d.remise) && d.remise >= 0 && d.remise <= 90 ? d.remise : 0,
+      budget: (d && nombre(d.budget, 0, 100000)) || 0,
+    };
+  }
+  const LECTEURS = { journal: lireEntreeJournal, pieces: lireMeta, favoris: lireFavori, envies: lireEnvie };
 
   function lireDonneesLocales() {
     try {
       const e = JSON.parse(localStorage.getItem(CLE_DONNEES)) || {};
-      for (const nom of ["journal", "pieces", "favoris"]) {
+      for (const nom of ["journal", "pieces", "favoris", "envies"]) {
         for (const [id, d] of Object.entries(e[nom] || {})) {
           const x = LECTEURS[nom](id, d);
           if (x) donnees[nom][id] = x;
         }
       }
       donnees.gouts = lireGouts(e.gouts);
+      donnees.reglages = lireReglages(e.reglages);
     } catch (_) { /* rien d'enregistré */ }
   }
   function ecrireDonneesLocales() {
     try {
       localStorage.setItem(CLE_DONNEES, JSON.stringify({
         journal: donnees.journal, pieces: donnees.pieces, favoris: donnees.favoris, gouts: { paires: donnees.gouts },
+        envies: donnees.envies, reglages: donnees.reglages,
       }));
     } catch (_) { /* stockage indisponible */ }
   }
@@ -274,10 +294,19 @@
     if (collection === "pieces") return { lavage: !!v.lavage, prix: v.prix === null || v.prix === undefined ? null : v.prix, achatLe: v.achatLe || null, taille: v.taille || "", majLe: maintenant };
     if (collection === "favoris") return { tenue: v.tenue, ajouteLe: v.ajouteLe || maintenant };
     if (collection === "gouts") return { paires: v.paires, majLe: maintenant };
+    if (collection === "envies") {
+      return {
+        titre: v.titre || "", categorie: v.categorie, teinte: v.teinte, encolure: v.encolure || null,
+        marque: v.marque || "", modele: v.modele || "", couleur: v.couleur || "",
+        prix: v.prix === null || v.prix === undefined ? null : v.prix, lien: v.lien || "", ajouteLe: v.ajouteLe || maintenant,
+      };
+    }
+    if (collection === "reglages") return { remise: v.remise || 0, budget: v.budget || 0, majLe: maintenant };
     return JSON.parse(JSON.stringify(v));
   }
   function appliquerLocal(collection, id, v) {
     if (collection === "gouts") donnees.gouts = Object.assign(vide(), v ? v.paires : null);
+    else if (collection === "reglages") donnees.reglages = lireReglages(v);
     else if (possede(donnees, collection)) {
       if (v) donnees[collection][id] = v; else delete donnees[collection][id];
       if (collection === "journal") indexerJournal();
@@ -285,6 +314,7 @@
   }
   function valeurLocale(collection, id) {
     if (collection === "gouts") return { paires: Object.assign({}, donnees.gouts) };
+    if (collection === "reglages") return Object.assign({}, donnees.reglages);
     return possede(donnees, collection) && possede(donnees[collection], id) ? donnees[collection][id] : null;
   }
   const filesEcriture = new Map();
@@ -301,13 +331,17 @@
     const avant = filesEcriture.get(chemin) || Promise.resolve();
     const suite = avant.catch(() => {}).then(() => appel(() => (corps ? db.doc(chemin).set(corps) : db.doc(chemin).delete()), ["unavailable"]));
     filesEcriture.set(chemin, suite);
-    return suite.catch(err => {
+    const resultat = suite.catch(err => {
       // Rien n'a été enregistré : l'écran revient à l'état d'avant, sauf si une écriture plus récente suit.
       if (filesEcriture.get(chemin) === suite) { appliquerLocal(collection, id, precedente); planifierRendu(); }
       toast(CODES_DROITS.includes(err && err.code) ? "Seul le propriétaire de la page peut enregistrer." : "L'enregistrement n'a pas abouti. Réessaie dans un instant.", "erreur");
       throw err;
     });
+    const fin = () => { if (filesEcriture.get(chemin) === suite) filesEcriture.delete(chemin); };
+    suite.then(fin, fin);
+    return resultat;
   }
+  const enAttente = chemin => filesEcriture.has(chemin);
 
   // Journal : nombre de ports, dernier port, et fraîcheur sur deux semaines pour la rotation.
   let RECENCE = new Map(), PORTS = new Map(), DERNIER = new Map();
@@ -1260,6 +1294,11 @@
       ? `<button class="btn petit" type="button" id="lavage-${esc(a.id)}" data-action="lavage" data-id="${esc(a.id)}" aria-pressed="${auLavage(a.id)}">Au lavage</button>` : "";
     const porter = `<button class="btn petit" type="button" id="porter-${esc(a.id)}" data-action="choisir" data-id="${esc(a.id)}" data-depuis="catalogue">Porter avec…</button>` + lavage;
     const ports = PORTS.get(a.id) || 0;
+    const m = donnees.pieces[a.id] || {};
+    const achat = [
+      m.prix === null || m.prix === undefined ? "" : `Payée ${euros(m.prix)}${ports ? ` · ${euros(Math.round(m.prix / ports * 100) / 100)} par port` : ""}`,
+      m.taille ? "taille " + m.taille : "",
+    ].filter(Boolean).join(" · ");
     let actions = `<div class="fiche-actions">${porter}</div>`;
     if (a.ajoute && peutEcrire) {
       actions = confirmation === a.id
@@ -1282,6 +1321,7 @@
         ${a.ajoute ? `<span class="tag-ajout">Ajouté${a.ajouteLe ? " le " + esc(dateCourte(a.ajouteLe)) : ""}</span>` : ""}
         ${assoc.length ? `<span class="assoc">${majuscule(assoc.join(" · ").toLowerCase())}</span>` : ""}
         ${ports ? `<span class="assoc">Portée ${ports} fois · dernière fois le ${esc(dateCourte(DERNIER.get(a.id)))}</span>` : ""}
+        ${achat ? `<span class="assoc">${esc(achat)}</span>` : ""}
         ${auLavage(a.id) ? `<span class="tag-ajout">Au lavage</span>` : ""}
         ${a.lien ? `<a href="${esc(a.lien)}" target="_blank" rel="noopener noreferrer">${esc(texteLien)}</a>` : ""}
         ${actions}
@@ -1350,6 +1390,339 @@
       : `<li class="vide">Toutes les catégories sont couvertes : tu peux t'habiller 100&nbsp;% magasin de la tête aux pieds.</li>`;
   }
 
+  // ---------- acheter malin : simulateur, meilleurs achats, envies, budget, coût par port ----------
+  // Une pièce envisagée n'a pas de photo : une silhouette de sa couleur la remplace.
+  const SILHOUETTES = {
+    haut: "M30 18 L42 12 Q50 17 58 12 L70 18 L84 36 L73 42 L69 35 L69 92 L31 92 L31 35 L27 42 L16 36 Z",
+    bas: "M31 8 L69 8 L73 96 L56 96 L50 38 L44 96 L27 96 Z",
+    dessus: "M29 16 L43 10 L50 34 L57 10 L71 16 L86 38 L75 44 L71 37 L71 94 L29 94 L29 37 L25 44 L14 38 Z M50 34 L50 94",
+    pieds: "M12 66 Q14 50 30 48 L46 46 Q56 57 73 59 Q88 61 90 73 L90 80 L12 80 Z",
+    aucun: "M24 58 Q24 30 50 30 Q76 30 76 58 L88 62 L88 68 L24 68 Z",
+  };
+  function silhouette(categorie, teinte) {
+    const motif = teinte === "motif";
+    const remplissage = motif ? "url(#m)" : /^#[0-9a-f]{6}$/i.test(T[teinte].hex) ? T[teinte].hex : "#9aa0a8";
+    const defs = motif ? `<defs><pattern id="m" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#e9e7e2"/><rect width="3" height="6" fill="#8a8a8d"/></pattern></defs>` : "";
+    const forme = SILHOUETTES[CAT[categorie].role] || SILHOUETTES.haut;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 125">${defs}<rect width="100" height="125" fill="#eceff3"/><g transform="translate(0 14)"><path d="${forme}" fill="${remplissage}" stroke="#7d8492" stroke-width="1.2" stroke-linejoin="round"/></g></svg>`;
+    return "data:image/svg+xml," + encodeURIComponent(svg);
+  }
+  // Une pièce envisagée (simulateur ou envie), sous la forme d'un article.
+  function pieceEnvisagee(v, id) {
+    if (!v || !possede(CAT, v.categorie) || !possede(T, v.teinte)) return null;
+    const pull = PULL_CATS.includes(v.categorie);
+    return {
+      id: id || "simulation", envisagee: true, categorie: v.categorie, teinte: v.teinte,
+      encolure: pull && possede(ENCOLURES, v.encolure) ? v.encolure : undefined,
+      marque: v.marque || "", modele: v.modele || "", couleur: v.couleur || T[v.teinte].nom,
+      coupe: "", lien: v.lien || null, image: silhouette(v.categorie, v.teinte),
+    };
+  }
+  // Ce qu'une pièce ajouterait : paires haut + bas, superpositions, tenues qu'elle peut couvrir.
+  function apport(p) {
+    const r = role(p);
+    const res = { hb: 0, sures: 0, sup: 0, dessus: 0, pieds: 0, total: 0 };
+    if (r === "haut") BAS.forEach(b => { const s = accord(b, p); if (s) { res.hb++; if (s === 2) res.sures++; } });
+    if (r === "bas") HAUTS.forEach(h => { const s = accord(p, h); if (s) { res.hb++; if (s === 2) res.sures++; } });
+    if (peutEtreDessous(p)) HAUTS.forEach(h => { if (accepte(h, p) && superposer(p, h).score) res.sup++; });
+    if (accepteDessous(p)) SOUS.forEach(s => { if (accepte(p, s) && superposer(s, p).score) res.sup++; });
+    if (r === "dessus" || r === "pieds") {
+      BAS.forEach(b => HAUTS.forEach(h => {
+        if (!accord(b, h)) return;
+        if (r === "dessus") { if (surcouche(p, h, b).score) res.dessus++; return; }
+        const k = touche(p, { bas: b.id, haut: h.id });
+        if (!k || k.score === 2) res.pieds++;
+      }));
+    }
+    res.total = res.hb + res.sup + (DESSUS.length ? 0 : res.dessus) + (PIEDS.length ? 0 : res.pieds);
+    // Pour classer : une valeur sûre compte double ; une première paire de chaussures ou une
+    // première veste comptent pour toutes les tenues qu'elles complètent.
+    res.valeur = res.sures * 2 + (res.hb - res.sures) + res.sup * 1.5
+      + res.dessus * (DESSUS.length ? 0.05 : 0.2)
+      + (r === "pieds" ? (PIEDS.length ? res.pieds * 0.05 : 1000 + res.pieds) : 0);
+    return res;
+  }
+  function texteApport(p, a) {
+    const r = role(p), morceaux = [];
+    if (a.hb) morceaux.push(`+${pluriel(a.hb, "tenue")} haut + bas${a.sures ? `, dont ${pluriel(a.sures, "valeur")} sûre${a.sures > 1 ? "s" : ""}` : ""}`);
+    if (a.sup) morceaux.push(`+${pluriel(a.sup, "superposition")}`);
+    if (r === "dessus" && a.dessus) morceaux.push(DESSUS.length ? `par-dessus possible sur ${pluriel(a.dessus, "tenue")}` : `ta première couche par-dessus, pour ${pluriel(a.dessus, "tenue")}`);
+    if (r === "pieds" && a.pieds) morceaux.push(PIEDS.length ? `une paire de plus pour ${pluriel(a.pieds, "tenue")}` : `${pluriel(a.pieds, "tenue")} deviennent 100 % magasin`);
+    if (r === "aucun") morceaux.push("un accessoire pour relever tes tenues");
+    return morceaux.length ? morceaux.join(" · ") : "aucune nouvelle tenue avec ce que tu as";
+  }
+  // Un calcul fait avec la pièce glissée un instant dans la garde-robe.
+  function avecPieceEnvisagee(p, fn) {
+    const sauve = ajoutes;
+    ajoutes = ajoutes.concat([p]);
+    indexer();
+    try { return fn(); } finally { ajoutes = sauve; indexer(); }
+  }
+  const CANDIDATS = [
+    ["t-shirts"], ["chemises"], ["polos"], ["pulls", "rond"], ["pulls", "zip"], ["pulls", "v"], ["sweats", "capuche"],
+    ["vestes"], ["blousons"], ["manteaux"], ["chaussures"], ["pantalons"], ["jeans"],
+  ];
+  const TEINTES_PIEDS = ["blanc", "noir", "marron", "ecru", "beige", "gris-clair", "gris-fonce", "marine"];
+  function teinteCandidate(categorie, teinte) {
+    if (teinte === "motif") return categorie === "chemises";
+    if (teinte.startsWith("denim-")) return categorie === "jeans" || categorie === "vestes";
+    if (categorie === "jeans") return ["noir", "gris-moyen", "gris-clair", "blanc"].includes(teinte);
+    if (categorie === "chaussures") return TEINTES_PIEDS.includes(teinte);
+    return true;
+  }
+  // Les achats qui rapporteraient le plus, sans une pièce que tu as déjà dans la même couleur.
+  function meilleursAchats() {
+    const res = [];
+    for (const [categorie, encolure] of CANDIDATS) {
+      for (const teinte of Object.keys(T)) {
+        if (!teinteCandidate(categorie, teinte)) continue;
+        if (ARTICLES.some(a => a.categorie === categorie && a.teinte === teinte && (!encolure || a.encolure === encolure))) continue;
+        const p = pieceEnvisagee({ categorie, teinte, encolure, modele: encolure ? ENCOLURES[encolure] : "" });
+        const a = apport(p);
+        // À valeur égale, la couleur la plus classique d'abord (pour les chaussures).
+        if (categorie === "chaussures") a.valeur += (TEINTES_PIEDS.length - TEINTES_PIEDS.indexOf(teinte)) * 0.01;
+        if (a.total > 0) res.push({ p, a });
+      }
+    }
+    res.sort((x, y) => y.a.valeur - x.a.valeur);
+    const parCat = {}, choisis = [];
+    for (const x of res) {
+      const k = x.p.categorie;
+      if ((parCat[k] || 0) >= 2) continue;
+      parCat[k] = (parCat[k] || 0) + 1;
+      choisis.push(x);
+      if (choisis.length === 6) break;
+    }
+    return choisis;
+  }
+  function nomEnvisage(p) {
+    if (p.marque) return `${p.marque} ${p.modele || singulier(p.categorie)} ${p.couleur.toLowerCase()}`;
+    const base = role(p) === "pieds" ? CAT[p.categorie].nom
+      : p.encolure ? `${singulier(p.categorie)} ${ENCOLURES[p.encolure].toLowerCase()}` : singulier(p.categorie);
+    return `${base} · ${p.couleur.toLowerCase()}`;
+  }
+  const euros = n => n.toLocaleString("fr-FR", { style: "currency", currency: "EUR", minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 });
+  const remise = () => donnees.reglages.remise || 0;
+  const prixRemise = prix => Math.round(prix * (100 - remise())) / 100;
+  // Dépensé dans un mois : les prix payés des pièces achetées ce mois-là.
+  function depensesDuMois(mois) {
+    let total = 0, n = 0;
+    for (const [id, m] of Object.entries(donnees.pieces)) {
+      if (PAR_ID[id] && m.prix !== null && m.achatLe && m.achatLe.startsWith(mois)) { total += m.prix; n++; }
+    }
+    return { total: Math.round(total * 100) / 100, n };
+  }
+  // Un montant tapé : « 59,90 » ou « 59.90 » ; null si vide ou invalide.
+  function lireMontant(v, max) {
+    const s = String(v || "").trim().replace(/\s|€/g, "").replace(",", ".");
+    if (!s) return null;
+    const n = Number(s);
+    return isFinite(n) && n >= 0 && n <= max ? Math.round(n * 100) / 100 : undefined;
+  }
+  const saisie = n => String(n).replace(".", ",");   // un montant tel qu'on le tape en français
+  const idNouveau = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+
+  // Simulateur « Et si j'achetais… »
+  const simulTouches = new Set();
+  let simulAnalyse = null;
+  function remplirListesAcheter() {
+    F("simul-categorie").innerHTML = `<option value="">Choisir…</option>` +
+      D.categories.map(c => `<option value="${esc(c.id)}">${esc(c.nom)}</option>`).join("");
+    F("simul-teinte").innerHTML = `<option value="">Choisir…</option>` +
+      Object.entries(T).map(([id, t]) => `<option value="${esc(id)}">${esc(t.nom)}</option>`).join("");
+    F("simul-col").innerHTML = `<option value="">Peu importe</option>` +
+      Object.entries(ENCOLURES).map(([id, nom]) => `<option value="${esc(id)}">${esc(nom)}</option>`).join("");
+  }
+  function simulDepuisTitre() {
+    // Seul un titre au format Canva (« Marque - Catégorie - Modèle - Couleur ») est analysé ;
+    // un nom libre reste un simple libellé.
+    const titre = F("simul-titre").value;
+    simulAnalyse = /\s[-–—]\s/.test(titre) ? analyserTitre(titre) : null;
+    if (!simulAnalyse) return;
+    const r = simulAnalyse;
+    if (!simulTouches.has("simul-categorie") && r.categorie) F("simul-categorie").value = r.categorie;
+    const cat = F("simul-categorie").value;
+    if (!simulTouches.has("simul-teinte") && r.couleur) F("simul-teinte").value = devinerTeinte(r.couleur, cat, r.modele) || "";
+    if (!simulTouches.has("simul-col")) F("simul-col").value = devinerEncolure(r.modele, cat) || "";
+  }
+  function pieceDuSimulateur() {
+    const r = simulAnalyse || {};
+    const encolure = PULL_CATS.includes(F("simul-categorie").value) ? F("simul-col").value : "";
+    return pieceEnvisagee({
+      categorie: F("simul-categorie").value, teinte: F("simul-teinte").value, encolure,
+      marque: r.marque, modele: r.modele || (encolure ? ENCOLURES[encolure] : ""), couleur: r.couleur,
+    });
+  }
+  function viderSimulateur() {
+    F("form-simul").reset();
+    simulTouches.clear();
+    simulAnalyse = null;
+    F("simul-erreur").textContent = "";
+  }
+  function rendreSimulateur() {
+    const teinte = F("simul-teinte").value, categorie = F("simul-categorie").value;
+    F("simul-pastille").style.background = possede(T, teinte) ? T[teinte].hex : "transparent";
+    F("champ-simul-col").hidden = !PULL_CATS.includes(categorie);
+    F("simul-envie").disabled = !peutNoter();
+    const zone = F("simul-resultat");
+    const p = pieceDuSimulateur();
+    if (!p) {
+      zone.innerHTML = `<p class="vide">Choisis une catégorie et une couleur, ou colle un titre au format Canva : la page calcule les tenues que la pièce t'ouvrirait.</p>`;
+      return;
+    }
+    const a = apport(p);
+    const memes = ARTICLES.filter(x => x.categorie === p.categorie && x.teinte === p.teinte && (!p.encolure || x.encolure === p.encolure));
+    const vide = !ARTICLES.some(x => x.categorie === p.categorie);
+    const prix = lireMontant(F("simul-prix").value, 100000);
+    const tenues = avecPieceEnvisagee(p, () => suggestionsAutour(PAR_ID[p.id]).slice(0, 3)
+      .map((t, i) => ligneTenue(t, `<span class="eyebrow">Tenue ${i + 1} avec cette pièce</span>`, "")).join(""));
+    const lignePrix = prix ? `<p class="mono">${esc(euros(prixRemise(prix)))}${remise() ? ` avec ta remise de ${remise()} %` : ""}${a.total ? ` · ${esc(euros(prixRemise(prix) / a.total))} par nouvelle tenue` : ""}</p>` : "";
+    zone.innerHTML = `
+      <div class="simul-tete">
+        <img src="${esc(p.image)}" alt="" width="64" height="80">
+        <div>
+          <strong>${esc(majuscule(nomEnvisage(p)))}</strong>
+          <p class="apport">${esc(majuscule(texteApport(p, a)))}.</p>
+          ${lignePrix}
+          ${vide ? `<p><span class="badge complet">Première pièce en ${esc(CAT[p.categorie].nom.toLowerCase())}</span></p>` : ""}
+          ${memes.length ? `<p class="aide">Tu as déjà ${memes.length > 1 ? `${memes.length} pièces` : "une pièce"} de ce type dans cette couleur.</p>` : ""}
+        </div>
+      </div>
+      ${tenues ? `<ol class="semaine">${tenues}</ol>` : `<p class="vide">Aucune tenue complète ne se forme avec cette pièce et ce que tu as.</p>`}`;
+  }
+  // Ces calculs ne dépendent que de la garde-robe : gardés d'un rendu à l'autre tant qu'elle ne change pas.
+  const memo = new Map();
+  function memoiser(nom, cle, calcul) {
+    const m = memo.get(nom);
+    if (m && m.cle === cle) return m.val;
+    const val = calcul();
+    memo.set(nom, { cle, val });
+    return val;
+  }
+  const cleGarderobe = () => ARTICLES.map(a => a.id + ":" + a.teinte + ":" + (a.encolure || "")).join("|");
+  function rendreMeilleursAchats() {
+    const liste = memoiser("meilleurs-achats", cleGarderobe(), meilleursAchats);
+    F("meilleurs-achats").innerHTML = liste.length ? liste.map(({ p, a }, i) => `<li>
+        <span class="rang" aria-hidden="true">${i + 1}</span>
+        <img src="${esc(p.image)}" alt="" width="40" height="50">
+        <span class="classement-corps"><strong>${esc(majuscule(nomEnvisage(p)))}</strong><span class="aide">${esc(majuscule(texteApport(p, a)))}</span></span>
+        <button class="btn petit" type="button" id="simuler-${i}" data-action="simuler" data-categorie="${esc(p.categorie)}" data-teinte="${esc(p.teinte)}" data-col="${esc(p.encolure || "")}">Simuler</button>
+      </li>`).join("") : `<li class="vide">Ta garde-robe couvre déjà toutes les couleurs utiles.</li>`;
+  }
+  function rendreEnvies() {
+    const garderobe = cleGarderobe();
+    const envies = Object.entries(donnees.envies).map(([id, e]) => {
+      const p = pieceEnvisagee(e, "envie-" + id);
+      return p ? { id, e, p, a: memoiser("envie-" + id, garderobe + JSON.stringify([e.categorie, e.teinte, e.encolure]), () => apport(p)) } : null;
+    }).filter(Boolean);
+    // Le meilleur rapport d'abord : prix remisé par nouvelle tenue ; sans prix, à la fin.
+    const ratio = x => (x.e.prix && x.a.total ? prixRemise(x.e.prix) / x.a.total : Infinity);
+    envies.sort((x, y) => ratio(x) - ratio(y) || y.a.valeur - x.a.valeur || x.e.ajouteLe.localeCompare(y.e.ajouteLe));
+    F("compte-envies").textContent = envies.length ? pluriel(envies.length, "envie") : "";
+    F("liste-envies").innerHTML = envies.length ? envies.map(({ id, e, p, a }) => {
+      const prix = e.prix
+        ? `${esc(euros(prixRemise(e.prix)))}${remise() ? ` <s>${esc(euros(e.prix))}</s>` : ""}${a.total ? ` · ${esc(euros(prixRemise(e.prix) / a.total))} par nouvelle tenue` : ""}`
+        : "Prix non indiqué";
+      return `<li class="sans-rang">
+        <img src="${esc(p.image)}" alt="" width="40" height="50">
+        <span class="classement-corps">
+          <strong>${esc(e.titre || majuscule(nomEnvisage(p)))}</strong>
+          <span class="mono">${prix}</span>
+          <span class="aide">${esc(majuscule(texteApport(p, a)))}</span>
+          ${e.lien ? `<a href="${esc(e.lien)}" target="_blank" rel="noopener noreferrer">Voir la fiche ↗</a>` : ""}
+        </span>
+        <span class="ligne-actions">
+          <button class="btn petit" type="button" id="envie-simuler-${esc(id)}" data-action="envie-simuler" data-id="${esc(id)}">Simuler</button>
+          ${peutEcrire && peutNoter() ? `<button class="btn petit primaire" type="button" id="envie-achetee-${esc(id)}" data-action="envie-achetee" data-id="${esc(id)}">Je l'ai acheté</button>` : ""}
+          ${peutNoter() ? `<button class="btn petit danger" type="button" id="envie-retirer-${esc(id)}" data-action="envie-retirer" data-id="${esc(id)}">Retirer</button>` : ""}
+        </span>
+      </li>`;
+    }).join("") : `<li class="vide">${peutNoter() ? "Ajoute ici les pièces repérées au magasin avec le simulateur : elles se classent selon ce qu'elles t'apporteraient pour leur prix." : "Aucune envie pour l'instant."}</li>`;
+  }
+  function rendreBudget() {
+    const r = donnees.reglages;
+    if (document.activeElement !== F("reglage-remise")) F("reglage-remise").value = r.remise ? String(r.remise) : "";
+    if (document.activeElement !== F("reglage-budget")) F("reglage-budget").value = r.budget ? saisie(r.budget) : "";
+    F("reglage-remise").disabled = F("reglage-budget").disabled = !peutNoter();
+    const nomMois = new Date(midi(AUJ_DATE)).toLocaleDateString("fr-FR", { month: "long" });
+    const d = depensesDuMois(AUJ_DATE.slice(0, 7));
+    const depense = d.n ? `${esc(euros(d.total))} dépensés en ${nomMois} (${pluriel(d.n, "pièce")})` : `Rien de noté en ${nomMois}`;
+    if (!r.budget) {
+      F("budget-jauge").innerHTML = `<p class="aide">${depense}.${peutNoter() ? " Indique un budget par mois pour suivre tes achats ; le prix payé se note à l'ajout d'une pièce ou dans « Coût par port »." : " Aucun budget indiqué."}</p>`;
+      return;
+    }
+    const part = Math.min(1, d.total / r.budget), reste = Math.round((r.budget - d.total) * 100) / 100;
+    F("budget-jauge").innerHTML = `
+      <p>${d.n ? `<strong>${esc(euros(d.total))}</strong> dépensés` : "Rien de dépensé"} en ${nomMois} sur ${esc(euros(r.budget))} · ${reste >= 0 ? `reste ${esc(euros(reste))}` : `dépassé de ${esc(euros(-reste))}`}</p>
+      <div class="jauge${reste < 0 ? " depasse" : ""}" role="meter" aria-valuemin="0" aria-valuemax="${r.budget}" aria-valuenow="${Math.min(d.total, r.budget)}" aria-label="Budget de ${nomMois} dépensé"><span style="width:${(part * 100).toFixed(1)}%"></span></div>`;
+  }
+
+  // Coût par port : le prix payé divisé par le nombre de ports notés au journal.
+  let editionCout = null;   // pièce dont on note le prix, la taille et la date d'achat
+  let erreurCout = "";
+  function formCout(a) {
+    const m = donnees.pieces[a.id] || {};
+    return `<form class="cout-form" id="cout-form" data-id="${esc(a.id)}" novalidate>
+      <div class="champ"><label for="cout-prix">Prix payé (€)</label><input type="text" id="cout-prix" inputmode="decimal" autocomplete="off" maxlength="12" placeholder="59,90" value="${m.prix === null || m.prix === undefined ? "" : esc(saisie(m.prix))}"></div>
+      <div class="champ"><label for="cout-date">Acheté le</label><input type="date" id="cout-date" max="${AUJ_DATE}" value="${esc(m.achatLe || "")}"></div>
+      <div class="champ"><label for="cout-taille">Taille</label><input type="text" id="cout-taille" maxlength="20" autocomplete="off" value="${esc(m.taille || "")}" placeholder="M, 32/32…"></div>
+      <p class="form-erreur" role="alert">${esc(erreurCout)}</p>
+      <div class="actions">
+        <button class="btn petit primaire" type="submit" id="cout-enregistrer">Enregistrer</button>
+        <button class="btn petit" type="button" id="cout-annuler" data-action="cout-annuler">Annuler</button>
+      </div>
+    </form>`;
+  }
+  function rendreCoutPort() {
+    const lignes = ARTICLES.map(a => {
+      const m = donnees.pieces[a.id] || {};
+      const ports = PORTS.get(a.id) || 0;
+      const prix = m.prix === null || m.prix === undefined ? null : m.prix;
+      return { a, m, ports, prix, cout: prix === null ? null : ports ? prix / ports : prix };
+    });
+    const avecPrix = lignes.filter(x => x.prix !== null);
+    const total = avecPrix.reduce((s, x) => s + x.prix, 0);
+    const ports = avecPrix.reduce((s, x) => s + x.ports, 0);
+    F("cout-bilan").textContent = avecPrix.length
+      ? `${euros(Math.round(total * 100) / 100)} pour ${pluriel(avecPrix.length, "pièce")} au prix noté · ${pluriel(ports, "port")} au journal${ports ? ` · ${euros(Math.round(total / ports * 100) / 100)} par port en moyenne` : ""}.`
+      : "Aucun prix noté pour l'instant.";
+    // Pendant la saisie, la liste ne se redessine pas sous les doigts.
+    const form = F("cout-form");
+    if (form && form.contains(document.activeElement) && editionCout === form.dataset.id) return;
+    // Les pièces au coût par port le plus élevé d'abord : ce sont elles qu'il faut sortir.
+    const avec = lignes.filter(x => x.prix !== null), sans = lignes.filter(x => x.prix === null);
+    avec.sort((x, y) => y.cout - x.cout || ORDRE_CAT[x.a.categorie] - ORDRE_CAT[y.a.categorie]);
+    const ligne = ({ a, m, ports, prix, cout }) => {
+      const details = [m.taille ? "Taille " + m.taille : "", m.achatLe ? "achetée le " + dateCourte(m.achatLe) : ""].filter(Boolean).join(" · ");
+      const ligneCout = prix === null ? "Prix non noté"
+        : ports ? `${euros(Math.round(cout * 100) / 100)} par port · ${euros(prix)} pour ${pluriel(ports, "port")}`
+        : `${euros(prix)} · pas encore portée`;
+      return `<li class="sans-rang">
+        <img src="${esc(a.image)}" alt="" width="40" height="50" loading="lazy">
+        <span class="classement-corps">
+          <strong>${esc(a.marque)} ${esc(role(a) === "bas" ? court(a) : court(a).toLowerCase())}</strong>
+          <span class="mono">${esc(ligneCout)}</span>
+          ${details ? `<span class="aide">${esc(majuscule(details))}</span>` : ""}
+        </span>
+        ${peutNoter() && editionCout !== a.id ? `<button class="btn petit" type="button" id="cout-modifier-${esc(a.id)}" data-action="cout-modifier" data-id="${esc(a.id)}">${prix === null ? "Noter le prix" : "Modifier"}</button>` : "<span></span>"}
+        ${editionCout === a.id ? formCout(a) : ""}
+      </li>`;
+    };
+    F("cout-port").innerHTML = avec.length ? avec.map(ligne).join("")
+      : `<li class="vide">${peutNoter() ? "Note le prix payé d'une pièce pour voir ce que te coûte chaque port." : "Aucun prix noté pour l'instant."}</li>`;
+    F("cout-sans").hidden = !sans.length;
+    F("cout-sans-titre").textContent = `${pluriel(sans.length, "pièce")} sans prix noté`;
+    F("cout-sans-prix").innerHTML = sans.map(ligne).join("");
+    if (editionCout && sans.some(x => x.a.id === editionCout)) F("cout-sans").open = true;
+  }
+  function rendreAcheter() {
+    rendreBudget();
+    rendreSimulateur();
+    rendreMeilleursAchats();
+    rendreEnvies();
+    rendreCoutPort();
+  }
+
   function rendre(...parties) {
     const focus = document.activeElement && document.activeElement.id;
     parties.forEach(f => f());
@@ -1358,7 +1731,7 @@
       if (el && el !== document.activeElement) el.focus({ preventScroll: true });
     }
   }
-  const rendreTout = () => rendre(rendreTete, rendreMeteo, rendreTenue, rendreChoix, rendreFavoris, rendreSemaine, rendreJournal, rendreCatalogue, rendreAccords, rendreCompleter);
+  const rendreTout = () => rendre(rendreTete, rendreMeteo, rendreTenue, rendreChoix, rendreFavoris, rendreSemaine, rendreJournal, rendreCatalogue, rendreAccords, rendreCompleter, rendreAcheter);
 
   // Une photo stockée qui ne répond plus est remplacée par un aplat.
   document.addEventListener("error", e => {
@@ -1472,8 +1845,14 @@
       if ((nom === "pieces" || nom === "journal") && etatAjouts === "ok") reconcilier(true);
       planifierRendu();
     }, () => toast("Une partie de tes données n'a pas pu être chargée. Recharge la page.", "erreur"));
-    ["journal", "pieces", "favoris"].forEach(collection);
+    ["journal", "pieces", "favoris", "envies"].forEach(collection);
+    db.doc("reglages/general").onSnapshot(snap => {
+      if (enAttente("reglages/general")) return; // l'écran montre déjà l'écriture en cours
+      donnees.reglages = lireReglages(snap.exists ? snap.data() : null);
+      planifierRendu();
+    }, () => {});
     db.doc("gouts/accords").onSnapshot(snap => {
+      if (enAttente("gouts/accords")) return;
       donnees.gouts = lireGouts(snap.exists ? snap.data() : null);
       if (!(snap.metadata && snap.metadata.fromCache)) goutsPrets = true;
       planifierRendu();
@@ -1573,6 +1952,7 @@
   let cadrage = { zoom: 1, x: 0, y: 0 };
   let envoiEnCours = false;
   let titreAuto = "";          // titre posé à partir du nom de fichier, remplaçable par la photo suivante
+  let envieAchetee = null;     // envie à retirer une fois la pièce ajoutée
 
   function remplirListes() {
     F("achat-categorie").innerHTML = `<option value="">Choisir…</option>` +
@@ -1678,6 +2058,9 @@
     edition = null;
     titreAuto = "";
     F("photo-actuelle").hidden = true;
+    envieAchetee = null;
+    F("achat-date").value = AUJ_DATE;
+    F("achat-date").max = AUJ_DATE;
     F("titre-ajouter").textContent = "Ajouter un achat";
     F("achat-envoyer").textContent = "Ajouter à la garde-robe";
     erreur("");
@@ -1702,6 +2085,10 @@
     const valeurs = { "achat-marque": a.marque, "achat-categorie": a.categorie, "achat-modele": a.modele, "achat-couleur": a.couleur, "achat-teinte": a.teinte, "achat-coupe": a.coupe, "achat-lien": a.lien || "" };
     CHAMPS.forEach(id => { F(id).value = valeurs[id]; touches.add(id); });
     majPastille();
+    const m = donnees.pieces[a.id] || {};
+    F("achat-prix").value = m.prix === null || m.prix === undefined ? "" : saisie(m.prix);
+    F("achat-date").value = m.achatLe || "";
+    F("achat-taille").value = m.taille || "";
     F("photo-actuelle-img").src = a.image;
     F("photo-actuelle").hidden = false;
     F("titre-ajouter").textContent = "Modifier une pièce";
@@ -1725,6 +2112,11 @@
     if (!possede(T, v.teinte)) return { manque: "Choisis la couleur utilisée pour les accords." };
     if (v.lien && !lienSur(v.lien)) return { manque: "Le lien doit commencer par https://." };
     if (!photo && !edition) return { manque: "Ajoute une photo." };
+    v.prix = lireMontant(F("achat-prix").value, 100000);
+    if (v.prix === undefined) return { manque: "Le prix payé doit être un nombre, par exemple 59,90." };
+    v.achatLe = DATE_RE.test(F("achat-date").value) ? F("achat-date").value : null;
+    if (v.achatLe && v.achatLe > AUJ_DATE) return { manque: "La date d'achat ne peut pas être dans le futur." };
+    v.taille = F("achat-taille").value.trim().slice(0, 20);
     v.lien = v.lien ? lienSur(v.lien) : "";
     v.titre = F("achat-titre").value.trim() ||
       [v.marque, singulier(v.categorie), v.modele, v.couleur].filter(Boolean).join(" - ");
@@ -1826,6 +2218,8 @@
       return;
     }
     if (enEdition && nouvelleImage) supprimerPhoto(courant.imageId);
+    noterAchat(enEdition ? enEdition.id : "achat-" + ref.id, v);
+    if (envieAchetee && !enEdition) enregistrer("envies", envieAchetee, null).catch(() => {});
     const nom = [v.marque, v.modele || singulier(v.categorie), v.couleur].join(" ");
     reinitialiser();
     if (enEdition) {
@@ -1842,6 +2236,29 @@
         : `Ajouté : ${nom}. La pièce est dans le catalogue et entre dans la composition des tenues.`);
       F("achat-photo").focus({ preventScroll: true });
     }
+  }
+
+  // Prix payé, date d'achat et taille vivent avec l'état de la pièce (comme le lavage).
+  function noterAchat(id, v) {
+    if (!peutNoter()) return;
+    const avant = donnees.pieces[id] || { lavage: false, prix: null, achatLe: null, taille: "" };
+    if (avant.prix === v.prix && avant.achatLe === v.achatLe && (avant.taille || "") === v.taille) return;
+    enregistrer("pieces", id, Object.assign({}, avant, { prix: v.prix, achatLe: v.achatLe, taille: v.taille })).catch(() => {});
+  }
+  function ouvrirAchatDepuisEnvie(id) {
+    const e = donnees.envies[id];
+    if (!e || !peutEcrire) return;
+    reinitialiser();
+    succes("");
+    const modele = e.modele || (e.encolure ? ENCOLURES[e.encolure] : "");
+    const valeurs = { "achat-marque": e.marque, "achat-categorie": e.categorie, "achat-modele": modele, "achat-couleur": e.couleur || T[e.teinte].nom, "achat-teinte": e.teinte, "achat-lien": e.lien };
+    F("achat-titre").value = e.titre;
+    CHAMPS.forEach(c => { if (valeurs[c]) { F(c).value = valeurs[c]; touches.add(c); } });
+    majPastille();
+    if (e.prix) F("achat-prix").value = saisie(prixRemise(e.prix));
+    envieAchetee = id;
+    F("titre-ajouter").textContent = "Ajouter un achat de tes envies";
+    ouvrirPanneau();
   }
 
   async function supprimer(id) {
@@ -2051,12 +2468,76 @@
     }
   }
 
+  // Acheter malin
+  F("form-simul").addEventListener("input", e => {
+    const id = e.target.id;
+    if (id === "simul-titre") simulDepuisTitre();
+    else if (e.target.tagName === "SELECT") simulTouches.add(id);
+    F("simul-erreur").textContent = "";
+    rendre(rendreSimulateur);
+  });
+  F("form-simul").addEventListener("submit", e => {
+    e.preventDefault();
+    if (!peutNoter()) return;
+    const p = pieceDuSimulateur();
+    const prix = lireMontant(F("simul-prix").value, 100000);
+    const lien = F("simul-lien").value.trim();
+    const erreurSimul = !p ? "Choisis au moins la catégorie et la couleur."
+      : prix === undefined ? "Le prix doit être un nombre, par exemple 59,90."
+      : lien && !lienSur(lien) ? "Le lien doit commencer par https://." : "";
+    F("simul-erreur").textContent = erreurSimul;
+    if (erreurSimul) return;
+    const r = simulAnalyse || {};
+    enregistrer("envies", idNouveau(), {
+      titre: F("simul-titre").value.trim().slice(0, 200), categorie: p.categorie, teinte: p.teinte, encolure: p.encolure || "",
+      marque: (r.marque || "").slice(0, 60), modele: (r.modele || (p.encolure ? ENCOLURES[p.encolure] : "")).slice(0, 80), couleur: (r.couleur || "").slice(0, 40),
+      prix, lien: lien ? lienSur(lien) : "", ajouteLe: new Date().toISOString(),
+    }).catch(() => {});
+    viderSimulateur();
+    toast("Ajoutée à tes envies.");
+    rendre(rendreAcheter);
+  });
+  ["reglage-remise", "reglage-budget"].forEach(id => F(id).addEventListener("change", () => {
+    if (!peutNoter()) return;
+    // Seul le champ touché change : l'autre vient des données, pas de l'écran.
+    const remiseChamp = id === "reglage-remise";
+    const v = lireMontant(F(id).value, remiseChamp ? 90 : 100000);
+    if (v === undefined) {
+      toast(remiseChamp ? "La remise va de 0 à 90 %." : "Le budget doit être un nombre positif.", "erreur");
+      rendre(rendreBudget);
+      return;
+    }
+    const r = Object.assign({}, donnees.reglages, remiseChamp ? { remise: Math.round(v || 0) } : { budget: v || 0 });
+    if (r.remise === donnees.reglages.remise && r.budget === donnees.reglages.budget) return;
+    enregistrer("reglages", "general", r).catch(() => {});
+    rendre(rendreAcheter);
+  }));
+  F("acheter").addEventListener("submit", e => {
+    if (e.target.id !== "cout-form") return;
+    e.preventDefault();
+    const id = e.target.dataset.id;
+    if (!PAR_ID[id] || !peutNoter()) return;
+    const prix = lireMontant(F("cout-prix").value, 100000);
+    const date = F("cout-date").value;
+    erreurCout = prix === undefined ? "Le prix doit être un nombre, par exemple 59,90."
+      : date && (!DATE_RE.test(date) || date > AUJ_DATE) ? "La date d'achat ne peut pas être dans le futur." : "";
+    if (erreurCout) { rendreErreurCout(); return; }
+    noterAchat(id, { prix, achatLe: date || null, taille: F("cout-taille").value.trim().slice(0, 20) });
+    editionCout = null;
+    rendre(rendreAcheter, rendreCatalogue);
+    const b = F("cout-modifier-" + id); if (b) b.focus({ preventScroll: true });
+  });
+  function rendreErreurCout() {
+    const p = F("cout-form") && F("cout-form").querySelector(".form-erreur");
+    if (p) p.textContent = erreurCout;
+  }
+
   document.addEventListener("click", e => {
     const el = e.target.closest("[data-action]");
     if (!el) return;
     const action = el.dataset.action;
     // Pendant un envoi, le formulaire ne se ferme pas et ne change pas de pièce.
-    if (envoiEnCours && ["ouvrir-ajout", "fermer-ajout", "annuler-ajout", "modifier"].includes(action)) return;
+    if (envoiEnCours && ["ouvrir-ajout", "fermer-ajout", "annuler-ajout", "modifier", "envie-achetee"].includes(action)) return;
     if (action === "recomposer") { composerSemaine(); rendre(rendreSemaine, rendreTenue); }
     else if (action === "changer") {
       const j = el.dataset.jour;
@@ -2214,6 +2695,42 @@
       if (b) { if (!b.matches("button")) b.tabIndex = -1; b.focus({ preventScroll: true }); }
     }
     else if (action === "filtre") { filtre = el.dataset.filtre; rendre(rendreCatalogue); }
+    else if (action === "simul-effacer") { viderSimulateur(); rendre(rendreSimulateur); F("simul-titre").focus(); }
+    else if (action === "simuler" || action === "envie-simuler") {
+      const e2 = action === "envie-simuler" ? donnees.envies[el.dataset.id] : null;
+      if (action === "envie-simuler" && !e2) return;
+      viderSimulateur();
+      const v = e2 || { titre: "", categorie: el.dataset.categorie, teinte: el.dataset.teinte, encolure: el.dataset.col, prix: null, lien: "" };
+      F("simul-titre").value = v.titre;
+      if (v.titre) simulDepuisTitre();
+      F("simul-categorie").value = v.categorie;
+      F("simul-teinte").value = v.teinte;
+      F("simul-col").value = v.encolure || "";
+      ["simul-categorie", "simul-teinte", "simul-col"].forEach(c => simulTouches.add(c));
+      F("simul-prix").value = v.prix ? saisie(v.prix) : "";
+      F("simul-lien").value = v.lien || "";
+      rendre(rendreSimulateur);
+      F("titre-simulateur").scrollIntoView({ block: "start" });
+      F("simul-prix").focus({ preventScroll: true });
+    }
+    else if (action === "envie-achetee") ouvrirAchatDepuisEnvie(el.dataset.id);
+    else if (action === "envie-retirer") {
+      enregistrer("envies", el.dataset.id, null).catch(() => {});
+      toast("Retirée de tes envies.");
+      rendre(rendreAcheter);
+      const b = F("liste-envies").querySelector("button");
+      (b || F("simul-titre")).focus({ preventScroll: true });
+    }
+    else if (action === "cout-modifier") {
+      editionCout = el.dataset.id; erreurCout = "";
+      rendre(rendreCoutPort);
+      const c = F("cout-prix"); if (c) c.focus();
+    }
+    else if (action === "cout-annuler") {
+      const id = editionCout; editionCout = null; erreurCout = "";
+      rendre(rendreCoutPort);
+      const b = F("cout-modifier-" + id); if (b) b.focus();
+    }
     else if (action === "ouvrir-ajout") { reinitialiser(); succes(""); ouvrirPanneau(); }
     else if (action === "fermer-ajout" || action === "annuler-ajout") fermerPanneau();
     else if (action === "modifier") { const a = PAR_ID[el.dataset.id]; if (a && a.ajoute && peutEcrire) ouvrirEdition(a); }
@@ -2253,6 +2770,7 @@
   indexerJournal();
   indexer();
   remplirListes();
+  remplirListesAcheter();
   reconcilier();
   rendreTout();
   brancher();

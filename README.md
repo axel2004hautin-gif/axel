@@ -21,6 +21,7 @@ Ouvre `index.html` dans un navigateur (double-clic sur le fichier, rien à insta
 - **Catalogue** : toutes les pièces, filtrables par catégorie, avec le lien vers la fiche produit.
 - **Accords** : toutes les combinaisons haut × bas, et un tableau des superpositions sous-couche × haut, notées « valeur sûre », « possible » ou « à éviter ».
 - **À compléter** : les catégories encore vides, par ordre de priorité.
+- **Acheter malin** : avant de passer en caisse, le simulateur « Et si j'achetais… » montre ce qu'une pièce t'apporterait (nouvelles tenues, superpositions, et les tenues elles-mêmes), avec le prix par nouvelle tenue. Viennent ensuite les achats qui t'apporteraient le plus, ta liste d'envies classée selon le rapport prix / nouvelles tenues (« Je l'ai acheté » ouvre le formulaire d'ajout pré-rempli), ta remise employé, ton budget du mois et le coût par port de chaque pièce (prix payé ÷ nombre de fois portée).
 
 ### Les règles de superposition
 
@@ -88,7 +89,7 @@ Il manque les chaussures pour qu'une tenue soit entièrement achetée au magasin
 
 1. Choisis la photo. Si le fichier s'appelle comme tes exports Canva (`Marque - Catégorie - Modèle - Couleur.png`), le titre et tous les champs se remplissent seuls. Sinon, tape le titre au même format.
 2. Fais glisser la photo pour centrer la pièce dans le cadre, et zoome si besoin.
-3. Vérifie la catégorie et la « couleur pour les accords », puis valide.
+3. Vérifie la catégorie et la « couleur pour les accords », note si tu veux le prix payé, la date d'achat et la taille, puis valide.
 
 La pièce apparaît aussitôt dans le catalogue, les tenues, la semaine et le tableau des accords. Elle est enregistrée dans la page elle-même (base de données et stockage photo de la page), pas dans ce dépôt. Seul le propriétaire de la page peut ajouter, modifier ou supprimer des pièces. Les autres personnes qui ont accès à la page les voient sans pouvoir les changer.
 
@@ -106,7 +107,7 @@ Claude peut recopier dans le dépôt les pièces ajoutées depuis la page.
 
 La page publiée sur claude.ai est `index.html` sans son enveloppe de document, que le visualiseur ajoute lui-même : `outils/version-artefact.sh > garde-robe-blue-box.html`, publiée avec `app.js`, `garde-robe.js` et `images/*.jpg`, et les capacités `db` (écriture réservée au propriétaire), `assets` et `user`.
 
-Dans la base de la page : `achats` (pièces ajoutées), `etat/semaine` (semaine, couches, météo, tenue du jour), `journal/AAAA-MM-JJ`, `pieces/<id>` (lavage, prix, taille), `favoris`, `gouts/accords`.
+Dans la base de la page : `achats` (pièces ajoutées), `etat/semaine` (semaine, couches, météo, tenue du jour), `journal/AAAA-MM-JJ`, `pieces/<id>` (lavage, prix payé, date d'achat, taille), `favoris`, `gouts/accords`, `envies`, `reglages/general` (remise, budget).
 
 ## Notes
 

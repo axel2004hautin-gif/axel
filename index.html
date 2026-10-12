@@ -291,6 +291,42 @@ table.accords { width: 100%; min-width: 820px; border-collapse: separate; border
 
 footer { margin-top: 48px; color: var(--muted); font-size: .86rem; }
 footer p { margin: 0; max-width: 65ch; }
+
+/* acheter malin */
+.reglages { display: grid; grid-template-columns: repeat(2, minmax(0, 220px)); gap: 12px; margin-bottom: 12px; }
+.budget p { margin: 0 0 6px; }
+.jauge { height: 10px; max-width: 460px; overflow: hidden; border-radius: 999px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); }
+.jauge span { display: block; height: 100%; border-radius: inherit; background: var(--indigo); }
+.jauge.depasse span { background: var(--no); }
+.simulateur { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.simulateur .simul-titre, .simulateur .simul-lien, .simulateur .actions, .simulateur .form-erreur { grid-column: 1 / -1; }
+.simul-resultat { display: grid; gap: 12px; margin-top: 12px; }
+.simul-tete { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 12px; }
+.simul-tete img { width: 64px; height: 80px; border-radius: 6px; background: var(--surface-2); }
+.simul-tete div { display: grid; gap: 4px; min-width: 0; }
+.simul-tete p { margin: 0; }
+.apport { color: var(--ink); }
+.classement { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.classement > li { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 8px 10px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.classement > li.sans-rang { grid-template-columns: auto minmax(0, 1fr) auto; }
+.classement > li.vide { display: block; padding: 20px; background: transparent; border: 1.5px dashed var(--line); color: var(--muted); }
+.classement img { width: 40px; height: 50px; object-fit: cover; border-radius: 6px; background: var(--surface-2); }
+.classement .rang { min-width: 1.4em; font: 700 .9rem var(--f-mono); color: var(--muted); text-align: center; }
+.classement-corps { display: grid; gap: 2px; min-width: 0; }
+.classement-corps s { color: var(--muted); }
+.sans-prix { margin-top: 10px; }
+.sans-prix summary { padding: 8px 0; color: var(--indigo); font-weight: 600; cursor: pointer; }
+.sans-prix .classement { margin-top: 6px; }
+.cout-form { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding-top: 8px; border-top: 1px solid var(--line); }
+.cout-form .actions, .cout-form .form-erreur { grid-column: 1 / -1; }
+@media (max-width: 640px) {
+  .reglages { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .simulateur { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .classement > li { grid-template-columns: auto minmax(0, 1fr); }
+  .classement > li .rang { display: none; }
+  .classement > li > .ligne-actions, .classement > li > .btn { grid-column: 1 / -1; justify-content: flex-start; justify-self: start; }
+  .cout-form { grid-template-columns: minmax(0, 1fr); }
+}
 </style>
 </head>
 <body>
@@ -365,6 +401,20 @@ footer p { margin: 0; max-width: 65ch; }
             <label for="achat-lien">Lien de la fiche <span class="aide">(facultatif)</span></label>
             <input type="url" id="achat-lien" autocomplete="off" maxlength="500" placeholder="https://…">
           </div>
+          <div class="champs-2">
+            <div class="champ">
+              <label for="achat-prix">Prix payé (€) <span class="aide">(facultatif)</span></label>
+              <input type="text" id="achat-prix" inputmode="decimal" autocomplete="off" maxlength="12" placeholder="59,90">
+            </div>
+            <div class="champ">
+              <label for="achat-date">Acheté le</label>
+              <input type="date" id="achat-date">
+            </div>
+            <div class="champ">
+              <label for="achat-taille">Taille <span class="aide">(facultatif)</span></label>
+              <input type="text" id="achat-taille" autocomplete="off" maxlength="20" placeholder="M, 32/32…">
+            </div>
+          </div>
           <p class="form-erreur" id="achat-erreur" role="alert"></p>
           <div class="actions">
             <button class="btn primaire" type="submit" id="achat-envoyer">Ajouter à la garde-robe</button>
@@ -386,6 +436,7 @@ footer p { margin: 0; max-width: 65ch; }
       <li><a href="#catalogue">Catalogue</a></li>
       <li><a href="#accords">Accords</a></li>
       <li><a href="#completer">À compléter</a></li>
+      <li><a href="#acheter">Acheter malin</a></li>
     </ul>
   </nav>
 
@@ -514,6 +565,77 @@ footer p { margin: 0; max-width: 65ch; }
     </div>
     <p class="intro">Pour être habillé 100&nbsp;% magasin au travail, voici les catégories encore vides, de la plus urgente à la moins urgente.</p>
     <ol class="priorites" id="priorites"></ol>
+  </section>
+
+  <section id="acheter" aria-labelledby="titre-acheter">
+    <div class="entete-section">
+      <h2 id="titre-acheter">Acheter malin</h2>
+      <p id="compte-envies"></p>
+    </div>
+    <p class="intro">Avant de passer en caisse : ce qu'une pièce t'apporterait, tes envies classées selon leur prix, ton budget du mois et ce que te coûte chaque port.</p>
+
+    <div class="reglages">
+      <div class="champ">
+        <label for="reglage-remise">Remise employé (%)</label>
+        <input type="text" id="reglage-remise" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="0">
+      </div>
+      <div class="champ">
+        <label for="reglage-budget">Budget par mois (€)</label>
+        <input type="text" id="reglage-budget" inputmode="decimal" autocomplete="off" maxlength="12" placeholder="Aucun">
+      </div>
+    </div>
+    <div class="budget" id="budget-jauge"></div>
+
+    <h3 class="sous-titre" id="titre-simulateur">Et si j'achetais…</h3>
+    <form class="simulateur" id="form-simul" novalidate aria-labelledby="titre-simulateur">
+      <div class="champ simul-titre">
+        <label for="simul-titre">Titre <span class="aide">(facultatif)</span></label>
+        <input type="text" id="simul-titre" autocomplete="off" maxlength="200" placeholder="Tommy Jeans - Chemise - Oxford - Bleu ciel">
+      </div>
+      <div class="champ">
+        <label for="simul-categorie">Catégorie</label>
+        <select id="simul-categorie"></select>
+      </div>
+      <div class="champ">
+        <label for="simul-teinte">Couleur</label>
+        <span class="champ-teinte"><i class="pastille" id="simul-pastille"></i><select id="simul-teinte"></select></span>
+      </div>
+      <div class="champ" id="champ-simul-col" hidden>
+        <label for="simul-col">Col</label>
+        <select id="simul-col"></select>
+      </div>
+      <div class="champ">
+        <label for="simul-prix">Prix en magasin (€)</label>
+        <input type="text" id="simul-prix" inputmode="decimal" autocomplete="off" maxlength="12" placeholder="59,90">
+      </div>
+      <div class="champ simul-lien">
+        <label for="simul-lien">Lien <span class="aide">(facultatif)</span></label>
+        <input type="url" id="simul-lien" autocomplete="off" maxlength="500" placeholder="https://…">
+      </div>
+      <div class="actions">
+        <button class="btn primaire" type="submit" id="simul-envie">Ajouter à mes envies</button>
+        <button class="btn" type="button" id="simul-effacer" data-action="simul-effacer">Effacer</button>
+      </div>
+      <p class="form-erreur" id="simul-erreur" role="alert"></p>
+    </form>
+    <div class="simul-resultat" id="simul-resultat" aria-live="polite"></div>
+
+    <h3 class="sous-titre">Les achats qui t'apporteraient le plus</h3>
+    <p class="intro">Calculé sur ta garde-robe actuelle : les pièces qui ouvriraient le plus de nouvelles tenues, deux au plus par catégorie.</p>
+    <ol class="classement" id="meilleurs-achats"></ol>
+
+    <h3 class="sous-titre">Mes envies</h3>
+    <p class="intro">Classées du meilleur au moins bon rapport : prix, remise comprise, divisé par le nombre de nouvelles tenues.</p>
+    <ul class="classement" id="liste-envies"></ul>
+
+    <h3 class="sous-titre">Coût par port</h3>
+    <p class="intro">Le prix payé divisé par le nombre de fois où tu as porté la pièce (d'après le journal). Indique ce que tu as payé : plus tu la portes, moins elle te coûte.</p>
+    <p class="bilan" id="cout-bilan"></p>
+    <ul class="classement" id="cout-port"></ul>
+    <details class="sans-prix" id="cout-sans">
+      <summary id="cout-sans-titre"></summary>
+      <ul class="classement" id="cout-sans-prix"></ul>
+    </details>
   </section>
 
   <footer>
