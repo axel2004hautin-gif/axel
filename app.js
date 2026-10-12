@@ -542,7 +542,9 @@
         const gHB = gout("hb:" + h.id + "|" + b.id);
         if (gHB <= -2) continue;
         base += gHB * 3;
-        if (pluie && T[b.teinte].clarte === "clair") base -= 12; // les bas clairs craignent les éclaboussures
+        // Les bas clairs craignent les éclaboussures : la pluie passe avant la rotation de la semaine
+        // (un bas déjà porté un autre jour coûte 12, la veille 15).
+        if (pluie && T[b.teinte].clarte === "clair") base -= 40;
         for (const v of ctx.voisins) {
           const hv = PAR_ID[v.haut];
           if (v.bas === b.id) base -= 15;
