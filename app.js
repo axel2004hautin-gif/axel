@@ -473,9 +473,16 @@
   // Une saisie en cours (achat, simulateur, question au styliste, opération, photo du lookbook)
   // n'est jamais perdue : on la laisse finir, la page se recharge au geste suivant.
   const ZONES_SAISIE = ["ajouter", "form-simul", "form-styliste", "form-operation", "form-look"];
+  // Un ajout commencé : une modification, une photo choisie ou un champ rempli (la date est remplie d'office).
+  function ajoutCommence() {
+    if (!F("ajouter") || F("ajouter").hidden) return false;
+    if (edition || photo || envieAchetee) return true;
+    return ["achat-titre", "achat-marque", "achat-categorie", "achat-modele", "achat-couleur", "achat-teinte", "achat-coupe", "achat-lien", "achat-prix", "achat-taille"]
+      .some(id => F(id) && F(id).value && F(id).value.trim());
+  }
   function saisieEnCours() {
     const rempli = id => F(id) && F(id).value && F(id).value.trim();
-    return (F("ajouter") && !F("ajouter").hidden) || rempli("simul-titre") || rempli("simul-prix") || rempli("styliste-question")
+    return ajoutCommence() || rempli("simul-titre") || rempli("simul-prix") || rempli("styliste-question")
       || (typeof opBrouillon !== "undefined" && opBrouillon) || (F("look-photo") && F("look-photo").files && F("look-photo").files.length > 0);
   }
   let avertiDate = false;
@@ -485,11 +492,13 @@
       // Sans geste (retour sur l'onglet, données reçues) : on attend, sans rien appliquer ni envoyer.
       if (!e) return true;
       // Dans la zone de saisie, le geste passe (ajouter l'achat, envoyer la question…).
-      if (e.target && e.target.closest && ZONES_SAISIE.some(z => e.target.closest("#" + z))) return false;
+      // Les onglets passent aussi : ils mènent à la saisie restée dans un autre onglet, sans rien écrire.
+      if (e.target && e.target.closest && (e.target.closest("#onglets") || ZONES_SAISIE.some(z => e.target.closest("#" + z)))) return false;
       // Ailleurs : un avertissement d'abord ; au geste suivant, la page se met à jour.
       if (!avertiDate) { avertiDate = true; toast("La date a changé : termine ta saisie. Au prochain geste ailleurs, la page se mettra à jour."); return true; }
     }
     rechargement = true;
+    try { history.replaceState(null, "", location.pathname + location.search); history.scrollRestoration = "manual"; } catch (_) { /* adresse inchangée */ }
     location.reload();
     return true;
   }
@@ -585,6 +594,7 @@
 
   let etat = lire() || { jours: ["lun", "mar", "mer", "jeu", "ven", "sam"], plan: {}, semaine: dateSemaine(0), couches: couchesDeSaison(), couchesChoisies: false, idee: null, portee: null, meteo: null, majLe: 0 };
   let apercu = null;       // tenue choisie dans un tableau d'accords
+  let caseApercu = "";     // sélecteur de la case touchée, pour y revenir
   // Idée du jour (quand aujourd'hui n'est pas coché) et pièce « portée aujourd'hui » : gardées pour la journée.
   const ideeDuJour = () => (etat.idee && etat.idee.date === AUJ_DATE ? etat.idee.t : null);
   const poserIdee = t => { etat.idee = t ? { date: AUJ_DATE, t } : null; };
@@ -1054,7 +1064,7 @@
     F("sur-titre").textContent = `Achats magasin depuis ${D.depuis}`;
     F("resume").innerHTML =
       `<strong>${pluriel(ARTICLES.length, "pièce")}</strong> (${parMarque}). De quoi composer <strong>${pluriel(possibles, "tenue")}</strong> haut + bas, dont ${sures} valeur${sures > 1 ? "s" : ""} sûre${sures > 1 ? "s" : ""}` +
-      (superpositions ? `, et ${pluriel(superpositions, "superposition")} sous-couche + haut. ` : ". ") +
+      (superpositions ? `, et ${pluriel(superpositions, "combinaison")} sous-couche + haut. ` : ". ") +
       (PIEDS.length
         ? `Avec ${PIEDS.length > 1 ? "tes chaussures" : "ta paire de chaussures"}, chaque tenue peut être 100&nbsp;% magasin.`
         : `Il manque encore les chaussures pour une tenue 100&nbsp;% magasin.`);
@@ -1141,7 +1151,7 @@
   function tenueAffichee() {
     const pid = porteeId();
     const autour = t => (contient(t, pid) ? `Composée autour de : ${nomComplet(PAR_ID[pid])}.` : null);
-    if (apercu && valide(apercu)) return { t: apercu, contexte: "Choisie dans un tableau d'accords." };
+    if (apercu && valide(apercu)) return { t: apercu, contexte: "Choisie dans « Ce qui va ensemble »." };
     apercu = null;
     const prevue = etat.plan[AUJ[0]];
     let contexte = etat.jours.includes(AUJ[0]) ? "Pas de tenue prévue aujourd'hui dans ta semaine : voici une idée."
@@ -1158,7 +1168,7 @@
         // Les pièces ajoutées n'ont pas pu être chargées : on montre une autre idée sans toucher
         // à celle enregistrée, qui reviendra telle quelle quand la base répondra.
         if (!valide(ideeProvisoire)) ideeProvisoire = composerAvecRepli(ctxVide());
-        return ideeProvisoire ? { t: ideeProvisoire, contexte: "Ta tenue du jour utilise une pièce ajoutée qui n'a pas pu être chargée. Voici une autre idée en attendant." } : null;
+        return ideeProvisoire ? { t: ideeProvisoire, contexte: "Ta tenue utilise une pièce ajoutée qui n'a pas pu être chargée. Voici une autre idée en attendant." } : null;
       }
       t = composerAvecRepli(ctxVide());
       poserIdee(t);
@@ -1196,11 +1206,12 @@
     F("tenue-raisons").innerHTML = listeRaisons(ev);
     const ecrit = peutNoter();
     const boutons = [];
-    if (apercu) boutons.push(`<button class="btn" type="button" id="retour-tenue" data-action="retour">Revenir à la tenue du jour</button>`);
+    if (apercu) boutons.push(`<button class="btn" type="button" id="retour-tenue" data-action="retour">Revenir à ma tenue</button>`,
+      `<button class="btn" type="button" id="revoir-accords" data-action="revoir-accords">Revoir « Ce qui va ensemble »</button>`);
     else if (ecrit) {
       boutons.push(dejaNotee
         ? `<button class="btn" type="button" id="porte" data-action="porte" aria-pressed="true">Portée ✓ (annuler)</button>`
-        : `<button class="btn primaire" type="button" id="porte" data-action="porte" aria-pressed="false">${note ? "Remplacer dans le journal" : "Je l'ai portée"}</button>`);
+        : `<button class="btn primaire" type="button" id="porte" data-action="porte" aria-pressed="false">${note ? "Noter celle-ci à la place" : "Je l'ai portée"}</button>`);
     }
     if (ecrit) {
       boutons.push(`<button class="btn" type="button" id="favori-tenue" data-action="favori" data-cible="tenue" aria-pressed="${!!favoriDe(t)}">Favori</button>`);
@@ -1208,13 +1219,13 @@
       if (!apercu) boutons.push(`<button class="btn" type="button" id="aime-pas" data-action="aime-pas">Pas pour moi</button>`);
     }
     if (!apercu) boutons.push(`<button class="btn${ecrit ? "" : " primaire"}" type="button" id="autre-tenue" data-action="autre">Autre tenue</button>`);
-    F("tenue-actions").innerHTML = boutons.join("");
     // L'avis d'abord : s'il ne vaut plus pour cette tenue, il s'efface et le bouton revient.
     rendreAvis();
-    // Deuxième rangée, plus discrète : ce qu'on fait de la tenue au-delà de la porter.
+    // Au bout de la rangée, plus discrets : ce qu'on fait de la tenue au-delà de la porter.
     const plus = apercu ? [] : [`<button class="lien-action" type="button" id="carte-tenue" data-action="carte">Carte à partager</button>`];
     if (sample && !apercu) plus.push(`<button class="lien-action" type="button" id="avis-tenue" data-action="avis-tenue" aria-disabled="${!!(avis && avis.enCours)}">Avis du styliste</button>`);
-    F("tenue-plus").innerHTML = plus.join("");
+    F("tenue-actions").innerHTML = boutons.join("") + (plus.length ? `<span class="tenue-liens">${plus.join("")}</span>` : "");
+    F("tenue-plus").innerHTML = "";
   }
   function rendreMeteo() {
     const m = meteoDuJour();
@@ -1240,7 +1251,7 @@
 
   function rendreSemaine() {
     JOURS.forEach(([j]) => { F("jour-" + j).checked = etat.jours.includes(j); });
-    F("intro-semaine").textContent = "Coche tes jours de travail. Chaque jour reçoit un haut différent, et les bas tournent pour montrer toute la collection. " +
+    F("intro-semaine").textContent = "Coche tes jours de travail : chaque jour reçoit sa tenue, et les pièces tournent pour que toute la collection passe dans la semaine. " +
       (etat.couches === 1 ? "En une couche, les t-shirts passent avant les pulls." : "Avec plusieurs couches, les pulls passent avant les t-shirts portés seuls.");
     const jours = JOURS.filter(([j]) => etat.jours.includes(j) && etat.plan[j]);
     const liste = F("liste-semaine");
@@ -1378,7 +1389,7 @@
       detail += `<p class="vide">${etatAjouts === "chargement" ? "Chargement des pièces ajoutées…" : "Une pièce de cette tenue n'existe plus."}</p>` +
         (peutNoter() && etatAjouts !== "chargement" ? `<div class="actions"><button class="btn" type="button" id="journal-retirer" data-action="journal-retirer">Retirer du journal</button></div>` : "");
     } else {
-      detail += `<p class="vide">Rien de noté ce jour-là.${jourJournal === AUJ_DATE && peutNoter() ? " Touche « Je l'ai portée » sur la tenue du jour." : ""}</p>`;
+      detail += `<p class="vide">Rien de noté ce jour-là.${jourJournal === AUJ_DATE && peutNoter() ? " Touche « Je l'ai portée » sous ta tenue, dans « Aujourd'hui »." : ""}</p>`;
     }
     F("journal-detail").innerHTML = detail;
     // Pièces oubliées : pas portées depuis trois semaines (ou jamais notées)
@@ -1394,7 +1405,7 @@
     F("oubliees").innerHTML = oubliees.length
       ? oubliees.map(({ a, jours }) => `<li>
           <img src="${esc(a.image)}" alt="" width="40" height="50" loading="lazy">
-          <span><strong>${esc(nomComplet(a))}</strong><span class="mono">${jours === Infinity ? "Jamais notée dans le journal" : `Pas portée depuis ${jours} jours`}</span></span>
+          <span><strong>${esc(nomComplet(a))}</strong><span class="mono">${jours === Infinity ? "Jamais notée" : `Pas portée depuis ${jours} jours`}</span></span>
           <button class="btn petit" type="button" id="oubliee-${esc(a.id)}" data-action="choisir" data-id="${esc(a.id)}" data-depuis="catalogue">Porter avec…</button>
         </li>`).join("")
       : `<li class="vide">Aucune pièce oubliée : tout a été porté ces trois dernières semaines.</li>`;
@@ -1428,7 +1439,7 @@
     const ports = PORTS.get(a.id) || 0;
     const m = donnees.pieces[a.id] || {};
     const achat = [
-      m.prix === null || m.prix === undefined ? "" : `Payée ${euros(m.prix)}${ports ? ` · ${euros(Math.round(m.prix / ports * 100) / 100)} par port` : ""}`,
+      m.prix === null || m.prix === undefined ? "" : `Payée ${euros(m.prix)}${ports ? ` · ${euros(Math.round(m.prix / ports * 100) / 100)} par jour porté` : ""}`,
       m.taille ? "taille " + m.taille : "",
     ].filter(Boolean).join(" · ");
     let actions = `<div class="fiche-actions">${porter}</div>`;
@@ -1577,7 +1588,7 @@
   function texteApport(p, a) {
     const r = role(p), morceaux = [];
     if (a.hb) morceaux.push(`+${pluriel(a.hb, "tenue")} haut + bas${a.sures ? `, dont ${pluriel(a.sures, "valeur")} sûre${a.sures > 1 ? "s" : ""}` : ""}`);
-    if (a.sup) morceaux.push(`+${pluriel(a.sup, "superposition")}`);
+    if (a.sup) morceaux.push(`+${pluriel(a.sup, "combinaison")} sous-couche + haut`);
     if (r === "dessus" && a.dessus) morceaux.push(DESSUS.length ? `par-dessus possible sur ${pluriel(a.dessus, "tenue")}` : `ta première couche par-dessus, pour ${pluriel(a.dessus, "tenue")}`);
     if (r === "pieds" && a.pieds) morceaux.push(PIEDS.length ? `une paire de plus pour ${pluriel(a.pieds, "tenue")}` : `${pluriel(a.pieds, "tenue")} deviennent 100 % magasin`);
     if (r === "aucun") morceaux.push("un accessoire pour relever tes tenues");
@@ -1770,7 +1781,7 @@
           ${peutNoter() ? `<button class="btn petit danger" type="button" id="envie-retirer-${esc(id)}" data-action="envie-retirer" data-id="${esc(id)}">Retirer</button>` : ""}
         </span>
       </li>`;
-    }).join("") : `<li class="vide">${peutNoter() ? "Ajoute ici les pièces repérées au magasin avec le simulateur : elles se classent selon ce qu'elles t'apporteraient pour leur prix." : "Aucune envie pour l'instant."}</li>`;
+    }).join("") : `<li class="vide">${peutNoter() ? "Ajoute ici les pièces repérées au magasin avec « Avant d'acheter » : elles se classent selon ce qu'elles t'apporteraient pour leur prix." : "Aucune envie pour l'instant."}</li>`;
   }
   function rendreBudget() {
     const r = donnees.reglages;
@@ -1782,7 +1793,7 @@
     const d = depensesDuMois(AUJ_DATE.slice(0, 7));
     const depense = d.n ? `${esc(euros(d.total))} dépensés en ${nomMois} (${pluriel(d.n, "pièce")})` : `Rien de noté en ${nomMois}`;
     if (!r.budget) {
-      F("budget-jauge").innerHTML = `<p class="aide">${depense}.${peutNoter() ? " Indique un budget par mois pour suivre tes achats ; le prix payé se note à l'ajout d'une pièce ou dans « Coût par port »." : " Aucun budget indiqué."}</p>`;
+      F("budget-jauge").innerHTML = `<p class="aide">${depense}.${peutNoter() ? " Indique un budget par mois pour suivre tes achats ; le prix payé se note à l'ajout d'une pièce ou dans « Rentabilité »." : " Aucun budget indiqué."}</p>`;
       return;
     }
     const part = Math.min(1, d.total / r.budget), reste = Math.round((r.budget - d.total) * 100) / 100;
@@ -1818,7 +1829,7 @@
     const total = avecPrix.reduce((s, x) => s + x.prix, 0);
     const ports = avecPrix.reduce((s, x) => s + x.ports, 0);
     F("cout-bilan").textContent = avecPrix.length
-      ? `${euros(Math.round(total * 100) / 100)} pour ${pluriel(avecPrix.length, "pièce")} au prix noté · ${pluriel(ports, "port")} au journal${ports ? ` · ${euros(Math.round(total / ports * 100) / 100)} par port en moyenne` : ""}.`
+      ? `${euros(Math.round(total * 100) / 100)} pour ${pluriel(avecPrix.length, "pièce")} au prix noté · ${pluriel(ports, "jour")} porté${ports > 1 ? "s" : ""}${ports ? ` · ${euros(Math.round(total / ports * 100) / 100)} par jour porté en moyenne` : ""}.`
       : "Aucun prix noté pour l'instant.";
     // Pendant la saisie, la liste ne se redessine pas sous les doigts.
     const form = F("cout-form");
@@ -1829,7 +1840,7 @@
     const ligne = ({ a, m, ports, prix, cout }) => {
       const details = [m.taille ? "Taille " + m.taille : "", m.achatLe ? "achetée le " + dateCourte(m.achatLe) : ""].filter(Boolean).join(" · ");
       const ligneCout = prix === null ? "Prix non noté"
-        : ports ? `${euros(Math.round(cout * 100) / 100)} par port · ${euros(prix)} pour ${pluriel(ports, "port")}`
+        : ports ? `${euros(Math.round(cout * 100) / 100)} par jour porté · ${euros(prix)}, portée ${ports} fois`
         : `${euros(prix)} · pas encore portée`;
       return `<li class="sans-rang">
         <img src="${esc(a.image)}" alt="" width="40" height="50" loading="lazy">
@@ -1843,7 +1854,7 @@
       </li>`;
     };
     F("cout-port").innerHTML = avec.length ? avec.map(ligne).join("")
-      : `<li class="vide">${peutNoter() ? "Note le prix payé d'une pièce pour voir ce que te coûte chaque port." : "Aucun prix noté pour l'instant."}</li>`;
+      : `<li class="vide">${peutNoter() ? "Note le prix payé d'une pièce pour voir ce qu'elle te coûte chaque fois que tu la portes." : "Aucun prix noté pour l'instant."}</li>`;
     F("cout-sans").hidden = !sans.length;
     F("cout-sans-titre").textContent = `${pluriel(sans.length, "pièce")} sans prix noté`;
     F("cout-sans-prix").innerHTML = sans.map(ligne).join("");
@@ -2235,15 +2246,15 @@ Réponds uniquement par un objet JSON de cette forme :
     // « 16 oct. » finit déjà par un point : pas de second point derrière.
     const phrase = s => s.replace(/\.?$/, ".");
     F("op-etat").textContent = active
-      ? phrase(`En cours : ${active.titre || "opération " + active.marque}${active.fin ? `, jusqu'au ${dateCourte(active.fin)}` : ""}`) + ` Les tenues mettent ${active.marque} en avant.`
+      ? phrase(`En cours : ${active.titre || active.marque}${active.fin ? `, jusqu'au ${dateCourte(active.fin)}` : ""}`) + ` Les tenues mettent ${active.marque} en avant.`
       : op && operationEnCours(op) ? `En pause : plus aucune pièce ${op.marque} à porter dans la garde-robe.`
-      : op ? phrase(`L'opération ${op.titre ? "« " + op.titre + " » " : ""}est terminée${op.fin ? ` depuis le ${dateCourte(op.fin)}` : ""}`) : "Aucune opération en cours.";
+      : op ? phrase(`${op.titre ? "« " + op.titre + " »" : "La mise en avant de " + op.marque} est terminée${op.fin ? ` depuis le ${dateCourte(op.fin)}` : ""}`) : "Aucune marque mise en avant.";
     rendreBandeau();
   }
   function rendreBandeau() {
     const active = operationActive(), bandeau = F("operation-bandeau");
     bandeau.hidden = !active;
-    bandeau.textContent = active ? `${active.titre || "Opération " + active.marque} : les tenues mettent ${active.marque} en avant.` : "";
+    bandeau.textContent = active ? `${active.titre ? active.titre + " : les" : "Les"} tenues mettent ${active.marque} en avant.` : "";
   }
   // Un point de plus par pièce de la marque mise en avant, pondéré par sa place dans la tenue.
   function bonusOperation(date) {
@@ -2364,7 +2375,7 @@ Réponds uniquement par un objet JSON de cette forme :
       F("carte-enregistrer").hidden = !downloads;
       F("carte-aide").textContent = downloads ? "" : "Appuie longuement sur l'image (ou clic droit) pour l'enregistrer.";
       (downloads ? F("carte-enregistrer") : F("carte-fermer")).focus({ preventScroll: true });
-      F("carte-zone").scrollIntoView({ block: "nearest" });
+      montrer(F("carte-zone"), { block: "nearest" });
     } catch (_) {
       if (jeton !== jetonCarte) return;
       carteEnCours = null;
@@ -2415,11 +2426,11 @@ Réponds uniquement par un objet JSON de cette forme :
     const ok = peutEcrire && peutNoter();
     F("form-look").hidden = !ok;
     F("look-indispo").textContent = ok ? "" : modeDonnees === "local"
-      ? "Le lookbook fonctionne dans la page publiée sur Claude, où les photos sont stockées."
+      ? "Les photos en tenue fonctionnent dans la page publiée sur Claude, où elles sont stockées."
       : modeDonnees === "lecture" ? "" : "Chargement…";
     if (ok && !F("look-date").value) F("look-date").value = AUJ_DATE;
     F("look-envoyer").disabled = lookEnvoi;
-    F("look-envoyer").textContent = lookEnvoi ? "Envoi…" : "Ajouter au lookbook";
+    F("look-envoyer").textContent = lookEnvoi ? "Envoi…" : "Ajouter la photo";
     const looks = Object.entries(donnees.lookbook).sort((x, y) => y[1].date.localeCompare(x[1].date) || y[1].ajouteLe.localeCompare(x[1].ajouteLe));
     F("compte-lookbook").textContent = looks.length ? pluriel(looks.length, "photo") : "";
     F("lookbook").innerHTML = looks.length ? looks.map(([id, l]) => {
@@ -2433,11 +2444,11 @@ Réponds uniquement par un objet JSON de cette forme :
         <div class="look-corps">
           <span class="eyebrow">${esc(majuscule(dateLongue(l.date)))}</span>
           ${l.legende ? `<span>${esc(l.legende)}</span>` : ""}
-          ${vignettes ? `<span class="vignettes look-tenue" title="Tenue notée au journal ce jour-là">${vignettes}</span>` : ""}
+          ${vignettes ? `<span class="vignettes look-tenue" title="Tenue notée ce jour-là">${vignettes}</span>` : ""}
           ${actions}
         </div>
       </li>`;
-    }).join("") : `<li class="vide">${ok ? "Ajoute une photo de toi en tenue : elle se range ici avec la tenue notée au journal ce jour-là." : "Aucune photo pour l'instant."}</li>`;
+    }).join("") : `<li class="vide">${ok ? "Ajoute une photo de toi en tenue : elle se range ici avec la tenue notée ce jour-là." : "Aucune photo pour l'instant."}</li>`;
   }
   // La photo est réduite à 1350 px de haut au plus avant l'envoi.
   function reduirePhoto(fichier) {
@@ -2473,7 +2484,7 @@ Réponds uniquement par un objet JSON de cette forme :
     const reussi = () => {
       F("form-look").reset();
       F("look-date").value = AUJ_DATE;
-      toast("Photo ajoutée au lookbook.");
+      toast("Photo ajoutée à tes photos en tenue.");
     };
     try {
       const blob = await reduirePhoto(fichier);
@@ -2504,8 +2515,8 @@ Réponds uniquement par un objet JSON de cette forme :
   function messageLook(err) {
     const code = err && err.code;
     if (code === "lecture") return "Cette photo n'a pas pu être lue. Essaie en JPEG ou en PNG.";
-    if (code === "quota_or_state") return "Le stockage des photos est plein : retire des photos du lookbook avant d'en ajouter.";
-    if (CODES_DROITS.includes(code)) return "Seul le propriétaire de la page peut ajouter des photos au lookbook.";
+    if (code === "quota_or_state") return "Le stockage des photos est plein : retire des photos en tenue avant d'en ajouter.";
+    if (CODES_DROITS.includes(code)) return "Seul le propriétaire de la page peut ajouter des photos en tenue.";
     return messageErreur(err);
   }
   async function supprimerLook(id) {
@@ -2550,7 +2561,7 @@ Réponds uniquement par un objet JSON de cette forme :
     const s = memoiser("stats", versionJournal + "|" + cleGarderobe(), statistiques);
     F("export-journal").hidden = !downloads || !s.entrees.length;
     if (!s.entrees.length) {
-      F("stats").innerHTML = `<p class="vide">Note tes tenues avec « Je l'ai portée » : les statistiques apparaissent ici dès le premier jour.</p>`;
+      F("stats").innerHTML = `<p class="vide">Note tes tenues avec « Je l'ai portée » : tes chiffres apparaissent ici dès le premier jour.</p>`;
       return;
     }
     const portables = ARTICLES.filter(a => role(a) !== "aucun");
@@ -2957,7 +2968,7 @@ Réponds uniquement par un objet JSON de cette forme :
   }
   function ouvrirPanneau() {
     F("ajouter").hidden = false;
-    F("ajouter").scrollIntoView({ block: "start" });
+    montrer(F("ajouter"), { block: "start" });
     F(edition ? "achat-titre" : "achat-photo").focus({ preventScroll: true });
   }
   function fermerPanneau() {
@@ -2998,7 +3009,7 @@ Réponds uniquement par un objet JSON de cette forme :
     if (!v.marque) return { manque: "Indique la marque." };
     if (!possede(CAT, v.categorie)) return { manque: "Choisis la catégorie." };
     if (!v.couleur) return { manque: "Indique la couleur." };
-    if (!possede(T, v.teinte)) return { manque: "Choisis la couleur utilisée pour les accords." };
+    if (!possede(T, v.teinte)) return { manque: "Choisis la couleur de référence." };
     if (v.lien && !lienSur(v.lien)) return { manque: "Le lien doit commencer par https://." };
     if (!photo && !edition) return { manque: "Ajoute une photo." };
     v.prix = lireMontant(F("achat-prix").value, 100000);
@@ -3123,12 +3134,12 @@ Réponds uniquement par un objet JSON de cette forme :
       const fiche = F("modifier-" + enEdition.id);
       if (fiche) {
         fiche.focus({ preventScroll: true });
-        fiche.closest(".fiche").scrollIntoView({ block: "center" });
+        montrer(fiche.closest(".fiche"), { block: "center" });
       }
     } else {
       succes(CAT[v.categorie].role === "aucun"
-        ? `Ajouté : ${nom}. La pièce est dans le catalogue.`
-        : `Ajouté : ${nom}. La pièce est dans le catalogue et entre dans la composition des tenues.`);
+        ? `Ajouté : ${nom}. La pièce est dans « Mes vêtements ».`
+        : `Ajouté : ${nom}. La pièce est dans « Mes vêtements » et entre dans la composition des tenues.`);
       F("achat-photo").focus({ preventScroll: true });
     }
   }
@@ -3299,7 +3310,7 @@ Réponds uniquement par un objet JSON de cette forme :
     etat.choisie = { date: AUJ_DATE };
     ecrire();
     rendre(rendreTenue, rendreSemaine);
-    F("tenue").scrollIntoView({ block: "start" });
+    montrer(F("tenue"), { block: "start" });
     const b = F("autre-tenue");
     if (b) b.focus({ preventScroll: true });
   }
@@ -3327,10 +3338,10 @@ Réponds uniquement par un objet JSON de cette forme :
     const e = donnees.journal[date];
     if (e && cleTenue(e.tenue) === cleTenue(t)) {
       enregistrer("journal", date, null).catch(() => {});
-      toast("Retirée du journal.");
+      toast("Tenue retirée.");
     } else {
       enregistrer("journal", date, { date, tenue: copieTenue(t), meteo: date === AUJ_DATE ? meteoDuJour() : null }).catch(() => {});
-      toast(e ? "Journal mis à jour." : "Notée dans le journal.");
+      toast(e ? "Tenue remplacée." : "Tenue notée.");
     }
   }
 
@@ -3370,12 +3381,12 @@ Réponds uniquement par un objet JSON de cette forme :
     rendre(rendreChoix);
     if (depuisCatalogue) {
       // Depuis le catalogue, on arrive directement sur la tenue proposée.
-      F("choix-resultat").scrollIntoView({ block: "start" });
+      montrer(F("choix-resultat"), { block: "start" });
       const b = F("piece-" + id);
       if (b) b.focus({ preventScroll: true });
     } else if (F("choix-resultat").getBoundingClientRect().top > window.innerHeight * 0.7) {
       // Sur téléphone, la tenue s'affiche sous la grille : on l'amène à l'écran.
-      F("choix-resultat").scrollIntoView({ block: "start" });
+      montrer(F("choix-resultat"), { block: "start" });
     }
   }
 
@@ -3423,7 +3434,7 @@ Réponds uniquement par un objet JSON de cette forme :
     enregistrer("reglages", "general", r).catch(() => {});
     rendre(rendreAcheter);
   }));
-  F("acheter").addEventListener("submit", e => {
+  F("onglet-shopping").addEventListener("submit", e => {
     if (e.target.id !== "cout-form") return;
     e.preventDefault();
     const id = e.target.dataset.id;
@@ -3458,7 +3469,7 @@ Réponds uniquement par un objet JSON de cette forme :
     recomposerJoursSuivants(ancienne);
     // Un simple changement de nom ne change rien aux tenues : on ne recompose pas.
     if ((operationActive() || {}).marque !== avant) recomposerAujourdhui(); else rendre(rendreTenue, rendreVitrine, rendreSemaine);
-    toast(`Opération lancée : les tenues mettent ${marque} en avant.`);
+    toast(`C'est fait : les tenues mettent ${marque} en avant.`);
   });
   ["input", "change"].forEach(type => F("form-operation").addEventListener(type, () => { opBrouillon = true; }));
   F("op-marque").addEventListener("change", () => {
@@ -3497,7 +3508,7 @@ Réponds uniquement par un objet JSON de cette forme :
     F("styliste-question").value = "";
     demanderStyliste(q);
     const li = F("conversation").lastElementChild;
-    if (li) li.scrollIntoView({ block: "nearest" });
+    if (li) montrer(li, { block: "nearest" });
   });
   F("styliste-question").addEventListener("keydown", e => {
     if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); F("form-styliste").requestSubmit(); }
@@ -3541,8 +3552,14 @@ Réponds uniquement par un objet JSON de cette forme :
       const t = meilleureAvec(contraintes);
       if (!t) return;
       apercu = t;
+      caseApercu = `[data-action="${action}"]` + Object.keys(contraintes).map(k => `[data-${k}="${CSS.escape(contraintes[k])}"]`).join("");
       rendre(rendreTenue);
-      F("tenue").scrollIntoView({ block: "start" });
+      montrer(F("tenue"), { block: "start" });
+    }
+    else if (action === "revoir-accords") {
+      const c = caseApercu && document.querySelector(caseApercu);
+      montrer(c || F("accords"), { block: "center" });
+      if (c) c.focus({ preventScroll: true });
     }
     else if (action === "choisir") choisirPiece(el.dataset.id, el.dataset.depuis === "catalogue");
     else if (action === "choix-filtre") { choix.filtre = el.dataset.filtre; rendre(rendreChoix); }
@@ -3550,7 +3567,7 @@ Réponds uniquement par un objet JSON de cette forme :
     else if (action === "choix-voir") {
       choix.rang = Number(el.dataset.rang) || 0;
       rendre(rendreChoix);
-      F("choix-resultat").scrollIntoView({ block: "start" });
+      montrer(F("choix-resultat"), { block: "start" });
       const b = F("choix-porter");
       if (b) b.focus({ preventScroll: true });
     }
@@ -3604,7 +3621,7 @@ Réponds uniquement par un objet JSON de cette forme :
         if (noteeAujourdhui(t)) {
           // Déjà portée aujourd'hui : la tenue notée reste telle quelle, la pièce sort des prochaines.
           reconcilier();
-          toast(`Au lavage : ${nomComplet(PAR_ID[id])}. Ta tenue d'aujourd'hui reste notée au journal.`);
+          toast(`Au lavage : ${nomComplet(PAR_ID[id])}. Ta tenue d'aujourd'hui reste notée.`);
           rendreTout();
           const b = F(`slot-changer-${k}`);
           if (b) b.focus({ preventScroll: true });
@@ -3647,7 +3664,7 @@ Réponds uniquement par un objet JSON de cette forme :
     else if (action === "journal-retirer") {
       if (!donnees.journal[jourJournal]) return;
       enregistrer("journal", jourJournal, null).catch(() => {});
-      toast("Retirée du journal.");
+      toast("Tenue retirée.");
       rendre(rendreTenue, rendreSemaine, rendreJournal, rendreCatalogue);
       const b = F("journal-" + jourJournal); if (b) b.focus({ preventScroll: true });
     }
@@ -3699,7 +3716,7 @@ Réponds uniquement par un objet JSON de cette forme :
       F("op-erreur").textContent = "";
       recomposerJoursSuivants(ancienne);
       if (avant) recomposerAujourdhui(); else rendre(rendreTenue, rendreVitrine, rendreSemaine);
-      toast("Opération arrêtée.");
+      toast("Plus aucune marque mise en avant.");
       F("op-marque").focus();
     }
     else if (action === "carte") creerCarte();
@@ -3724,7 +3741,7 @@ Réponds uniquement par un objet JSON de cette forme :
       F("simul-prix").value = v.prix ? saisie(v.prix) : "";
       F("simul-lien").value = v.lien || "";
       rendre(rendreSimulateur);
-      F("titre-simulateur").scrollIntoView({ block: "start" });
+      montrer(F("acheter"), { block: "start" });
       F("simul-prix").focus({ preventScroll: true });
     }
     else if (action === "envie-achetee") ouvrirAchatDepuisEnvie(el.dataset.id);
@@ -3745,7 +3762,7 @@ Réponds uniquement par un objet JSON de cette forme :
       rendre(rendreCoutPort);
       const b = F("cout-modifier-" + id); if (b) b.focus();
     }
-    else if (action === "ouvrir-ajout") { reinitialiser(); succes(""); ouvrirPanneau(); }
+    else if (action === "ouvrir-ajout") { if (F("ajouter").hidden || edition) reinitialiser(); succes(""); ouvrirPanneau(); }
     else if (action === "fermer-ajout" || action === "annuler-ajout") fermerPanneau();
     else if (action === "modifier") { const a = PAR_ID[el.dataset.id]; if (a && a.ajoute && peutEcrire) ouvrirEdition(a); }
     else if (action === "supprimer") {
@@ -3769,6 +3786,63 @@ Réponds uniquement par un objet JSON de cette forme :
       });
     }
   });
+
+  // ---------- onglets ----------
+  // Cinq onglets, un seul affiché. Tout ce qui mène ailleurs (« Porter avec… », une case des accords,
+  // « Je l'ai acheté », un lien) ouvre d'abord l'onglet de sa destination.
+  const ONGLETS = ["aujourdhui", "semaine", "vetements", "shopping", "magasin"];
+  let ongletActif = "aujourdhui";
+  let parHistorique = false;     // changement venu de l'adresse (Précédent, lien direct) : rien à ajouter
+  const ongletDe = el => { const p = el && el.closest && el.closest(".onglet"); return p ? p.id.slice("onglet-".length) : null; };
+  const enHaut = doux => window.scrollTo({ top: 0, behavior: doux && !matchMedia("(prefers-reduced-motion: reduce)").matches ? "smooth" : "instant" });
+  // Vrai si l'onglet vient de changer.
+  function afficherOnglet(nom) {
+    if (!ONGLETS.includes(nom) || nom === ongletActif) return false;
+    ongletActif = nom;
+    ONGLETS.forEach(n => {
+      const actif = n === nom, b = F("tab-" + n);
+      F("onglet-" + n).hidden = !actif;
+      b.setAttribute("aria-selected", String(actif));
+      b.tabIndex = actif ? 0 : -1;
+    });
+    // L'adresse garde l'onglet : « Précédent » y revient, un rechargement aussi.
+    try { if (!parHistorique) history.pushState(null, "", "#" + nom); } catch (_) { /* adresse inchangée */ }
+    return true;
+  }
+  function montrer(el, opts) {
+    if (!el) return;
+    afficherOnglet(ongletDe(el));
+    el.scrollIntoView(opts || { block: "start" });
+  }
+  // Un onglet touché s'ouvre en haut ; l'onglet déjà ouvert remonte en haut.
+  function allerA(cible) {
+    if (ONGLETS.includes(cible)) { enHaut(!afficherOnglet(cible)); return true; }
+    const el = cible && F(cible);
+    if (el && ongletDe(el)) { montrer(el); return true; }
+    return false;
+  }
+  F("onglets").addEventListener("click", e => {
+    const b = e.target.closest("[data-onglet]");
+    if (b) allerA(b.dataset.onglet);
+  });
+  F("onglets").addEventListener("keydown", e => {
+    const i = ONGLETS.indexOf(ongletActif), n = ONGLETS.length;
+    const j = { ArrowRight: (i + 1) % n, ArrowLeft: (i + n - 1) % n, Home: 0, End: n - 1 }[e.key];
+    if (j === undefined) return;
+    e.preventDefault();
+    allerA(ONGLETS[j]);
+    F("tab-" + ONGLETS[j]).focus();
+  });
+  // Les liens internes (« Voir l'idée », le nom de la page) passent par les onglets.
+  document.addEventListener("click", e => {
+    const a = e.target.closest && e.target.closest('a[href^="#"]');
+    if (a && allerA(a.getAttribute("href").slice(1))) e.preventDefault();
+  });
+  const cibleAdresse = () => { try { return decodeURIComponent(location.hash.slice(1)); } catch (_) { return ""; } };
+  // Une adresse sans onglet (retour au tout début de l'historique) ramène à « Aujourd'hui ».
+  const depuisAdresse = () => { parHistorique = true; try { allerA(cibleAdresse() || ONGLETS[0]); } finally { parHistorique = false; } };
+  window.addEventListener("hashchange", depuisAdresse);
+  if (cibleAdresse()) depuisAdresse();
 
   // Au retour sur la page, et avant chaque geste : si la date a changé, on recharge d'abord.
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") jourChange(); });

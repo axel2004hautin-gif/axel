@@ -6,24 +6,38 @@ Toutes les pièces achetées au magasin Blue Box depuis juin 2026. Le but : êtr
 
 ## L'appli
 
-Ouvre `index.html` dans un navigateur (double-clic sur le fichier, rien à installer). La page contient :
+Ouvre `index.html` dans un navigateur (double-clic sur le fichier, rien à installer). La page est rangée en cinq onglets, en haut sur ordinateur, en bas sur téléphone et tablette. Le bouton « Ajouter un achat » reste en haut, quel que soit l'onglet.
 
-- **Ajouter un achat** (sur la page publiée, pour le propriétaire) : choisis la photo, le titre et les champs se remplissent tout seuls, recadre, valide.
-- **Tenue du jour** : jusqu'à 5 pièces (sous-couche, pull, veste ou blouson, bas, chaussures), avec les raisons pour lesquelles elles vont ensemble et un bouton « Autre tenue ».
-- **Couches** : un réglage « 1 · un haut », « 2 · sous-couche + pull », « 3 · + veste ou blouson », réglé par défaut selon le mois (3 d'octobre à mars). Il s'applique à la tenue du jour, à la semaine et à « Je veux porter ».
-- **Je veux porter…** : choisis la pièce qui te fait envie le matin (ou « Porter avec… » depuis le catalogue). La page compose jusqu'à 5 tenues autour d'elle, explique pourquoi, et « Porter aujourd'hui » en fait ta tenue du jour.
-- **Météo du jour** : froid, frais, doux ou pluie. Elle règle les couches d'aujourd'hui seulement (les autres jours de la semaine gardent les leurs) ; sous la pluie, les bas clairs, les vestes légères et le daim reculent.
-- **Changer une pièce** : sous chaque pièce de la tenue du jour, « Changer » remplace seulement celle-là, « Au lavage » la sort des tenues et la remplace.
-- **Je l'ai portée / Favori / J'aime / Pas pour moi** : la tenue part dans le journal, dans les favoris, ou apprend tes goûts (une association notée deux fois « pas pour moi » n'est plus proposée).
-- **Tenues favorites** : tes tenues gardées, à remettre en un geste. Une tenue remise à la main (favori, styliste, journal) reste celle que tu as choisie : la météo ou une opération ne la recomposent pas ; sous la pluie, seul un bas clair est remplacé par un bas foncé.
-- **Styliste** (page publiée) : pose tes questions à Claude, qui connaît ta garde-robe, ton journal, tes envies et la météo du jour ; les tenues qu'il propose se portent en un geste. « Avis du styliste » commente la tenue du jour, et « Remplir avec Claude » reconnaît la pièce sur la photo dans le formulaire d'ajout. Chaque demande utilise ton propre compte Claude et demande ton accord la première fois.
-- **Journal** : le calendrier de ce que tu as porté, le détail de chaque jour, et les pièces oubliées (pas portées depuis trois semaines). Les pièces portées ces deux dernières semaines reviennent moins vite dans les propositions.
+**Aujourd'hui**
+- **Ma tenue** : jusqu'à 5 pièces (sous-couche, pull, veste ou blouson, bas, chaussures), avec les raisons pour lesquelles elles vont ensemble. « Autre tenue » en propose une autre ; sous chaque pièce, « Changer » remplace seulement celle-là et « Au lavage » la sort des tenues. « Je l'ai portée » la note au journal, « Favori » la garde, « J'aime » et « Pas pour moi » apprennent tes goûts (une association notée deux fois « pas pour moi » n'est plus proposée). « Carte à partager » en fait une image 1080 × 1350 pour une story.
+- **Réglages du jour**, à côté de la tenue : la météo (froid, frais, doux ou pluie) règle les couches d'aujourd'hui seulement ; sous la pluie, les bas clairs, les vestes légères et le daim reculent. Les couches (« 1 · un haut », « 2 · sous-couche + pull », « 3 · + veste ou blouson ») se règlent par défaut selon le mois et valent pour la tenue, la semaine et « Choisir une pièce ». La marque mise en avant au magasin s'y affiche quand il y en a une.
+- **Choisir une pièce** : touche la pièce qui te fait envie. La page compose jusqu'à 5 tenues autour d'elle, explique pourquoi, et « Porter aujourd'hui » en fait ta tenue.
+- **Mes favoris** : tes tenues gardées, à remettre en un geste. Une tenue remise à la main (favori, styliste, journal) reste celle que tu as choisie : la météo ou la marque mise en avant ne la recomposent pas ; sous la pluie, seul un bas clair est remplacé par un bas foncé.
+- **Demander au styliste** (page publiée) : pose tes questions à Claude, qui connaît ta garde-robe, ton journal, tes envies et la météo du jour ; les tenues qu'il propose se portent en un geste. « Avis du styliste », sous ta tenue, la commente. Chaque demande utilise ton propre compte Claude et demande ton accord la première fois.
+
+**Ma semaine**
 - **Ma semaine** : coche tes jours de travail. Chaque jour reçoit un haut différent, les bas et les sous-couches tournent pour que toute la collection passe dans la semaine. Chaque jour a son bouton « Changer ». Chaque lundi, la semaine repart de zéro : les jours déjà portés reprennent la tenue notée au journal, les autres sont recomposés avec la rotation. Les jours passés ne sont plus modifiés.
-- **Catalogue** : toutes les pièces, filtrables par catégorie, avec le lien vers la fiche produit.
-- **Accords** : toutes les combinaisons haut × bas, et un tableau des superpositions sous-couche × haut, notées « valeur sûre », « possible » ou « à éviter ».
-- **À compléter** : les catégories encore vides, par ordre de priorité.
-- **Mettre en avant** : l'opération du moment au magasin (une marque mise en avant jusqu'à une date : les tenues de la semaine la favorisent jusqu'à cette date, ses bas et ses chaussures peuvent revenir plusieurs jours, et un bandeau le rappelle), la carte à partager de la tenue du jour (image 1080 × 1350 pour une story), le lookbook de tes photos en tenue rangées avec la tenue notée ce jour-là, et les statistiques du journal (pièces les plus portées, marques, couleurs, jours par mois), exportables en tableur.
-- **Acheter malin** : avant de passer en caisse, le simulateur « Et si j'achetais… » montre ce qu'une pièce t'apporterait (nouvelles tenues, superpositions, et les tenues elles-mêmes), avec le prix par nouvelle tenue. Viennent ensuite les achats qui t'apporteraient le plus, ta liste d'envies classée selon le rapport prix / nouvelles tenues (« Je l'ai acheté » ouvre le formulaire d'ajout pré-rempli), ta remise employé, ton budget du mois et le coût par port de chaque pièce (prix payé ÷ nombre de fois portée).
+- **Ce que j'ai porté** : le journal, sous forme de calendrier, le détail de chaque jour et les pièces oubliées (pas portées depuis trois semaines). Les pièces portées ces deux dernières semaines reviennent moins vite dans les propositions.
+
+**Mes vêtements**
+- **Mes vêtements** : toutes les pièces, filtrables par catégorie, avec le lien vers la fiche produit, « Porter avec… », « Au lavage », et pour les pièces ajoutées « Modifier » et « Supprimer ».
+- **Ajouter un achat** (sur la page publiée, pour le propriétaire) : choisis la photo, le titre et les champs se remplissent tout seuls ; « Remplir avec Claude » reconnaît la pièce sur la photo. Recadre, valide.
+- **Ce qui va ensemble** : toutes les combinaisons haut × bas, et un tableau des sous-couches, notées « valeur sûre », « possible » ou « à éviter ». Une case touchée montre la tenue en grand dans « Aujourd'hui ».
+
+**Shopping**
+- **Avant d'acheter** : décris la pièce que tu regardes en magasin ; la page montre ce qu'elle t'apporterait (nouvelles tenues, sous-couches, et les tenues elles-mêmes), avec le prix par nouvelle tenue.
+- **Mes envies** : les pièces repérées, classées selon le rapport prix / nouvelles tenues. « Je l'ai acheté » ouvre le formulaire d'ajout pré-rempli.
+- **Mon budget** : ta remise employé et ton budget du mois.
+- **Ce qu'il me manque** : les catégories encore vides, par ordre de priorité.
+- **Les achats les plus utiles** : les pièces qui ouvriraient le plus de nouvelles tenues.
+- **Rentabilité** : le coût par port de chaque pièce (prix payé ÷ nombre de fois portée).
+
+**Au magasin**
+- **Marque mise en avant** : l'opération du moment (une marque jusqu'à une date). Les tenues de la semaine la favorisent jusqu'à cette date, ses bas et ses chaussures peuvent revenir plusieurs jours.
+- **Mes photos en tenue** : tes photos, rangées avec la tenue notée ce jour-là.
+- **Mes chiffres** : pièces les plus portées, marques, couleurs, jours notés par mois, et l'export du journal en tableur.
+
+Une adresse qui finit par le nom d'un onglet (`#semaine`, `#shopping`…) ouvre directement cet onglet.
 
 ### Les règles de superposition
 
@@ -91,9 +105,9 @@ Il manque les chaussures pour qu'une tenue soit entièrement achetée au magasin
 
 1. Choisis la photo. Si le fichier s'appelle comme tes exports Canva (`Marque - Catégorie - Modèle - Couleur.png`), le titre et tous les champs se remplissent seuls. Sinon, tape le titre au même format.
 2. Fais glisser la photo pour centrer la pièce dans le cadre, et zoome si besoin.
-3. Vérifie la catégorie et la « couleur pour les accords », note si tu veux le prix payé, la date d'achat et la taille, puis valide.
+3. Vérifie la catégorie et la « couleur de référence », note si tu veux le prix payé, la date d'achat et la taille, puis valide.
 
-La pièce apparaît aussitôt dans le catalogue, les tenues, la semaine et le tableau des accords. Elle est enregistrée dans la page elle-même (base de données et stockage photo de la page), pas dans ce dépôt. Seul le propriétaire de la page peut ajouter, modifier ou supprimer des pièces. Les autres personnes qui ont accès à la page les voient sans pouvoir les changer.
+La pièce apparaît aussitôt dans « Mes vêtements », les tenues, la semaine et « Ce qui va ensemble ». Elle est enregistrée dans la page elle-même (base de données et stockage photo de la page), pas dans ce dépôt. Seul le propriétaire de la page peut ajouter, modifier ou supprimer des pièces. Les autres personnes qui ont accès à la page les voient sans pouvoir les changer.
 
 Catégories reconnues dans le titre : pantalon, jean, pull, t-shirt, chemise, veste, blouson, manteau (et parka, caban, trench), chaussures (et baskets, sneakers, boots…), sweat, polo, short, accessoires. Une couleur « à carreaux », « rayée » ou « imprimée » est classée en motif. Si une couleur n'est pas dans le tableau des accords, des règles générales s'appliquent : deux teintes foncées de la même famille se confondent, deux tons clairs proches manquent de contraste, deux couleurs franches sont à doser.
 

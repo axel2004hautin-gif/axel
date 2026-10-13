@@ -8,7 +8,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:wght@400;600;700&display=swap">
 <style>
-/* Layout : une colonne de fiches produit, sommaire collant, sections empilées (ajout → tenue → semaine → catalogue → accords → à compléter) */
+/* Layout : une barre collante (nom, cinq onglets, ajout) ; chaque onglet montre peu de choses à la fois,
+   en deux colonnes sur ordinateur ; sur téléphone, les onglets passent en barre du bas. */
 :root {
   --bg: #eef1f5;
   --surface: #ffffff;
@@ -19,7 +20,7 @@
   --indigo: #2b4c9b;
   --indigo-soft: #e2e8f6;
   --on-indigo: #ffffff;
-  --rivet: #a5561f;
+  --rivet: #9a4f1c;
   --rivet-soft: #f6e6da;
   --ok: #26714a;
   --ok-soft: #dff0e6;
@@ -57,36 +58,97 @@ img { max-width: 100%; }
 a { color: var(--indigo); }
 :focus-visible { outline: 2px solid var(--indigo); outline-offset: 2px; }
 
-.page { max-width: 1120px; margin: 0 auto; padding-inline: var(--gutter); padding-block: 0 64px; }
+.page { max-width: 1200px; margin: 0 auto; padding-inline: var(--gutter); padding-block: 0 72px; }
 
 .eyebrow { font: 600 .72rem/1.3 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .mono { font-family: var(--f-mono); font-size: .78rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 
-/* En-tête */
-.tete { display: grid; gap: 14px; padding-block: 40px 24px; }
-.tete-haut { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 20px; }
-.tete-haut > div { display: grid; gap: 10px; min-width: 0; }
-h1 { margin: 0; font-family: var(--f-display); font-stretch: 125%; font-weight: 800; font-size: clamp(2.1rem, 7.5vw, 3.8rem); line-height: .95; letter-spacing: -.015em; text-wrap: balance; }
-.resume { margin: 0; max-width: 65ch; color: var(--muted); font-size: 1.05rem; }
+/* Barre du haut : nom, onglets, ajout */
+.barre-haut { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); }
+.barre-haut-dedans { display: flex; align-items: stretch; gap: 12px 24px; max-width: 1200px; min-height: 64px; margin: 0 auto; padding-inline: var(--gutter); }
+.marque { align-self: center; margin: 0; font-family: var(--f-display); font-stretch: 118%; font-weight: 800; font-size: 1.2rem; line-height: 1; letter-spacing: -.01em; white-space: nowrap; }
+.marque a { color: var(--ink); text-decoration: none; }
+.marque span { color: var(--indigo); }
+.onglets { display: flex; gap: 2px; min-width: 0; }
+.onglet-btn { position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 0 14px; border: 0; background: none; color: var(--muted); font: 600 .95rem/1.1 var(--f-body); white-space: nowrap; cursor: pointer; }
+.onglet-btn:hover, .onglet-btn[aria-selected="true"] { color: var(--ink); }
+.onglet-btn[aria-selected="true"]::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: -1px; height: 3px; border-radius: 3px 3px 0 0; background: var(--indigo); }
+.onglet-btn:focus-visible { outline-offset: -4px; }
+.picto { flex: none; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.onglet-btn[aria-selected="true"] .picto { color: var(--indigo); }
+.ajout { align-self: center; flex: none; margin-left: auto; }
+.ajout .court { display: none; }
+@media (max-width: 1239px) {
+  .onglet-btn { padding: 0 10px; }
+  .onglets .picto { display: none; }
+}
+@media (max-width: 1079px) and (min-width: 1000px) {
+  .ajout .long { display: none; }
+  .ajout .court { display: inline; }
+}
+/* Téléphone et tablette : onglets en barre du bas, avec leur pictogramme */
+@media (max-width: 999px) {
+  .barre-haut-dedans { min-height: 56px; }
+  .onglets { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; padding: 2px 4px calc(2px + env(safe-area-inset-bottom, 0px)); background: var(--surface); border-top: 1px solid var(--line); }
+  .onglet-btn { flex-direction: column; justify-content: center; gap: 4px; min-height: 56px; padding: 6px 2px; font-size: .7rem; line-height: 1.15; white-space: normal; text-align: center; }
+  .onglets .picto { display: block; }
+  .onglet-btn[aria-selected="true"]::after { top: -3px; bottom: auto; left: 28%; right: 28%; border-radius: 0 0 3px 3px; }
+  .page { padding-block-end: calc(104px + env(safe-area-inset-bottom, 0px)); }
+  #toast { bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
+  /* Ce qui défile pour se montrer (message du styliste, carte) s'arrête au-dessus de la barre du bas. */
+  html { scroll-padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
+}
+@media (max-width: 459px) {
+  .ajout .long { display: none; }
+  .ajout .court { display: inline; }
+  .barre-haut-dedans { gap: 12px; }
+  .marque { font-size: 1.05rem; }
+}
+@media (max-width: 359px) {
+  .ajout .court { display: none; }
+  .ajout { padding-inline: 10px; }
+}
+
+/* Sections */
+section { padding-top: 44px; scroll-margin-top: 84px; }
+.onglet > section:first-child, .onglet > .duo:first-child > section, #ajouter[hidden] + #catalogue { padding-top: 28px; }
+.entete-section { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; margin-bottom: 16px; }
+h2 { margin: 0; font-family: var(--f-display); font-stretch: 112%; font-weight: 750; font-size: clamp(1.4rem, 3.6vw, 1.75rem); line-height: 1.1; text-wrap: balance; }
+.entete-section p { margin: 0; color: var(--muted); }
+.titre-bloc { display: grid; gap: 6px; min-width: 0; }
+.intro { margin: -6px 0 16px; max-width: 65ch; color: var(--muted); }
+.resume { margin: 0 0 12px; max-width: 70ch; color: var(--muted); font-size: 1.02rem; }
 .resume strong { color: var(--ink); font-weight: 600; }
-.couverture { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 0; padding: 0; list-style: none; }
+.couverture { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 22px; padding: 0; list-style: none; }
 .couverture li { display: inline-flex; align-items: baseline; gap: 6px; padding: 4px 11px; border: 1px solid var(--line); border-radius: 999px; font-size: .88rem; }
 .couverture li b { font: 500 .8rem var(--f-mono); font-variant-numeric: tabular-nums; }
 .couverture li.oui { background: var(--indigo-soft); border-color: transparent; }
 .couverture li.non { border-style: dashed; color: var(--muted); }
 
-/* Sommaire collant */
-.sommaire { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; margin-inline: calc(var(--gutter) * -1); padding-inline: var(--gutter); background: var(--bg); border-bottom: 1px solid var(--line); }
-.sommaire ul { display: flex; gap: 4px; margin: 0; padding: 8px 0; list-style: none; overflow-x: auto; scrollbar-width: none; }
-.sommaire a { display: block; padding: 6px 12px; border-radius: 999px; color: var(--ink); font-weight: 600; font-size: .92rem; text-decoration: none; white-space: nowrap; }
-.sommaire a:hover { background: var(--surface); }
+/* Deux sections côte à côte sur grand écran */
+.duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 44px; align-items: start; }
+.duo > section { min-width: 0; }
+.duo-large { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+@media (max-width: 960px) { .duo, .duo-large { grid-template-columns: minmax(0, 1fr); } }
 
-/* Sections */
-section { padding-top: 48px; scroll-margin-top: 52px; }
-.entete-section { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; margin-bottom: 16px; }
-h2 { margin: 0; font-family: var(--f-display); font-stretch: 112%; font-weight: 750; font-size: clamp(1.4rem, 3.6vw, 1.75rem); line-height: 1.1; text-wrap: balance; }
-.entete-section p { margin: 0; color: var(--muted); }
-.intro { margin: -6px 0 16px; max-width: 65ch; color: var(--muted); }
+/* Aujourd'hui : la tenue, et les réglages du jour à côté */
+.tenue-grille { display: grid; grid-template-columns: minmax(0, 1fr) 300px; grid-template-areas: "corps reglages"; gap: 20px 32px; align-items: start; }
+.tenue-corps { grid-area: corps; min-width: 0; }
+.reglages-jour { grid-area: reglages; display: grid; gap: 18px; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.reglages-jour .couches, .reglages-jour .operation { margin: 0; }
+/* Moins large : les réglages passent sous la tenue, côte à côte, pour laisser toute la largeur aux pièces. */
+@media (max-width: 1119px) {
+  .tenue-grille { grid-template-columns: minmax(0, 1fr); grid-template-areas: "corps" "reglages"; }
+  .reglages-jour { grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); align-items: start; gap: 16px 28px; }
+  .reglages-jour .operation { grid-column: 1 / -1; }
+}
+@media (max-width: 999px) { section { scroll-margin-top: 72px; } }
+/* Catalogue plus compact sur grand écran ; envies : les trois boutons passent sous le texte */
+@media (min-width: 1100px) { .onglet .grille { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+#liste-envies > li > .ligne-actions { grid-column: 2 / -1; justify-content: flex-start; }
+@media (min-width: 481px) { #liste-favoris > li > .ligne-actions, #conversation .semaine > li > .ligne-actions { grid-column: 2 / -1; justify-content: flex-start; } }
+@media (min-width: 961px) { #journal-detail .tenue { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); } }
+.tenue-liens { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; margin-left: 8px; }
 
 /* Boutons et badges */
 .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font: 600 .95rem/1.2 var(--f-body); cursor: pointer; }
@@ -108,7 +170,7 @@ h2 { margin: 0; font-family: var(--f-display); font-stretch: 112%; font-weight: 
 .annonce.ok { color: var(--ok); }
 
 /* Ajouter un achat */
-.panneau { margin-top: 8px; padding: 20px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); scroll-margin-top: 16px; }
+.panneau { margin-top: 8px; padding: 20px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
 .panneau .entete-section { margin-bottom: 12px; }
 .form-grille { display: grid; grid-template-columns: minmax(0, 260px) minmax(0, 1fr); gap: 20px 24px; align-items: start; }
 .depot { display: grid; gap: 8px; padding: 14px; border: 1.5px dashed var(--line); border-radius: var(--radius); background: var(--surface-2); }
@@ -203,7 +265,8 @@ h2 { margin: 0; font-family: var(--f-display); font-stretch: 112%; font-weight: 
 .piece { padding: 0; overflow: hidden; border: 1.5px solid var(--line); border-radius: 8px; background: var(--surface-2); cursor: pointer; }
 .piece img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; }
 .piece[aria-pressed="true"] { border-color: var(--indigo); box-shadow: 0 0 0 2px var(--indigo); }
-#choix-resultat { scroll-margin-top: 60px; }
+#choix-resultat, #carte-zone { scroll-margin-top: 84px; }
+@media (max-width: 999px) { #choix-resultat, #carte-zone { scroll-margin-top: 72px; } }
 .choix-tete { margin: 0 0 12px; color: var(--muted); }
 .choix-tete strong { color: var(--ink); font-weight: 600; }
 .sous-titre { margin: 28px 0 10px; font-family: var(--f-display); font-stretch: 112%; font-weight: 700; font-size: 1.15rem; }
@@ -394,28 +457,169 @@ footer p { margin: 0; max-width: 65ch; }
   .barre-nom { grid-column: 1 / -1; white-space: normal; }
 }
 .resume, .classement-corps .aide, .operation, #op-etat, .slot figcaption > *, .look-corps > *, .simul-tete strong { overflow-wrap: anywhere; }
-.tete > * { min-width: 0; }
 </style>
 </head>
 <body>
-<div class="page">
-  <header class="tete">
-    <div class="tete-haut">
-      <div>
-        <span class="eyebrow" id="sur-titre">Achats magasin depuis juin 2026</span>
-        <h1>Garde-robe Blue&nbsp;Box</h1>
-      </div>
-      <button class="btn primaire" type="button" id="ouvrir-ajout" data-action="ouvrir-ajout" hidden>Ajouter un achat</button>
-    </div>
-    <p class="resume" id="resume"></p>
-    <ul class="couverture" id="couverture" aria-label="Pièces par catégorie"></ul>
-  </header>
+<header class="barre-haut">
+  <div class="barre-haut-dedans">
+    <h1 class="marque"><a href="#aujourdhui" data-onglet-lien="aujourdhui">Garde-robe <span>Blue&nbsp;Box</span></a></h1>
+    <nav class="onglets" id="onglets" role="tablist" aria-label="Parties de la garde-robe">
+      <button class="onglet-btn" type="button" role="tab" id="tab-aujourdhui" aria-controls="onglet-aujourdhui" aria-selected="true" tabindex="0" data-onglet="aujourdhui"><svg class="picto" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg><span>Aujourd'hui</span></button>
+      <button class="onglet-btn" type="button" role="tab" id="tab-semaine" aria-controls="onglet-semaine" aria-selected="false" tabindex="-1" data-onglet="semaine"><svg class="picto" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4M7.5 14h2M11 14h2M14.5 14h2"/></svg><span>Ma semaine</span></button>
+      <button class="onglet-btn" type="button" role="tab" id="tab-vetements" aria-controls="onglet-vetements" aria-selected="false" tabindex="-1" data-onglet="vetements"><svg class="picto" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M12 7.5a2 2 0 1 1 2-2"/><path d="M12 7.5v1.2L3.2 15.4a1.4 1.4 0 0 0 .9 2.5h15.8a1.4 1.4 0 0 0 .9-2.5L12 8.7"/></svg><span>Mes vêtements</span></button>
+      <button class="onglet-btn" type="button" role="tab" id="tab-shopping" aria-controls="onglet-shopping" aria-selected="false" tabindex="-1" data-onglet="shopping"><svg class="picto" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M5 8h14l-1 12.5H6L5 8Z"/><path d="M9 10V6.5a3 3 0 0 1 6 0V10"/></svg><span>Shopping</span></button>
+      <button class="onglet-btn" type="button" role="tab" id="tab-magasin" aria-controls="onglet-magasin" aria-selected="false" tabindex="-1" data-onglet="magasin"><svg class="picto" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M4 10v10h16V10"/><path d="M3 10l1.6-5.5h14.8L21 10c0 1.4-1.2 2.5-2.6 2.5S15.8 11.4 15.8 10c0 1.4-1.2 2.5-2.6 2.5h-2.4c-1.4 0-2.6-1.1-2.6-2.5 0 1.4-1.2 2.5-2.6 2.5S3 11.4 3 10Z"/><path d="M10 20v-4.5h4V20"/></svg><span>Au magasin</span></button>
+    </nav>
+    <button class="btn primaire ajout" type="button" id="ouvrir-ajout" data-action="ouvrir-ajout" aria-label="Ajouter un achat" hidden><svg class="picto" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg><span class="long">Ajouter un achat</span><span class="court" aria-hidden="true">Ajouter</span></button>
+  </div>
+</header>
 
-  <section id="ajouter" class="panneau" aria-labelledby="titre-ajouter" hidden>
-    <div class="entete-section">
-      <h2 id="titre-ajouter">Ajouter un achat</h2>
-      <button class="btn" type="button" id="fermer-ajout" data-action="fermer-ajout">Fermer</button>
+<main class="page">
+
+  <!-- ===== Aujourd'hui ===== -->
+  <div class="onglet" id="onglet-aujourdhui" role="tabpanel" aria-labelledby="tab-aujourdhui">
+    <section id="tenue" aria-labelledby="titre-tenue">
+      <div class="entete-section">
+        <h2 id="titre-tenue">Ma tenue</h2>
+        <p id="date-du-jour"></p>
+      </div>
+      <div class="tenue-grille">
+        <aside class="reglages-jour" aria-label="Réglages du jour">
+          <p class="operation" id="operation-bandeau" hidden></p>
+        <fieldset class="couches" id="meteo">
+          <legend class="eyebrow">Météo du jour</legend>
+          <label class="puce"><input type="radio" name="meteo" id="meteo-froid" value="froid">Froid</label>
+          <label class="puce"><input type="radio" name="meteo" id="meteo-frais" value="frais">Frais</label>
+          <label class="puce"><input type="radio" name="meteo" id="meteo-doux" value="doux">Doux</label>
+          <label class="puce"><input type="radio" name="meteo" id="meteo-pluie" value="pluie">Pluie</label>
+          <p class="aide" id="meteo-aide"></p>
+        </fieldset>
+        <fieldset class="couches" id="couches-tenue">
+          <legend class="eyebrow">Couches en haut</legend>
+          <label class="puce"><input type="radio" name="couches-tenue" id="couches-tenue-1" value="1">1 · un haut</label>
+          <label class="puce"><input type="radio" name="couches-tenue" id="couches-tenue-2" value="2">2 · sous-couche + pull</label>
+          <label class="puce"><input type="radio" name="couches-tenue" id="couches-tenue-3" value="3">3 · + veste ou blouson</label>
+          <p class="aide" id="couches-aide-tenue"></p>
+        </fieldset>
+        </aside>
+        <div class="tenue-corps">
+      <div class="tenue" id="tenue-slots"></div>
+      <div class="verdict">
+        <div class="verdict-texte" id="tenue-verdict"></div>
+        <div class="actions" id="tenue-actions"></div>
+      </div>
+      <ul class="raisons" id="tenue-raisons"></ul>
+      <div class="tenue-plus" id="tenue-plus"></div>
+      <div class="avis" id="avis-styliste" aria-live="polite" hidden></div>
+      <div class="carte" id="carte-zone" hidden>
+        <img id="carte-img" alt="Carte de la tenue du jour, prête à partager" width="1080" height="1350" hidden>
+        <p class="aide" id="carte-aide" role="status"></p>
+        <div class="actions">
+          <button class="btn primaire" type="button" id="carte-enregistrer" data-action="carte-enregistrer" hidden>Enregistrer l'image</button>
+          <button class="btn" type="button" id="carte-fermer" data-action="carte-fermer">Fermer</button>
+        </div>
+      </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="choisir" aria-labelledby="titre-choisir">
+      <div class="entete-section">
+        <h2 id="titre-choisir">Choisir une pièce</h2>
+      </div>
+    <fieldset class="couches" id="couches-choix" hidden>
+      <legend class="eyebrow">Couches en haut</legend>
+      <label class="puce"><input type="radio" name="couches-choix" id="couches-choix-1" value="1">1 · un haut</label>
+      <label class="puce"><input type="radio" name="couches-choix" id="couches-choix-2" value="2">2 · sous-couche + pull</label>
+      <label class="puce"><input type="radio" name="couches-choix" id="couches-choix-3" value="3">3 · + veste ou blouson</label>
+      <p class="aide" id="couches-aide-choix"></p>
+    </fieldset>
+    <div class="filtres" id="choix-filtres" role="group" aria-label="Filtrer les pièces par catégorie"></div>
+    <div class="pieces" id="choix-pieces"></div>
+    <div id="choix-resultat"></div>
+    </section>
+
+    <div class="duo">
+      <section id="favoris" aria-labelledby="titre-favoris">
+        <div class="entete-section">
+          <h2 id="titre-favoris">Mes favoris</h2>
+          <p id="compte-favoris"></p>
+        </div>
+        <ol class="semaine" id="liste-favoris"></ol>
+      </section>
+
+      <section id="styliste" aria-labelledby="titre-styliste">
+        <div class="entete-section">
+          <h2 id="titre-styliste">Demander au styliste</h2>
+          <button class="btn petit" type="button" id="styliste-nouveau" data-action="styliste-nouveau" hidden>Nouvelle conversation</button>
+        </div>
+        <p class="intro">Claude connaît ta garde-robe, ce que tu as porté, tes envies et la météo du jour. Les réponses utilisent ton compte Claude ; la conversation s'efface quand tu quittes la page.</p>
+    <p class="vide" id="styliste-absent" hidden></p>
+    <div id="styliste-zone" hidden>
+      <div class="idees" id="styliste-idees"></div>
+      <ol class="conversation" id="conversation" aria-live="polite"></ol>
+      <form class="form-styliste" id="form-styliste" novalidate>
+        <label for="styliste-question">Ta question</label>
+        <textarea id="styliste-question" rows="2" maxlength="1000" placeholder="Une tenue pour une journée d'inventaire ?"></textarea>
+        <div class="actions">
+          <button class="btn primaire" type="submit" id="styliste-envoyer">Demander</button>
+          <button class="btn" type="button" id="styliste-stop" data-action="styliste-stop" hidden>Arrêter</button>
+        </div>
+      </form>
     </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ===== Ma semaine ===== -->
+  <div class="onglet" id="onglet-semaine" role="tabpanel" aria-labelledby="tab-semaine" hidden>
+    <div class="duo duo-large">
+      <section id="semaine" aria-labelledby="titre-semaine">
+        <div class="entete-section">
+          <h2 id="titre-semaine">Ma semaine</h2>
+          <button class="btn" type="button" id="recomposer" data-action="recomposer">Recomposer la semaine</button>
+        </div>
+        <p class="intro" id="intro-semaine">Coche tes jours de travail : chaque jour reçoit sa tenue, et les pièces tournent pour que toute la collection passe dans la semaine.</p>
+    <fieldset class="jours" id="jours">
+      <legend class="eyebrow">Jours de travail</legend>
+      <label class="puce"><input type="checkbox" id="jour-lun" value="lun">Lun</label>
+      <label class="puce"><input type="checkbox" id="jour-mar" value="mar">Mar</label>
+      <label class="puce"><input type="checkbox" id="jour-mer" value="mer">Mer</label>
+      <label class="puce"><input type="checkbox" id="jour-jeu" value="jeu">Jeu</label>
+      <label class="puce"><input type="checkbox" id="jour-ven" value="ven">Ven</label>
+      <label class="puce"><input type="checkbox" id="jour-sam" value="sam">Sam</label>
+      <label class="puce"><input type="checkbox" id="jour-dim" value="dim">Dim</label>
+    </fieldset>
+    <ol class="semaine" id="liste-semaine"></ol>
+    <p class="bilan" id="bilan-semaine"></p>
+      </section>
+
+      <section id="journal" aria-labelledby="titre-journal">
+        <div class="entete-section">
+          <h2 id="titre-journal">Ce que j'ai porté</h2>
+          <p id="journal-bilan"></p>
+        </div>
+        <p class="intro">Les jours où tu as noté ta tenue. Les pièces portées ces deux dernières semaines reviennent moins vite dans les tenues proposées.</p>
+    <div class="calendrier-tete">
+      <button class="btn petit" type="button" id="journal-prec" data-action="journal-prec" aria-label="Mois précédent">‹</button>
+      <h3 id="journal-mois" aria-live="polite"></h3>
+      <button class="btn petit" type="button" id="journal-suiv" data-action="journal-suiv" aria-label="Mois suivant">›</button>
+    </div>
+    <div class="calendrier" id="journal-grille"></div>
+    <div id="journal-detail"></div>
+        <h3 class="sous-titre">Pièces oubliées</h3>
+    <ul class="oubliees" id="oubliees"></ul>
+      </section>
+    </div>
+  </div>
+
+  <!-- ===== Mes vêtements ===== -->
+  <div class="onglet" id="onglet-vetements" role="tabpanel" aria-labelledby="tab-vetements" hidden>
+    <section id="ajouter" class="panneau" aria-labelledby="titre-ajouter" hidden>
+      <div class="entete-section">
+        <h2 id="titre-ajouter">Ajouter un achat</h2>
+        <button class="btn" type="button" id="fermer-ajout" data-action="fermer-ajout">Fermer</button>
+      </div>
     <form id="form-achat" novalidate>
       <div class="form-grille">
         <div class="depot" id="depot">
@@ -459,7 +663,7 @@ footer p { margin: 0; max-width: 65ch; }
               <input type="text" id="achat-couleur" autocomplete="off" maxlength="40">
             </div>
             <div class="champ">
-              <label for="achat-teinte">Couleur pour les accords</label>
+              <label for="achat-teinte">Couleur de référence</label>
               <span class="champ-teinte"><i class="pastille" id="achat-teinte-pastille"></i><select id="achat-teinte"></select></span>
             </div>
             <div class="champ">
@@ -494,203 +698,50 @@ footer p { margin: 0; max-width: 65ch; }
         </div>
       </div>
     </form>
-  </section>
+    </section>
 
-  <nav class="sommaire" aria-label="Sommaire">
-    <ul>
-      <li><a href="#tenue">Tenue du jour</a></li>
-      <li><a href="#choisir">Je veux porter</a></li>
-      <li><a href="#styliste">Styliste</a></li>
-      <li><a href="#favoris">Favoris</a></li>
-      <li><a href="#semaine">Ma semaine</a></li>
-      <li><a href="#journal">Journal</a></li>
-      <li><a href="#catalogue">Catalogue</a></li>
-      <li><a href="#accords">Accords</a></li>
-      <li><a href="#completer">À compléter</a></li>
-      <li><a href="#acheter">Acheter malin</a></li>
-      <li><a href="#vitrine">Mettre en avant</a></li>
-    </ul>
-  </nav>
-
-  <section id="tenue" aria-labelledby="titre-tenue">
-    <div class="entete-section">
-      <h2 id="titre-tenue">Tenue du jour</h2>
-      <p id="date-du-jour"></p>
-    </div>
-    <p class="operation" id="operation-bandeau" hidden></p>
-    <fieldset class="couches" id="meteo">
-      <legend class="eyebrow">Météo du jour</legend>
-      <label class="puce"><input type="radio" name="meteo" id="meteo-froid" value="froid">Froid</label>
-      <label class="puce"><input type="radio" name="meteo" id="meteo-frais" value="frais">Frais</label>
-      <label class="puce"><input type="radio" name="meteo" id="meteo-doux" value="doux">Doux</label>
-      <label class="puce"><input type="radio" name="meteo" id="meteo-pluie" value="pluie">Pluie</label>
-      <p class="aide" id="meteo-aide"></p>
-    </fieldset>
-    <fieldset class="couches" id="couches-tenue">
-      <legend class="eyebrow">Couches en haut</legend>
-      <label class="puce"><input type="radio" name="couches-tenue" id="couches-tenue-1" value="1">1 · un haut</label>
-      <label class="puce"><input type="radio" name="couches-tenue" id="couches-tenue-2" value="2">2 · sous-couche + pull</label>
-      <label class="puce"><input type="radio" name="couches-tenue" id="couches-tenue-3" value="3">3 · + veste ou blouson</label>
-      <p class="aide" id="couches-aide-tenue"></p>
-    </fieldset>
-    <div class="tenue" id="tenue-slots"></div>
-    <div class="verdict">
-      <div class="verdict-texte" id="tenue-verdict"></div>
-      <div class="actions" id="tenue-actions"></div>
-    </div>
-    <ul class="raisons" id="tenue-raisons"></ul>
-    <div class="tenue-plus" id="tenue-plus"></div>
-    <div class="avis" id="avis-styliste" aria-live="polite" hidden></div>
-    <div class="carte" id="carte-zone" hidden>
-      <img id="carte-img" alt="Carte de la tenue du jour, prête à partager" width="1080" height="1350" hidden>
-      <p class="aide" id="carte-aide" role="status"></p>
-      <div class="actions">
-        <button class="btn primaire" type="button" id="carte-enregistrer" data-action="carte-enregistrer" hidden>Enregistrer l'image</button>
-        <button class="btn" type="button" id="carte-fermer" data-action="carte-fermer">Fermer</button>
-      </div>
-    </div>
-  </section>
-
-  <section id="choisir" aria-labelledby="titre-choisir">
-    <div class="entete-section">
-      <h2 id="titre-choisir">Je veux porter…</h2>
-    </div>
-    <p class="intro">Choisis la pièce qui te fait envie ce matin : la page compose la tenue autour d'elle et explique pourquoi elle marche.</p>
-    <fieldset class="couches" id="couches-choix">
-      <legend class="eyebrow">Couches en haut</legend>
-      <label class="puce"><input type="radio" name="couches-choix" id="couches-choix-1" value="1">1 · un haut</label>
-      <label class="puce"><input type="radio" name="couches-choix" id="couches-choix-2" value="2">2 · sous-couche + pull</label>
-      <label class="puce"><input type="radio" name="couches-choix" id="couches-choix-3" value="3">3 · + veste ou blouson</label>
-      <p class="aide" id="couches-aide-choix"></p>
-    </fieldset>
-    <div class="filtres" id="choix-filtres" role="group" aria-label="Filtrer les pièces par catégorie"></div>
-    <div class="pieces" id="choix-pieces"></div>
-    <div id="choix-resultat"></div>
-  </section>
-
-  <section id="styliste" aria-labelledby="titre-styliste">
-    <div class="entete-section">
-      <h2 id="titre-styliste">Styliste</h2>
-      <button class="btn petit" type="button" id="styliste-nouveau" data-action="styliste-nouveau" hidden>Nouvelle conversation</button>
-    </div>
-    <p class="intro">Pose ta question à Claude : il connaît ta garde-robe, ton journal, tes envies et la météo du jour, et peut composer des tenues à porter tout de suite. Les réponses utilisent ton compte Claude ; la conversation s'efface en quittant la page.</p>
-    <p class="vide" id="styliste-absent" hidden></p>
-    <div id="styliste-zone" hidden>
-      <div class="idees" id="styliste-idees"></div>
-      <ol class="conversation" id="conversation" aria-live="polite"></ol>
-      <form class="form-styliste" id="form-styliste" novalidate>
-        <label for="styliste-question">Ta question</label>
-        <textarea id="styliste-question" rows="2" maxlength="1000" placeholder="Une tenue pour une journée d'inventaire ?"></textarea>
-        <div class="actions">
-          <button class="btn primaire" type="submit" id="styliste-envoyer">Demander</button>
-          <button class="btn" type="button" id="styliste-stop" data-action="styliste-stop" hidden>Arrêter</button>
+    <section id="catalogue" aria-labelledby="titre-catalogue">
+      <div class="entete-section">
+        <div class="titre-bloc">
+          <span class="eyebrow" id="sur-titre">Achats magasin depuis juin 2026</span>
+          <h2 id="titre-catalogue">Mes vêtements</h2>
         </div>
-      </form>
-    </div>
-  </section>
-
-  <section id="favoris" aria-labelledby="titre-favoris">
-    <div class="entete-section">
-      <h2 id="titre-favoris">Tenues favorites</h2>
-      <p id="compte-favoris"></p>
-    </div>
-    <ol class="semaine" id="liste-favoris"></ol>
-  </section>
-
-  <section id="semaine" aria-labelledby="titre-semaine">
-    <div class="entete-section">
-      <h2 id="titre-semaine">Ma semaine</h2>
-      <button class="btn" type="button" id="recomposer" data-action="recomposer">Recomposer la semaine</button>
-    </div>
-    <p class="intro" id="intro-semaine">Coche tes jours de travail. Chaque jour reçoit un haut différent, et les bas tournent pour montrer toute la collection.</p>
-    <fieldset class="jours" id="jours">
-      <legend class="eyebrow">Jours de travail</legend>
-      <label class="puce"><input type="checkbox" id="jour-lun" value="lun">Lun</label>
-      <label class="puce"><input type="checkbox" id="jour-mar" value="mar">Mar</label>
-      <label class="puce"><input type="checkbox" id="jour-mer" value="mer">Mer</label>
-      <label class="puce"><input type="checkbox" id="jour-jeu" value="jeu">Jeu</label>
-      <label class="puce"><input type="checkbox" id="jour-ven" value="ven">Ven</label>
-      <label class="puce"><input type="checkbox" id="jour-sam" value="sam">Sam</label>
-      <label class="puce"><input type="checkbox" id="jour-dim" value="dim">Dim</label>
-    </fieldset>
-    <ol class="semaine" id="liste-semaine"></ol>
-    <p class="bilan" id="bilan-semaine"></p>
-  </section>
-
-  <section id="journal" aria-labelledby="titre-journal">
-    <div class="entete-section">
-      <h2 id="titre-journal">Journal</h2>
-      <p id="journal-bilan"></p>
-    </div>
-    <p class="intro">Ce que tu as vraiment porté. Les pièces portées ces deux dernières semaines reviennent moins vite dans les tenues proposées.</p>
-    <div class="calendrier-tete">
-      <button class="btn petit" type="button" id="journal-prec" data-action="journal-prec" aria-label="Mois précédent">‹</button>
-      <h3 id="journal-mois" aria-live="polite"></h3>
-      <button class="btn petit" type="button" id="journal-suiv" data-action="journal-suiv" aria-label="Mois suivant">›</button>
-    </div>
-    <div class="calendrier" id="journal-grille"></div>
-    <div id="journal-detail"></div>
-    <h3 class="sous-titre">Pièces oubliées</h3>
-    <ul class="oubliees" id="oubliees"></ul>
-  </section>
-
-  <section id="catalogue" aria-labelledby="titre-catalogue">
-    <div class="entete-section">
-      <h2 id="titre-catalogue">Catalogue</h2>
-      <p id="compte-catalogue"></p>
-    </div>
+        <p id="compte-catalogue"></p>
+      </div>
+      <p class="resume" id="resume"></p>
+      <p class="aide lien-accords"><a href="#accords">Voir ce qui va ensemble</a></p>
+      <ul class="couverture" id="couverture" aria-label="Pièces par catégorie" hidden></ul>
     <p class="annonce" id="annonce" role="status"></p>
     <div class="filtres" id="filtres" role="group" aria-label="Filtrer par catégorie"></div>
     <div class="grille" id="grille"></div>
-  </section>
+    </section>
 
-  <section id="accords" aria-labelledby="titre-accords">
-    <div class="entete-section">
-      <h2 id="titre-accords">Accords hauts × bas</h2>
-      <p id="compte-accords"></p>
-    </div>
-    <p class="intro">Chaque case est une tenue. Touche une case pour la voir en grand en haut de la page.</p>
+    <section id="accords" aria-labelledby="titre-accords">
+      <div class="entete-section">
+        <h2 id="titre-accords">Ce qui va ensemble</h2>
+        <p id="compte-accords"></p>
+      </div>
+      <p class="intro">Chaque case est une tenue haut + bas. Touche une case pour la voir en grand dans « Aujourd'hui ».</p>
     <div class="legende">
       <span class="badge ok">●● Valeur sûre</span>
       <span class="badge maybe">● Possible</span>
       <span class="badge no">× À éviter</span>
     </div>
     <div class="table-scroll"><table class="accords" id="table-accords"></table></div>
-    <h3 class="sous-titre">Superpositions sous-couche × haut</h3>
-    <p class="intro">Ce qui se porte sous chaque pull, sweat ou chemise ouverte. Touche une case pour voir la tenue complète.</p>
+      <h3 class="sous-titre">Ce qui se porte dessous</h3>
+      <p class="intro">Les sous-couches qui vont sous chaque pull, sweat ou chemise ouverte. Touche une case pour voir la tenue complète.</p>
     <p class="vide" id="superpositions-vide">Ajoute des chemises, des polos ou des t-shirts : ce tableau montrera lesquels vont sous chacun de tes pulls.</p>
     <div class="table-scroll" id="superpositions-table"><table class="accords" id="table-superpositions"></table></div>
-  </section>
+    </section>
+  </div>
 
-  <section id="completer" aria-labelledby="titre-completer">
-    <div class="entete-section">
-      <h2 id="titre-completer">À compléter</h2>
-      <p id="compte-completer"></p>
-    </div>
-    <p class="intro">Pour être habillé 100&nbsp;% magasin au travail, voici les catégories encore vides, de la plus urgente à la moins urgente.</p>
-    <ol class="priorites" id="priorites"></ol>
-  </section>
-
-  <section id="acheter" aria-labelledby="titre-acheter">
-    <div class="entete-section">
-      <h2 id="titre-acheter">Acheter malin</h2>
-      <p id="compte-envies"></p>
-    </div>
-    <p class="intro">Avant de passer en caisse : ce qu'une pièce t'apporterait, tes envies classées selon leur prix, ton budget du mois et ce que te coûte chaque port.</p>
-
-    <div class="reglages">
-      <div class="champ">
-        <label for="reglage-remise">Remise employé (%)</label>
-        <input type="text" id="reglage-remise" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="0">
+  <!-- ===== Shopping ===== -->
+  <div class="onglet" id="onglet-shopping" role="tabpanel" aria-labelledby="tab-shopping" hidden>
+    <section id="acheter" aria-labelledby="titre-simulateur">
+      <div class="entete-section">
+        <h2 id="titre-simulateur">Avant d'acheter</h2>
       </div>
-      <div class="champ">
-        <label for="reglage-budget">Budget par mois (€)</label>
-        <input type="text" id="reglage-budget" inputmode="decimal" autocomplete="off" maxlength="12" placeholder="Aucun">
-      </div>
-    </div>
-    <div class="budget" id="budget-jauge"></div>
-
-    <h3 class="sous-titre" id="titre-simulateur">Et si j'achetais…</h3>
+      <p class="intro">Décris la pièce que tu regardes en magasin : la page te dit combien de nouvelles tenues elle t'ouvrirait, et ce que coûte chacune.</p>
     <form class="simulateur" id="form-simul" novalidate aria-labelledby="titre-simulateur">
       <div class="champ simul-titre">
         <label for="simul-titre">Titre <span class="aide">(facultatif)</span></label>
@@ -723,35 +774,79 @@ footer p { margin: 0; max-width: 65ch; }
       <p class="form-erreur" id="simul-erreur" role="alert"></p>
     </form>
     <div class="simul-resultat" id="simul-resultat" aria-live="polite"></div>
+    </section>
 
-    <h3 class="sous-titre">Les achats qui t'apporteraient le plus</h3>
-    <p class="intro">Calculé sur ta garde-robe actuelle : les pièces qui ouvriraient le plus de nouvelles tenues, deux au plus par catégorie.</p>
-    <ol class="classement" id="meilleurs-achats"></ol>
-
-    <h3 class="sous-titre">Mes envies</h3>
-    <p class="intro">Classées du meilleur au moins bon rapport : prix, remise comprise, divisé par le nombre de nouvelles tenues.</p>
+    <div class="duo">
+      <section id="mes-envies" aria-labelledby="titre-envies">
+        <div class="entete-section">
+          <h2 id="titre-envies">Mes envies</h2>
+          <p id="compte-envies"></p>
+        </div>
+        <p class="intro">Classées du meilleur au moins bon rapport : le prix, remise comprise, divisé par le nombre de nouvelles tenues.</p>
     <ul class="classement" id="liste-envies"></ul>
+      </section>
 
-    <h3 class="sous-titre">Coût par port</h3>
-    <p class="intro">Le prix payé divisé par le nombre de fois où tu as porté la pièce (d'après le journal). Indique ce que tu as payé : plus tu la portes, moins elle te coûte.</p>
+      <section id="achats-utiles" aria-labelledby="titre-utiles">
+        <div class="entete-section">
+          <h2 id="titre-utiles">Les achats les plus utiles</h2>
+        </div>
+        <p class="intro">Les pièces qui ouvriraient le plus de nouvelles tenues avec ta garde-robe actuelle, deux au plus par catégorie.</p>
+    <ol class="classement" id="meilleurs-achats"></ol>
+      </section>
+    </div>
+
+    <div class="duo">
+      <section id="completer" aria-labelledby="titre-completer">
+        <div class="entete-section">
+          <h2 id="titre-completer">Ce qu'il me manque</h2>
+          <p id="compte-completer"></p>
+        </div>
+        <p class="intro">Les catégories encore vides pour être habillé 100&nbsp;% magasin, de la plus urgente à la moins urgente.</p>
+    <ol class="priorites" id="priorites"></ol>
+      </section>
+
+      <section id="mon-budget" aria-labelledby="titre-budget">
+        <div class="entete-section">
+          <h2 id="titre-budget">Mon budget</h2>
+        </div>
+    <div class="reglages">
+      <div class="champ">
+        <label for="reglage-remise">Remise employé (%)</label>
+        <input type="text" id="reglage-remise" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="0">
+      </div>
+      <div class="champ">
+        <label for="reglage-budget">Budget par mois (€)</label>
+        <input type="text" id="reglage-budget" inputmode="decimal" autocomplete="off" maxlength="12" placeholder="Aucun">
+      </div>
+    </div>
+    <div class="budget" id="budget-jauge"></div>
+      </section>
+    </div>
+
+    <section id="rentabilite" aria-labelledby="titre-rentabilite">
+      <div class="entete-section">
+        <h2 id="titre-rentabilite">Rentabilité</h2>
+      </div>
+      <p class="intro">Le prix payé divisé par le nombre de fois où tu as porté la pièce, d'après ce que tu as noté. Plus tu la portes, moins elle te coûte.</p>
     <p class="bilan" id="cout-bilan"></p>
     <ul class="classement" id="cout-port"></ul>
     <details class="sans-prix" id="cout-sans">
       <summary id="cout-sans-titre"></summary>
       <ul class="classement" id="cout-sans-prix"></ul>
     </details>
-  </section>
+    </section>
+  </div>
 
-  <section id="vitrine" aria-labelledby="titre-vitrine">
-    <div class="entete-section">
-      <h2 id="titre-vitrine">Mettre en avant</h2>
-    </div>
-    <p class="intro">Ce qui sert la collection au-delà de la tenue : l'opération du moment au magasin, tes photos en tenue et ce que dit ton journal.</p>
-
-    <h3 class="sous-titre" id="titre-operation">Opération magasin</h3>
+  <!-- ===== Au magasin ===== -->
+  <div class="onglet" id="onglet-magasin" role="tabpanel" aria-labelledby="tab-magasin" hidden>
+    <section id="vitrine" aria-labelledby="titre-operation">
+      <div class="entete-section">
+        <h2 id="titre-operation">Marque mise en avant</h2>
+      </div>
+      <p class="intro">Quand le magasin met une marque en avant, les tenues de la semaine la favorisent jusqu'à la date de fin.</p>
     <form class="operation-form" id="form-operation" novalidate aria-labelledby="titre-operation">
       <div class="champ">
-        <label for="op-marque">Marque mise en avant</label>
+        <label for="op-marque">Marque</label>
         <select id="op-marque"></select>
       </div>
       <div class="champ">
@@ -763,17 +858,20 @@ footer p { margin: 0; max-width: 65ch; }
         <input type="date" id="op-fin">
       </div>
       <div class="actions">
-        <button class="btn primaire" type="submit" id="op-enregistrer">Lancer l'opération</button>
+        <button class="btn primaire" type="submit" id="op-enregistrer">Mettre en avant</button>
         <button class="btn" type="button" id="op-arreter" data-action="op-arreter" hidden>Arrêter</button>
       </div>
       <p class="aide" id="op-etat"></p>
       <p class="form-erreur" id="op-erreur" role="alert"></p>
     </form>
+    </section>
 
-    <div class="entete-section entete-sous">
-      <h3 class="sous-titre" id="titre-lookbook">Lookbook</h3>
-      <p id="compte-lookbook"></p>
-    </div>
+    <section id="mes-photos" aria-labelledby="titre-lookbook">
+      <div class="entete-section">
+        <h2 id="titre-lookbook">Mes photos en tenue</h2>
+        <p id="compte-lookbook"></p>
+      </div>
+      <p class="intro">Chaque photo est rangée avec la tenue notée ce jour-là.</p>
     <form class="look-form" id="form-look" novalidate aria-labelledby="titre-lookbook" hidden>
       <div class="champ">
         <label for="look-photo">Photo de toi en tenue</label>
@@ -785,26 +883,30 @@ footer p { margin: 0; max-width: 65ch; }
       </div>
       <div class="champ">
         <label for="look-legende">Légende <span class="aide">(facultatif)</span></label>
-        <input type="text" id="look-legende" maxlength="140" autocomplete="off" placeholder="Premier jour de l'opération denim">
+        <input type="text" id="look-legende" maxlength="140" autocomplete="off" placeholder="Premier jour de la semaine denim">
       </div>
-      <div class="actions"><button class="btn primaire" type="submit" id="look-envoyer">Ajouter au lookbook</button></div>
+      <div class="actions"><button class="btn primaire" type="submit" id="look-envoyer">Ajouter la photo</button></div>
       <p class="form-erreur" id="look-erreur" role="alert"></p>
     </form>
     <p class="aide" id="look-indispo"></p>
     <ul class="lookbook" id="lookbook"></ul>
+    </section>
 
-    <div class="entete-section entete-sous">
-      <h3 class="sous-titre">Statistiques</h3>
-      <button class="btn petit" type="button" id="export-journal" data-action="export-journal" hidden>Exporter le journal (.csv)</button>
-    </div>
+    <section id="mes-chiffres" aria-labelledby="titre-chiffres">
+      <div class="entete-section">
+        <h2 id="titre-chiffres">Mes chiffres</h2>
+        <button class="btn petit" type="button" id="export-journal" data-action="export-journal" hidden>Exporter ce que j'ai porté (.csv)</button>
+      </div>
+      <p class="intro">D'après ce que tu as noté : les pièces qui sortent le plus, les marques, les couleurs et les jours notés par mois.</p>
     <p class="aide" id="export-etat" role="status"></p>
     <div id="stats"></div>
-  </section>
+    </section>
+  </div>
 
   <footer>
     <p>Les 16 premières pièces viennent de <span class="mono">garde-robe.js</span>, celles ajoutées avec le formulaire sont enregistrées dans la page. Les liens ont été nettoyés de leurs paramètres de suivi publicitaire. Trois pulls n'ont pas de fiche sur le site de la marque : leur lien mène chez un revendeur.</p>
   </footer>
-</div>
+</main>
 
 <p class="toast" id="toast" role="status" aria-live="polite" hidden></p>
 
