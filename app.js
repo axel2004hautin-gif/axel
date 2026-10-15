@@ -498,7 +498,8 @@
       if (!avertiDate) { avertiDate = true; toast("La date a changé : termine ta saisie. Au prochain geste ailleurs, la page se mettra à jour."); return true; }
     }
     rechargement = true;
-    try { history.replaceState(null, "", location.pathname + location.search); history.scrollRestoration = "manual"; } catch (_) { /* adresse inchangée */ }
+    // La page rechargée repart en haut, sur « Aujourd'hui » (l'adresse n'est jamais réécrite).
+    try { history.scrollRestoration = "manual"; } catch (_) { /* défilement restauré par le navigateur */ }
     location.reload();
     return true;
   }
@@ -3792,7 +3793,6 @@ Réponds uniquement par un objet JSON de cette forme :
   // « Je l'ai acheté », un lien) ouvre d'abord l'onglet de sa destination.
   const ONGLETS = ["aujourdhui", "semaine", "vetements", "shopping", "magasin"];
   let ongletActif = "aujourdhui";
-  let parHistorique = false;     // changement venu de l'adresse (Précédent, lien direct) : rien à ajouter
   const ongletDe = el => { const p = el && el.closest && el.closest(".onglet"); return p ? p.id.slice("onglet-".length) : null; };
   const enHaut = doux => window.scrollTo({ top: 0, behavior: doux && !matchMedia("(prefers-reduced-motion: reduce)").matches ? "smooth" : "instant" });
   // Vrai si l'onglet vient de changer.
@@ -3805,8 +3805,6 @@ Réponds uniquement par un objet JSON de cette forme :
       b.setAttribute("aria-selected", String(actif));
       b.tabIndex = actif ? 0 : -1;
     });
-    // L'adresse garde l'onglet : « Précédent » y revient, un rechargement aussi.
-    try { if (!parHistorique) history.pushState(null, "", "#" + nom); } catch (_) { /* adresse inchangée */ }
     return true;
   }
   function montrer(el, opts) {
@@ -3839,8 +3837,8 @@ Réponds uniquement par un objet JSON de cette forme :
     if (a && allerA(a.getAttribute("href").slice(1))) e.preventDefault();
   });
   const cibleAdresse = () => { try { return decodeURIComponent(location.hash.slice(1)); } catch (_) { return ""; } };
-  // Une adresse sans onglet (retour au tout début de l'historique) ramène à « Aujourd'hui ».
-  const depuisAdresse = () => { parHistorique = true; try { allerA(cibleAdresse() || ONGLETS[0]); } finally { parHistorique = false; } };
+  // Un lien direct (#semaine, #journal…) ouvre son onglet ; la page ne modifie jamais elle-même son adresse.
+  const depuisAdresse = () => { if (cibleAdresse()) allerA(cibleAdresse()); };
   window.addEventListener("hashchange", depuisAdresse);
   if (cibleAdresse()) depuisAdresse();
 
