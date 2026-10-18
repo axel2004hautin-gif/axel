@@ -130,3 +130,15 @@ Dans la base de la page : `achats` (pièces ajoutées), `etat/semaine` (semaine 
 - Les liens ont été nettoyés des paramètres de suivi publicitaire (`gclid`, `utm_*`, etc.).
 - Trois pulls n'ont pas de fiche sur le site de la marque, leur lien mène chez un revendeur : le col rond noir, et les deux cols polo.
 - La correspondance entre les références Levi's et les couleurs suit l'ordre de la liste d'achats et des captures. Le 29507-1417 « Call It Off » est confirmé comme un délavage moyen.
+
+## Carnet de vente (outil pro)
+
+Une page à part, `vente/carnet-vente.html`, pour vendre mieux au magasin. Publiée sur claude.ai : https://claude.ai/artifact/NVwFkh19wc4hXRJjsMbAgd (privée, toi seul la vois et la remplis).
+
+- **Service** : « Nouveau client » après chaque client : les articles proposés, ceux qu'il a pris (prix, quantité) et pourquoi il n'a pas pris les autres (prix, taille, coupe, couleur, il réfléchit, rupture). « Juste regarder » note un passage en un geste. Les tuiles CA, TT, panier moyen et IPV se mettent à jour, avec la jauge de ton objectif. Le bilan du service, et un débrief par Claude.
+- **Articles** : les pièces du magasin avec leur prix, leurs points forts, les objections et leurs réponses, les articles à proposer avec ; chacune montre son taux de réussite (pris ÷ proposé) et se classe facile, moyen ou difficile à partir de 3 propositions. « Rédiger l'argumentaire avec Claude » prépare une première version.
+- **Mes chiffres** : par période, les indicateurs comparés à la période précédente, le CA par jour, ce que tu vends bien et ce qui coince, les raisons des refus avec la technique à travailler, ce qui part ensemble, les résultats par marque, catégorie et créneau, et les conseils du coach Claude.
+- **S'entraîner** : Claude joue un client (trop cher, je vais réfléchir, pas sa taille, vente complémentaire…), tu réponds, puis tu reçois une note et des phrases à reprendre.
+- **Objectifs** : CA par service, TT, panier moyen, IPV, et l'export de tous tes clients en tableur.
+
+Publication : le fichier tel quel, avec les capacités `db` (lecture et écriture réservées au propriétaire), `user`, `sample` et `downloads`. Dans la base : `jours/AAAA-MM-JJ` (clients du jour et bilan), `catalogue/<id>` (articles, au départ les 16 pièces de la garde-robe, prix à renseigner), `reglages/general` (objectifs).

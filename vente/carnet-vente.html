@@ -1,0 +1,1360 @@
+<title>Carnet de vente Blue Box</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Mise en page : une colonne d'outil, onglets en bas sur téléphone et en haut sur ordinateur ;
+   les chiffres s'affichent comme des étiquettes de prix (condensé, tabulaire). */
+:root {
+  --fond: #eef2f8;
+  --surface: #ffffff;
+  --surface-2: #f6f8fc;
+  --encre: #0e1a33;
+  --doux: #56627d;
+  --trait: #d6ddea;
+  --bleu: #1d4ed8;
+  --bleu-doux: #e2e9fb;
+  --sur-bleu: #ffffff;
+  --bon: #17804f;
+  --bon-doux: #dcf2e6;
+  --moyen: #a0670f;
+  --moyen-doux: #f8ecd6;
+  --mauvais: #bf3b33;
+  --mauvais-doux: #f8e0de;
+  --voile: rgba(9, 16, 32, .48);
+  --ombre: 0 10px 30px rgba(14, 26, 51, .14);
+  --police-titre: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --police: "Public Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --rayon: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fond: #0a1120; --surface: #121b2d; --surface-2: #172238; --encre: #e7ecf6; --doux: #9ba7c1;
+    --trait: #26324b; --bleu: #7ea4ff; --bleu-doux: #1a2950; --sur-bleu: #0a1120;
+    --bon: #4fc48b; --bon-doux: #133426; --moyen: #e4ad55; --moyen-doux: #3a2c13;
+    --mauvais: #f2827a; --mauvais-doux: #3d1d1b; --voile: rgba(0, 0, 0, .6); --ombre: 0 10px 30px rgba(0, 0, 0, .45);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --fond: #0a1120; --surface: #121b2d; --surface-2: #172238; --encre: #e7ecf6; --doux: #9ba7c1;
+  --trait: #26324b; --bleu: #7ea4ff; --bleu-doux: #1a2950; --sur-bleu: #0a1120;
+  --bon: #4fc48b; --bon-doux: #133426; --moyen: #e4ad55; --moyen-doux: #3a2c13;
+  --mauvais: #f2827a; --mauvais-doux: #3d1d1b; --voile: rgba(0, 0, 0, .6); --ombre: 0 10px 30px rgba(0, 0, 0, .45);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--fond); color: var(--encre); font-family: var(--police); font-size: 15px; line-height: 1.5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--fond); }
+h1, h2, h3 { font-family: var(--police-titre); font-weight: 700; line-height: 1.1; text-wrap: balance; margin: 0; letter-spacing: .01em; }
+h2 { font-size: 1.7rem; }
+h3 { font-size: 1.25rem; }
+p { margin: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--bleu); outline-offset: 2px; }
+.chiffre { font-family: var(--police-titre); font-variant-numeric: tabular-nums; }
+.eyebrow { font-size: .72rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--doux); }
+.aide { color: var(--doux); font-size: .88rem; }
+.page { max-width: 1080px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 18px 110px; display: grid; gap: 18px; }
+
+/* En-tête */
+.entete { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.marque { display: flex; align-items: center; gap: 10px; }
+.logo { width: 38px; height: 38px; border-radius: 8px; background: var(--bleu); color: var(--sur-bleu); display: grid; place-items: center; font-family: var(--police-titre); font-weight: 700; font-size: 1.05rem; letter-spacing: .02em; }
+.marque h1 { font-size: 1.6rem; }
+.etat { font-size: .82rem; color: var(--doux); display: flex; align-items: center; gap: 6px; }
+.etat::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--doux); }
+.etat[data-etat="ok"]::before { background: var(--bon); }
+.etat[data-etat="erreur"]::before { background: var(--mauvais); }
+.bandeau { background: var(--moyen-doux); color: var(--encre); border-radius: var(--rayon); padding: 10px 14px; font-size: .9rem; }
+
+/* Onglets */
+.onglets { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--trait); border-radius: 12px; padding: 4px; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; }
+.onglet { flex: 1; border: 0; background: none; border-radius: 9px; padding: 9px 6px; font-weight: 600; font-size: .92rem; color: var(--doux); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.onglet svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.onglet[aria-selected="true"] { background: var(--bleu-doux); color: var(--bleu); }
+@media (max-width: 760px) {
+  .onglets { position: fixed; top: auto; bottom: 0; left: 0; right: 0; border-radius: 0; border-width: 1px 0 0; padding: 4px max(6px, env(safe-area-inset-right, 0px)) calc(4px + env(safe-area-inset-bottom, 0px)) max(6px, env(safe-area-inset-left, 0px)); }
+  .onglet { font-size: .72rem; padding: 6px 2px; }
+}
+@media (min-width: 761px) { .onglet { flex-direction: row; justify-content: center; gap: 8px; } }
+
+/* Blocs */
+.bloc { background: var(--surface); border: 1px solid var(--trait); border-radius: 14px; padding: 18px; display: grid; gap: 14px; min-width: 0; }
+.bloc-tete { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.grille-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+.vide { color: var(--doux); padding: 14px; border: 1px dashed var(--trait); border-radius: var(--rayon); text-align: center; list-style: none; }
+
+/* Boutons */
+.btn { border: 1px solid var(--trait); background: var(--surface); border-radius: 9px; padding: 8px 14px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; }
+.btn:hover { border-color: var(--bleu); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn.primaire { background: var(--bleu); color: var(--sur-bleu); border-color: var(--bleu); }
+.btn.grand { min-height: 54px; font-size: 1.05rem; padding: 10px 20px; }
+.btn.discret { border-color: transparent; background: none; color: var(--bleu); padding-inline: 8px; }
+.btn.danger { color: var(--mauvais); }
+.btn.danger.arme { background: var(--mauvais); color: var(--surface); border-color: var(--mauvais); }
+.rangee { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.puces { display: flex; gap: 6px; flex-wrap: wrap; }
+.puce { border: 1px solid var(--trait); background: var(--surface); border-radius: 999px; padding: 6px 12px; font-size: .88rem; cursor: pointer; font-weight: 500; }
+.puce[aria-pressed="true"] { background: var(--encre); color: var(--surface); border-color: var(--encre); }
+
+/* Champs */
+label { font-weight: 600; font-size: .88rem; }
+.champ { display: grid; gap: 4px; min-width: 0; }
+input[type="text"], input[type="number"], input[type="search"], input[type="time"], select, textarea {
+  width: 100%; border: 1px solid var(--trait); background: var(--surface-2); border-radius: 8px; padding: 9px 11px; min-height: 40px;
+}
+textarea { resize: vertical; min-height: 70px; }
+.champs { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+
+/* Service : navigation par jour et tuiles */
+.jour-nav { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.jour-nav h2 { flex: 1; min-width: 180px; }
+.tuiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+.tuile { background: var(--surface-2); border-radius: var(--rayon); padding: 12px 14px; display: grid; gap: 2px; align-content: start; }
+.tuile .valeur { font-family: var(--police-titre); font-size: 2rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+.tuile .sous { font-size: .8rem; color: var(--doux); }
+.tuile[data-niveau="bon"] .valeur { color: var(--bon); }
+.tuile[data-niveau="moyen"] .valeur { color: var(--moyen); }
+.tuile[data-niveau="mauvais"] .valeur { color: var(--mauvais); }
+.delta { font-size: .8rem; font-weight: 600; }
+.delta.haut { color: var(--bon); }
+.delta.bas { color: var(--mauvais); }
+.jauge { height: 10px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.jauge > span { display: block; height: 100%; background: var(--bleu); border-radius: inherit; }
+.jauge.atteint > span { background: var(--bon); }
+.actions-service { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; }
+@media (max-width: 480px) { .actions-service { grid-template-columns: 1fr; } }
+
+/* Ticket : la liste des clients du jour */
+.ticket { list-style: none; margin: 0; padding: 0; display: grid; }
+.ticket li.client { display: grid; grid-template-columns: 54px 1fr auto; gap: 10px; align-items: start; padding: 11px 4px; border-top: 1px dashed var(--trait); cursor: pointer; }
+.ticket li.client:first-child { border-top: 0; }
+.ticket li.client:hover { background: var(--surface-2); }
+.ticket .heure { font-family: var(--police-titre); font-size: 1.1rem; color: var(--doux); font-variant-numeric: tabular-nums; }
+.ticket .detail { min-width: 0; display: grid; gap: 3px; }
+.ticket .montant { font-family: var(--police-titre); font-size: 1.3rem; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+.ticket .lignes-mini { font-size: .88rem; color: var(--doux); overflow-wrap: anywhere; }
+.ticket .lignes-mini s { opacity: .8; }
+.pastille { display: inline-block; font-size: .72rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; border-radius: 5px; padding: 2px 7px; }
+.pastille.vendu, .pastille.facile { background: var(--bon-doux); color: var(--bon); }
+.pastille.perdu, .pastille.difficile { background: var(--mauvais-doux); color: var(--mauvais); }
+.pastille.moyen { background: var(--moyen-doux); color: var(--moyen); }
+.pastille.neutre { background: var(--surface-2); color: var(--doux); }
+
+/* Feuille (fenêtre) */
+.voile { position: fixed; inset: 0; background: var(--voile); z-index: 20; display: flex; align-items: flex-end; justify-content: center; }
+.feuille { background: var(--surface); width: 100%; max-width: 680px; max-height: 94%; overflow-y: auto; border-radius: 18px 18px 0 0; box-shadow: var(--ombre);
+  padding-block: 18px calc(18px + env(safe-area-inset-bottom, 0px)); padding-left: max(18px, env(safe-area-inset-left, 0px)); padding-right: max(18px, env(safe-area-inset-right, 0px)); display: grid; gap: 16px; align-content: start; }
+@media (min-width: 761px) { .voile { align-items: center; } .feuille { border-radius: 18px; max-height: 90%; } }
+.feuille-tete { display: flex; align-items: center; gap: 10px; }
+.feuille-tete h2 { flex: 1; }
+.feuille-pied { position: sticky; bottom: calc(-18px - env(safe-area-inset-bottom, 0px)); background: var(--surface); border-top: 1px solid var(--trait); margin-inline: -18px; padding: 12px 18px calc(12px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.feuille-pied .resume { flex: 1; min-width: 160px; font-weight: 600; }
+.resultats { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.resultats button { width: 100%; text-align: left; border: 1px solid var(--trait); background: var(--surface-2); border-radius: 9px; padding: 8px 12px; cursor: pointer; display: flex; gap: 10px; align-items: center; }
+.resultats button:hover { border-color: var(--bleu); }
+.resultats .nom { flex: 1; min-width: 0; }
+.resultats .nom small { display: block; color: var(--doux); }
+.lignes { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.ligne { border: 1px solid var(--trait); border-radius: 12px; padding: 12px; display: grid; gap: 10px; }
+.ligne[data-pris="true"] { border-color: var(--bon); background: var(--bon-doux); }
+.ligne-tete { display: flex; gap: 10px; align-items: start; }
+.ligne-tete .nom { flex: 1; min-width: 0; font-weight: 600; }
+.ligne-tete .nom small { display: block; font-weight: 400; color: var(--doux); }
+.ligne-reglages { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.ligne-reglages input[type="number"] { width: 96px; }
+.bascule { display: inline-flex; border: 1px solid var(--trait); border-radius: 9px; overflow: hidden; }
+.bascule button { border: 0; background: var(--surface); padding: 8px 12px; cursor: pointer; font-weight: 600; font-size: .88rem; }
+.bascule button[aria-pressed="true"].oui { background: var(--bon); color: var(--surface); }
+.bascule button[aria-pressed="true"].non { background: var(--mauvais); color: var(--surface); }
+.qte { display: inline-flex; align-items: center; gap: 2px; }
+.qte button { width: 34px; height: 34px; border: 1px solid var(--trait); background: var(--surface); border-radius: 8px; cursor: pointer; font-weight: 700; }
+.qte span { min-width: 26px; text-align: center; font-variant-numeric: tabular-nums; font-weight: 600; }
+
+/* Articles */
+.filtres { display: grid; grid-template-columns: 2fr repeat(3, 1fr); gap: 10px; }
+@media (max-width: 760px) { .filtres { grid-template-columns: 1fr 1fr; } .filtres .champ:first-child { grid-column: 1 / -1; } }
+.cartes { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; list-style: none; margin: 0; padding: 0; }
+.carte { border: 1px solid var(--trait); background: var(--surface); border-radius: 12px; padding: 14px; display: grid; gap: 8px; text-align: left; cursor: pointer; width: 100%; align-content: start; }
+.carte:hover { border-color: var(--bleu); }
+.carte .titre { font-weight: 700; }
+.carte .prix { font-family: var(--police-titre); font-size: 1.35rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.carte .stats { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: .85rem; color: var(--doux); }
+.barre-taux { height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.barre-taux > span { display: block; height: 100%; background: var(--doux); }
+.barre-taux[data-niveau="facile"] > span { background: var(--bon); }
+.barre-taux[data-niveau="moyen"] > span { background: var(--moyen); }
+.barre-taux[data-niveau="difficile"] > span { background: var(--mauvais); }
+.liste-points { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.objection { background: var(--surface-2); border-radius: 9px; padding: 10px 12px; display: grid; gap: 3px; }
+.objection strong::before { content: "« "; }
+.objection strong::after { content: " »"; }
+
+/* Analyse */
+.tableau-conteneur { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+th, td { padding: 8px 10px; border-bottom: 1px solid var(--trait); text-align: left; white-space: nowrap; }
+th { font-size: .74rem; letter-spacing: .06em; text-transform: uppercase; color: var(--doux); font-weight: 700; }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
+.classement { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.classement li { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: center; }
+.classement li small { grid-column: 1 / -1; color: var(--doux); }
+.barres { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.barres li { display: grid; grid-template-columns: minmax(110px, 38%) 1fr auto; gap: 10px; align-items: center; font-size: .9rem; }
+.barres .piste { height: 12px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
+.barres .piste span { display: block; height: 100%; background: var(--mauvais); border-radius: 4px; }
+.conseil { background: var(--bleu-doux); border-radius: var(--rayon); padding: 12px 14px; display: grid; gap: 4px; }
+.graphe svg { width: 100%; height: auto; display: block; }
+.graphe text { fill: var(--doux); font-size: 11px; font-family: var(--police); }
+.graphe .barre { fill: var(--bleu); }
+.graphe .barre.atteint { fill: var(--bon); }
+.graphe .grille { stroke: var(--trait); stroke-width: 1; }
+.graphe .cible { stroke: var(--moyen); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.texte-claude { display: grid; gap: 8px; }
+.texte-claude ul, .texte-claude ol { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+
+/* Entraînement */
+.discussion { display: grid; gap: 10px; max-height: 420px; overflow-y: auto; padding: 4px; }
+.bulle { max-width: 85%; padding: 10px 13px; border-radius: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.bulle.client { background: var(--surface-2); border-bottom-left-radius: 4px; justify-self: start; }
+.bulle.vendeur { background: var(--bleu); color: var(--sur-bleu); border-bottom-right-radius: 4px; justify-self: end; }
+.bulle small { display: block; font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; opacity: .7; margin-bottom: 2px; }
+.saisie { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; }
+.saisie textarea { min-height: 48px; }
+
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(90px + env(safe-area-inset-bottom, 0px)); background: var(--encre); color: var(--surface); padding: 10px 16px; border-radius: 10px; z-index: 30; font-weight: 600; box-shadow: var(--ombre); max-width: calc(100% - 32px); }
+@media (prefers-reduced-motion: no-preference) { .feuille { animation: monte .18s ease-out; } @keyframes monte { from { transform: translateY(16px); opacity: .6; } } }
+</style>
+
+<div class="page">
+  <header class="entete">
+    <div class="marque">
+      <div class="logo" aria-hidden="true">BB</div>
+      <div>
+        <h1>Carnet de vente</h1>
+        <p class="aide">Blue Box · mes clients, mes articles, mes chiffres</p>
+      </div>
+    </div>
+    <span class="etat" id="etat" data-etat="attente">Connexion…</span>
+  </header>
+  <p class="bandeau" id="bandeau" hidden></p>
+
+  <nav class="onglets" role="tablist" aria-label="Sections">
+    <button class="onglet" role="tab" id="tab-service" aria-controls="onglet-service" aria-selected="true" data-onglet="service" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg><span>Service</span></button>
+    <button class="onglet" role="tab" id="tab-articles" aria-controls="onglet-articles" aria-selected="false" tabindex="-1" data-onglet="articles" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg><span>Articles</span></button>
+    <button class="onglet" role="tab" id="tab-analyse" aria-controls="onglet-analyse" aria-selected="false" tabindex="-1" data-onglet="analyse" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Mes chiffres</span></button>
+    <button class="onglet" role="tab" id="tab-entrainement" aria-controls="onglet-entrainement" aria-selected="false" tabindex="-1" data-onglet="entrainement" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg><span>S'entraîner</span></button>
+    <button class="onglet" role="tab" id="tab-reglages" aria-controls="onglet-reglages" aria-selected="false" tabindex="-1" data-onglet="reglages" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg><span>Objectifs</span></button>
+  </nav>
+
+  <!-- SERVICE -->
+  <section class="onglet-contenu" id="onglet-service" role="tabpanel" aria-labelledby="tab-service">
+    <div class="bloc">
+      <div class="jour-nav">
+        <button class="btn" type="button" id="jour-prec" aria-label="Jour précédent">‹</button>
+        <h2 id="jour-titre">Aujourd'hui</h2>
+        <button class="btn" type="button" id="jour-suiv" aria-label="Jour suivant">›</button>
+        <button class="btn discret" type="button" id="jour-auj" hidden>Revenir à aujourd'hui</button>
+      </div>
+      <div class="tuiles" id="tuiles-jour"></div>
+      <div class="champ" id="objectif-jour"></div>
+      <div class="actions-service">
+        <button class="btn primaire grand" type="button" id="btn-client">+ Nouveau client</button>
+        <button class="btn grand" type="button" id="btn-regarde" title="Note en un geste un client qui regardait seulement">Juste regarder</button>
+      </div>
+    </div>
+
+    <div class="grille-2" style="margin-top:18px">
+      <div class="bloc">
+        <div class="bloc-tete"><h3>Mes clients</h3><span class="aide" id="nb-clients"></span></div>
+        <ol class="ticket" id="liste-clients"></ol>
+      </div>
+      <div class="bloc">
+        <div class="bloc-tete"><h3>Bilan du service</h3></div>
+        <div class="champ"><label for="bilan-bien">Ce qui a bien marché</label><textarea id="bilan-bien" placeholder="Ex. : j'ai proposé une chemise sous chaque pull, 3 clients l'ont prise."></textarea></div>
+        <div class="champ"><label for="bilan-mieux">Ce que je ferai mieux demain</label><textarea id="bilan-mieux" placeholder="Ex. : relancer les clients qui disent « je réfléchis »."></textarea></div>
+        <div class="rangee"><button class="btn" type="button" id="btn-debrief">Débrief avec Claude</button></div>
+        <div class="texte-claude" id="debrief" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ARTICLES -->
+  <section class="onglet-contenu" id="onglet-articles" role="tabpanel" aria-labelledby="tab-articles" hidden>
+    <div class="bloc">
+      <div class="bloc-tete">
+        <div><h2>Articles</h2><p class="aide">Les pièces du magasin, avec ton argumentaire et ce que tu en vends.</p></div>
+        <button class="btn primaire" type="button" id="btn-nouvel-article">+ Ajouter un article</button>
+      </div>
+      <div class="filtres">
+        <div class="champ"><label for="art-recherche">Rechercher</label><input type="search" id="art-recherche" placeholder="Marque, modèle, couleur…"></div>
+        <div class="champ"><label for="art-marque">Marque</label><select id="art-marque"></select></div>
+        <div class="champ"><label for="art-categorie">Catégorie</label><select id="art-categorie"></select></div>
+        <div class="champ"><label for="art-tri">Trier par</label><select id="art-tri">
+          <option value="proposes">Plus proposés</option>
+          <option value="taux-haut">Plus faciles à vendre</option>
+          <option value="taux-bas">Plus difficiles à vendre</option>
+          <option value="ca">Chiffre d'affaires</option>
+          <option value="nom">Nom</option>
+        </select></div>
+      </div>
+      <ul class="cartes" id="liste-articles"></ul>
+    </div>
+  </section>
+
+  <!-- ANALYSE -->
+  <section class="onglet-contenu" id="onglet-analyse" role="tabpanel" aria-labelledby="tab-analyse" hidden>
+    <div class="bloc">
+      <div class="bloc-tete">
+        <div><h2>Mes chiffres</h2><p class="aide" id="periode-texte"></p></div>
+        <div class="puces" id="periodes" role="group" aria-label="Période">
+          <button class="puce" type="button" data-periode="7" aria-pressed="false">7 jours</button>
+          <button class="puce" type="button" data-periode="30" aria-pressed="true">30 jours</button>
+          <button class="puce" type="button" data-periode="90" aria-pressed="false">3 mois</button>
+          <button class="puce" type="button" data-periode="0" aria-pressed="false">Tout</button>
+        </div>
+      </div>
+      <div class="tuiles" id="tuiles-periode"></div>
+    </div>
+
+    <div class="bloc" style="margin-top:18px">
+      <div class="bloc-tete"><h3>Chiffre d'affaires par jour</h3><span class="aide" id="graphe-legende"></span></div>
+      <div class="graphe" id="graphe-ca"></div>
+    </div>
+
+    <div class="grille-2" style="margin-top:18px">
+      <div class="bloc">
+        <div class="bloc-tete"><h3>Ce que je vends bien</h3><span class="pastille facile">60 % et plus</span></div>
+        <ul class="classement" id="top-facile"></ul>
+      </div>
+      <div class="bloc">
+        <div class="bloc-tete"><h3>Ce qui coince</h3><span class="pastille difficile">30 % et moins</span></div>
+        <ul class="classement" id="top-difficile"></ul>
+      </div>
+    </div>
+
+    <div class="grille-2" style="margin-top:18px">
+      <div class="bloc">
+        <div class="bloc-tete"><h3>Pourquoi ça ne se vend pas</h3></div>
+        <ul class="barres" id="raisons"></ul>
+        <div id="conseil-raison"></div>
+      </div>
+      <div class="bloc">
+        <div class="bloc-tete"><h3>Ce qui part ensemble</h3></div>
+        <ul class="classement" id="paires"></ul>
+        <p class="aide" id="complement-texte"></p>
+      </div>
+    </div>
+
+    <div class="grille-2" style="margin-top:18px">
+      <div class="bloc">
+        <h3>Par marque</h3>
+        <div class="tableau-conteneur" id="table-marques"></div>
+      </div>
+      <div class="bloc">
+        <h3>Par catégorie</h3>
+        <div class="tableau-conteneur" id="table-categories"></div>
+      </div>
+    </div>
+
+    <div class="grille-2" style="margin-top:18px">
+      <div class="bloc">
+        <h3>Par créneau</h3>
+        <div class="tableau-conteneur" id="table-creneaux"></div>
+      </div>
+      <div class="bloc">
+        <div class="bloc-tete"><h3>Conseils du coach</h3></div>
+        <p class="aide">Claude lit tes chiffres de la période et te donne trois choses précises à travailler.</p>
+        <div class="rangee"><button class="btn primaire" type="button" id="btn-coach">Demander au coach</button></div>
+        <div class="texte-claude" id="coach" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ENTRAÎNEMENT -->
+  <section class="onglet-contenu" id="onglet-entrainement" role="tabpanel" aria-labelledby="tab-entrainement" hidden>
+    <div class="bloc">
+      <div><h2>S'entraîner</h2><p class="aide">Claude joue un client. Tu réponds comme en magasin, puis tu reçois une note et des phrases à reprendre.</p></div>
+      <div class="champ"><span class="eyebrow">Situation</span><div class="puces" id="scenarios" role="group" aria-label="Situation"></div></div>
+      <div class="champs">
+        <div class="champ"><label for="entr-article">Article au centre de la scène</label><select id="entr-article"></select></div>
+        <div class="champ"><label for="entr-niveau">Client</label><select id="entr-niveau">
+          <option value="ouvert">Ouvert, facile à conseiller</option>
+          <option value="normal" selected>Normal, a ses doutes</option>
+          <option value="exigeant">Exigeant, difficile à convaincre</option>
+        </select></div>
+      </div>
+      <div class="rangee"><button class="btn primaire" type="button" id="btn-scene">Commencer la scène</button><span class="aide" id="entr-etat"></span></div>
+    </div>
+    <div class="bloc" id="bloc-scene" style="margin-top:18px" hidden>
+      <div class="discussion" id="discussion" aria-live="polite"></div>
+      <div class="saisie">
+        <div class="champ"><label for="entr-reponse">Ta réponse</label><textarea id="entr-reponse" placeholder="Ce que tu dirais au client…"></textarea></div>
+        <button class="btn primaire" type="button" id="btn-repondre">Envoyer</button>
+      </div>
+      <div class="rangee"><button class="btn" type="button" id="btn-retour">Terminer et avoir mon retour</button></div>
+      <div class="texte-claude" id="retour" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- RÉGLAGES -->
+  <section class="onglet-contenu" id="onglet-reglages" role="tabpanel" aria-labelledby="tab-reglages" hidden>
+    <div class="bloc">
+      <div><h2>Mes objectifs</h2><p class="aide">Ils colorent tes tuiles : vert quand tu les atteins, orange quand tu t'en approches.</p></div>
+      <div class="champs">
+        <div class="champ"><label for="obj-ca">CA par service (€)</label><input type="number" id="obj-ca" min="0" step="10" inputmode="decimal"></div>
+        <div class="champ"><label for="obj-tt">Taux de transformation (%)</label><input type="number" id="obj-tt" min="0" max="100" step="1" inputmode="numeric"></div>
+        <div class="champ"><label for="obj-pm">Panier moyen (€)</label><input type="number" id="obj-pm" min="0" step="1" inputmode="decimal"></div>
+        <div class="champ"><label for="obj-ipv">Articles par vente (IPV)</label><input type="number" id="obj-ipv" min="0" step="0.1" inputmode="decimal"></div>
+      </div>
+      <div class="rangee"><button class="btn primaire" type="button" id="btn-objectifs">Enregistrer les objectifs</button></div>
+    </div>
+    <div class="bloc" style="margin-top:18px">
+      <h3>Les indicateurs</h3>
+      <ul class="liste-points">
+        <li><strong>CA</strong> : la somme des prix de vente des articles pris.</li>
+        <li><strong>TT, taux de transformation</strong> : clients qui achètent ÷ clients notés.</li>
+        <li><strong>PM, panier moyen</strong> : CA ÷ nombre de ventes.</li>
+        <li><strong>IPV, indice de vente</strong> : articles vendus ÷ nombre de ventes. Au-dessus de 1, tu fais des ventes complémentaires.</li>
+        <li><strong>Taux de réussite d'un article</strong> : fois où il a été pris ÷ fois où tu l'as proposé. Il faut au moins 3 propositions pour le classer facile ou difficile.</li>
+      </ul>
+    </div>
+    <div class="bloc" style="margin-top:18px">
+      <h3>Exporter</h3>
+      <p class="aide">Tous tes clients en tableur (une ligne par article proposé), pour ton responsable ou ton entretien annuel.</p>
+      <div class="rangee"><button class="btn" type="button" id="btn-export">Télécharger le tableur</button></div>
+    </div>
+  </section>
+</div>
+
+<div class="voile" id="voile-client" hidden>
+  <div class="feuille" role="dialog" aria-modal="true" aria-labelledby="fiche-titre" id="feuille-client"></div>
+</div>
+<div class="voile" id="voile-article" hidden>
+  <div class="feuille" role="dialog" aria-modal="true" aria-labelledby="article-titre" id="feuille-article"></div>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(() => {
+  "use strict";
+
+  // ---------- outils ----------
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const arrondi = n => Math.round((Number(n) || 0) * 100) / 100;
+  const euro = n => { const v = arrondi(n); const d = Number.isInteger(v) ? 0 : 2; return v.toLocaleString("fr-FR", { style: "currency", currency: "EUR", minimumFractionDigits: d, maximumFractionDigits: d }); };
+  const pct = x => (isFinite(x) ? Math.round(x * 100) : 0) + " %";
+  const nombre = (x, d = 1) => (isFinite(x) ? x : 0).toLocaleString("fr-FR", { minimumFractionDigits: d, maximumFractionDigits: d });
+  const pluriel = (n, mot, motPluriel) => `${n} ${n > 1 ? (motPluriel || mot + "s") : mot}`;
+  const norm = s => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  const nouvelId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  const cle = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const versDate = k => { const [a, m, j] = k.split("-").map(Number); return new Date(a, m - 1, j); };
+  const decaler = (k, n) => { const d = versDate(k); d.setDate(d.getDate() + n); return cle(d); };
+  const aujourdhui = () => cle(new Date());
+  const heureMaintenant = () => { const d = new Date(); return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
+  const dateLongue = k => { const t = versDate(k).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }); return t.charAt(0).toUpperCase() + t.slice(1); };
+  const dateCourte = k => versDate(k).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+
+  let toastMinuteur = null;
+  function toast(texte) {
+    const t = $("#toast"); t.textContent = texte; t.hidden = false;
+    clearTimeout(toastMinuteur); toastMinuteur = setTimeout(() => { t.hidden = true; }, 2600);
+  }
+
+  const CATEGORIES = ["Jeans", "Pantalons", "Shorts", "Pulls", "Sweats", "T-shirts", "Polos", "Chemises", "Vestes", "Blousons", "Manteaux", "Chaussures", "Accessoires"];
+
+  // Raisons d'un article proposé mais pas pris, avec la technique à travailler.
+  const RAISONS = [
+    { id: "prix", nom: "Prix", conseil: "Parle de valeur avant de parler de prix : la matière, la coupe, combien de fois il le portera. Ramène le prix au nombre de tenues qu'il permet, et propose de l'essayer avant de discuter du montant." },
+    { id: "taille", nom: "Pas sa taille", conseil: "Vérifie le stock dans la réserve et les autres magasins avant de dire non. Propose une coupe voisine dans sa taille, ou de le mettre de côté et de l'appeler à la réception." },
+    { id: "coupe", nom: "Coupe, pas convaincu", conseil: "Fais essayer systématiquement : en cabine, ajuste et compare deux coupes. Demande ce qu'il porte d'habitude pour viser juste du premier coup." },
+    { id: "couleur", nom: "Couleur", conseil: "Montre deux couleurs côte à côte et associe chacune à une pièce qu'il a déjà. Une couleur se vend mieux en tenue complète que seule sur le cintre." },
+    { id: "reflechit", nom: "Il réfléchit", conseil: "« Je réfléchis » cache souvent une objection. Demande : « Qu'est-ce qui vous fait hésiter ? » Reformule, réponds à ce point précis, puis propose de mettre l'article de côté." },
+    { id: "rupture", nom: "Rupture de stock", conseil: "Note les tailles et les modèles demandés pour les remonter à ton responsable, et propose tout de suite l'alternative la plus proche." },
+    { id: "autre", nom: "Autre", conseil: "Note ce qui s'est passé dans la remarque du client : c'est en relisant ces notes que tu trouveras le motif." },
+  ];
+  // Raisons d'un client reparti sans rien.
+  const RAISONS_CLIENT = [{ id: "regarde", nom: "Juste regarder", conseil: "Accueille sans pression puis reviens avec une question ouverte (« Vous cherchez pour une occasion ? »). Un client qui regarde achète plus souvent quand on lui fait essayer une pièce." }, ...RAISONS];
+  const RAISON = Object.fromEntries(RAISONS_CLIENT.map(r => [r.id, r]));
+
+  const SCENARIOS = [
+    { id: "prix", nom: "Trop cher", texte: "Le client aime l'article mais trouve le prix trop élevé." },
+    { id: "reflechit", nom: "Je vais réfléchir", texte: "Le client hésite et veut partir en disant qu'il va réfléchir." },
+    { id: "taille", nom: "Pas sa taille", texte: "L'article n'existe plus dans sa taille en rayon." },
+    { id: "complement", nom: "Vente complémentaire", texte: "Le client a déjà choisi l'article et va passer en caisse ; le vendeur doit lui proposer une pièce en plus." },
+    { id: "regarde", nom: "Je regarde seulement", texte: "Le client entre, répond « je regarde » et ne veut pas être dérangé." },
+    { id: "cadeau", nom: "Un cadeau", texte: "Le client cherche un cadeau pour quelqu'un d'autre et ne connaît ni sa taille exacte ni son style." },
+    { id: "presse", nom: "Client pressé", texte: "Le client a dix minutes et veut une tenue pour un événement ce soir." },
+  ];
+
+  // ---------- état ----------
+  const S = {
+    jours: {},            // "AAAA-MM-JJ" -> { clients: [...], bien, mieux }
+    catalogue: {},        // id -> article
+    reglages: { objCA: 0, objTT: 0, objPM: 0, objIPV: 0 },
+    jour: aujourdhui(),
+    periode: 30,
+    onglet: "service",
+  };
+  const store = { db: null, mode: "attente", files: new Map(), lecture: false };
+  const CLE_LOCALE = "carnet-vente-blue-box-v1";
+
+  function chargerLocal() {
+    try {
+      const brut = localStorage.getItem(CLE_LOCALE);
+      if (!brut) return;
+      const d = JSON.parse(brut);
+      S.jours = d.jours || {}; S.catalogue = d.catalogue || {}; S.reglages = { ...S.reglages, ...(d.reglages || {}) };
+    } catch (_) {}
+  }
+  function enregistrerLocal() {
+    try { localStorage.setItem(CLE_LOCALE, JSON.stringify({ jours: S.jours, catalogue: S.catalogue, reglages: S.reglages })); } catch (_) {}
+  }
+
+  function etat(texte, niveau) { const e = $("#etat"); e.textContent = texte; e.dataset.etat = niveau; }
+
+  // Une écriture à la fois par document, dans l'ordre des gestes.
+  function ecrire(chemin, corps) {
+    if (store.lecture) { toast("Ce carnet est en lecture seule."); return Promise.resolve(); }
+    if (store.mode !== "distant") { enregistrerLocal(); return Promise.resolve(); }
+    const faire = () => (corps ? store.db.doc(chemin).set(corps) : store.db.doc(chemin).delete());
+    const avant = store.files.get(chemin) || Promise.resolve();
+    const suite = avant.catch(() => {}).then(faire)
+      .catch(e => {
+        if (e && e.code === "unavailable") return new Promise(r => setTimeout(r, 400 + Math.random() * 800)).then(faire);
+        throw e;
+      })
+      .then(() => etat("Enregistré", "ok"))
+      .catch(e => {
+        etat("Pas enregistré", "erreur");
+        toast(e && e.code === "quota_exceeded" ? "Le carnet est plein : exporte puis supprime d'anciens jours." : "Pas enregistré. Vérifie ta connexion et refais le geste.");
+      });
+    store.files.set(chemin, suite);
+    return suite;
+  }
+
+  const jourDoc = k => S.jours[k] || { clients: [], bien: "", mieux: "" };
+  function sauverJour(k, doc) {
+    S.jours[k] = doc;
+    const vide = !doc.clients.length && !doc.bien && !doc.mieux;
+    if (vide) delete S.jours[k];
+    render();
+    return ecrire("jours/" + k, vide ? null : doc);
+  }
+  function sauverArticle(a) { S.catalogue[a.id] = a; render(); return ecrire("catalogue/" + a.id, a); }
+  function supprimerArticle(id) { delete S.catalogue[id]; render(); return ecrire("catalogue/" + id, null); }
+
+  // ---------- calculs ----------
+  const estVendu = c => (c.lignes || []).some(l => l.pris);
+  const lignesPrises = c => (c.lignes || []).filter(l => l.pris);
+  const caClient = c => lignesPrises(c).reduce((s, l) => s + (Number(l.p) || 0) * (l.q || 1), 0);
+  const articlesClient = c => lignesPrises(c).reduce((s, l) => s + (l.q || 1), 0);
+
+  function joursPeriode(nbJours, finCle = aujourdhui(), decalage = 0) {
+    const cles = Object.keys(S.jours).sort();
+    if (!nbJours) return decalage ? [] : cles;
+    const fin = decaler(finCle, -decalage * nbJours);
+    const debut = decaler(fin, -(nbJours - 1));
+    return cles.filter(k => k >= debut && k <= fin);
+  }
+
+  function indicateurs(cles) {
+    let clients = 0, ventes = 0, ca = 0, articles = 0, multi = 0;
+    for (const k of cles) for (const c of jourDoc(k).clients) {
+      clients++;
+      if (estVendu(c)) { ventes++; ca += caClient(c); const n = articlesClient(c); articles += n; if (n >= 2) multi++; }
+    }
+    return { clients, ventes, ca, articles, multi, tt: clients ? ventes / clients : NaN, pm: ventes ? ca / ventes : NaN, ipv: ventes ? articles / ventes : NaN, jours: cles.filter(k => jourDoc(k).clients.length).length };
+  }
+
+  const nomLigne = l => { const a = l.a && S.catalogue[l.a]; return a ? `${a.marque} ${a.modele}${a.couleur ? " " + a.couleur.toLowerCase() : ""}` : (l.n || "Article"); };
+  const infoLigne = l => { const a = l.a && S.catalogue[l.a]; return { marque: (a && a.marque) || l.m || "Sans marque", categorie: (a && a.categorie) || l.c || "Autre" }; };
+  const cleLigne = l => l.a || "libre:" + norm(l.n);
+
+  function statsArticles(cles) {
+    const st = {};
+    for (const k of cles) for (const c of jourDoc(k).clients) for (const l of c.lignes || []) {
+      const id = cleLigne(l);
+      const s = st[id] || (st[id] = { id, nom: nomLigne(l), a: l.a, proposes: 0, vendus: 0, ca: 0, raisons: {} });
+      s.proposes++;
+      if (l.pris) { s.vendus++; s.ca += (Number(l.p) || 0) * (l.q || 1); }
+      else if (l.r) s.raisons[l.r] = (s.raisons[l.r] || 0) + 1;
+    }
+    for (const s of Object.values(st)) s.taux = s.proposes ? s.vendus / s.proposes : 0;
+    return st;
+  }
+  const niveauTaux = s => !s || s.proposes < 3 ? "neutre" : s.taux >= 0.6 ? "facile" : s.taux <= 0.3 ? "difficile" : "moyen";
+  const NOM_NIVEAU = { facile: "Facile", moyen: "Moyen", difficile: "Difficile", neutre: "À tester" };
+  const raisonPrincipale = s => { const e = Object.entries(s.raisons).sort((a, b) => b[1] - a[1])[0]; return e ? RAISON[e[0]] : null; };
+
+  function groupes(cles, cleDe) {
+    const g = {};
+    for (const k of cles) for (const c of jourDoc(k).clients) for (const l of c.lignes || []) {
+      const nom = cleDe(l);
+      const s = g[nom] || (g[nom] = { nom, proposes: 0, vendus: 0, ca: 0 });
+      s.proposes++; if (l.pris) { s.vendus++; s.ca += (Number(l.p) || 0) * (l.q || 1); }
+    }
+    return Object.values(g).sort((a, b) => b.ca - a.ca || b.proposes - a.proposes);
+  }
+
+  function niveauObjectif(valeur, objectif) {
+    if (!objectif || !isFinite(valeur)) return "";
+    return valeur >= objectif ? "bon" : valeur >= objectif * 0.8 ? "moyen" : "mauvais";
+  }
+
+  // ---------- rendu : service ----------
+  function tuile(eyebrow, valeur, sous, niveau, delta) {
+    return `<div class="tuile" ${niveau ? `data-niveau="${niveau}"` : ""}><span class="eyebrow">${eyebrow}</span><span class="valeur">${valeur}</span>${sous ? `<span class="sous">${sous}</span>` : ""}${delta || ""}</div>`;
+  }
+
+  function tuilesIndicateurs(i, comparaison) {
+    const R = S.reglages;
+    const d = (v, w, format) => {
+      if (!comparaison || !isFinite(v) || !isFinite(w) || w === 0) return "";
+      const ecart = v - w; if (Math.abs(ecart) < 1e-9) return `<span class="delta">= période précédente</span>`;
+      return `<span class="delta ${ecart > 0 ? "haut" : "bas"}">${ecart > 0 ? "▲" : "▼"} ${format(Math.abs(ecart))} vs période précédente</span>`;
+    };
+    const c = comparaison || {};
+    return [
+      tuile("CA", euro(i.ca), pluriel(i.ventes, "vente"), comparaison ? "" : niveauObjectif(i.ca, R.objCA), d(i.ca, c.ca, euro)),
+      tuile("TT", isFinite(i.tt) ? pct(i.tt) : "—", `${i.ventes} sur ${pluriel(i.clients, "client")}`, niveauObjectif(i.tt, R.objTT / 100), d(i.tt, c.tt, x => Math.round(x * 100) + " pts")),
+      tuile("Panier moyen", isFinite(i.pm) ? euro(i.pm) : "—", R.objPM ? `objectif ${euro(R.objPM)}` : "par vente", niveauObjectif(i.pm, R.objPM), d(i.pm, c.pm, euro)),
+      tuile("IPV", isFinite(i.ipv) ? nombre(i.ipv, 2) : "—", `${pluriel(i.articles, "article")} vendu${i.articles > 1 ? "s" : ""}`, niveauObjectif(i.ipv, R.objIPV), d(i.ipv, c.ipv, x => nombre(x, 2))),
+    ].join("");
+  }
+
+  function renderService() {
+    const k = S.jour, doc = jourDoc(k), auj = aujourdhui();
+    $("#jour-titre").textContent = k === auj ? `Aujourd'hui · ${dateLongue(k).toLowerCase()}` : dateLongue(k);
+    $("#jour-auj").hidden = k === auj;
+    $("#jour-suiv").disabled = k >= auj;
+    const i = indicateurs([k]);
+    $("#tuiles-jour").innerHTML = tuilesIndicateurs(i);
+    const obj = S.reglages.objCA;
+    $("#objectif-jour").innerHTML = obj
+      ? `<div class="bloc-tete"><span class="eyebrow">Objectif du service</span><span class="aide">${i.ca >= obj ? "Objectif atteint, bravo." : `Encore ${euro(obj - i.ca)} pour ${euro(obj)}`}</span></div>
+         <div class="jauge ${i.ca >= obj ? "atteint" : ""}" role="progressbar" aria-label="Objectif de chiffre d'affaires" aria-valuemin="0" aria-valuemax="${obj}" aria-valuenow="${arrondi(i.ca)}"><span style="width:${Math.min(100, (i.ca / obj) * 100)}%"></span></div>`
+      : `<p class="aide">Fixe un objectif de CA par service dans l'onglet <button class="btn discret" type="button" data-aller="reglages">Objectifs</button> pour suivre ta progression ici.</p>`;
+
+    const clients = [...doc.clients].sort((a, b) => (b.h || "").localeCompare(a.h || ""));
+    $("#nb-clients").textContent = clients.length ? pluriel(clients.length, "client") : "";
+    $("#liste-clients").innerHTML = clients.length ? clients.map(c => {
+      const vendu = estVendu(c);
+      const lignes = (c.lignes || []).map(l => l.pris ? esc(nomLigne(l)) + (l.q > 1 ? ` ×${l.q}` : "") : `<s>${esc(nomLigne(l))}</s>${l.r ? ` (${esc(RAISON[l.r]?.nom.toLowerCase() || "")})` : ""}`).join(" · ");
+      const raison = !vendu && c.r ? RAISON[c.r]?.nom : "";
+      return `<li class="client" data-client="${esc(c.id)}" tabindex="0" role="button" aria-label="Modifier le client de ${esc(c.h)}">
+        <span class="heure">${esc(c.h || "")}</span>
+        <span class="detail"><span><span class="pastille ${vendu ? "vendu" : "perdu"}">${vendu ? "Vendu" : "Pas d'achat"}</span>${raison ? ` <span class="aide">${esc(raison)}</span>` : ""}</span>
+          ${lignes ? `<span class="lignes-mini">${lignes}</span>` : ""}${c.note ? `<span class="lignes-mini">${esc(c.note)}</span>` : ""}</span>
+        <span class="montant">${vendu ? euro(caClient(c)) : "—"}</span></li>`;
+    }).join("") : `<li class="vide">${k === auj ? "Aucun client noté. Touche « Nouveau client » dès qu'un client repart : ajoute les articles proposés et marque ceux qu'il a pris." : "Aucun client noté ce jour-là."}</li>`;
+
+    for (const [id, champ] of [["bilan-bien", "bien"], ["bilan-mieux", "mieux"]]) {
+      const el = $("#" + id);
+      if (document.activeElement !== el) el.value = doc[champ] || "";
+      el.disabled = store.lecture;
+    }
+    $("#btn-client").disabled = $("#btn-regarde").disabled = store.lecture;
+  }
+
+  // ---------- fiche client ----------
+  let F = null; // client en cours d'édition
+
+  function ouvrirClient(id) {
+    const doc = jourDoc(S.jour);
+    const existant = id && doc.clients.find(c => c.id === id);
+    F = existant ? JSON.parse(JSON.stringify(existant)) : { id: nouvelId(), h: S.jour === aujourdhui() ? heureMaintenant() : "12:00", lignes: [], r: null, note: "" };
+    F.nouveau = !existant; F.recherche = ""; F.libre = false; F.armeSuppr = false;
+    $("#voile-client").hidden = false;
+    renderFiche();
+    setTimeout(() => $("#fiche-recherche")?.focus(), 30);
+  }
+  function fermerClient() { F = null; $("#voile-client").hidden = true; }
+
+  function propositionsRecentes() {
+    const st = statsArticles(joursPeriode(30));
+    return Object.values(S.catalogue).filter(a => a.actif !== false)
+      .sort((a, b) => (st[b.id]?.proposes || 0) - (st[a.id]?.proposes || 0) || `${a.marque} ${a.modele}`.localeCompare(`${b.marque} ${b.modele}`));
+  }
+
+  function resultatsRecherche() {
+    const q = norm(F.recherche).split(/\s+/).filter(Boolean);
+    const deja = new Set(F.lignes.map(l => l.a).filter(Boolean));
+    let liste = propositionsRecentes().filter(a => !deja.has(a.id));
+    if (q.length) liste = liste.filter(a => { const t = norm(`${a.marque} ${a.modele} ${a.couleur} ${a.categorie} ${a.ref || ""}`); return q.every(m => t.includes(m)); });
+    return liste.slice(0, 6);
+  }
+
+  function renderFiche() {
+    if (!F) return;
+    const vendu = F.lignes.some(l => l.pris);
+    const ca = caClient(F), nb = articlesClient(F);
+    const res = resultatsRecherche();
+    const catalogueVide = !Object.keys(S.catalogue).length;
+    $("#feuille-client").innerHTML = `
+      <div class="feuille-tete">
+        <h2 id="fiche-titre">${F.nouveau ? "Nouveau client" : "Client"}</h2>
+        <input type="time" id="fiche-heure" value="${esc(F.h)}" aria-label="Heure" style="width:auto">
+        <button class="btn" type="button" data-fermer aria-label="Fermer">✕</button>
+      </div>
+
+      <div class="champ">
+        <label for="fiche-recherche">Articles proposés</label>
+        <input type="search" id="fiche-recherche" placeholder="${catalogueVide ? "Ajoute d'abord tes articles dans l'onglet Articles" : "Cherche : 502, zip bordeaux, Teddy…"}" value="${esc(F.recherche)}" autocomplete="off">
+        <ul class="resultats" id="fiche-resultats">${res.map(a => `<li><button type="button" data-ajouter="${esc(a.id)}"><span class="nom">${esc(a.marque)} ${esc(a.modele)}<small>${esc(a.categorie)}${a.couleur ? " · " + esc(a.couleur) : ""}</small></span><span class="chiffre">${a.prix ? euro(a.prix) : ""}</span><span aria-hidden="true">＋</span></button></li>`).join("")}</ul>
+        ${F.libre ? `<div class="champs" style="margin-top:6px">
+            <div class="champ"><label for="libre-nom">Article hors liste</label><input type="text" id="libre-nom" placeholder="Ex. : ceinture cuir marron"></div>
+            <div class="champ"><label for="libre-prix">Prix (€)</label><input type="number" id="libre-prix" min="0" step="0.01" inputmode="decimal"></div>
+            <div class="champ" style="align-self:end"><button class="btn" type="button" id="libre-ajouter">Ajouter</button></div></div>`
+          : `<div><button class="btn discret" type="button" id="libre-ouvrir">+ Article hors liste</button></div>`}
+      </div>
+
+      <ul class="lignes">${F.lignes.map((l, i) => `
+        <li class="ligne" data-pris="${l.pris}">
+          <div class="ligne-tete">
+            <span class="nom">${esc(nomLigne(l))}<small>${esc(infoLigne(l).categorie)}</small></span>
+            <button class="btn discret" type="button" data-retirer="${i}" aria-label="Retirer ${esc(nomLigne(l))}">Retirer</button>
+          </div>
+          <div class="ligne-reglages">
+            <div class="bascule" role="group" aria-label="Résultat">
+              <button type="button" class="oui" data-pris="${i}" aria-pressed="${l.pris}">Pris</button>
+              <button type="button" class="non" data-paspris="${i}" aria-pressed="${!l.pris}">Pas pris</button>
+            </div>
+            ${l.pris ? `<label class="sr" for="prix-${i}" style="font-weight:500">Prix</label><input type="number" id="prix-${i}" data-prix="${i}" min="0" step="0.01" inputmode="decimal" value="${l.p ?? ""}" placeholder="€">
+            <span class="qte"><button type="button" data-moins="${i}" aria-label="Un de moins">−</button><span>${l.q || 1}</span><button type="button" data-plus="${i}" aria-label="Un de plus">+</button></span>` : ""}
+          </div>
+          ${l.pris ? "" : `<div class="puces" role="group" aria-label="Pourquoi pas pris">${RAISONS.map(r => `<button class="puce" type="button" data-raison-ligne="${i}" data-r="${r.id}" aria-pressed="${l.r === r.id}">${r.nom}</button>`).join("")}</div>`}
+        </li>`).join("")}</ul>
+
+      ${!vendu && !F.lignes.length ? `<div class="champ"><span class="eyebrow">Pourquoi il est reparti sans rien</span>
+        <div class="puces" role="group" aria-label="Raison">${RAISONS_CLIENT.map(r => `<button class="puce" type="button" data-raison-client="${r.id}" aria-pressed="${F.r === r.id}">${r.nom}</button>`).join("")}</div></div>` : ""}
+
+      <div class="champ"><label for="fiche-note">Remarque</label><textarea id="fiche-note" placeholder="Ce qu'il cherchait, ce que tu as essayé, sa taille…">${esc(F.note)}</textarea></div>
+
+      <div class="feuille-pied">
+        <span class="resume">${vendu ? `<span class="pastille vendu">Vendu</span> ${pluriel(nb, "article")} · ${euro(ca)}` : `<span class="pastille perdu">Pas d'achat</span>`}</span>
+        ${F.nouveau ? "" : `<button class="btn danger ${F.armeSuppr ? "arme" : ""}" type="button" id="fiche-suppr">${F.armeSuppr ? "Confirmer" : "Supprimer"}</button>`}
+        <button class="btn primaire" type="button" id="fiche-ok">Enregistrer</button>
+      </div>`;
+  }
+
+  function ajouterLigne(a) {
+    F.lignes.push({ a: a.id, p: a.prix || null, q: 1, pris: true, r: null });
+    F.recherche = ""; F.r = null;
+    renderFiche();
+    $("#fiche-recherche")?.focus();
+  }
+
+  function enregistrerClient() {
+    const doc = JSON.parse(JSON.stringify(jourDoc(S.jour)));
+    const c = { id: F.id, h: F.h, lignes: F.lignes.map(l => ({ ...l, p: l.pris && l.p !== null && l.p !== "" ? arrondi(l.p) : (l.p === "" ? null : l.p) })), r: F.lignes.some(l => l.pris) || F.lignes.length ? null : F.r, note: F.note.trim() };
+    const i = doc.clients.findIndex(x => x.id === c.id);
+    if (i >= 0) doc.clients[i] = c; else doc.clients.push(c);
+    const manquePrix = c.lignes.some(l => l.pris && !l.p);
+    fermerClient();
+    sauverJour(S.jour, doc);
+    toast(manquePrix ? "Enregistré. Un article pris n'a pas de prix : il ne compte pas dans le CA." : estVendu(c) ? `Vente notée : ${euro(caClient(c))}` : "Client noté");
+  }
+
+  $("#feuille-client").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b || !F) return;
+    if (b.hasAttribute("data-fermer")) return fermerClient();
+    if (b.dataset.ajouter) { const a = S.catalogue[b.dataset.ajouter]; if (a) ajouterLigne(a); return; }
+    if (b.id === "libre-ouvrir") { F.libre = true; renderFiche(); $("#libre-nom")?.focus(); return; }
+    if (b.id === "libre-ajouter") {
+      const n = $("#libre-nom").value.trim(); if (!n) { $("#libre-nom").focus(); return; }
+      const p = parseFloat($("#libre-prix").value);
+      F.lignes.push({ a: null, n, p: isFinite(p) ? p : null, q: 1, pris: true, r: null }); F.libre = false; F.r = null; renderFiche(); return;
+    }
+    const i = Number(b.dataset.retirer ?? b.dataset.pris ?? b.dataset.paspris ?? b.dataset.moins ?? b.dataset.plus ?? b.dataset.raisonLigne);
+    if (b.dataset.retirer !== undefined) F.lignes.splice(i, 1);
+    else if (b.dataset.pris !== undefined) { F.lignes[i].pris = true; F.lignes[i].r = null; }
+    else if (b.dataset.paspris !== undefined) F.lignes[i].pris = false;
+    else if (b.dataset.moins !== undefined) F.lignes[i].q = Math.max(1, (F.lignes[i].q || 1) - 1);
+    else if (b.dataset.plus !== undefined) F.lignes[i].q = (F.lignes[i].q || 1) + 1;
+    else if (b.dataset.raisonLigne !== undefined) F.lignes[i].r = F.lignes[i].r === b.dataset.r ? null : b.dataset.r;
+    else if (b.dataset.raisonClient) F.r = F.r === b.dataset.raisonClient ? null : b.dataset.raisonClient;
+    else if (b.id === "fiche-ok") return enregistrerClient();
+    else if (b.id === "fiche-suppr") {
+      if (!F.armeSuppr) { F.armeSuppr = true; renderFiche(); return; }
+      const doc = JSON.parse(JSON.stringify(jourDoc(S.jour)));
+      doc.clients = doc.clients.filter(c => c.id !== F.id);
+      fermerClient(); sauverJour(S.jour, doc); toast("Client supprimé"); return;
+    } else return;
+    renderFiche();
+  });
+  $("#feuille-client").addEventListener("input", e => {
+    if (!F) return;
+    const t = e.target;
+    if (t.id === "fiche-recherche") {
+      F.recherche = t.value;
+      const res = resultatsRecherche();
+      $("#fiche-resultats").innerHTML = res.map(a => `<li><button type="button" data-ajouter="${esc(a.id)}"><span class="nom">${esc(a.marque)} ${esc(a.modele)}<small>${esc(a.categorie)}${a.couleur ? " · " + esc(a.couleur) : ""}</small></span><span class="chiffre">${a.prix ? euro(a.prix) : ""}</span><span aria-hidden="true">＋</span></button></li>`).join("")
+        || `<li class="vide">Aucun article ne correspond. Ajoute-le « hors liste » ou dans l'onglet Articles.</li>`;
+    } else if (t.id === "fiche-heure") F.h = t.value;
+    else if (t.id === "fiche-note") F.note = t.value;
+    else if (t.dataset.prix !== undefined) {
+      const v = parseFloat(t.value); F.lignes[Number(t.dataset.prix)].p = isFinite(v) ? v : null;
+      const vendu = F.lignes.some(l => l.pris);
+      $(".feuille-pied .resume").innerHTML = vendu ? `<span class="pastille vendu">Vendu</span> ${pluriel(articlesClient(F), "article")} · ${euro(caClient(F))}` : `<span class="pastille perdu">Pas d'achat</span>`;
+    }
+  });
+  $("#feuille-client").addEventListener("keydown", e => {
+    if (e.key === "Enter" && e.target.id === "fiche-recherche") { e.preventDefault(); const r = resultatsRecherche()[0]; if (r) ajouterLigne(r); }
+  });
+
+  // ---------- articles ----------
+  let A = null; // fiche article ouverte : { id, edition, brouillon, armeSuppr }
+
+  function renderFiltres() {
+    const marques = [...new Set(Object.values(S.catalogue).map(a => a.marque).filter(Boolean))].sort();
+    const remplir = (sel, valeurs, tous) => {
+      const v = sel.value;
+      sel.innerHTML = `<option value="">${tous}</option>` + valeurs.map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join("");
+      if (valeurs.includes(v)) sel.value = v;
+    };
+    remplir($("#art-marque"), marques, "Toutes");
+    const cats = [...new Set(Object.values(S.catalogue).map(a => a.categorie).filter(Boolean))].sort((a, b) => CATEGORIES.indexOf(a) - CATEGORIES.indexOf(b));
+    remplir($("#art-categorie"), cats, "Toutes");
+  }
+
+  function renderArticles() {
+    renderFiltres();
+    const st = statsArticles(joursPeriode(0));
+    const q = norm($("#art-recherche").value).split(/\s+/).filter(Boolean);
+    const m = $("#art-marque").value, c = $("#art-categorie").value, tri = $("#art-tri").value;
+    let liste = Object.values(S.catalogue).filter(a => (!m || a.marque === m) && (!c || a.categorie === c) && (!q.length || q.every(x => norm(`${a.marque} ${a.modele} ${a.couleur} ${a.categorie} ${a.ref || ""}`).includes(x))));
+    const s = a => st[a.id] || { proposes: 0, vendus: 0, ca: 0, taux: 0 };
+    const nom = a => `${a.marque} ${a.modele} ${a.couleur || ""}`;
+    const tris = {
+      proposes: (a, b) => s(b).proposes - s(a).proposes || nom(a).localeCompare(nom(b)),
+      "taux-haut": (a, b) => (s(b).proposes >= 3) - (s(a).proposes >= 3) || s(b).taux - s(a).taux || s(b).proposes - s(a).proposes,
+      "taux-bas": (a, b) => (s(b).proposes >= 3) - (s(a).proposes >= 3) || s(a).taux - s(b).taux || s(b).proposes - s(a).proposes,
+      ca: (a, b) => s(b).ca - s(a).ca,
+      nom: (a, b) => nom(a).localeCompare(nom(b)),
+    };
+    liste.sort(tris[tri] || tris.nom);
+    $("#btn-nouvel-article").disabled = store.lecture;
+    $("#liste-articles").innerHTML = liste.length ? liste.map(a => {
+      const x = s(a), niv = niveauTaux(x);
+      return `<li><button class="carte" type="button" data-article="${esc(a.id)}">
+        <span class="eyebrow">${esc(a.marque)} · ${esc(a.categorie)}</span>
+        <span class="titre">${esc(a.modele)}${a.couleur ? ` <span class="aide">${esc(a.couleur)}</span>` : ""}</span>
+        <span class="prix">${a.prix ? euro(a.prix) : `<span class="aide">Prix à renseigner</span>`}</span>
+        <span class="barre-taux" data-niveau="${niv}"><span style="width:${x.proposes ? Math.round(x.taux * 100) : 0}%"></span></span>
+        <span class="stats"><span>${x.proposes ? `${x.vendus} vendu${x.vendus > 1 ? "s" : ""} sur ${x.proposes} proposé${x.proposes > 1 ? "s" : ""}` : "Jamais proposé"}</span><span class="pastille ${niv}">${NOM_NIVEAU[niv]}</span></span>
+      </button></li>`;
+    }).join("") : `<li class="vide" style="grid-column:1/-1">${Object.keys(S.catalogue).length ? "Aucun article ne correspond à ces filtres." : "Aucun article pour l'instant. Ajoute les pièces que tu vends le plus : tu pourras les choisir en un geste pendant le service."}</li>`;
+  }
+
+  ["#art-recherche", "#art-marque", "#art-categorie", "#art-tri"].forEach(s => $(s).addEventListener("input", renderArticles));
+  $("#liste-articles").addEventListener("click", e => { const b = e.target.closest("[data-article]"); if (b) ouvrirArticle(b.dataset.article); });
+  $("#btn-nouvel-article").addEventListener("click", () => ouvrirArticle(null));
+
+  function ouvrirArticle(id) {
+    const a = id && S.catalogue[id];
+    A = a ? { id, edition: false, armeSuppr: false } : { id: null, edition: true, armeSuppr: false, brouillon: { marque: "", modele: "", categorie: "Pulls", couleur: "", prix: null, coupe: "", points: [], objections: [], complements: [] } };
+    if (a) A.brouillon = JSON.parse(JSON.stringify(a));
+    $("#voile-article").hidden = false;
+    renderFicheArticle();
+  }
+  function fermerArticle() { A = null; $("#voile-article").hidden = true; }
+
+  function renderFicheArticle() {
+    if (!A) return;
+    const a = A.brouillon, el = $("#feuille-article");
+    if (A.edition) {
+      el.innerHTML = `
+        <div class="feuille-tete"><h2 id="article-titre">${A.id ? "Modifier l'article" : "Nouvel article"}</h2><button class="btn" type="button" data-fermer aria-label="Fermer">✕</button></div>
+        <div class="champs">
+          <div class="champ"><label for="ed-marque">Marque</label><input type="text" id="ed-marque" value="${esc(a.marque)}" list="liste-marques"></div>
+          <div class="champ"><label for="ed-modele">Modèle</label><input type="text" id="ed-modele" value="${esc(a.modele)}"></div>
+          <div class="champ"><label for="ed-categorie">Catégorie</label><select id="ed-categorie">${CATEGORIES.map(c => `<option ${c === a.categorie ? "selected" : ""}>${c}</option>`).join("")}</select></div>
+          <div class="champ"><label for="ed-couleur">Couleur</label><input type="text" id="ed-couleur" value="${esc(a.couleur)}"></div>
+          <div class="champ"><label for="ed-prix">Prix en magasin (€)</label><input type="number" id="ed-prix" min="0" step="0.01" inputmode="decimal" value="${a.prix ?? ""}"></div>
+          <div class="champ"><label for="ed-ref">Référence</label><input type="text" id="ed-ref" value="${esc(a.ref || "")}"></div>
+        </div>
+        <datalist id="liste-marques">${[...new Set(Object.values(S.catalogue).map(x => x.marque))].map(m => `<option value="${esc(m)}">`).join("")}</datalist>
+        <div class="champ"><label for="ed-coupe">Coupe, matière, entretien</label><input type="text" id="ed-coupe" value="${esc(a.coupe || "")}" placeholder="Ex. : fuselé, coton stretch"></div>
+        <div class="champ"><label for="ed-points">Points forts (un par ligne)</label><textarea id="ed-points" rows="4">${esc((a.points || []).join("\n"))}</textarea></div>
+        <div class="champ"><label for="ed-objections">Objections et réponses (une par ligne : objection | réponse)</label><textarea id="ed-objections" rows="4" placeholder="C'est trop cher | Il se porte avec tout votre vestiaire…">${esc((a.objections || []).map(o => `${o.objection} | ${o.reponse}`).join("\n"))}</textarea></div>
+        <div class="champ"><span class="eyebrow">À proposer avec</span>
+          <div class="puces" role="group" aria-label="À proposer avec">${Object.values(S.catalogue).filter(x => x.id !== A.id).sort((x, y) => `${x.marque}${x.modele}`.localeCompare(`${y.marque}${y.modele}`)).map(x => `<button class="puce" type="button" data-complement="${esc(x.id)}" aria-pressed="${(a.complements || []).includes(x.id)}">${esc(x.marque)} ${esc(x.modele)}${x.couleur ? " " + esc(x.couleur.toLowerCase()) : ""}</button>`).join("") || `<span class="aide">Ajoute d'autres articles pour les associer.</span>`}</div></div>
+        <div class="rangee"><button class="btn" type="button" id="ed-claude">Rédiger l'argumentaire avec Claude</button><span class="aide" id="ed-claude-etat"></span></div>
+        <div class="feuille-pied">
+          <span class="resume"></span>
+          <button class="btn" type="button" id="ed-annuler">Annuler</button>
+          <button class="btn primaire" type="button" id="ed-ok">Enregistrer</button>
+        </div>`;
+      return;
+    }
+    const st = statsArticles(joursPeriode(0))[A.id] || { proposes: 0, vendus: 0, ca: 0, taux: 0, raisons: {} };
+    const niv = niveauTaux(st), rp = raisonPrincipale(st);
+    const comps = (a.complements || []).map(id => S.catalogue[id]).filter(Boolean);
+    el.innerHTML = `
+      <div class="feuille-tete"><div style="flex:1"><span class="eyebrow">${esc(a.marque)} · ${esc(a.categorie)}${a.ref ? " · " + esc(a.ref) : ""}</span><h2 id="article-titre">${esc(a.modele)}${a.couleur ? " " + esc(a.couleur.toLowerCase()) : ""}</h2></div><button class="btn" type="button" data-fermer aria-label="Fermer">✕</button></div>
+      <div class="tuiles">
+        ${tuile("Prix", a.prix ? euro(a.prix) : "—", a.coupe ? esc(a.coupe) : "")}
+        ${tuile("Réussite", st.proposes ? pct(st.taux) : "—", `${st.vendus} sur ${pluriel(st.proposes, "proposition")}`, { facile: "bon", moyen: "moyen", difficile: "mauvais" }[niv] || "")}
+        ${tuile("CA total", euro(st.ca), NOM_NIVEAU[niv])}
+      </div>
+      ${rp ? `<div class="conseil"><span class="eyebrow">Ce qui bloque le plus : ${esc(rp.nom.toLowerCase())}</span><p>${esc(rp.conseil)}</p></div>` : ""}
+      <div class="champ"><h3>Points forts</h3>${(a.points || []).length ? `<ul class="liste-points">${a.points.map(p => `<li>${esc(p)}</li>`).join("")}</ul>` : `<p class="aide">Pas encore d'argumentaire. « Modifier » pour l'écrire, ou laisse Claude le rédiger.</p>`}</div>
+      ${(a.objections || []).length ? `<div class="champ"><h3>Objections</h3>${a.objections.map(o => `<div class="objection"><strong>${esc(o.objection)}</strong><span>${esc(o.reponse)}</span></div>`).join("")}</div>` : ""}
+      ${comps.length ? `<div class="champ"><h3>À proposer avec</h3><div class="puces">${comps.map(x => `<button class="puce" type="button" data-voir="${esc(x.id)}">${esc(x.marque)} ${esc(x.modele)}${x.couleur ? " " + esc(x.couleur.toLowerCase()) : ""}</button>`).join("")}</div></div>` : ""}
+      ${a.lien ? `<p><a href="${esc(a.lien)}" target="_blank" rel="noopener">Fiche produit ${esc(a.site || "")} ↗</a></p>` : ""}
+      ${store.lecture ? "" : `<div class="feuille-pied">
+        <span class="resume"></span>
+        <button class="btn danger ${A.armeSuppr ? "arme" : ""}" type="button" id="art-suppr">${A.armeSuppr ? "Confirmer" : "Supprimer"}</button>
+        <button class="btn primaire" type="button" id="art-modifier">Modifier</button>
+      </div>`}`;
+  }
+
+  function lireFormulaireArticle() {
+    const a = A.brouillon;
+    a.marque = $("#ed-marque").value.trim(); a.modele = $("#ed-modele").value.trim();
+    a.categorie = $("#ed-categorie").value; a.couleur = $("#ed-couleur").value.trim();
+    const p = parseFloat($("#ed-prix").value); a.prix = isFinite(p) ? arrondi(p) : null;
+    a.ref = $("#ed-ref").value.trim() || null; a.coupe = $("#ed-coupe").value.trim();
+    a.points = $("#ed-points").value.split("\n").map(s => s.trim()).filter(Boolean);
+    a.objections = $("#ed-objections").value.split("\n").map(s => s.trim()).filter(Boolean).map(s => { const [o, ...r] = s.split("|"); return { objection: o.trim(), reponse: r.join("|").trim() }; }).filter(o => o.objection);
+  }
+
+  $("#feuille-article").addEventListener("click", async e => {
+    const b = e.target.closest("button"); if (!b || !A) return;
+    if (b.hasAttribute("data-fermer")) return fermerArticle();
+    if (b.dataset.voir) return ouvrirArticle(b.dataset.voir);
+    if (b.id === "art-modifier") { A.edition = true; renderFicheArticle(); return; }
+    if (b.id === "art-suppr") {
+      if (!A.armeSuppr) { A.armeSuppr = true; renderFicheArticle(); return; }
+      const id = A.id; fermerArticle(); supprimerArticle(id); toast("Article supprimé (les ventes passées restent dans tes chiffres)"); return;
+    }
+    if (b.id === "ed-annuler") { if (!A.id) return fermerArticle(); A.brouillon = JSON.parse(JSON.stringify(S.catalogue[A.id])); A.edition = false; renderFicheArticle(); return; }
+    if (b.dataset.complement) {
+      const c = A.brouillon.complements || (A.brouillon.complements = []);
+      const i = c.indexOf(b.dataset.complement); if (i >= 0) c.splice(i, 1); else c.push(b.dataset.complement);
+      b.setAttribute("aria-pressed", String(i < 0)); return;
+    }
+    if (b.id === "ed-ok") {
+      lireFormulaireArticle();
+      const a = A.brouillon;
+      if (!a.marque || !a.modele) { toast("Il faut au moins une marque et un modèle."); (!a.marque ? $("#ed-marque") : $("#ed-modele")).focus(); return; }
+      if (!A.id) a.id = (norm(`${a.marque}-${a.modele}-${a.couleur}`).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) || "article") + "-" + nouvelId().slice(-4);
+      A.id = a.id; A.edition = false;
+      sauverArticle(JSON.parse(JSON.stringify(a)));
+      renderFicheArticle(); toast("Article enregistré"); return;
+    }
+    if (b.id === "ed-claude") {
+      lireFormulaireArticle();
+      const a = A.brouillon;
+      if (!a.marque || !a.modele) { toast("Indique au moins la marque et le modèle."); return; }
+      const sample = await obtenirSample(); const etatEl = $("#ed-claude-etat");
+      if (!sample) { etatEl.textContent = "Claude répond sur la page publiée seulement."; return; }
+      b.disabled = true; etatEl.textContent = "Claude rédige…";
+      const autres = Object.values(S.catalogue).filter(x => x.id !== A.id).map(x => `${x.id} : ${x.marque} ${x.modele} ${x.couleur || ""} (${x.categorie})`).join("\n");
+      try {
+        const r = await sample.json(`Tu aides un vendeur d'un magasin de prêt-à-porter multimarque Blue Box à préparer l'argumentaire d'un article.
+Article : ${a.marque} ${a.modele}, catégorie ${a.categorie}${a.couleur ? ", couleur " + a.couleur : ""}${a.prix ? `, prix ${a.prix} €` : ""}${a.coupe ? `, ${a.coupe}` : ""}.
+${a.points.length ? "Points déjà notés par le vendeur : " + a.points.join(" ; ") : ""}
+N'invente pas de caractéristiques techniques précises (composition, grammage, provenance) que tu ne connais pas avec certitude pour ce modèle : appuie-toi sur la coupe, le style, les usages, les associations, et ce qui est connu de la marque.
+Autres articles du magasin (id : nom) :
+${autres || "(aucun)"}
+Réponds uniquement avec un objet JSON : {"points": [4 à 5 arguments courts à dire au client, en le vouvoyant], "objections": [3 objets {"objection": "phrase du client", "reponse": "réponse du vendeur en 1 à 2 phrases"}], "complements": [jusqu'à 3 id pris dans la liste ci-dessus, les plus logiques à proposer avec cet article]}`, { modelTier: "default" });
+        if (Array.isArray(r?.points)) a.points = r.points.map(String).slice(0, 6);
+        if (Array.isArray(r?.objections)) a.objections = r.objections.filter(o => o && o.objection).map(o => ({ objection: String(o.objection), reponse: String(o.reponse || "") })).slice(0, 5);
+        if (Array.isArray(r?.complements)) a.complements = [...new Set([...(a.complements || []), ...r.complements.map(String).filter(id => S.catalogue[id] && id !== A.id)])];
+        renderFicheArticle();
+        $("#ed-claude-etat").textContent = "Relis, ajuste avec ce que tu sais du produit, puis enregistre.";
+      } catch (err) {
+        b.disabled = false; etatEl.textContent = messageSample(err);
+      }
+    }
+  });
+
+  // ---------- analyse ----------
+  function renderAnalyse() {
+    const n = S.periode, cles = joursPeriode(n), prec = n ? joursPeriode(n, aujourdhui(), 1) : [];
+    const i = indicateurs(cles), ip = n ? indicateurs(prec) : null;
+    $$("#periodes .puce").forEach(b => b.setAttribute("aria-pressed", String(Number(b.dataset.periode) === n)));
+    $("#periode-texte").textContent = i.clients ? `${pluriel(i.jours, "service")}, ${pluriel(i.clients, "client")} notés${n ? ` sur les ${n} derniers jours` : " depuis le début"}.` : "Pas encore de clients notés sur cette période.";
+    $("#tuiles-periode").innerHTML = tuilesIndicateurs(i, ip && ip.clients ? ip : null) + tuile("Ventes à 2 articles et plus", i.ventes ? pct(i.multi / i.ventes) : "—", `${i.multi} sur ${pluriel(i.ventes, "vente")}`);
+
+    renderGraphe(cles, n);
+
+    const st = Object.values(statsArticles(cles)).filter(s => s.proposes >= 3);
+    const ligne = s => { const rp = raisonPrincipale(s); return `<li><span>${esc(s.nom)}</span><span class="chiffre">${pct(s.taux)}</span><small>${s.vendus} sur ${s.proposes} · ${euro(s.ca)}${rp ? ` · bloque surtout sur : ${esc(rp.nom.toLowerCase())}` : ""}</small></li>`; };
+    const faciles = st.filter(s => s.taux >= 0.6).sort((a, b) => b.taux - a.taux || b.proposes - a.proposes).slice(0, 6);
+    const difficiles = st.filter(s => s.taux <= 0.3).sort((a, b) => a.taux - b.taux || b.proposes - a.proposes).slice(0, 6);
+    const attente = `Il faut au moins 3 propositions d'un article pour le classer.`;
+    $("#top-facile").innerHTML = faciles.map(ligne).join("") || `<li class="vide">${attente}</li>`;
+    $("#top-difficile").innerHTML = difficiles.map(ligne).join("") || `<li class="vide">${st.length ? "Aucun article sous 30 %. Continue comme ça." : attente}</li>`;
+
+    // Raisons : lignes non prises + clients repartis sans article proposé.
+    const compte = {};
+    for (const k of cles) for (const c of jourDoc(k).clients) {
+      for (const l of c.lignes || []) if (!l.pris && l.r) compte[l.r] = (compte[l.r] || 0) + 1;
+      if (!(c.lignes || []).length && c.r) compte[c.r] = (compte[c.r] || 0) + 1;
+    }
+    const raisons = Object.entries(compte).sort((a, b) => b[1] - a[1]);
+    const max = raisons[0]?.[1] || 1, total = raisons.reduce((s, r) => s + r[1], 0);
+    $("#raisons").innerHTML = raisons.map(([id, nb]) => `<li><span>${esc(RAISON[id]?.nom || id)}</span><span class="piste"><span style="width:${(nb / max) * 100}%"></span></span><span class="chiffre">${nb} · ${pct(nb / total)}</span></li>`).join("")
+      || `<li class="vide">Quand un client ne prend pas un article, touche la raison : elle s'affichera ici.</li>`;
+    const top = raisons[0] && RAISON[raisons[0][0]];
+    $("#conseil-raison").innerHTML = top ? `<div class="conseil"><span class="eyebrow">À travailler : ${esc(top.nom.toLowerCase())}</span><p>${esc(top.conseil)}</p></div>` : "";
+
+    // Paires achetées ensemble.
+    const paires = {};
+    for (const k of cles) for (const c of jourDoc(k).clients) {
+      const ids = [...new Set(lignesPrises(c).map(l => cleLigne(l)))].sort();
+      const noms = Object.fromEntries(lignesPrises(c).map(l => [cleLigne(l), nomLigne(l)]));
+      for (let x = 0; x < ids.length; x++) for (let y = x + 1; y < ids.length; y++) {
+        const p = ids[x] + "|" + ids[y]; (paires[p] || (paires[p] = { noms: [noms[ids[x]], noms[ids[y]]], n: 0 })).n++;
+      }
+    }
+    const tp = Object.values(paires).sort((a, b) => b.n - a.n).slice(0, 6);
+    $("#paires").innerHTML = tp.map(p => `<li><span>${esc(p.noms[0])} + ${esc(p.noms[1])}</span><span class="chiffre">${p.n}×</span></li>`).join("") || `<li class="vide">Les articles achetés ensemble apparaîtront ici. Ce sont tes meilleures idées de vente complémentaire.</li>`;
+    $("#complement-texte").textContent = i.ventes ? `${pct(i.multi / i.ventes)} de tes ventes comptent au moins 2 articles.` : "";
+
+    const table = (lignes, titre) => lignes.length ? `<table><thead><tr><th>${titre}</th><th class="n">Proposés</th><th class="n">Vendus</th><th class="n">Réussite</th><th class="n">CA</th></tr></thead><tbody>${lignes.map(g => `<tr><td>${esc(g.nom)}</td><td class="n">${g.proposes}</td><td class="n">${g.vendus}</td><td class="n">${pct(g.vendus / g.proposes)}</td><td class="n">${euro(g.ca)}</td></tr>`).join("")}</tbody></table>` : `<p class="vide">Rien sur cette période.</p>`;
+    $("#table-marques").innerHTML = table(groupes(cles, l => infoLigne(l).marque), "Marque");
+    $("#table-categories").innerHTML = table(groupes(cles, l => infoLigne(l).categorie), "Catégorie");
+
+    const creneaux = {};
+    for (const k of cles) for (const c of jourDoc(k).clients) {
+      const h = parseInt((c.h || "").slice(0, 2), 10); if (!isFinite(h)) continue;
+      const debut = Math.floor(h / 2) * 2, nom = `${debut} h – ${debut + 2} h`;
+      const s = creneaux[debut] || (creneaux[debut] = { nom, clients: 0, ventes: 0, ca: 0 });
+      s.clients++; if (estVendu(c)) { s.ventes++; s.ca += caClient(c); }
+    }
+    const cr = Object.keys(creneaux).map(Number).sort((a, b) => a - b).map(h => creneaux[h]);
+    $("#table-creneaux").innerHTML = cr.length ? `<table><thead><tr><th>Créneau</th><th class="n">Clients</th><th class="n">TT</th><th class="n">CA</th></tr></thead><tbody>${cr.map(s => `<tr><td>${s.nom}</td><td class="n">${s.clients}</td><td class="n">${pct(s.ventes / s.clients)}</td><td class="n">${euro(s.ca)}</td></tr>`).join("")}</tbody></table>` : `<p class="vide">Rien sur cette période.</p>`;
+  }
+
+  function renderGraphe(cles, n) {
+    const fin = aujourdhui();
+    let jours;
+    if (n && n <= 30) { jours = []; for (let d = n - 1; d >= 0; d--) jours.push(decaler(fin, -d)); }
+    else jours = cles.filter(k => jourDoc(k).clients.length);
+    const valeurs = jours.map(k => ({ k, ca: indicateurs([k]).ca }));
+    const el = $("#graphe-ca");
+    if (!valeurs.some(v => v.ca > 0)) { el.innerHTML = `<p class="vide">Le graphique se remplit à mesure que tu notes tes ventes.</p>`; $("#graphe-legende").textContent = ""; return; }
+    const obj = S.reglages.objCA || 0;
+    const brut = Math.max(obj, ...valeurs.map(v => v.ca));
+    const pas = [50, 100, 200, 250, 500, 1000, 2000, 2500, 5000, 10000].find(p => brut / p <= 5) || 20000;
+    const haut = Math.ceil(brut / pas) * pas;
+    const L = 720, H = 240, g = 52, dr = 10, ht = 12, bas = 28, larg = L - g - dr, hauteur = H - ht - bas;
+    const y = v => ht + hauteur - (v / haut) * hauteur;
+    const bw = larg / valeurs.length;
+    const graduations = []; for (let v = 0; v <= haut; v += pas) graduations.push(v);
+    const etiquetteTous = Math.ceil(valeurs.length / 8);
+    el.innerHTML = `<svg viewBox="0 0 ${L} ${H}" role="img" aria-label="Chiffre d'affaires par jour">
+      ${graduations.map(v => `<line class="grille" x1="${g}" x2="${L - dr}" y1="${y(v)}" y2="${y(v)}"/><text x="${g - 8}" y="${y(v) + 4}" text-anchor="end">${v.toLocaleString("fr-FR")} €</text>`).join("")}
+      ${valeurs.map((v, i) => { const h = Math.max(v.ca > 0 ? 2 : 0, hauteur - (y(v.ca) - ht)); const x = g + i * bw + bw * 0.15; return `<rect class="barre ${obj && v.ca >= obj ? "atteint" : ""}" x="${x}" y="${y(v.ca)}" width="${Math.max(1, bw * 0.7)}" height="${h}" rx="2"><title>${dateCourte(v.k)} : ${euro(v.ca)}</title></rect>`; }).join("")}
+      ${obj ? `<line class="cible" x1="${g}" x2="${L - dr}" y1="${y(obj)}" y2="${y(obj)}"/>` : ""}
+      ${valeurs.map((v, i) => i % etiquetteTous === 0 ? `<text x="${g + i * bw + bw / 2}" y="${H - 8}" text-anchor="middle">${dateCourte(v.k)}</text>` : "").join("")}
+    </svg>`;
+    $("#graphe-legende").textContent = obj ? `Pointillés : ton objectif de ${euro(obj)} ; en vert, les jours où tu l'as atteint.` : "";
+  }
+
+  $("#periodes").addEventListener("click", e => { const b = e.target.closest("[data-periode]"); if (!b) return; S.periode = Number(b.dataset.periode); renderAnalyse(); });
+
+  // ---------- Claude ----------
+  let samplePromesse = null;
+  function obtenirSample() {
+    if (!(window.claude && typeof window.claude.use === "function")) return Promise.resolve(null);
+    if (!samplePromesse) samplePromesse = window.claude.use("sample").catch(() => null);
+    return samplePromesse;
+  }
+  function messageSample(err) {
+    const code = err && err.code;
+    if (code === "not_granted") return "Claude n'a pas été autorisé pour cette page.";
+    if (code === "rate_limited") return "Trop de demandes d'un coup : réessaie dans une minute.";
+    if (code === "cancelled") return "Demande annulée.";
+    return "Claude n'a pas pu répondre. Réessaie dans un instant.";
+  }
+  function texteClaude(t) {
+    const lignes = esc(t).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").split("\n");
+    let html = "", liste = null;
+    for (const l of lignes) {
+      const m = l.match(/^\s*(?:[-•*]|\d+[.)])\s+(.*)/);
+      if (m) { if (!liste) { liste = /^\s*\d/.test(l) ? "ol" : "ul"; html += `<${liste}>`; } html += `<li>${m[1]}</li>`; continue; }
+      if (liste) { html += `</${liste}>`; liste = null; }
+      const h = l.match(/^#{1,4}\s+(.*)/);
+      if (h) html += `<p><strong>${h[1]}</strong></p>`; else if (l.trim()) html += `<p>${l}</p>`;
+    }
+    if (liste) html += `</${liste}>`;
+    return html;
+  }
+  async function demander(bouton, cible, prompt, options = {}) {
+    const sample = await obtenirSample();
+    if (!sample) { cible.innerHTML = `<p class="aide">Claude répond sur la page publiée seulement.</p>`; return null; }
+    bouton.disabled = true; cible.innerHTML = `<p class="aide">Claude réfléchit…</p>`;
+    try {
+      const r = await sample(prompt, { ...options, onText: ({ text }) => { cible.innerHTML = texteClaude(text); } });
+      cible.innerHTML = texteClaude(r.text) + (r.truncated ? `<p class="aide">Réponse coupée.</p>` : "");
+      return r.text;
+    } catch (err) { cible.innerHTML = `<p class="aide">${esc(messageSample(err))}</p>`; return null; }
+    finally { bouton.disabled = false; }
+  }
+
+  function resumeClients(cles) {
+    return cles.flatMap(k => jourDoc(k).clients.map(c => {
+      const lignes = (c.lignes || []).map(l => `${nomLigne(l)} ${l.pris ? `PRIS${l.p ? " " + l.p + " €" : ""}${l.q > 1 ? " x" + l.q : ""}` : `pas pris${l.r ? " (" + RAISON[l.r]?.nom + ")" : ""}`}`).join(" ; ");
+      return `${k} ${c.h} : ${lignes || "aucun article proposé" + (c.r ? " (" + RAISON[c.r]?.nom + ")" : "")}${c.note ? " — note : " + c.note : ""}`;
+    })).join("\n");
+  }
+  const CONTEXTE = `Tu es un coach de vente expérimenté en prêt-à-porter. Tu accompagnes un vendeur d'un magasin multimarque Blue Box (marques comme Tommy Jeans, Levi's, Teddy Smith). Indicateurs : CA, TT (taux de transformation = ventes ÷ clients), PM (panier moyen), IPV (articles par vente). Parle-lui en le tutoyant, en français simple, de façon concrète et bienveillante mais franche. Pas de généralités : appuie chaque conseil sur ses chiffres ou ses clients, et donne des phrases exactes qu'il peut dire en magasin.`;
+
+  $("#btn-debrief").addEventListener("click", e => {
+    const k = S.jour, doc = jourDoc(k), i = indicateurs([k]);
+    if (!doc.clients.length && !doc.bien && !doc.mieux) { $("#debrief").innerHTML = `<p class="aide">Note quelques clients d'abord : le débrief s'appuie dessus.</p>`; return; }
+    const R = S.reglages;
+    demander(e.currentTarget, $("#debrief"), `${CONTEXTE}
+
+Service du ${dateLongue(k)} : ${i.clients} clients, ${i.ventes} ventes, CA ${arrondi(i.ca)} €, TT ${isFinite(i.tt) ? Math.round(i.tt * 100) + " %" : "—"}, PM ${isFinite(i.pm) ? arrondi(i.pm) + " €" : "—"}, IPV ${isFinite(i.ipv) ? nombre(i.ipv, 2) : "—"}.
+Objectifs : CA ${R.objCA || "non fixé"} €, TT ${R.objTT || "non fixé"} %, PM ${R.objPM || "non fixé"} €, IPV ${R.objIPV || "non fixé"}.
+Clients :
+${resumeClients([k]) || "(aucun)"}
+Ce qui a bien marché selon lui : ${doc.bien || "(rien noté)"}
+Ce qu'il veut améliorer : ${doc.mieux || "(rien noté)"}
+
+Fais un débrief court : une phrase sur le service, ce qu'il a bien fait (2 points), et 2 choses précises à faire au prochain service, chacune avec une phrase à dire au client. 150 mots maximum.`);
+  });
+
+  $("#btn-coach").addEventListener("click", e => {
+    const n = S.periode, cles = joursPeriode(n), i = indicateurs(cles);
+    if (!i.clients) { $("#coach").innerHTML = `<p class="aide">Note des clients pendant quelques services : le coach a besoin de chiffres.</p>`; return; }
+    const st = Object.values(statsArticles(cles)).sort((a, b) => b.proposes - a.proposes).slice(0, 25)
+      .map(s => `${s.nom} : proposé ${s.proposes}, vendu ${s.vendus}, CA ${arrondi(s.ca)} €${Object.keys(s.raisons).length ? ", refus : " + Object.entries(s.raisons).map(([r, nb]) => `${RAISON[r]?.nom} ${nb}`).join(", ") : ""}`).join("\n");
+    const R = S.reglages;
+    const bilans = cles.map(k => jourDoc(k)).filter(d => d.bien || d.mieux).slice(-8).map(d => `+ ${d.bien || "—"} / à améliorer : ${d.mieux || "—"}`).join("\n");
+    demander(e.currentTarget, $("#coach"), `${CONTEXTE}
+
+Période : ${n ? n + " derniers jours" : "depuis le début"}. ${i.jours} services, ${i.clients} clients, ${i.ventes} ventes, CA ${arrondi(i.ca)} €, TT ${Math.round(i.tt * 100)} %, PM ${isFinite(i.pm) ? arrondi(i.pm) + " €" : "—"}, IPV ${isFinite(i.ipv) ? nombre(i.ipv, 2) : "—"}, ventes à 2 articles et plus : ${i.ventes ? Math.round(i.multi / i.ventes * 100) : 0} %.
+Objectifs : CA/service ${R.objCA || "non fixé"} €, TT ${R.objTT || "non fixé"} %, PM ${R.objPM || "non fixé"} €, IPV ${R.objIPV || "non fixé"}.
+Articles (proposé / vendu / raisons des refus) :
+${st}
+${bilans ? "Ses bilans de service récents :\n" + bilans : ""}
+
+Donne : 1) en deux phrases, son point fort et son point faible d'après les chiffres ; 2) trois actions précises pour les prochains services, chacune avec le chiffre qu'elle doit faire bouger et une phrase à dire au client ; 3) l'article sur lequel il doit s'entraîner en priorité et pourquoi. 250 mots maximum.`);
+  });
+
+  // ---------- entraînement ----------
+  let E = { scenario: "prix", messages: [], fini: false };
+  function renderEntrainement() {
+    $("#scenarios").innerHTML = SCENARIOS.map(s => `<button class="puce" type="button" data-scenario="${s.id}" aria-pressed="${E.scenario === s.id}" title="${esc(s.texte)}">${s.nom}</button>`).join("");
+    const sel = $("#entr-article"), v = sel.value;
+    const st = statsArticles(joursPeriode(0));
+    const liste = Object.values(S.catalogue).sort((a, b) => (st[a.id] ? st[a.id].taux : 1) - (st[b.id] ? st[b.id].taux : 1) || `${a.marque}${a.modele}`.localeCompare(`${b.marque}${b.modele}`));
+    sel.innerHTML = `<option value="">Au choix de Claude</option>` + liste.map(a => { const s = st[a.id], niv = niveauTaux(s); return `<option value="${esc(a.id)}">${esc(a.marque)} ${esc(a.modele)}${a.couleur ? " " + esc(a.couleur.toLowerCase()) : ""}${niv === "difficile" ? " · difficile pour toi" : ""}</option>`; }).join("");
+    if ([...sel.options].some(o => o.value === v)) sel.value = v;
+  }
+  function renderDiscussion() {
+    $("#bloc-scene").hidden = !E.messages.length;
+    $("#discussion").innerHTML = E.messages.slice(1).map(m => `<div class="bulle ${m.role === "assistant" ? "client" : "vendeur"}"><small>${m.role === "assistant" ? "Client" : "Toi"}</small>${esc(m.content)}</div>`).join("");
+    const d = $("#discussion"); d.scrollTop = d.scrollHeight;
+    $("#btn-repondre").disabled = $("#entr-reponse").disabled = E.fini || E.attente;
+    $("#btn-retour").disabled = E.attente || E.messages.length < 4;
+  }
+  $("#scenarios").addEventListener("click", e => { const b = e.target.closest("[data-scenario]"); if (!b) return; E.scenario = b.dataset.scenario; renderEntrainement(); });
+
+  async function tourClient() {
+    const sample = await obtenirSample();
+    if (!sample) { $("#entr-etat").textContent = "Claude répond sur la page publiée seulement."; return; }
+    E.attente = true; renderDiscussion();
+    const bulle = document.createElement("div"); bulle.className = "bulle client"; bulle.innerHTML = `<small>Client</small>…`;
+    $("#discussion").append(bulle);
+    try {
+      const r = await sample(E.messages, { cache: false, modelTier: "default", onText: ({ text }) => { bulle.innerHTML = `<small>Client</small>${esc(text)}`; } });
+      E.messages.push({ role: "assistant", content: r.text.trim() });
+      $("#entr-etat").textContent = "";
+    } catch (err) {
+      $("#entr-etat").textContent = messageSample(err);
+      if (E.messages.length === 1) E.messages = [];
+      else E.messages.pop();
+    }
+    E.attente = false; renderDiscussion();
+    $("#entr-reponse").focus();
+  }
+
+  $("#btn-scene").addEventListener("click", () => {
+    const sc = SCENARIOS.find(s => s.id === E.scenario);
+    const a = S.catalogue[$("#entr-article").value];
+    const niveau = { ouvert: "plutôt ouvert et sympathique, tu te laisses convaincre par de bons arguments", normal: "normal : tu as de vrais doutes et tu ne te laisses convaincre que si le vendeur pose des questions et répond précisément", exigeant: "exigeant et pressé, tu coupes la parole aux discours trop longs et tu ne cèdes qu'à un vendeur qui écoute vraiment, reformule et propose une solution concrète" }[$("#entr-niveau").value];
+    const article = a ? `${a.marque} ${a.modele}${a.couleur ? " " + a.couleur : ""} (${a.categorie}${a.prix ? ", " + a.prix + " €" : ""})` : "un article du magasin que tu choisis (jean Levi's 502, pull Tommy Jeans, pantalon Teddy Smith…)";
+    E = { scenario: E.scenario, fini: false, attente: false, messages: [{ role: "user", content: `Jeu de rôle d'entraînement à la vente. Tu joues UN CLIENT dans un magasin de prêt-à-porter multimarque Blue Box ; je suis le vendeur.
+Situation : ${sc.texte}
+Article concerné : ${article}.
+Ton caractère : ${niveau}.
+Règles : reste toujours dans ton rôle de client, réponds en 1 à 3 phrases, en français parlé naturel, vouvoie le vendeur. Ne donne jamais de conseil de vente et ne commente pas la scène. Invente un prénom, un âge et un besoin réaliste, et garde-les. Si le vendeur conclut bien, tu peux acheter (et même prendre un article en plus si on te le propose habilement) ; s'il insiste maladroitement, tu pars poliment. Une courte didascalie entre astérisques est permise.
+Commence la scène par ta première réplique quand le vendeur s'approche de toi.` }] };
+    $("#retour").innerHTML = "";
+    renderDiscussion();
+    tourClient();
+  });
+  function envoyerReponse() {
+    const t = $("#entr-reponse").value.trim(); if (!t || E.attente || E.fini) return;
+    E.messages.push({ role: "user", content: t }); $("#entr-reponse").value = "";
+    tourClient();
+  }
+  $("#btn-repondre").addEventListener("click", envoyerReponse);
+  $("#entr-reponse").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); envoyerReponse(); } });
+  $("#btn-retour").addEventListener("click", async e => {
+    E.fini = true; renderDiscussion();
+    const sc = SCENARIOS.find(s => s.id === E.scenario);
+    const transcript = E.messages.slice(1).map(m => `${m.role === "assistant" ? "CLIENT" : "VENDEUR"} : ${m.content}`).join("\n");
+    await demander(e.currentTarget, $("#retour"), `${CONTEXTE}
+
+Il vient de s'entraîner sur cette situation : ${sc.texte}
+Voici l'échange :
+${transcript}
+
+Donne ton retour : une note sur 10 ; ce qu'il a bien fait (2 points, en citant ses mots) ; ce qu'il doit travailler (3 points maximum), chacun avec la phrase exacte qu'il aurait pu dire à la place ; et la technique de vente à retenir pour cette situation en une phrase. 220 mots maximum.`, { cache: false });
+    $("#btn-retour").disabled = true;
+  });
+
+  // ---------- objectifs et export ----------
+  function renderReglages() {
+    const R = S.reglages;
+    for (const [id, champ] of [["obj-ca", "objCA"], ["obj-tt", "objTT"], ["obj-pm", "objPM"], ["obj-ipv", "objIPV"]]) {
+      const el = $("#" + id); if (document.activeElement !== el) el.value = R[champ] || ""; el.disabled = store.lecture;
+    }
+    $("#btn-objectifs").disabled = store.lecture;
+  }
+  $("#btn-objectifs").addEventListener("click", () => {
+    const v = id => { const x = parseFloat($("#" + id).value); return isFinite(x) && x > 0 ? x : 0; };
+    S.reglages = { objCA: v("obj-ca"), objTT: Math.min(100, v("obj-tt")), objPM: v("obj-pm"), objIPV: v("obj-ipv") };
+    render(); ecrire("reglages/general", S.reglages); toast("Objectifs enregistrés");
+  });
+
+  $("#btn-export").addEventListener("click", async () => {
+    const cel = v => { const s = String(v ?? ""); return /[;"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+    const lignes = [["Date", "Heure", "Client", "Résultat", "Article", "Marque", "Catégorie", "Prix", "Quantité", "Pris", "Raison", "Remarque"]];
+    for (const k of Object.keys(S.jours).sort()) jourDoc(k).clients.forEach((c, n) => {
+      const res = estVendu(c) ? "Vendu" : "Pas d'achat";
+      if (!(c.lignes || []).length) lignes.push([k, c.h, n + 1, res, "", "", "", "", "", "", RAISON[c.r]?.nom || "", c.note]);
+      for (const l of c.lignes || []) { const inf = infoLigne(l); lignes.push([k, c.h, n + 1, res, nomLigne(l), inf.marque, inf.categorie, l.p != null ? String(l.p).replace(".", ",") : "", l.q || 1, l.pris ? "Oui" : "Non", l.pris ? "" : RAISON[l.r]?.nom || "", c.note]); }
+    });
+    if (lignes.length === 1) { toast("Rien à exporter pour l'instant."); return; }
+    const csv = "﻿" + lignes.map(l => l.map(cel).join(";")).join("\r\n");
+    let downloads = null;
+    try { downloads = window.claude && typeof window.claude.use === "function" ? await window.claude.use("downloads") : null; } catch (_) {}
+    if (!downloads) { toast("Le téléchargement marche sur la page publiée."); return; }
+    try { await downloads.save({ filename: `carnet-vente-${aujourdhui()}.csv`, data: new Blob([csv], { type: "text/csv;charset=utf-8" }) }); }
+    catch (err) { if (err && err.code !== "cancelled" && err.code !== "declined") toast("Le fichier n'a pas pu être enregistré."); }
+  });
+
+  // ---------- service : gestes ----------
+  $("#btn-client").addEventListener("click", () => ouvrirClient(null));
+  $("#btn-regarde").addEventListener("click", () => {
+    const doc = JSON.parse(JSON.stringify(jourDoc(S.jour)));
+    doc.clients.push({ id: nouvelId(), h: S.jour === aujourdhui() ? heureMaintenant() : "12:00", lignes: [], r: "regarde", note: "" });
+    sauverJour(S.jour, doc); toast("Passage noté : juste regarder");
+  });
+  $("#liste-clients").addEventListener("click", e => { const li = e.target.closest("[data-client]"); if (li && !store.lecture) ouvrirClient(li.dataset.client); });
+  $("#liste-clients").addEventListener("keydown", e => { if ((e.key === "Enter" || e.key === " ") && e.target.matches("[data-client]")) { e.preventDefault(); if (!store.lecture) ouvrirClient(e.target.dataset.client); } });
+  $("#jour-prec").addEventListener("click", () => { S.jour = decaler(S.jour, -1); renderService(); });
+  $("#jour-suiv").addEventListener("click", () => { if (S.jour < aujourdhui()) { S.jour = decaler(S.jour, 1); renderService(); } });
+  $("#jour-auj").addEventListener("click", () => { S.jour = aujourdhui(); renderService(); });
+
+  let bilanMinuteur = null;
+  function sauverBilan() {
+    clearTimeout(bilanMinuteur); bilanMinuteur = null;
+    const doc = JSON.parse(JSON.stringify(jourDoc(S.jour)));
+    const bien = $("#bilan-bien").value.trim(), mieux = $("#bilan-mieux").value.trim();
+    if ((doc.bien || "") === bien && (doc.mieux || "") === mieux) return;
+    doc.bien = bien; doc.mieux = mieux; sauverJour(S.jour, doc);
+  }
+  ["#bilan-bien", "#bilan-mieux"].forEach(s => {
+    $(s).addEventListener("input", () => { clearTimeout(bilanMinuteur); bilanMinuteur = setTimeout(sauverBilan, 1200); });
+    $(s).addEventListener("blur", () => { if (bilanMinuteur) sauverBilan(); });
+  });
+
+  // ---------- onglets ----------
+  const ONGLETS = ["service", "articles", "analyse", "entrainement", "reglages"];
+  function allerA(nom, focus) {
+    if (!ONGLETS.includes(nom)) return;
+    S.onglet = nom;
+    for (const o of ONGLETS) {
+      const tab = $("#tab-" + o), actif = o === nom;
+      tab.setAttribute("aria-selected", String(actif)); tab.tabIndex = actif ? 0 : -1;
+      $("#onglet-" + o).hidden = !actif;
+    }
+    if (focus) $("#tab-" + nom).focus();
+    try { localStorage.setItem(CLE_LOCALE + "-onglet", nom); } catch (_) {}
+    window.scrollTo(0, 0);
+  }
+  $(".onglets").addEventListener("click", e => { const b = e.target.closest("[data-onglet]"); if (b) allerA(b.dataset.onglet); });
+  $(".onglets").addEventListener("keydown", e => {
+    const i = ONGLETS.indexOf(S.onglet);
+    if (e.key === "ArrowRight") allerA(ONGLETS[(i + 1) % ONGLETS.length], true);
+    else if (e.key === "ArrowLeft") allerA(ONGLETS[(i + ONGLETS.length - 1) % ONGLETS.length], true);
+  });
+  document.addEventListener("click", e => { const b = e.target.closest("[data-aller]"); if (b) allerA(b.dataset.aller); });
+  document.addEventListener("keydown", e => {
+    if (e.key !== "Escape") return;
+    if (!$("#voile-article").hidden) fermerArticle(); else if (!$("#voile-client").hidden) fermerClient();
+  });
+  for (const v of ["#voile-client", "#voile-article"]) $(v).addEventListener("click", e => { if (e.target === e.currentTarget) (v === "#voile-client" ? fermerClient : fermerArticle)(); });
+
+  // ---------- rendu global ----------
+  function render() {
+    renderService(); renderArticles(); renderAnalyse(); renderEntrainement(); renderReglages();
+    if (F) { /* la fiche client garde sa saisie */ }
+    if (A && !A.edition && A.id && S.catalogue[A.id]) { A.brouillon = JSON.parse(JSON.stringify(S.catalogue[A.id])); renderFicheArticle(); }
+  }
+
+  // ---------- démarrage ----------
+  async function demarrer() {
+    const depart = (location.hash || "").slice(1);
+    let memo = null; try { memo = localStorage.getItem(CLE_LOCALE + "-onglet"); } catch (_) {}
+    allerA(ONGLETS.includes(depart) ? depart : ONGLETS.includes(memo) ? memo : "service");
+    render();
+
+    const local = (message) => {
+      store.mode = "local"; chargerLocal(); render();
+      etat("Sur cet appareil", "ok");
+      if (message) { $("#bandeau").textContent = message; $("#bandeau").hidden = false; }
+    };
+    if (!(window.claude && typeof window.claude.use === "function")) return local("Page ouverte en fichier : tes notes restent dans ce navigateur. Sur la page publiée, elles te suivent sur tous tes appareils.");
+    const [db, user] = await Promise.all([window.claude.use("db").catch(() => null), window.claude.use("user").catch(() => null)]);
+    if (!db) return local("Connecte-toi à claude.ai pour retrouver ton carnet sur tous tes appareils. En attendant, tes notes restent dans ce navigateur.");
+    store.db = db; store.mode = "distant";
+    const proprio = user ? await user.isOwner().catch(() => false) : false;
+    if (!proprio) {
+      store.lecture = true;
+      $("#bandeau").textContent = "Ce carnet est privé : seul son propriétaire voit et note ses ventes.";
+      $("#bandeau").hidden = false;
+    }
+    let charges = 0;
+    const pret = () => { if (++charges === 3) etat("À jour", "ok"); };
+    const erreur = () => etat("Connexion perdue, recharge la page", "erreur");
+    let premierJours = true, premierCat = true, premierReg = true;
+    db.collection("jours").onSnapshot(snap => {
+      const j = {}; snap.docs.forEach(d => { const v = d.data(); if (v) j[d.id] = { clients: Array.isArray(v.clients) ? v.clients : [], bien: v.bien || "", mieux: v.mieux || "" }; });
+      S.jours = j; render(); if (premierJours) { premierJours = false; pret(); }
+    }, erreur);
+    db.collection("catalogue").onSnapshot(snap => {
+      const c = {}; snap.docs.forEach(d => { const v = d.data(); if (v) c[d.id] = { ...v, id: d.id }; });
+      S.catalogue = c; render(); if (premierCat) { premierCat = false; pret(); }
+    }, erreur);
+    db.doc("reglages/general").onSnapshot(snap => {
+      if (snap.exists) S.reglages = { objCA: 0, objTT: 0, objPM: 0, objIPV: 0, ...snap.data() };
+      render(); if (premierReg) { premierReg = false; pret(); }
+    }, erreur);
+  }
+  demarrer();
+})();
+</script>
