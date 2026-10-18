@@ -133,12 +133,12 @@ Dans la base de la page : `achats` (pièces ajoutées), `etat/semaine` (semaine 
 
 ## Carnet de vente (outil pro)
 
-Une page à part, `vente/carnet-vente.html`, pour vendre mieux au magasin. Publiée sur claude.ai : https://claude.ai/artifact/NVwFkh19wc4hXRJjsMbAgd (privée, toi seul la vois et la remplis).
+Une page à part, `vente/carnet-vente.html`, pour vendre mieux au magasin sans rien noter pendant le service. Publiée sur claude.ai : https://claude.ai/artifact/NVwFkh19wc4hXRJjsMbAgd (privée, toi seul la vois et la remplis).
 
-- **Service** : « Nouveau client » après chaque client : les articles proposés, ceux qu'il a pris (prix, quantité) et pourquoi il n'a pas pris les autres (prix, taille, coupe, couleur, il réfléchit, rupture). « Juste regarder » note un passage en un geste. Les tuiles CA, TT, panier moyen et IPV se mettent à jour, avec la jauge de ton objectif. Le bilan du service, et un débrief par Claude.
-- **Articles** : les pièces du magasin avec leur prix, leurs points forts, les objections et leurs réponses, les articles à proposer avec ; chacune montre son taux de réussite (pris ÷ proposé) et se classe facile, moyen ou difficile à partir de 3 propositions. « Rédiger l'argumentaire avec Claude » prépare une première version.
-- **Mes chiffres** : par période, les indicateurs comparés à la période précédente, le CA par jour, ce que tu vends bien et ce qui coince, les raisons des refus avec la technique à travailler, ce qui part ensemble, les résultats par marque, catégorie et créneau, et les conseils du coach Claude.
-- **S'entraîner** : Claude joue un client (trop cher, je vais réfléchir, pas sa taille, vente complémentaire…), tu réponds, puis tu reçois une note et des phrases à reprendre.
-- **Objectifs** : CA par service, TT, panier moyen, IPV, et l'export de tous tes clients en tableur.
+- **Ce soir** : le bilan du soir, en deux minutes et tout facultatif. Ton CA, tes ventes et tes articles si tu as ton récap vendeur ; le monde en boutique et ta forme ; ce qui est bien parti et ce qui a coincé (avec la raison : prix, taille, coupe, couleur, il réfléchit, rupture) ; ce qu'on t'a demandé et que vous n'aviez pas ; si tu as relevé le défi du jour. « Enregistrer et préparer demain » prépare le défi du lendemain : une action, et la phrase à dire au client. Le matin, il s'affiche en haut de la page.
+- **Mes chiffres** : CA moyen par jour, panier moyen, IPV et défis relevés, comparés à la période précédente ; le CA par jour ; ce que tu vends bien et ce qui coince ; pourquoi ça coince, avec la technique à travailler ; les demandes non satisfaites, à copier pour ton responsable ; tes résultats par jour de la semaine ; les conseils du coach Claude.
+- **Articles** : l'argumentaire de chaque pièce (points forts, objections et réponses, articles à proposer avec), à relire avant le service. Claude peut en rédiger une première version.
+- **S'entraîner** : Claude joue un client (trop cher, je vais réfléchir, pas sa taille…), tu réponds, puis tu reçois une note et des phrases à reprendre.
+- **Objectifs** : CA par jour, panier moyen, IPV, et l'export de tous tes bilans en tableur.
 
-Publication : le fichier tel quel, avec les capacités `db` (lecture et écriture réservées au propriétaire), `user`, `sample` et `downloads`. Dans la base : `jours/AAAA-MM-JJ` (clients du jour et bilan), `catalogue/<id>` (articles, au départ les 16 pièces de la garde-robe, prix à renseigner), `reglages/general` (objectifs).
+Publication : le fichier tel quel, avec les capacités `db` (lecture et écriture réservées au propriétaire), `user`, `sample` et `downloads`. Dans la base : `jours/AAAA-MM-JJ` (le bilan du soir et le défi préparé pour le lendemain), `catalogue/<id>` (articles, au départ les 16 pièces de la garde-robe avec un nom court, prix à renseigner), `reglages/general` (objectifs).
