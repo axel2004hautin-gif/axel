@@ -131,9 +131,23 @@ Dans la base de la page : `achats` (pièces ajoutées), `etat/semaine` (semaine 
 - Trois pulls n'ont pas de fiche sur le site de la marque, leur lien mène chez un revendeur : le col rond noir, et les deux cols polo.
 - La correspondance entre les références Levi's et les couleurs suit l'ordre de la liste d'achats et des captures. Le 29507-1417 « Call It Off » est confirmé comme un délavage moyen.
 
+## Rayon Homme (le site du rayon)
+
+`rayon-homme/` : le catalogue du rayon Homme, rangé comme le site d'une marque. Publié sur claude.ai : https://claude.ai/artifact/2FF2gNvSR1b9WYtDET6Nzr (privé tant que tu ne le partages pas).
+
+- **En-tête** : un bandeau (le message de l'opération en cours), le menu Nouveautés · Vêtements · Chaussures · Accessoires · Marques · Promotions, avec un grand menu au survol sur ordinateur et un tiroir sur téléphone, la recherche (marque, modèle, couleur, matière ou mot d'une remarque) et les favoris.
+- **Sections** : Vêtements (T-shirts, Polos, Chemises, Pulls & Gilets, Sweats & Hoodies, Vestes & Blousons, Manteaux & Parkas, Jeans, Pantalons & Chinos, Shorts & Bermudas, Joggings & Survêtements, Sous-vêtements & Chaussettes), Chaussures (Baskets, Boots & Bottines, Chaussures de ville, Sandales & Claquettes) et Accessoires (Ceintures, Casquettes & Bonnets, Écharpes & Gants, Sacs & Maroquinerie, Autres accessoires).
+- **Filtres**, avec le nombre d'articles pour chaque choix : catégorie, marque, couleur, taille disponible, prix, coupe, matière, col, manches, taillant, collection, style, et « Mes repères » (en promotion, nouveauté, coup de cœur, avec remarques, ma note 4 ★ et plus, disponible, en rupture, fiche à compléter). Tri : pertinence, nouveautés, prix, marque, mieux notés, plus de remarques.
+- **Fiche article** : photos, prix et promo, les autres coloris du modèle, les tailles et leur stock (disponible, dernières pièces, rupture : « Modifier le stock » les change d'une touche), le taillant, **ma note** (1 à 5 étoiles) et **mes remarques** datées, avec des débuts tout prêts (taille petit, réassort demandé…). Puis la description et « Les + produit », la composition, la coupe, les infos rayon, « Complétez le look » et « Dans la même catégorie ».
+- **Ajouter un article** (bouton +) : les photos d'abord, puis « Remplir avec Claude » lit la photo (et l'étiquette si elle se voit) et remplit les champs vides ; « Rédiger avec Claude » écrit la description et les arguments. « Enregistrer et ajouter un autre » garde la marque, la catégorie, la collection et les tailles. Sur une fiche, « + Autre coloris » reprend tout le modèle sauf la couleur et les photos.
+- **Accueil** : la collection, les catégories, les nouveautés, les coups de cœur, les promotions, les articles vus récemment, les marques et le compte des fiches à compléter.
+- **Réglages du site** (pied de page) : le message du bandeau, la collection en cours, la durée d'une nouveauté, et l'export du catalogue en tableur.
+
+Publication : `rayon-homme/index.html` tel quel, avec `rayon-homme/app.js` publié comme `app.js`, `images/*.jpg`, et les capacités `db`, `user` (avec les noms), `assets`, `sample` (avec images) et `downloads`. Dans la base : `articles/<id>`, `remarques/<id>`, `site/reglages`, et les favoris de chacun dans `data/users/<id>/prefs`. Les 16 pièces de la garde-robe y sont les premiers articles (prix et tailles à renseigner). Ouverte en fichier, la page garde le catalogue dans le navigateur, sans les photos.
+
 ## Carnet de vente (outil pro)
 
-Une page à part, `vente/carnet-vente.html`, pour vendre mieux au magasin sans rien noter pendant le service. Publiée sur claude.ai : https://claude.ai/artifact/NVwFkh19wc4hXRJjsMbAgd (privée, toi seul la vois et la remplis).
+Remplacé par le Rayon Homme ci-dessus ; la page existe toujours. Une page à part, `vente/carnet-vente.html`, pour vendre mieux au magasin sans rien noter pendant le service. Publiée sur claude.ai : https://claude.ai/artifact/NVwFkh19wc4hXRJjsMbAgd (privée, toi seul la vois et la remplis).
 
 - **Ce soir** : le bilan du soir, en deux minutes et tout facultatif. Ton CA, tes ventes et tes articles si tu as ton récap vendeur ; le monde en boutique et ta forme ; ce qui est bien parti et ce qui a coincé (avec la raison : prix, taille, coupe, couleur, il réfléchit, rupture) ; ce qu'on t'a demandé et que vous n'aviez pas ; si tu as relevé le défi du jour. « Enregistrer et préparer demain » prépare le défi du lendemain : une action, et la phrase à dire au client. Le matin, il s'affiche en haut de la page.
 - **Mes chiffres** : CA moyen par jour, panier moyen, IPV et défis relevés, comparés à la période précédente ; le CA par jour ; ce que tu vends bien et ce qui coince ; pourquoi ça coince, avec la technique à travailler ; les demandes non satisfaites, à copier pour ton responsable ; tes résultats par jour de la semaine ; les conseils du coach Claude.
