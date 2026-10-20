@@ -131,6 +131,20 @@ Dans la base de la page : `achats` (pièces ajoutées), `etat/semaine` (semaine 
 - Trois pulls n'ont pas de fiche sur le site de la marque, leur lien mène chez un revendeur : le col rond noir, et les deux cols polo.
 - La correspondance entre les références Levi's et les couleurs suit l'ordre de la liste d'achats et des captures. Le 29507-1417 « Call It Off » est confirmé comme un délavage moyen.
 
+## Articles par cœur (s'entraîner)
+
+`par-coeur/` : apprendre ses articles par cœur (matières, coupes, arguments) et s'entraîner en quiz. Publié sur claude.ai : https://claude.ai/artifact/UXEuTmKpxGso4TDnf7ATX2 (privé tant que tu ne le partages pas).
+
+- **Accueil** : la séance du jour (10 questions : les articles à revoir, des nouveaux, des questions de base), une étiquette de composition à retenir, la progression (articles maîtrisés, à revoir aujourd'hui, série de jours, réussite sur 7 jours, les 14 derniers jours) et les fiches à compléter.
+- **Articles** : le rayon en cartes, avec recherche, filtres par catégorie et marque, et « À compléter ». La fiche montre l'étiquette de composition, ce que chaque matière apporte, la coupe et son explication, le col, comment l'article taille, l'entretien, la phrase à retenir, les arguments à dire, et « Réviser cet article ».
+- **Ajouter ou modifier un article** : colle le texte de la fiche produit copiée sur le site de la marque, et « Remplir avec le texte » (Claude) remplit les champs vides ; « Lire les photos » lit aussi une photo de l'étiquette de composition, prise en magasin et jamais enregistrée. La composition se lit en direct, dans toutes les écritures d'étiquette (« 98% Coton, 2% Elasthanne », « CO 98% EL 2% », plusieurs parties). « Enregistrer et créer un autre coloris » reprend le modèle ; une case remplit les champs vides des autres coloris du même modèle.
+- **Quiz** : séance du jour, Composition (quatre compositions, dont celles des autres coloris), Vrai ou faux, Coupes et cols, Le bon article (« Lequel de ces 502 contient du lyocell ? », « Un client veut du stretch… »), De tête (taper la composition), Cartes mémoire, Les bases (fibres, tissus et mailles, coupes et cols, tailles, entretien), Sprint 60 secondes, et Accroche : une situation et un article, la première phrase au client notée par Claude avec la méthode « ce que tu vois → ce que tu sais → une question A ou B ».
+- **Révisions espacées** : chaque article et chaque question de base a sa boîte (1, 3, 7, 14 puis 30 jours) ; une erreur le fait revenir le jour même. « Rejouer mes erreurs » à la fin de chaque série.
+- **Matières et coupes** : 18 fibres (atouts, limites, notes de chaleur, respiration, douceur, stretch, froissage et solidité, la phrase à dire, l'entretien, les articles du rayon qui en contiennent), 21 tissus et mailles, les coupes de bas et de hauts, les cols, les manches, les numéros Levi's, les tailles W et L et les 15 symboles d'entretien.
+- **Données** : sauvegarde des fiches en fichier (et restauration), export en tableur, remise à zéro de la progression.
+
+Publication : `par-coeur/index.html` tel quel, avec `par-coeur/app.js`, `par-coeur/savoir.js` et `par-coeur/composition.js` publiés à la racine (`app.js`, `savoir.js`, `composition.js`), `images/*.jpg`, et les capacités `db` (seuls le propriétaire et les éditeurs modifient les articles ; chacun écrit sa progression), `user`, `assets`, `sample` (avec images) et `downloads`. Dans la base : `articles/<id>`, et la progression de chacun dans `data/users/<id>/progres`. Les 16 articles de Rayon Homme y ont été repris tels qu'ils étaient le 20 octobre 2026. Le savoir (fibres, tissus, coupes, questions de base) est dans `par-coeur/savoir.js`.
+
 ## Rayon Homme (le site du rayon)
 
 `rayon-homme/` : le catalogue du rayon Homme, rangé comme le site d'une marque. Publié sur claude.ai : https://claude.ai/artifact/2FF2gNvSR1b9WYtDET6Nzr (privé tant que tu ne le partages pas).
