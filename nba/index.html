@@ -160,6 +160,9 @@ h2.sec{font-family:var(--f-display);font-weight:700;font-size:1.35rem;letter-spa
 @media (max-width:520px){.pick .odds{gap:6px}.pick .odds .tile{padding:8px 9px}.pick .odds .tile .v{font-size:1.45rem}.pick .odds .tile .k{font-size:.66rem;letter-spacing:.04em}.pick .odds .tile .s{font-size:.75rem}}
 .pick .acts{display:flex;gap:10px;flex-wrap:wrap}
 .pick .acts .btn{flex:1;min-width:9rem;padding:10px 14px;font-size:1rem}
+.pick.retire{opacity:.6}
+.sel-head{display:flex;flex-direction:column;gap:4px;border-left:4px solid var(--accent);padding:10px 14px;background:var(--surface);border-radius:var(--r)}
+.sel-head b{font-family:var(--f-display);font-size:1.25rem;letter-spacing:.03em;text-transform:uppercase}
 .soir{display:flex;flex-direction:column;gap:8px}
 .soir .g{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .soir .g b{font-family:var(--f-display);font-size:1.05rem;letter-spacing:.03em;margin-right:4px}
@@ -249,6 +252,7 @@ h2.sec{font-family:var(--f-display);font-weight:700;font-size:1.35rem;letter-spa
   <!-- VALUE -->
   <section id="v-value" class="stack" hidden>
     <div class="panel row" id="bkBar"></div>
+    <div class="stack" id="selBlock"></div>
     <div class="panel stack">
       <h2 class="sec">Nouveau pronostic</h2>
       <form class="stack" id="pronoForm">
@@ -910,7 +914,7 @@ const BK={depart:1000,pas:250,mises:[0.5,1,1.5,2,2.5,3],seuil:0.05,seuilFaible:0
 /* Stratégie validée par l'utilisateur : value d'au moins 5 % selon la base (10 % en fiabilité faible) et value face au marché
    quand il existe ; un seul pari par idée et par match ; au plus 3 % de mise sur un match, 10 % et 5 paris sur une nuit. */
 const seuilDe=pr=>pr.proba_base==null||pr.fiabilite==="faible"?BK.seuilFaible:BK.seuil;
-function coteMin(pr){if(!pr||!pr.probabilite)return null;return Math.ceil(Math.max((1+seuilDe(pr))/pr.probabilite,pr.marche?1/pr.marche:0)*100)/100}
+function coteMin(pr){if(!pr||!pr.probabilite)return null;if(pr.cote_min)return pr.cote_min;return Math.ceil(Math.max((1+seuilDe(pr))/pr.probabilite,pr.marche?1/pr.marche:0)*100)/100}
 // Une même « idée » : le même marché du même match, quel que soit le côté ou la ligne
 function ideeKey(c){if(!c)return"";const per=c.periode||"match";
   return{victoire:`ecart|${per}`,handicap:`ecart|${per}`,total_match:`total|${per}`,total_equipe:`te|${c.equipe}|${per}`,stat_joueur:`sj|${norm(c.joueur||"")}|${c.stat}|${per}`,premier_panier:"premier",premiers_points:"premier"}[c.type]||`autre|${Math.random()}`}
@@ -1143,18 +1147,18 @@ async function saveBet(){
 }
 async function deleteBet(id){S.pendingBetDel=null;try{await S.db.collection("paris").doc(id).delete();toast("Pari supprimé")}catch(e){toast("Suppression impossible pour le moment")}}
 function pickCard(p){
-  const when=p.debut?frWhen(p):dshort(p.nuit),nm=p.n_matchs?` · ${p.n_matchs} match${p.n_matchs>1?"s":""}`:"";
+  const when=p.debut?frWhen(p):dshort(p.nuit),nm=p.n_matchs?` · ${p.n_matchs} match${p.n_matchs>1?"s":""}`:"",sel=p.source==="selection_21h";
   const fiab={["marché"]:'<span class="chip ok">Probabilité du marché</span>',bonne:`<span class="chip ok">Fiabilité bonne${nm}</span>`,moyenne:`<span class="chip warn">Fiabilité moyenne${nm}</span>`,faible:`<span class="chip under">Fiabilité faible${nm}</span>`}[p.fiabilite]||"";
   const aj=p.ajustement?` ${p.ajustement>0?"+":"−"} ${pct(Math.abs(p.ajustement)*100)} Claude`:"";
   const sous=p.proba_base!=null?`base ${pct(p.proba_base*100)}${aj}`:p.fiabilite==="marché"?"probabilité du marché":"estimation de Claude";
-  return`<article class="pick"><div class="row"><span class="note">${esc(p.ext)} @ ${esc(p.dom)} · ${esc(when)}</span><span class="spacer"></span>${fiab}</div>
+  return`<article class="pick${p.retire?" retire":""}"><div class="row"><span class="note">${esc(p.ext)} @ ${esc(p.dom)} · ${esc(when)}</span><span class="spacer"></span>${sel?'<span class="chip ok">Sélection de 21h</span>':""}${fiab}</div>
     <h3>${esc(p.intitule)}</h3>
     <div class="odds"><div class="tile"><span class="k">Probabilité</span><span class="v">${pct(p.probabilite*100)}</span><span class="s">${esc(sous)}</span></div>
       <div class="tile"><span class="k">Cote juste</span><span class="v">${odds(p.cote_juste)}</span><span class="s">joue à ${odds(coteMin(p))} ou plus</span></div>
       <div class="tile"><span class="k">Mise de Claude</span><span class="v">${pct(p.mise_pct)}</span><span class="s">${eur(miseEur(p.mise_pct))}</span></div></div>
     <p class="note" style="margin:0">${esc(p.detail||"")} ${esc(p.raison||"")}${p.methode?` <i>(${esc(p.methode)})</i>`:""}</p>
-    ${p.marche!=null?`<p class="note" style="margin:0">Pour comparer, le marché (DraftKings, sans marge) donne ${pct(p.marche*100)}.</p>`:""}
-    <div class="acts"><button class="btn go" data-act="joue" data-id="${esc(p.id)}">Je joue</button><button class="btn stop" data-act="passe" data-id="${esc(p.id)}">Je ne joue pas</button></div></article>`;
+    ${p.marche!=null&&!sel?`<p class="note" style="margin:0">Pour comparer, le marché (DraftKings, sans marge) donne ${pct(p.marche*100)}.</p>`:""}
+    ${p.retire?`<p class="note val-ko" style="margin:0">Retiré de la sélection : ${esc(p.raison_retrait||"ne passe plus la stratégie")} Ne le joue pas.</p>`:`<div class="acts"><button class="btn go" data-act="joue" data-id="${esc(p.id)}">Je joue</button><button class="btn stop" data-act="passe" data-id="${esc(p.id)}">Je ne joue pas</button></div>`}</article>`;
 }
 function renderValue(){
   if(S.tab!=="value")return;
@@ -1172,8 +1176,14 @@ function renderValue(){
       (pg.matchs||[]).map(m=>{const c=m.cotes||{},L=x=>String(x).replace(".",","),ch=q=>`<button type="button" class="chip-q" data-act="pronoFill" data-q="${esc(q)}">${esc(q)}</button>`,quand=nuitLabel(pg.nuit).toLowerCase();
         return`<div class="g"><b>${m.ext} @ ${m.dom}</b><span class="note">${esc(frWhen(m))}</span>${ch(`${m.dom} gagne contre ${m.ext} ${quand}`)}${ch(`${m.ext} gagne contre ${m.dom} ${quand}`)}${c.total!=null?ch(`Plus de ${L(c.total)} points dans ${m.ext}-${m.dom} ${quand}`)+ch(`Moins de ${L(c.total)} points dans ${m.ext}-${m.dom} ${quand}`):""}${c.ecartDom!=null?ch(`${m.dom} ${c.ecartDom>0?"+":""}${L(c.ecartDom)} contre ${m.ext} ${quand}`):""}</div>`}).join("")+`</details>`}).join("");
   const pr=(S.pronos||[]).slice().sort((a,b)=>String(b.cree).localeCompare(String(a.cree)));
-  const open=pr.filter(p=>!p.decision&&!p.resultat);
-  $("#pronoList").innerHTML=open.length?`<h2 class="sec">À décider</h2>`+open.map(pickCard).join(""):(off?"":emptyHTML("Aucun pronostic en attente","Écris un pronostic ci-dessus, ou touche un pari de ce soir : Claude donne sa probabilité, la cote juste et la mise.",false));
+  // Sélection de 21h de la nuit en cours ou à venir, puis les autres pronostics à décider
+  const nc=nuitCourante(),selDoc=(S.selections||[]).filter(x=>x.nuit>=nc).sort((a,b)=>a.nuit.localeCompare(b.nuit))[0];
+  const isSel=p=>p.source==="selection_21h"&&selDoc&&p.nuit===selDoc.nuit;
+  const open=pr.filter(p=>!p.decision&&!p.resultat&&!p.retire&&!isSel(p));
+  const selCards=pr.filter(p=>isSel(p)&&!p.decision&&!p.resultat).sort((a,b)=>(a.retire?1:0)-(b.retire?1:0));
+  const selHead=selDoc?`<div class="sel-head"><b>Sélection de 21h · ${esc(nuitLabel(selDoc.nuit))}</b><span class="note">${selDoc.pronostics.length?`${selDoc.pronostics.length} pari${selDoc.pronostics.length>1?"s":""} retenu${selDoc.pronostics.length>1?"s":""} sur ${selDoc.examines} examinés (${selDoc.matchs} matchs). Joue seulement ceux où Winamax paie au moins la cote indiquée.`:esc(selDoc.note)} Mise à jour ${esc(hmIn(TZ_FR,new Date(selDoc.maj)).replace(":","h"))}.</span></div>`:"";
+  $("#selBlock").innerHTML=off?"":selHead+selCards.map(pickCard).join("");
+  $("#pronoList").innerHTML=(open.length?`<h2 class="sec">À décider</h2>`+open.map(pickCard).join(""):(off?"":emptyHTML("Aucun pronostic en attente","Écris un pronostic ci-dessus, ou touche un pari de ce soir : Claude donne sa probabilité, la cote juste et la mise.",false)));
   const past=pr.filter(p=>p.decision||p.resultat).slice(0,40),res=pr.filter(p=>RESULT_CHIP[p.resultat]&&p.resultat!=="rembourse");
   const won=res.filter(p=>p.resultat==="gagne").length,avgP=res.length?res.reduce((s,p)=>s+p.probabilite,0)/res.length:0;
   $("#pronoPast").innerHTML=past.length?`<div class="row"><h2 class="sec">Pronostics passés</h2><span class="note">${res.length?`Claude : ${won} gagnés sur ${res.length} (${pct(won/res.length*100)}), pour ${pct(avgP*100)} annoncés en moyenne`:"Les résultats arrivent avec le récap du matin."}</span></div>
@@ -1324,6 +1334,7 @@ async function connect(){
   $("#exportBtn").hidden=!S.downloads;$("#importBtn").hidden=!S.canWrite;$("#dataTools").hidden=!S.downloads&&!S.canWrite;
   db.collection("paris").onSnapshot(snap=>{S.paris=snap.docs.map(d=>Object.assign({id:d.id},d.data()));if(["value","paris"].includes(S.tab))renderCurrent()},()=>{});
   db.collection("pronostics").onSnapshot(snap=>{S.pronos=snap.docs.map(d=>Object.assign({id:d.id},d.data()));if(S.tab==="value")renderValue()},()=>{});
+  db.collection("selections").orderBy("nuit","desc").limit(3).onSnapshot(snap=>{S.selections=snap.docs.map(d=>d.data());if(S.tab==="value")renderValue()},()=>{});
   db.collection("programme").orderBy("nuit","desc").limit(6).onSnapshot(snap=>{S.programmes=snap.docs.map(d=>d.data());if(S.tab==="value")renderValue()},()=>{});
   db.doc("reglages/bankroll").onSnapshot(d=>{if(d.exists)Object.assign(BK,d.data());if(["value","paris"].includes(S.tab))renderCurrent()},()=>{});
   db.collection("matchs").onSnapshot(snap=>{
