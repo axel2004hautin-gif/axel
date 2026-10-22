@@ -2202,8 +2202,30 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     for (const [id, re] of REGLES_TEINTE) if (re.test(c)) return id;
     return "";
   };
+  // Un motif suivi d'une couleur (« Rayé rouge », « Carreaux crème ») : le motif dessiné dans cette couleur.
+  const MOTIFS_COLORES = {
+    "raye": c => `repeating-linear-gradient(90deg, ${c} 0 2px, #ffffff 2px 4px)`,
+    "mariniere": c => `repeating-linear-gradient(0deg, ${c} 0 2px, #ffffff 2px 4px)`,
+    "carreaux": c => `repeating-linear-gradient(90deg, rgba(0, 0, 0, .22) 0 1px, transparent 1px 5px), repeating-linear-gradient(0deg, rgba(0, 0, 0, .22) 0 1px, ${c} 1px 5px)`,
+    "vichy": c => `repeating-conic-gradient(${c} 0 25%, #ffffff 0 50%) 0 0 / 5px 5px`,
+    "pied-de-poule": c => `repeating-conic-gradient(${c} 0 25%, #efe6d2 0 50%) 0 0 / 4px 4px`,
+    "chevrons": c => `repeating-linear-gradient(45deg, ${c} 0 2px, #e8e8e8 2px 4px)`,
+    "a pois": c => `radial-gradient(${c} 1.4px, #ffffff 1.6px) 0 0 / 5px 5px`,
+  };
+  function cssMotif(couleur, n) {
+    const cle = sansAccents(n.nom), dessin = MOTIFS_COLORES[cle];
+    const reste = sansAccents(couleur).trim().replace(/\s+/g, " ").slice(cle.length).replace(/^\s*(de|en)?\s*/, "");
+    if (!dessin || !reste) return n.css;
+    const fond = nuanceDe(reste), t = teinteDe(reste);
+    const c = fond && fond.css.startsWith("#") ? fond.css : t && t !== "motif" ? TEINTE[t].css : "";
+    return c ? dessin(c) : n.css;
+  }
   // La couleur d'une pastille : la nuance exacte si on la connaît, sinon celle de la famille.
-  const cssCouleur = couleur => { const n = nuanceDe(couleur), t = teinteDe(couleur); return n ? n.css : t ? TEINTE[t].css : ""; };
+  const cssCouleur = couleur => {
+    const n = nuanceDe(couleur), t = teinteDe(couleur);
+    if (n && n.famille === "motif") return cssMotif(couleur, n);
+    return n ? n.css : t ? TEINTE[t].css : "";
+  };
   const PHOTO_ASSET_RE = /^[0-9a-f]{32}$/i;
   const PHOTO_FICHIER_RE = /^images\/[a-z0-9-]+\.jpg$/;
   const PHOTO_LOCALE_RE = /^data:image\/(jpeg|png);base64,[A-Za-z0-9+/=]+$/;

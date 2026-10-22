@@ -149,7 +149,7 @@ def main():
         # Les promos du site ne valent pas en magasin : toujours le prix normal.
         prix, barre = d.get("price"), d.get("compare_at_price")
         promo = isinstance(barre, int) and isinstance(prix, int) and barre > prix
-        ref = next((t for t in d.get("tags", []) if re.fullmatch(r"\d{6,}[A-Z0-9]*", t)), "")   # 11018388D, 10117266DL32
+        ref = next((t for t in d.get("tags", []) if re.fullmatch(r"[A-Z]{0,4}\d{6,}[A-Z0-9]*", t)), "")   # 11018388D, 10117266DL32, STR1070123D
         piece = {
             "marque": (d.get("vendor") or "")[:60] or None,
             "categorie": categorie_de(d.get("type", ""), d.get("title", ""), d.get("handle", "").replace("-", " ")) or None,
