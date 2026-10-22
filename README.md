@@ -141,4 +141,6 @@ La base de stats NBA (joueurs, équipes et totaux, classement, Demander à Claud
 
 Sous « Matchs saisis », « Importer (.json) » ajoute des matchs exportés depuis la version fichier, et « Exporter (.json) » en garde une sauvegarde. Un match de la même nuit avec les deux mêmes équipes est remplacé.
 
+**Remplir une nuit.** `outils/nba/fetch_night.py` télécharge le programme d'une nuit NBA (ESPN : équipes, heure de coup d'envoi, scores par quart-temps) et les feuilles de match de Basketball-Reference (minutes à la seconde). `outils/nba/build_night.py` en tire un document par match et vérifie que les quarts-temps des deux sites concordent, que les points des joueurs font le score et que les minutes font 240 (plus 25 par prolongation). Un joueur déjà en base garde l'orthographe de la base. NBA.com refuse les connexions venant des serveurs de Claude.
+
 La source est `nba/index.html`. Ouverte en fichier local, la page garde les matchs dans le navigateur et l'onglet Demander à Claude n'est pas disponible. La version publiée en est tirée par `outils/version-artefact-nba.sh > base-nba.html`, avec les capacités `db` (écriture réservée au propriétaire), `user`, `downloads` et `sample`.
