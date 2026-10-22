@@ -4,14 +4,20 @@ Mon tableau de bord, publié sur claude.ai : https://claude.ai/artifact/QcoRPH8Y
 
 Ouvre `index.html` dans un navigateur pour le voir en local (rien à installer). En local, le planning est gardé dans le navigateur.
 
-Fond blanc, titre bleu marine, et sous le titre un bandeau marine avec les trois rubriques. Le titre ramène à l'accueil. Une adresse qui finit par `#travail`, `#argent` ou `#sport` ouvre directement la rubrique.
+Fond blanc, titre bleu marine, et sous le titre un bandeau marine avec les trois rubriques. Au survol d'une rubrique, ses sous-rubriques s'affichent dans un bandeau clair juste en dessous. Cliquer sur une rubrique ouvre la page de ses sous-rubriques ; sur téléphone, c'est le chemin pour y accéder. Le titre ramène à l'accueil.
+
+Une adresse qui finit par `#travail`, `#argent` ou `#sport` ouvre directement la rubrique, `#planning` la sous-rubrique « Mon planning ».
 
 ## Travail
+
+La page Travail présente ses sous-rubriques. Pour l'instant, il n'y en a qu'une, « Mon planning » : sa carte montre la semaine en cours en miniature, les horaires d'aujourd'hui, le total d'heures et le jour de repos.
+
+### Mon planning
 
 Tout tient dans l'écran, sans descendre, sur ordinateur comme sur téléphone :
 
 - **La semaine** : « Semaine 43 du 19 au 25 octobre », avec les flèches pour passer à la semaine d'avant ou d'après. Toucher le titre ouvre le choix de la semaine : l'année, puis les 52 ou 53 semaines (celles déjà remplies ont un point).
-- **Le planning** : une frise du lundi au samedi, demi-heure par demi-heure, de 10h à 19h (elle s'allonge si une semaine commence plus tôt ou finit plus tard). Les demi-heures travaillées sont en bleu, les autres en blanc ; un quart d'heure (« Autre… ») ne colorie que la moitié de la case. L'heure d'arrivée est écrite en haut de chaque bloc bleu, l'heure de départ en bas. Aujourd'hui est encadré en marine, les jours de repos restent blancs avec « Repos ».
+- **Le planning** : une frise du lundi au samedi, de 10h à 19h (elle s'allonge si une semaine commence plus tôt ou finit plus tard). Les heures sont écrites à gauche avec un trait marqué ; la demi-heure a un trait léger. Le temps travaillé est en bleu à la minute près, le reste en blanc. Deux barres rouges, à 12h et à 14h, marquent le milieu de la journée. L'heure d'arrivée est écrite en haut de chaque bloc bleu, l'heure de départ en bas. Aujourd'hui est encadré en marine, les jours de repos sont hachurés marron.
 - **Le bilan** : les heures travaillées de la semaine, le jour de repos et le bouton « Modifier le planning ».
 
 « Modifier le planning » ouvre une fenêtre au milieu de l'écran : pour chaque jour, le début et la fin du matin et de l'après-midi.

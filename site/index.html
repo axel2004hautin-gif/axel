@@ -9,9 +9,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:wght@400;600;700&display=swap">
 <style>
-/* Layout : fond blanc, titre marine, bandeau marine des rubriques. La rubrique Travail tient dans
-   l'écran : semaine, planning en frise (une colonne par jour, une ligne par demi-heure, il prend
-   toute la place qui reste), bilan. Un seul thème, clair. */
+/* Layout : fond blanc, titre marine, bandeau marine des rubriques ; au survol d'une rubrique, ses
+   sous-rubriques s'affichent dessous. Une rubrique ouvre la page de ses sous-rubriques. « Mon planning »
+   tient dans l'écran : semaine, frise (une colonne par jour, une ligne par heure, elle prend toute la
+   place qui reste), bilan. Un seul thème, clair. */
 :root {
   color-scheme: light;
   --fond: #ffffff;
@@ -21,7 +22,9 @@
   --encre: #172033;
   --gris: #5b6478;
   --trait: #dce1ea;
-  --trait-doux: #eef1f6;
+  --trait-doux: #f0f2f6;
+  --trait-heure: #c3cad7;
+  --rouge: #c62828;
   --bleu: #2b4c9b;
   --sur-marine: #ffffff;
   --sur-marine-2: #c9d2e6;
@@ -71,14 +74,25 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 /* En-tête : le titre, puis le bandeau marine des rubriques */
 .titre-ligne { padding-block: clamp(12px, 2.4vh, 22px) clamp(10px, 1.8vh, 16px); }
 .titre-site { display: inline-block; font-family: var(--f-display); font-weight: 800; font-stretch: 112%; font-size: clamp(1.55rem, min(4.2vw, 5.2vh), 2.75rem); line-height: 1.05; letter-spacing: -.015em; color: var(--marine); text-decoration: none; }
-.bande { background: var(--marine); }
+.bande { position: relative; z-index: 15; background: var(--marine); }
 .bande-dedans { display: flex; gap: 4px; }
+.rubrique-menu { display: flex; }
 .bande a { position: relative; padding: clamp(11px, 1.8vh, 15px) 24px; color: var(--sur-marine-2); font: 600 1.05rem/1 var(--f-body); text-decoration: none; }
 .bande a:hover { color: var(--sur-marine); }
 .bande a[aria-current="page"] { background: var(--marine-2); color: var(--sur-marine); }
 .bande a[aria-current="page"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: var(--sur-marine); }
 .bande a:focus-visible { outline-color: var(--sur-marine); outline-offset: -4px; }
-@media (max-width: 599px) { .bande-dedans { gap: 0; } .bande a { flex: 1; padding-inline: 8px; text-align: center; } }
+@media (max-width: 599px) { .bande-dedans { gap: 0; } .rubrique-menu { flex: 1; } .bande a { flex: 1; padding-inline: 8px; text-align: center; } }
+/* Sous-rubriques : un bandeau clair sous le bandeau marine, au survol (ou au clavier) de la rubrique */
+.sous-bande { position: absolute; left: 0; right: 0; top: 100%; display: none; background: var(--marine-doux); border-bottom: 1px solid var(--trait); box-shadow: 0 10px 24px rgba(15, 25, 50, .14); }
+@media (hover: hover) { .rubrique-menu:hover .sous-bande { display: block; } }
+.rubrique-menu:has(:focus-visible) .sous-bande { display: block; }
+.rubrique-menu.replie .sous-bande { display: none; }
+.sous-bande-dedans { display: flex; flex-wrap: wrap; gap: 4px; }
+.bande .sous-bande a { flex: 0 0 auto; padding: 13px 20px; color: var(--marine); font-size: 1rem; text-align: left; }
+.bande .sous-bande a:hover, .bande .sous-bande a[aria-current="page"] { background: var(--fond); color: var(--marine); }
+.bande .sous-bande a[aria-current="page"]::after { height: 3px; background: var(--marine); }
+.bande .sous-bande a:focus-visible { outline-color: var(--marine); }
 
 /* Accueil */
 .accueil { display: grid; gap: 20px; padding-block: 28px 56px; }
@@ -125,23 +139,29 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 .jour.aujourdhui .jour-nom, .jour.aujourdhui .jour-date, .jour.aujourdhui .jour-total { color: var(--sur-marine); }
 .jour.aujourdhui .jour-repos { color: var(--repos-raie); }
 /* L'axe et les colonnes ont la même hauteur : une heure à i/n de l'axe tombe sur la ligne i des colonnes */
-.axe { position: relative; width: clamp(40px, 4vw, 52px); border: 1px solid transparent; }
-.axe-heure { position: absolute; right: 6px; font: 500 .68rem/1 var(--f-mono); color: var(--gris); white-space: nowrap; font-variant-numeric: tabular-nums; transform: translateY(-50%); }
-.axe-heure.pleine { font-weight: 600; font-size: .74rem; color: var(--encre); }
-.colonne { position: relative; display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--trait); border-radius: 6px; overflow: hidden; background: var(--fond); }
+.axe { position: relative; grid-row: 2; grid-column: 1; width: clamp(40px, 4vw, 52px); border: 1px solid transparent; }
+.axe-heure { position: absolute; right: 6px; font: 600 .78rem/1 var(--f-mono); color: var(--encre); white-space: nowrap; font-variant-numeric: tabular-nums; transform: translateY(-50%); }
+.axe-heure.midi { font-weight: 700; color: var(--rouge); }
+.colonne { position: relative; grid-row: 2; display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--trait); border-radius: 6px; overflow: hidden; background: var(--fond); }
 .colonne.aujourdhui { border-color: var(--marine); box-shadow: 0 0 0 1px var(--marine); }
 .creneau { flex: 1 1 0; min-height: 0; box-shadow: inset 0 1px 0 var(--trait-doux); }
-.creneau.heure { box-shadow: inset 0 1px 0 var(--trait); }
+/* Un trait marqué à chaque heure, un trait léger à la demi-heure */
+.creneau.heure { box-shadow: inset 0 1.5px 0 var(--trait-heure); }
 .creneau:first-child { box-shadow: none; }
-.creneau.bleu { background: var(--bleu); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16); }
-.creneau.bleu.heure { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .34); }
-.creneau.bleu-haut { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16); }
-.creneau.bleu-haut.heure { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .34); }
+.creneau.bleu { background: var(--bleu); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1); }
+.creneau.bleu.heure { box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, .5); }
+.creneau.bleu-haut { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1); }
+.creneau.bleu-haut.heure { box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, .5); }
+.colonne.repos { background: repeating-linear-gradient(135deg, var(--repos-doux) 0 10px, var(--repos-raie) 10px 20px); }
+.colonne.repos .creneau { box-shadow: none; }
+/* Les repères rouges de midi (12h et 14h) traversent toute la semaine, au-dessus du bleu */
+.reperes { position: relative; z-index: 1; grid-row: 2; grid-column: 2 / -1; pointer-events: none; }
+.repere { position: absolute; left: 0; right: 0; height: 2px; margin-top: -1px; background: var(--rouge); }
 .creneau.partiel { background: linear-gradient(to bottom, transparent var(--de), var(--bleu) var(--de), var(--bleu) var(--a), transparent var(--a)); }
 .horaire { position: absolute; left: 0; right: 0; padding-inline: 2px; overflow: hidden; color: var(--sur-marine); font: 700 clamp(.68rem, min(1.1vw, 1.9vh), .85rem)/1 var(--f-body); text-align: center; white-space: nowrap; pointer-events: none; }
 .horaire.haut { margin-top: 4px; }
 .horaire.bas { margin-bottom: 4px; }
-.mot-repos { position: absolute; inset: 0; display: grid; place-items: center; color: var(--repos); font: 600 .72rem/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; pointer-events: none; }
+.mot-repos { position: absolute; top: 50%; left: 50%; z-index: 2; padding: 5px 8px; border-radius: 999px; background: var(--fond); color: var(--repos); font: 700 .72rem/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; transform: translate(-50%, -50%); pointer-events: none; }
 
 .bilan { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; align-items: center; gap: 12px 24px; padding: clamp(10px, 1.8vh, 18px) clamp(14px, 2vw, 24px); border: 1.5px solid var(--trait); border-radius: 12px; }
 .chiffre { display: grid; gap: 2px; min-width: 0; }
@@ -234,6 +254,25 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 .legende .point { display: inline-block; width: 6px; height: 6px; margin-right: 6px; border-radius: 50%; background: var(--marine); vertical-align: middle; }
 .legende .cadre-actuel { display: inline-block; width: 12px; height: 12px; margin-right: 6px; border: 2px solid var(--marine); border-radius: 3px; vertical-align: -1px; }
 
+/* Page d'une rubrique : ses sous-rubriques en cartes */
+.sous-rubriques { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); gap: 16px; }
+.carte-sous { display: flex; flex-direction: column; gap: 14px; height: 100%; padding: 22px; border: 1.5px solid transparent; border-radius: 12px; background: var(--c-doux); text-decoration: none; transition: border-color .15s ease; }
+.carte-sous:hover { border-color: var(--c); }
+.carte-sous-titre { font-family: var(--f-display); font-weight: 800; font-stretch: 108%; font-size: 1.6rem; line-height: 1.05; color: var(--c); }
+.carte-sous-texte { color: var(--gris); }
+.carte-sous-ligne { font-weight: 600; }
+.carte-sous-pied { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 12px; margin-top: auto; padding-top: 12px; border-top: 1px solid var(--trait); border-top-color: color-mix(in srgb, var(--c) 28%, transparent); font: 500 .8rem/1.4 var(--f-mono); color: var(--gris); }
+.carte-sous:hover .fleche { transform: translateX(3px); }
+/* La semaine en miniature dans la carte « Mon planning » */
+.mini { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+.mini-jour { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.mini-col { position: relative; display: block; width: 100%; height: 88px; border: 1px solid var(--trait); border-radius: 4px; overflow: hidden; background: var(--fond); }
+.mini-col.repos { background: repeating-linear-gradient(135deg, var(--repos-doux) 0 6px, var(--repos-raie) 6px 12px); }
+.mini-col.aujourdhui { border-color: var(--marine); box-shadow: 0 0 0 1px var(--marine); }
+.mini-bloc { position: absolute; left: 0; right: 0; background: var(--bleu); }
+.mini-repere { position: absolute; left: 0; right: 0; height: 1px; background: var(--rouge); }
+.mini-lettre { font: 600 .7rem/1 var(--f-mono); color: var(--gris); }
+
 /* Argent et Sport : rubriques encore à construire */
 .rubrique { display: grid; gap: 24px; padding-block: 32px 56px; }
 .rubrique-tete { display: grid; gap: 8px; }
@@ -263,7 +302,14 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   </div>
   <nav class="bande" aria-label="Rubriques">
     <div class="cadre bande-dedans">
-      <a href="#travail" data-aller="travail">Travail</a>
+      <div class="rubrique-menu">
+        <a href="#travail" data-aller="travail">Travail</a>
+        <div class="sous-bande" role="group" aria-label="Sous-rubriques de Travail">
+          <div class="cadre sous-bande-dedans">
+            <a href="#planning" data-aller="planning">Mon planning</a>
+          </div>
+        </div>
+      </div>
       <a href="#argent" data-aller="argent">Argent</a>
       <a href="#sport" data-aller="sport">Sport</a>
     </div>
@@ -282,7 +328,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
           <a class="carte-rubrique" href="#travail">
             <span class="numero" aria-hidden="true">1</span>
             <span class="carte-titre">Travail</span>
-            <span class="carte-texte">Mon planning de la semaine, mes heures et mon jour de repos.</span>
+            <span class="carte-texte">Mon planning, avec mes heures et mon jour de repos.</span>
             <span class="carte-pied"><span id="resume-travail">Planning de la semaine</span><span class="fleche">Ouvrir →</span></span>
           </a>
         </li>
@@ -306,8 +352,29 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     </div>
   </section>
 
-  <section class="vue-travail r-travail" data-vue="travail" aria-labelledby="titre-travail" hidden>
-    <h1 class="invisible" id="titre-travail" tabindex="-1">Travail : mon planning</h1>
+  <section class="r-travail" data-vue="travail" aria-labelledby="titre-travail" hidden>
+    <div class="cadre rubrique">
+      <div class="rubrique-tete">
+        <p class="eyebrow">Rubrique 1 sur 3</p>
+        <h1 id="titre-travail" tabindex="-1">Travail</h1>
+        <p class="chapo">Tout ce qui touche à mon boulot chez Blue Box.</p>
+      </div>
+      <ul class="sous-rubriques">
+        <li>
+          <a class="carte-sous" href="#planning">
+            <span class="carte-sous-titre">Mon planning</span>
+            <span class="carte-sous-texte">Mes horaires de la semaine, mes heures travaillées et mon jour de repos.</span>
+            <span class="mini" id="mini-planning" aria-hidden="true" hidden></span>
+            <span class="carte-sous-ligne" id="aujourdhui-planning" hidden></span>
+            <span class="carte-sous-pied"><span id="resume-planning">Planning de la semaine</span><span class="fleche">Ouvrir →</span></span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="vue-travail r-travail" data-vue="planning" aria-labelledby="titre-planning" hidden>
+    <h1 class="invisible" id="titre-planning" tabindex="-1">Mon planning</h1>
     <div class="cadre travail">
       <div class="semaine-nav">
         <button class="fleche-semaine" id="semaine-prec" type="button" aria-label="Semaine précédente">
@@ -436,16 +503,20 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 
   // ---------- vues : une rubrique à la fois ----------
   // La page ne modifie jamais son adresse (dans le cadre de claude.ai, une adresse réécrite
-  // rend la page introuvable) ; un lien direct (#travail, #argent, #sport) ouvre sa rubrique.
-  const VUES = ["accueil", "travail", "argent", "sport"];
+  // rend la page introuvable) ; un lien direct ouvre sa page : une rubrique (#travail, #argent,
+  // #sport) ou une sous-rubrique (#planning).
+  const VUES = ["accueil", "travail", "planning", "argent", "sport"];
+  const RUBRIQUE_DE = { planning: "travail" };
   let vueActive = "accueil";
 
   function montrer(nom, opts = {}) {
     if (!VUES.includes(nom)) return false;
     vueActive = nom;
     document.querySelectorAll("[data-vue]").forEach(v => { v.hidden = v.dataset.vue !== nom; });
+    // Dans le bandeau, la rubrique reste marquée quand une de ses sous-rubriques est ouverte.
     document.querySelectorAll(".bande [data-aller]").forEach(a => {
-      if (a.dataset.aller === nom) a.setAttribute("aria-current", "page");
+      const cible = a.closest(".sous-bande") ? nom : RUBRIQUE_DE[nom] || nom;
+      if (a.dataset.aller === cible) a.setAttribute("aria-current", "page");
       else a.removeAttribute("aria-current");
     });
     if (!opts.garderDefilement) window.scrollTo(0, 0);
@@ -457,8 +528,12 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   }
   document.addEventListener("click", e => {
     const a = e.target.closest('a[href^="#"]');
-    if (a && montrer(a.getAttribute("href").slice(1), { focus: true })) e.preventDefault();
+    if (!a || !montrer(a.getAttribute("href").slice(1), { focus: true })) return;
+    e.preventDefault();
+    // Une sous-rubrique choisie : le bandeau se replie jusqu'à ce que la souris quitte la rubrique.
+    if (a.closest(".sous-bande")) a.closest(".rubrique-menu").classList.add("replie");
   });
+  document.querySelectorAll(".rubrique-menu").forEach(m => m.addEventListener("mouseleave", () => m.classList.remove("replie")));
   const cibleAdresse = () => { try { return decodeURIComponent(location.hash.slice(1)); } catch (_) { return ""; } };
   window.addEventListener("hashchange", () => { if (cibleAdresse()) montrer(cibleAdresse()); });
 
@@ -609,13 +684,14 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     return { de, a, n: (a - de) / CRENEAU };
   }
   const position = (t, b) => (t - b.de) / (b.a - b.de) * 100;
+  const REPERES = [12 * 60, 14 * 60];   // le milieu de la journée, en rouge
   const enHeure = t => formatHeure(`${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`);
 
   function axeFrise(b) {
     const el = element("div", "axe");
     el.setAttribute("aria-hidden", "true");
-    for (let t = b.de; t <= b.a; t += CRENEAU) {
-      const h = element("span", "axe-heure" + (t % 60 === 0 ? " pleine" : ""), enHeure(t));
+    for (let t = Math.ceil(b.de / 60) * 60; t <= b.a; t += 60) {
+      const h = element("span", "axe-heure" + (REPERES.includes(t) ? " midi" : ""), enHeure(t));
       h.style.top = `${position(t, b)}%`;
       el.append(h);
     }
@@ -625,7 +701,8 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   function colonneJour(i, sem, b, iAujourdhui) {
     const jour = sem.jours[JOURS[i]];
     const travail = periodesTravaillees(jour);
-    const el = element("div", "colonne" + (i === iAujourdhui ? " aujourdhui" : ""));
+    const el = element("div", "colonne" + (jour.repos ? " repos" : "") + (i === iAujourdhui ? " aujourdhui" : ""));
+    el.style.gridColumn = String(i + 2);   // placée à la main : les repères rouges occupent la même zone
     el.setAttribute("role", "img");
     el.setAttribute("aria-label", `${majuscule(JOURS[i])} : ` + (jour.repos ? "repos"
       : travail.length ? travail.map(x => `${formatHeure(x.debut)} à ${formatHeure(x.fin)}`).join(", puis ") : "rien de prévu"));
@@ -676,6 +753,14 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     JOURS.forEach((_, i) => f.append(enteteJour(i, sem, iAujourdhui)));
     f.append(axeFrise(b));
     JOURS.forEach((_, i) => f.append(colonneJour(i, sem, b, iAujourdhui)));
+    const reperes = element("div", "reperes");
+    reperes.setAttribute("aria-hidden", "true");
+    REPERES.filter(t => t > b.de && t < b.a).forEach(t => {
+      const r = element("span", "repere");
+      r.style.top = `${position(t, b)}%`;
+      reperes.append(r);
+    });
+    f.append(reperes);
     grille.replaceChildren(f);
 
     const vide = estVide(s);
@@ -700,6 +785,50 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     $("resume-travail").textContent = `Cette semaine : ${formatDuree(dureeSemaine(s))}` + (repos.length ? ` · repos ${listeFr(repos)}` : "");
   }
 
+  // La semaine en cours en miniature, le total, le repos et les horaires d'aujourd'hui.
+  function rendreCartePlanning() {
+    const info = infoSemaine(lundiDe(aujourdhui()));
+    const s = semaines[info.cle];
+    const zone = $("mini-planning"), ligne = $("aujourdhui-planning");
+    if (estVide(s)) {
+      zone.hidden = ligne.hidden = true;
+      $("resume-planning").textContent = `Semaine ${info.num} : planning à remplir`;
+      return;
+    }
+    const b = bornesFrise(s);
+    const iAujourdhui = (new Date(aujourdhui()).getUTCDay() || 7) - 1;
+    const f = document.createDocumentFragment();
+    JOURS.forEach((j, i) => {
+      const jour = s.jours[j];
+      const col = element("span", "mini-col" + (jour.repos ? " repos" : "") + (i === iAujourdhui ? " aujourdhui" : ""));
+      periodesTravaillees(jour).forEach(x => {
+        const bloc = element("span", "mini-bloc");
+        bloc.style.top = `${position(x.de, b)}%`;
+        bloc.style.height = `${position(x.a, b) - position(x.de, b)}%`;
+        col.append(bloc);
+      });
+      REPERES.filter(t => t > b.de && t < b.a).forEach(t => {
+        const r = element("span", "mini-repere");
+        r.style.top = `${position(t, b)}%`;
+        col.append(r);
+      });
+      const cellule = element("span", "mini-jour");
+      cellule.append(col, element("span", "mini-lettre", JOURS_COURTS[i]));
+      f.append(cellule);
+    });
+    zone.replaceChildren(f);
+    zone.hidden = false;
+    const repos = joursDeRepos(s);
+    $("resume-planning").textContent = `Semaine ${info.num} : ${formatDuree(dureeSemaine(s))}` + (repos.length ? ` · repos ${listeFr(repos)}` : "");
+    ligne.hidden = iAujourdhui > 5;
+    if (iAujourdhui <= 5) {
+      const jour = s.jours[JOURS[iAujourdhui]];
+      const travail = periodesTravaillees(jour);
+      ligne.textContent = "Aujourd'hui : " + (jour.repos ? "repos"
+        : travail.length ? travail.map(x => `${formatHeure(x.debut)} – ${formatHeure(x.fin)}`).join(" et ") : "rien de prévu");
+    }
+  }
+
   function rendreDate() {
     try {
       const d = new Date();
@@ -711,6 +840,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   function rendreTout() {
     rendrePlanning();
     rendreResume();
+    rendreCartePlanning();
     if ($("fenetre-semaine").open) rendreGrilleSemaines();
   }
 
