@@ -2,15 +2,15 @@
 
 Mon tableau de bord, publié sur claude.ai : https://claude.ai/artifact/QcoRPH8YUBGwfVt8XqzoYY
 
-Ouvre `index.html` dans un navigateur pour le voir en local (rien à installer). En local, le planning et la to-do list sont gardés dans le navigateur.
+Ouvre `index.html` dans un navigateur pour le voir en local (rien à installer). En local, le planning, la to-do list et la garde-robe sont gardés dans le navigateur.
 
 Fond blanc, titre bleu marine, et sous le titre un bandeau marine avec les trois rubriques. Au survol d'une rubrique, ses sous-rubriques s'affichent dans un bandeau clair juste en dessous. Cliquer sur une rubrique ouvre la page de ses sous-rubriques ; sur téléphone, c'est le chemin pour y accéder. Le titre ramène à l'accueil.
 
-Une adresse qui finit par `#travail`, `#argent` ou `#sport` ouvre directement la rubrique ; `#planning` et `#todo` ouvrent les sous-rubriques « Mon planning » et « To-do list ».
+Une adresse qui finit par `#travail`, `#argent` ou `#sport` ouvre directement la rubrique ; `#planning`, `#todo` et `#garde-robe` ouvrent les sous-rubriques « Mon planning », « To-do list » et « Garde-robe Blue Box ».
 
 ## Travail
 
-La page Travail présente ses sous-rubriques en cartes. « Mon planning » montre la semaine en cours en miniature, les horaires d'aujourd'hui, le total d'heures et le jour de repos ; « To-do list » montre les compteurs et les trois tâches les plus pressantes.
+La page Travail présente ses sous-rubriques en cartes. « Mon planning » montre la semaine en cours en miniature, les horaires d'aujourd'hui, le total d'heures et le jour de repos ; « To-do list » montre les compteurs et les trois tâches les plus pressantes ; « Garde-robe Blue Box » montre six pièces en photo et le nombre de pièces et de marques.
 
 ### Mon planning
 
@@ -41,16 +41,28 @@ Ce que je dois faire au magasin et ce que je dois dire à quelqu'un.
 - **Cocher** une tâche la range dans « Fait », en bas, d'où on peut la décocher. « Effacer ce qui est fait » vide cette partie (second appui pour confirmer).
 - **Le crayon** ouvre la tâche pour la modifier ou la supprimer (second appui pour confirmer).
 
+### Garde-robe Blue Box
+
+Les pièces du magasin, pour penser les vitrines, les tenues et les posts.
+
+- **Les pièces** en photo, rangées par catégorie : marque, modèle, couleur (avec sa pastille), prix et repères.
+- **Les filtres** : recherche (modèle, marque, couleur, référence, note), marque, rayon (Homme, Femme ; une pièce mixte apparaît dans les deux), catégorie, famille de couleur (noir, gris, beige, marine, bordeaux…) et repères.
+- **Les repères** : Nouveauté, Promo, Idée vitrine, À poster.
+- **« Ajouter une pièce »** : photo (réduite à 900 px), marque, catégorie, modèle, couleur, coupe, rayon, prix, référence, lien de la fiche produit, repères et note. Une photo nommée comme les exports Canva (`Marque - Catégorie - Modèle - Couleur.png`) remplit les champs encore vides. Toucher une pièce la rouvre pour la modifier ou la supprimer (second appui pour confirmer).
+- **Au départ** : les 16 pièces de `garde-robe.js`, avec leurs photos de `images/`.
+
 ## Argent et Sport
 
 À construire : chaque rubrique montre des idées de contenu, marquées « Idée ».
 
 ## Données
 
-Sur la page publiée, le planning et la to-do list sont enregistrés dans la base de la page : ils sont les mêmes sur le téléphone et l'ordinateur, et seul le propriétaire peut les modifier. Un document par semaine : `planning/AAAA-Wss` (semaine ISO, par exemple `planning/2026-W43`), avec `jours.lundi` … `jours.samedi` : `{ repos, matin: { debut, fin }, apresMidi: { debut, fin } }`, les heures au format `HH:MM`.
+Sur la page publiée, le planning, la to-do list et la garde-robe sont enregistrés dans la base de la page : ils sont les mêmes sur le téléphone et l'ordinateur, et seul le propriétaire peut les modifier. Un document par semaine : `planning/AAAA-Wss` (semaine ISO, par exemple `planning/2026-W43`), avec `jours.lundi` … `jours.samedi` : `{ repos, matin: { debut, fin }, apresMidi: { debut, fin } }`, les heures au format `HH:MM`.
 
 Un document par tâche : `todo/<id>`, avec `texte`, `type` (`faire` ou `dire`), `personne`, `pour` (`AAAA-MM-JJ` ou rien), `urgent`, `fait`, `faitLe` et `creeLe`.
 
+Un document par pièce : `pieces/<id>`, avec `marque`, `categorie` (`pulls`, `jeans`, `pantalons`…), `modele`, `coupe`, `couleur`, `rayon` (`homme`, `femme` ou `mixte`), `prix`, `ref`, `lien`, `photo`, `reperes` (`nouveaute`, `promo`, `vitrine`, `reseaux`), `note` et `creeLe`. La photo est l'identifiant d'un fichier envoyé depuis la page (stockage de la page), ou le chemin d'une image publiée avec elle (`images/…jpg`).
+
 ## Publier
 
-`outils/version-artefact.sh site/index.html > site-axel.html`, puis publier `site-axel.html` sur la même adresse, avec les capacités `db` (écriture réservée au propriétaire) et `user`.
+`outils/version-artefact.sh site/index.html > site-axel.html`, puis publier `site-axel.html` sur la même adresse avec `images/*.jpg`, et les capacités `db` (écriture réservée au propriétaire), `user` et `assets` (envoi des photos).

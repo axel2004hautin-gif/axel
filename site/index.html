@@ -13,7 +13,8 @@
    sous-rubriques s'affichent dessous. Une rubrique ouvre la page de ses sous-rubriques. « Mon planning »
    tient dans l'écran : semaine, frise (une colonne par jour, une ligne par heure, elle prend toute la
    place qui reste), bilan. « To-do list » : ajout rapide en haut, puis deux colonnes, « À faire » et
-   « À dire » (par personne), et ce qui est fait en bas. Un seul thème, clair. */
+   « À dire » (par personne), et ce qui est fait en bas. « Garde-robe Blue Box » : filtres en haut, puis
+   les pièces en photo, rangées par catégorie. Un seul thème, clair. */
 :root {
   color-scheme: light;
   --fond: #ffffff;
@@ -283,8 +284,8 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 
 /* To-do list */
 .todo { display: grid; gap: 20px; padding-block: 28px 56px; }
-.todo-tete { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 8px 24px; }
-.todo-tete h1 { margin-top: 6px; font-family: var(--f-display); font-weight: 850; font-stretch: 120%; font-size: clamp(2rem, 6vw, 3.25rem); line-height: .95; letter-spacing: -.02em; color: var(--marine); }
+.todo-tete, .page-tete { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 8px 24px; }
+.todo-tete h1, .page-tete h1 { margin-top: 6px; font-family: var(--f-display); font-weight: 850; font-stretch: 120%; font-size: clamp(2rem, 6vw, 3.25rem); line-height: .95; letter-spacing: -.02em; color: var(--marine); }
 .todo-compte { font: 600 .85rem/1.4 var(--f-mono); color: var(--gris); }
 .todo-compte .rouge { color: var(--rouge); }
 
@@ -295,7 +296,8 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 .type-tache span { display: block; padding: 8px 14px; border-radius: 7px; color: var(--gris); font-weight: 600; text-align: center; white-space: nowrap; }
 .type-tache input:checked + span { background: var(--marine); color: var(--sur-marine); }
 .type-tache input:focus-visible + span { outline: 2px solid var(--marine); outline-offset: 2px; }
-.champs-tache input[type="text"], .champs-tache input[type="date"], .champs-tache select { min-height: 44px; padding: 8px 12px; border: 1.5px solid var(--trait); border-radius: 8px; background: var(--fond); color: var(--encre); font-size: 1rem; }
+.champs-tache input[type="text"], .champs-tache input[type="date"], .champs-tache input[type="url"], .champs-tache input[type="search"], .champs-tache select, .champs-tache textarea { min-height: 44px; padding: 8px 12px; border: 1.5px solid var(--trait); border-radius: 8px; background: var(--fond); color: var(--encre); font-size: 1rem; }
+.champs-tache textarea { resize: vertical; line-height: 1.4; }
 .champs-tache .en-erreur { border-color: var(--erreur); background: var(--erreur-doux); }
 .ajout-tache .champ-texte { flex: 1 1 240px; min-width: 0; }
 .ajout-tache .champ-personne { flex: 0 1 160px; min-width: 0; }
@@ -357,6 +359,75 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 .bouton-danger:hover { background: var(--erreur-doux); }
 .bouton-danger.arme { background: var(--erreur); color: var(--sur-marine); }
 
+/* Garde-robe Blue Box */
+.catalogue { display: grid; gap: 18px; padding-block: 28px 56px; }
+.page-tete-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.filtres { display: grid; gap: 10px; min-width: 0; padding: 14px; border: 1.5px solid var(--trait); border-radius: 12px; background: var(--marine-doux); }
+.filtres-ligne { display: flex; flex-wrap: wrap; gap: 10px; }
+.filtres-ligne input[type="search"] { flex: 1 1 260px; min-width: 0; }
+.filtres-ligne select { flex: 0 1 220px; min-width: 0; }
+.puces-filtre { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+.etiquette-filtre { margin-right: 4px; font: 600 .7rem/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--gris); }
+.puce-filtre { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 6px 12px; border: 1.5px solid var(--trait); border-radius: 999px; background: var(--fond); color: var(--encre); font-weight: 600; font-size: .92rem; white-space: nowrap; }
+.puce-filtre:hover { border-color: var(--marine); }
+.puce-filtre[aria-pressed="true"] { border-color: var(--marine); background: var(--marine); color: var(--sur-marine); }
+.puce-filtre[aria-pressed="true"] .nombre { color: var(--sur-marine-2); }
+.puce-filtre .nombre { font-size: .75rem; }
+@media (max-width: 599px) {
+  .filtres-ligne select, .filtres-ligne .type-tache { flex: 1 1 100%; }
+  .puces-filtre { flex-wrap: nowrap; overflow-x: auto; margin-inline: -14px; padding-inline: 14px; scrollbar-width: none; }
+  .puces-filtre::-webkit-scrollbar { display: none; }
+  .puce-filtre, .etiquette-filtre { flex: none; }
+}
+.resultat { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; color: var(--gris); }
+.lien-discret { padding: 4px 0; border: 0; background: none; color: var(--marine); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.groupes-pieces { display: grid; gap: 28px; }
+.groupe-pieces { display: grid; gap: 14px; }
+.groupe-pieces h2 { display: flex; align-items: baseline; gap: 10px; padding-bottom: 8px; border-bottom: 2px solid var(--marine); font-family: var(--f-display); font-weight: 800; font-size: 1.3rem; line-height: 1.2; color: var(--marine); }
+.grille-pieces { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); gap: 18px 14px; }
+@media (max-width: 479px) { .grille-pieces { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 10px; } }
+.piece { display: flex; flex-direction: column; gap: 3px; min-width: 0; padding: 0; border: 0; background: none; color: var(--encre); text-align: left; }
+.piece-photo { position: relative; display: grid; place-items: center; width: 100%; max-width: 100%; aspect-ratio: 4 / 5; overflow: hidden; border: 1px solid var(--trait); border-radius: 10px; background: var(--fond); }
+.piece-photo img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.piece:hover .piece-photo { border-color: var(--marine); }
+.sans-photo { padding: 8px; color: var(--gris); font: 600 .72rem/1.3 var(--f-mono); letter-spacing: .06em; text-align: center; text-transform: uppercase; }
+.piece-reperes { position: absolute; top: 6px; left: 6px; right: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
+.piece-marque { margin-top: 6px; font: 600 .7rem/1.2 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--gris); }
+.piece-modele { display: -webkit-box; overflow: hidden; font-weight: 600; line-height: 1.25; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.piece-ligne { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; color: var(--gris); font-size: .92rem; }
+.pastille-couleur { flex: none; display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: var(--teinte, transparent); box-shadow: inset 0 0 0 1px rgba(23, 32, 51, .2); }
+.rep { padding: 3px 7px; border-radius: 999px; font: 700 .64rem/1.2 var(--f-mono); letter-spacing: .03em; text-transform: uppercase; white-space: nowrap; }
+.rep-nouveaute { background: var(--marine); color: var(--sur-marine); }
+.rep-promo { background: var(--rouge); color: var(--sur-marine); }
+.rep-vitrine { background: var(--repos-doux); color: var(--repos); box-shadow: inset 0 0 0 1px var(--repos-raie); }
+.rep-reseaux { background: var(--bleu); color: var(--sur-marine); }
+.mosaique { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+.mosaique-case { display: block; max-width: 100%; aspect-ratio: 4 / 5; overflow: hidden; border: 1px solid var(--trait); border-radius: 6px; background: var(--fond); }
+.mosaique-case img { display: block; width: 100%; height: 100%; object-fit: contain; }
+
+.fenetre-piece { width: min(880px, calc(100vw - 24px)); }
+.piece-form { display: grid; gap: 18px; padding-top: 16px; }
+@media (min-width: 720px) { .piece-form { grid-template-columns: 220px minmax(0, 1fr); align-items: start; } }
+.photo-zone { display: grid; gap: 10px; align-content: start; }
+@media (max-width: 719px) { .photo-zone { grid-template-columns: 112px minmax(0, 1fr); align-items: center; } }
+.photo-apercu { display: grid; place-items: center; width: 100%; max-width: 100%; aspect-ratio: 4 / 5; overflow: hidden; border: 1.5px dashed var(--trait); border-radius: 10px; background: var(--fond); }
+.photo-apercu img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.photo-actions { display: grid; gap: 8px; justify-items: start; }
+.bouton-fichier { position: relative; display: inline-flex; align-items: center; cursor: pointer; }
+.aide { color: var(--gris); font-size: .88rem; line-height: 1.35; }
+.champs-grille { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; min-width: 0; }
+.champs-grille .large { grid-column: 1 / -1; }
+@media (max-width: 479px) { .champs-grille { grid-template-columns: minmax(0, 1fr); } }
+.champs-grille input, .champs-grille select, .champs-grille textarea { width: 100%; min-width: 0; }
+.champ-couleur { position: relative; display: block; }
+.champ-couleur .pastille-couleur { position: absolute; top: 50%; left: 12px; transform: translateY(-50%); }
+.champ-couleur input { padding-left: 32px !important; }
+.reperes-choix { display: flex; flex-wrap: wrap; gap: 8px; }
+.repere-choix { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 12px; border: 1.5px solid var(--trait); border-radius: 999px; background: var(--fond); color: var(--gris); font-weight: 600; cursor: pointer; }
+.repere-choix input { width: 18px; height: 18px; margin: 0; accent-color: var(--marine); }
+.repere-choix.coche { border-color: var(--marine); background: var(--marine-doux); color: var(--marine); }
+.lien-fiche { color: var(--marine); font-weight: 600; }
+
 /* Argent et Sport : rubriques encore à construire */
 .rubrique { display: grid; gap: 24px; padding-block: 32px 56px; }
 .rubrique-tete { display: grid; gap: 8px; }
@@ -392,6 +463,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
           <div class="cadre sous-bande-dedans">
             <a href="#planning" data-aller="planning">Mon planning</a>
             <a href="#todo" data-aller="todo">To-do list</a>
+            <a href="#garde-robe" data-aller="garde-robe">Garde-robe Blue Box</a>
           </div>
         </div>
       </div>
@@ -413,7 +485,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
           <a class="carte-rubrique" href="#travail">
             <span class="numero" aria-hidden="true">1</span>
             <span class="carte-titre">Travail</span>
-            <span class="carte-texte">Mon planning de la semaine et ma to-do list du magasin.</span>
+            <span class="carte-texte">Mon planning, ma to-do list et la garde-robe du magasin.</span>
             <span class="carte-pied"><span id="resume-travail">Planning de la semaine</span><span class="fleche">Ouvrir →</span></span>
           </a>
         </li>
@@ -460,6 +532,14 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
             <span class="carte-sous-texte">Ce que je dois faire au magasin et ce que je dois dire à quelqu'un.</span>
             <span class="apercu" id="apercu-todo" hidden></span>
             <span class="carte-sous-pied"><span id="resume-todo">Rien à faire pour l'instant</span><span class="fleche">Ouvrir →</span></span>
+          </a>
+        </li>
+        <li>
+          <a class="carte-sous" href="#garde-robe">
+            <span class="carte-sous-titre">Garde-robe Blue Box</span>
+            <span class="carte-sous-texte">Les pièces du magasin en photo, pour penser les vitrines, les tenues et les posts.</span>
+            <span class="mosaique" id="mosaique-pieces" aria-hidden="true" hidden></span>
+            <span class="carte-sous-pied"><span id="resume-pieces">Aucune pièce pour l'instant</span><span class="fleche">Ouvrir →</span></span>
           </a>
         </li>
       </ul>
@@ -548,6 +628,40 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
         <ul class="taches" id="liste-faites"></ul>
         <button class="bouton-second" type="button" id="effacer-faites">Effacer ce qui est fait</button>
       </details>
+    </div>
+  </section>
+
+  <section class="r-travail" data-vue="garde-robe" aria-labelledby="titre-garde-robe" hidden>
+    <div class="cadre catalogue">
+      <div class="page-tete">
+        <div>
+          <p class="eyebrow">Travail</p>
+          <h1 id="titre-garde-robe" tabindex="-1">Garde-robe Blue Box</h1>
+        </div>
+        <div class="page-tete-actions">
+          <p class="todo-compte" id="gr-compte"></p>
+          <button class="bouton-principal" type="button" id="gr-ajouter" disabled>Ajouter une pièce</button>
+        </div>
+      </div>
+
+      <div class="filtres champs-tache" role="search">
+        <div class="filtres-ligne">
+          <input type="search" id="gr-recherche" placeholder="Chercher un modèle, une marque, une couleur…" aria-label="Chercher une pièce">
+          <select id="gr-marque" aria-label="Marque"></select>
+          <div class="type-tache" role="radiogroup" aria-label="Rayon">
+            <label><input type="radio" name="gr-rayon" value="" checked><span>Tout</span></label>
+            <label><input type="radio" name="gr-rayon" value="homme"><span>Homme</span></label>
+            <label><input type="radio" name="gr-rayon" value="femme"><span>Femme</span></label>
+          </div>
+        </div>
+        <div class="puces-filtre" id="gr-categories" role="group" aria-label="Catégorie"></div>
+        <div class="puces-filtre" id="gr-teintes" role="group" aria-label="Couleur"></div>
+        <div class="puces-filtre" id="gr-reperes" role="group" aria-label="Repères"></div>
+      </div>
+
+      <p class="resultat" id="gr-resultat"></p>
+      <div class="groupes-pieces" id="gr-grille"></div>
+      <p class="liste-vide" id="gr-vide" hidden></p>
     </div>
   </section>
 
@@ -663,6 +777,52 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 
 <datalist id="personnes"></datalist>
 
+<dialog class="fenetre fenetre-piece" id="fenetre-piece" aria-labelledby="pi-titre">
+  <div class="fenetre-tete">
+    <h2 id="pi-titre">Ajouter une pièce</h2>
+    <button class="fermer" type="button" data-fermer aria-label="Fermer sans enregistrer">×</button>
+  </div>
+  <form class="fenetre-corps champs-tache piece-form" id="piece-form" autocomplete="off" novalidate>
+    <div class="photo-zone">
+      <div class="photo-apercu"><span class="sans-photo" id="pi-sans-photo">Pas de photo</span><img id="pi-image" alt="" hidden></div>
+      <div class="photo-actions">
+        <label class="bouton-second bouton-fichier" id="pi-choisir"><span id="pi-choisir-texte">Choisir une photo</span><input class="invisible" type="file" id="pi-fichier" accept="image/*"></label>
+        <button class="lien-discret" type="button" id="pi-retirer" hidden>Retirer la photo</button>
+        <p class="aide" id="pi-aide">Une photo nommée « Marque - Catégorie - Modèle - Couleur » remplit les champs toute seule.</p>
+        <a class="lien-fiche" id="pi-voir-lien" target="_blank" rel="noopener" hidden>Voir la fiche produit ↗</a>
+      </div>
+    </div>
+    <div class="champs-grille">
+      <label class="titre-champ">Marque<input type="text" id="pi-marque" maxlength="60" list="marques"></label>
+      <label class="titre-champ">Catégorie<select id="pi-categorie"></select></label>
+      <label class="titre-champ large">Modèle<input type="text" id="pi-modele" maxlength="120" placeholder="Ex. : Jean 502 Taper"></label>
+      <label class="titre-champ">Couleur<span class="champ-couleur"><span class="pastille-couleur" id="pi-pastille"></span><input type="text" id="pi-couleur" maxlength="60" list="couleurs"></span></label>
+      <label class="titre-champ">Coupe<input type="text" id="pi-coupe" maxlength="120" placeholder="Ex. : slim, jambe droite"></label>
+      <div class="titre-champ">Rayon
+        <div class="type-tache" role="radiogroup" aria-label="Rayon">
+          <label><input type="radio" name="pi-rayon" value="homme" checked><span>Homme</span></label>
+          <label><input type="radio" name="pi-rayon" value="femme"><span>Femme</span></label>
+          <label><input type="radio" name="pi-rayon" value="mixte"><span>Mixte</span></label>
+        </div>
+      </div>
+      <label class="titre-champ">Prix<input type="text" id="pi-prix" inputmode="decimal" maxlength="12" placeholder="Ex. : 79,90"></label>
+      <label class="titre-champ">Référence<input type="text" id="pi-ref" maxlength="60"></label>
+      <label class="titre-champ">Lien de la fiche produit<input type="url" id="pi-lien" maxlength="500" placeholder="https://…"></label>
+      <div class="titre-champ large">Repères<div class="reperes-choix" id="pi-reperes"></div></div>
+      <label class="titre-champ large">Note<textarea id="pi-note" maxlength="500" rows="2" placeholder="Ex. : tailles S à XL, se vend bien"></textarea></label>
+    </div>
+  </form>
+  <div class="fenetre-pied">
+    <p class="fenetre-erreur" id="pi-erreur" role="alert" hidden></p>
+    <button class="bouton-danger" type="button" id="pi-supprimer" hidden>Supprimer</button>
+    <button class="bouton-second" type="button" data-fermer>Annuler</button>
+    <button class="bouton-principal" type="button" id="pi-enregistrer">Enregistrer</button>
+  </div>
+</dialog>
+
+<datalist id="marques"></datalist>
+<datalist id="couleurs"></datalist>
+
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 <script>
@@ -673,9 +833,9 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   // ---------- vues : une rubrique à la fois ----------
   // La page ne modifie jamais son adresse (dans le cadre de claude.ai, une adresse réécrite
   // rend la page introuvable) ; un lien direct ouvre sa page : une rubrique (#travail, #argent,
-  // #sport) ou une sous-rubrique (#planning, #todo).
-  const VUES = ["accueil", "travail", "planning", "todo", "argent", "sport"];
-  const RUBRIQUE_DE = { planning: "travail", todo: "travail" };
+  // #sport) ou une sous-rubrique (#planning, #todo, #garde-robe).
+  const VUES = ["accueil", "travail", "planning", "todo", "garde-robe", "argent", "sport"];
+  const RUBRIQUE_DE = { planning: "travail", todo: "travail", "garde-robe": "travail" };
   let vueActive = "accueil";
 
   function montrer(nom, opts = {}) {
@@ -789,6 +949,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
       for (const [cle, d] of Object.entries(brut)) { const s = CLE_RE.test(cle) && lireSemaine(d); if (s) semaines[cle] = s; }
     } catch (_) { /* rien de gardé dans ce navigateur */ }
     chargerTodoLocal();
+    chargerPiecesLocal();
   }
   function sauverLocal() {
     try { localStorage.setItem(CLE_LOCALE, JSON.stringify(semaines)); return true; } catch (_) { return false; }
@@ -798,7 +959,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     const c = window.claude;
     if (!c || typeof c.use !== "function") { chargerLocal(); rendreTout(); return; }
     let base = null, user = null;
-    try { [base, user] = await Promise.all([c.use("db"), c.use("user")]); } catch (_) { /* vue sans capacités */ }
+    try { [base, user, assets] = await Promise.all([c.use("db"), c.use("user"), c.use("assets")]); } catch (_) { /* vue sans capacités */ }
     if (!base) { mode = "local"; chargerLocal(); rendreTout(); return; }
     db = base;
     let proprio = false;
@@ -816,6 +977,12 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
       taches = m;
       rendreTodo();
     }, () => toast("La to-do list n'a pas pu être chargée. Recharge la page.", "erreur"));
+    db.collection("pieces").onSnapshot(snap => {
+      const m = Object.create(null);
+      snap.docs.forEach(doc => { const x = doc.exists && lirePiece(doc.id, doc.data()); if (x) m[doc.id] = x; });
+      pieces = m;
+      rendreGardeRobe();
+    }, () => toast("La garde-robe n'a pas pu être chargée. Recharge la page.", "erreur"));
     rendreTout();
   }
 
@@ -1018,6 +1185,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     rendreResume();
     rendreCartePlanning();
     rendreTodo();
+    rendreGardeRobe();
     if ($("fenetre-semaine").open) rendreGrilleSemaines();
   }
 
@@ -1575,6 +1743,527 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
       return l;
     }));
   }
+
+  // ---------- garde-robe Blue Box : les pièces du magasin ----------
+  // Un document par pièce dans « pieces » : { marque, categorie, modele, coupe, couleur, rayon, prix, ref,
+  // lien, photo, reperes: { nouveaute, promo, vitrine, reseaux }, note, creeLe }. La photo est l'id d'un
+  // fichier envoyé depuis la page, ou une image publiée avec elle (images/…jpg). Hors de claude.ai, la
+  // liste et ses photos réduites sont gardées dans le navigateur.
+  const CLE_LOCALE_PIECES = "tableau-de-bord-axel:pieces";
+  const CATEGORIES = [
+    ["pulls", "Pulls"], ["sweats", "Sweats"], ["t-shirts", "T-shirts"], ["chemises", "Chemises"], ["polos", "Polos"],
+    ["vestes", "Vestes"], ["blousons", "Blousons"], ["manteaux", "Manteaux"],
+    ["jeans", "Jeans"], ["pantalons", "Pantalons"], ["shorts", "Shorts"],
+    ["chaussures", "Chaussures"], ["accessoires", "Accessoires"],
+  ];
+  const NOM_CATEGORIE = Object.fromEntries(CATEGORIES);
+  const RANG_CATEGORIE = Object.fromEntries(CATEGORIES.map(([id], i) => [id, i]));
+  const RAYONS = { homme: "Homme", femme: "Femme", mixte: "Mixte" };
+  const REPERES_PIECE = [["nouveaute", "Nouveauté"], ["promo", "Promo"], ["vitrine", "Idée vitrine"], ["reseaux", "À poster"]];
+  // Familles de couleurs : le nom affiché, la pastille, et les mots qui y mènent (dans cet ordre de lecture).
+  const TEINTES = [
+    ["noir", "Noir", "#1c1c1f"], ["blanc", "Blanc", "#ffffff"], ["ecru", "Écru", "#efe6d2"], ["gris", "Gris", "#9ca3ad"],
+    ["beige", "Beige", "#cbb08a"], ["marron", "Marron", "#7a4b2a"], ["marine", "Marine", "#1f2d50"], ["bleu", "Bleu", "#3d6db3"],
+    ["bleu-clair", "Bleu clair", "#9dc1e6"], ["vert", "Vert", "#5f7d45"], ["bordeaux", "Bordeaux", "#6e1f2e"], ["rouge", "Rouge", "#c0392b"],
+    ["rose", "Rose", "#e9a6ba"], ["jaune", "Jaune", "#e4bd3c"], ["orange", "Orange", "#e07a35"], ["violet", "Violet", "#7c5aa6"],
+    ["motif", "Motif", "conic-gradient(#c0392b 0 25%, #1f2d50 0 50%, #e4bd3c 0 75%, #5f7d45 0)"],
+  ];
+  const TEINTE = Object.fromEntries(TEINTES.map(([id, nom, css]) => [id, { nom, css }]));
+  const REGLES_TEINTE = [
+    ["motif", "carreaux|raye|rayee|rayures|motif|imprime|vichy|tartan|ecossais|camouflage|fleuri|multicolore"],
+    ["ecru", "blanc casse|ecru|creme|ivoire|off white"],
+    ["marine", "marine|navy|bleu nuit|bleu fonce|indigo|brut|rinse"],
+    ["bleu-clair", "bleu clair|bleu ciel|ciel|bleu pale|delave|bleach"],
+    ["bleu", "bleu|denim|stone|jean"],
+    ["gris", "gris|grise|anthracite|charbon|chine|perle|grey|gray"],
+    ["noir", "noir|noire|black"],
+    ["blanc", "blanc|blanche|white"],
+    ["bordeaux", "bordeaux|lie de vin|prune|burgundy|grenat"],
+    ["rose", "rose|pink|fuchsia"],
+    ["rouge", "rouge|red"],
+    ["vert", "vert|verte|kaki|olive|sapin|green"],
+    ["marron", "marron|chocolat|brun|cognac|tabac|brown"],
+    ["beige", "beige|camel|sable|taupe|mastic"],
+    ["jaune", "jaune|moutarde|yellow"],
+    ["orange", "orange|rouille|brique"],
+    ["violet", "violet|violette|mauve|lilas|lavande|purple"],
+  ].map(([id, mots]) => [id, new RegExp("\\b(" + mots + ")s?\\b")]);
+  const COULEURS_PROPOSEES = ["Noir", "Blanc", "Écru", "Gris clair", "Gris moyen", "Anthracite", "Beige", "Camel", "Marron", "Bleu marine", "Bleu", "Bleu clair", "Kaki", "Vert", "Bordeaux", "Rouge", "Rose", "Jaune", "Orange"];
+  const sansAccents = v => String(v || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const teinteDe = couleur => { const c = sansAccents(couleur); for (const [id, re] of REGLES_TEINTE) if (re.test(c)) return id; return ""; };
+  const PHOTO_ASSET_RE = /^[0-9a-f]{32}$/i;
+  const PHOTO_FICHIER_RE = /^images\/[a-z0-9-]+\.jpg$/;
+  const PHOTO_LOCALE_RE = /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/;
+  const srcPhoto = photo => (!photo ? null : PHOTO_ASSET_RE.test(photo) ? "/_blob/" + photo : photo);
+  const formatPrix = n => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", minimumFractionDigits: n % 1 ? 2 : 0 }).format(n);
+  let pieces = Object.create(null);
+  let assets = null;   // envoi des photos (propriétaire de la page publiée)
+
+  function lirePiece(id, d) {
+    if (!d || typeof d !== "object") return null;
+    const categorie = typeof d.categorie === "string" && NOM_CATEGORIE[d.categorie] ? d.categorie : null;
+    const marque = texteBorne(d.marque, 60), modele = texteBorne(d.modele, 120);
+    if (!categorie || !(marque || modele)) return null;
+    const photo = typeof d.photo === "string" && (PHOTO_ASSET_RE.test(d.photo) || PHOTO_FICHIER_RE.test(d.photo) || (mode === "local" && PHOTO_LOCALE_RE.test(d.photo))) ? d.photo : null;
+    const lien = typeof d.lien === "string" && /^https?:\/\/[^\s"<>]+$/i.test(d.lien.trim()) ? d.lien.trim().slice(0, 500) : null;
+    const prix = typeof d.prix === "number" && isFinite(d.prix) && d.prix >= 0 && d.prix < 100000 ? Math.round(d.prix * 100) / 100 : null;
+    const r = d.reperes && typeof d.reperes === "object" ? d.reperes : {};
+    return {
+      id, categorie, marque, modele,
+      coupe: texteBorne(d.coupe, 120), couleur: texteBorne(d.couleur, 60),
+      rayon: typeof d.rayon === "string" && RAYONS[d.rayon] ? d.rayon : null,
+      prix, ref: texteBorne(d.ref, 60), lien, photo,
+      reperes: Object.fromEntries(REPERES_PIECE.map(([k]) => [k, r[k] === true])),
+      note: texteBorne(d.note, 500), creeLe: texteBorne(d.creeLe, 40),
+    };
+  }
+  const corpsPiece = x => ({
+    marque: x.marque || null, categorie: x.categorie, modele: x.modele || null, coupe: x.coupe || null, couleur: x.couleur || null,
+    rayon: x.rayon, prix: x.prix, ref: x.ref || null, lien: x.lien, photo: x.photo, reperes: { ...x.reperes }, note: x.note || null, creeLe: x.creeLe,
+  });
+
+  function chargerPiecesLocal() {
+    pieces = Object.create(null);
+    try {
+      const brut = JSON.parse(localStorage.getItem(CLE_LOCALE_PIECES) || "{}");
+      for (const [id, d] of Object.entries(brut)) { const x = lirePiece(id, d); if (x) pieces[id] = x; }
+    } catch (_) { /* rien de gardé dans ce navigateur */ }
+  }
+  function sauverPiecesLocal() {
+    try {
+      localStorage.setItem(CLE_LOCALE_PIECES, JSON.stringify(Object.fromEntries(Object.values(pieces).map(x => [x.id, corpsPiece(x)]))));
+      return true;
+    } catch (_) { return false; }
+  }
+  // Une écriture à la fois par pièce ; corps null = supprimer.
+  const filesPieces = Object.create(null);
+  function ecrirePiece(id, corps) {
+    if (mode === "local") {
+      const avant = pieces[id];
+      if (corps) pieces[id] = lirePiece(id, corps); else delete pieces[id];
+      if (!sauverPiecesLocal()) {
+        if (avant) pieces[id] = avant; else delete pieces[id];
+        return Promise.reject({ code: "stockage_local" });
+      }
+      rendreGardeRobe();
+      return Promise.resolve();
+    }
+    const ref = db.doc("pieces/" + id);
+    const suite = (filesPieces[id] || Promise.resolve()).catch(() => {}).then(() => (corps ? ref.set(corps) : ref.delete()));
+    filesPieces[id] = suite;
+    return suite;
+  }
+  const nouvelIdPiece = () => (mode === "base" ? db.collection("pieces").doc().id : "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7));
+  const peutModifierPieces = () => mode === "local" || (mode === "base" && !!assets);
+  const trierPieces = (a, b) => (RANG_CATEGORIE[a.categorie] - RANG_CATEGORIE[b.categorie])
+    || a.marque.localeCompare(b.marque, "fr") || a.modele.localeCompare(b.modele, "fr") || a.couleur.localeCompare(b.couleur, "fr");
+
+  // ----- filtres -----
+  const filtres = { recherche: "", marque: "", rayon: "", categorie: "", teinte: "", repere: "" };
+  const filtreActif = () => Object.values(filtres).some(Boolean);
+  function piecesFiltrees() {
+    const q = sansAccents(filtres.recherche.trim());
+    return Object.values(pieces).filter(x =>
+      (!filtres.marque || x.marque === filtres.marque) &&
+      (!filtres.rayon || x.rayon === filtres.rayon || x.rayon === "mixte") &&
+      (!filtres.categorie || x.categorie === filtres.categorie) &&
+      (!filtres.teinte || teinteDe(x.couleur) === filtres.teinte) &&
+      (!filtres.repere || x.reperes[filtres.repere]) &&
+      (!q || sansAccents([x.marque, x.modele, x.coupe, x.couleur, x.ref, x.note, NOM_CATEGORIE[x.categorie]].join(" ")).includes(q))
+    ).sort(trierPieces);
+  }
+  function puceFiltre(cle, valeur, texte, nombre, teinte) {
+    const b = element("button", "puce-filtre");
+    b.type = "button";
+    b.dataset.filtre = cle;
+    b.dataset.valeur = valeur;
+    b.setAttribute("aria-pressed", String(filtres[cle] === valeur));
+    if (teinte) { const p = element("span", "pastille-couleur"); p.style.setProperty("--teinte", TEINTE[teinte].css); b.append(p); }
+    b.append(document.createTextNode(texte));
+    if (nombre != null) b.append(element("span", "nombre", String(nombre)));
+    return b;
+  }
+  function compter(liste, cle) { const m = new Map(); liste.forEach(x => { const k = cle(x); if (k) m.set(k, (m.get(k) || 0) + 1); }); return m; }
+
+  function rendreFiltres(toutes) {
+    // Marques
+    const marques = compter(toutes, x => x.marque);
+    const sel = $("gr-marque");
+    if (filtres.marque && !marques.has(filtres.marque)) filtres.marque = "";
+    sel.replaceChildren(new Option("Toutes les marques", ""), ...[...marques.keys()].sort((a, b) => a.localeCompare(b, "fr")).map(m => new Option(`${m} (${marques.get(m)})`, m)));
+    sel.value = filtres.marque;
+    // Catégories, couleurs, repères : seulement celles qui ont des pièces
+    const cats = compter(toutes, x => x.categorie);
+    $("gr-categories").replaceChildren(element("span", "etiquette-filtre", "Catégorie"),
+      ...CATEGORIES.filter(([id]) => cats.has(id)).map(([id, nom]) => puceFiltre("categorie", id, nom, cats.get(id))));
+    const teintes = compter(toutes, x => teinteDe(x.couleur));
+    $("gr-teintes").replaceChildren(element("span", "etiquette-filtre", "Couleur"),
+      ...TEINTES.filter(([id]) => teintes.has(id)).map(([id, nom]) => puceFiltre("teinte", id, nom, teintes.get(id), id)));
+    $("gr-teintes").hidden = !teintes.size;
+    $("gr-reperes").replaceChildren(element("span", "etiquette-filtre", "Repères"),
+      ...REPERES_PIECE.map(([k, nom]) => puceFiltre("repere", k, nom, toutes.filter(x => x.reperes[k]).length)));
+    document.querySelectorAll('input[name="gr-rayon"]').forEach(r => { r.checked = r.value === filtres.rayon; });
+    $("gr-categories").hidden = !cats.size;
+  }
+
+  function cartePiece(x) {
+    const b = element("button", "piece");
+    b.type = "button";
+    b.dataset.id = x.id;
+    const cadre = element("span", "piece-photo");
+    const src = srcPhoto(x.photo);
+    const sansPhoto = element("span", "sans-photo", NOM_CATEGORIE[x.categorie]);
+    if (src) {
+      const img = element("img");
+      img.alt = "";
+      img.loading = "lazy";
+      img.decoding = "async";
+      img.addEventListener("error", () => img.replaceWith(sansPhoto), { once: true });
+      img.src = src;
+      cadre.append(img);
+    } else cadre.append(sansPhoto);
+    const reps = REPERES_PIECE.filter(([k]) => x.reperes[k]);
+    if (reps.length) { const r = element("span", "piece-reperes"); r.append(...reps.map(([k, nom]) => element("span", "rep rep-" + k, nom))); cadre.append(r); }
+    b.append(cadre);
+    if (x.marque) b.append(element("span", "piece-marque", x.marque));
+    b.append(element("span", "piece-modele", x.modele || NOM_CATEGORIE[x.categorie]));
+    const ligne = element("span", "piece-ligne");
+    if (x.couleur) {
+      const t = teinteDe(x.couleur);
+      const p = element("span", "pastille-couleur");
+      if (t) p.style.setProperty("--teinte", TEINTE[t].css);
+      ligne.append(p, element("span", null, x.couleur));
+    }
+    if (x.prix != null) ligne.append(element("span", null, (x.couleur ? "· " : "") + formatPrix(x.prix)));
+    b.append(ligne);
+    b.setAttribute("aria-label", [x.marque, x.modele, x.couleur, x.prix != null ? formatPrix(x.prix) : "", ...reps.map(r => r[1])].filter(Boolean).join(", "));
+    return b;
+  }
+
+  function rendreGardeRobe() {
+    const toutes = Object.values(pieces);
+    const marques = new Set(toutes.map(x => x.marque).filter(Boolean));
+    const resume = toutes.length ? `${toutes.length} pièce${toutes.length > 1 ? "s" : ""} · ${marques.size} marque${marques.size > 1 ? "s" : ""}` : "Aucune pièce pour l'instant";
+    $("gr-compte").textContent = toutes.length ? resume : "";
+    rendreFiltres(toutes);
+
+    const liste = piecesFiltrees();
+    const resultat = $("gr-resultat");
+    resultat.replaceChildren();
+    if (toutes.length && filtreActif()) {
+      resultat.append(element("span", null, `${liste.length} pièce${liste.length > 1 ? "s" : ""} sur ${toutes.length}`));
+      const effacer = element("button", "lien-discret", "Effacer les filtres");
+      effacer.type = "button";
+      effacer.id = "gr-effacer";
+      resultat.append(effacer);
+    }
+    resultat.hidden = !resultat.childNodes.length;
+
+    // Par catégorie, sauf quand une catégorie est choisie
+    const grille = $("gr-grille");
+    if (filtres.categorie) {
+      const g = element("div", "grille-pieces");
+      g.append(...liste.map(cartePiece));
+      grille.replaceChildren(g);
+    } else {
+      const groupes = new Map();
+      liste.forEach(x => { if (!groupes.has(x.categorie)) groupes.set(x.categorie, []); groupes.get(x.categorie).push(x); });
+      grille.replaceChildren(...[...groupes].map(([cat, xs]) => {
+        const s = element("section", "groupe-pieces");
+        const h = element("h2", null, NOM_CATEGORIE[cat]);
+        h.append(element("span", "nombre", String(xs.length)));
+        const g = element("div", "grille-pieces");
+        g.append(...xs.map(cartePiece));
+        s.append(h, g);
+        return s;
+      }));
+    }
+    const vide = $("gr-vide");
+    vide.hidden = liste.length > 0;
+    vide.textContent = toutes.length ? "Aucune pièce ne correspond à ces filtres."
+      : peutModifierPieces() ? "Aucune pièce pour l'instant. Ajoute la première avec « Ajouter une pièce »." : "Aucune pièce pour l'instant.";
+
+    // Propositions dans le formulaire
+    $("marques").replaceChildren(...[...marques].sort((a, b) => a.localeCompare(b, "fr")).map(m => new Option(m)));
+    const couleurs = new Map(COULEURS_PROPOSEES.map(c => [sansAccents(c), c]));
+    toutes.forEach(x => { if (x.couleur && !couleurs.has(sansAccents(x.couleur))) couleurs.set(sansAccents(x.couleur), x.couleur); });
+    $("couleurs").replaceChildren(...[...couleurs.values()].sort((a, b) => a.localeCompare(b, "fr")).map(c => new Option(c)));
+
+    $("gr-ajouter").hidden = mode === "lecture" || (mode === "base" && !assets);
+    $("gr-ajouter").disabled = mode === "attente";
+
+    // Carte de la page Travail
+    $("resume-pieces").textContent = resume;
+    const mosaique = $("mosaique-pieces");
+    const avecPhoto = toutes.filter(x => x.photo).sort(trierPieces).slice(0, 6);
+    mosaique.hidden = !avecPhoto.length;
+    mosaique.replaceChildren(...avecPhoto.map(x => {
+      const c = element("span", "mosaique-case");
+      const img = element("img");
+      img.alt = "";
+      img.loading = "lazy";
+      img.src = srcPhoto(x.photo);
+      c.append(img);
+      return c;
+    }));
+  }
+
+  // Filtres : recherche, marque, rayon, puces
+  $("gr-recherche").addEventListener("input", e => { filtres.recherche = e.target.value; rendreGardeRobe(); });
+  $("gr-marque").addEventListener("change", e => { filtres.marque = e.target.value; rendreGardeRobe(); });
+  document.querySelectorAll('input[name="gr-rayon"]').forEach(r => r.addEventListener("change", () => { filtres.rayon = r.value; rendreGardeRobe(); }));
+  document.querySelector('[data-vue="garde-robe"]').addEventListener("click", e => {
+    const puce = e.target.closest(".puce-filtre");
+    if (puce) {
+      filtres[puce.dataset.filtre] = filtres[puce.dataset.filtre] === puce.dataset.valeur ? "" : puce.dataset.valeur;
+      rendreGardeRobe();
+      return;
+    }
+    if (e.target.closest("#gr-effacer")) {
+      Object.keys(filtres).forEach(k => { filtres[k] = ""; });
+      $("gr-recherche").value = "";
+      rendreGardeRobe();
+      return;
+    }
+    const carte = e.target.closest(".piece");
+    if (carte) ouvrirPiece(carte.dataset.id);
+  });
+
+  // ----- ajouter, modifier une pièce -----
+  // « Tommy Jeans - Pull - 1_4 zip - Noir.png » → marque, catégorie, modèle, couleur (comme les exports Canva).
+  const MOTS_CATEGORIE = [
+    [/^(pantalons?|chinos?|cargos?|joggings?)$/, "pantalons"],
+    [/^jeans?$/, "jeans"],
+    [/^(pulls?|pull-overs?|pullovers?|gilets?|cardigans?|mailles?)$/, "pulls"],
+    [/^(t-?shirts?|tee-?shirts?|tees?|debardeurs?)$/, "t-shirts"],
+    [/^chemises?$/, "chemises"],
+    [/^(vestes?|blazers?|surchemises?)$/, "vestes"],
+    [/^(blousons?|doudounes?|bombers?|coupe-vents?|perfectos?)$/, "blousons"],
+    [/^(manteaux|manteau|parkas?|cabans?|trenchs?|pardessus)$/, "manteaux"],
+    [/^(chaussures?|baskets?|sneakers?|boots?|bottines?|mocassins?)$/, "chaussures"],
+    [/^(sweats?|sweat-shirts?|sweatshirts?|hoodies?)$/, "sweats"],
+    [/^polos?$/, "polos"],
+    [/^(shorts?|bermudas?)$/, "shorts"],
+    [/^(accessoires?|casquettes?|bonnets?|ceintures?|echarpes?|sacs?|chaussettes?|portefeuilles?)$/, "accessoires"],
+  ];
+  const COULEUR_EN_TETE = /^(noire?|blanc|blanche|bleu|gris|grise|beige|rouge|rose|verte?|kaki|marine|bordeaux|ecru|creme|ivoire|marron|chocolat|camel|sable|taupe|jaune|moutarde|orange|violet|mauve|brut|anthracite|olive|black|white|navy|carreaux|raye|rayee|rayures|vichy|motif)s?\b/;
+  function devinerCategorie(mot) {
+    const m = sansAccents(mot);
+    for (const [re, id] of MOTS_CATEGORIE) if (re.test(m) || re.test(m.split(" ")[0])) return id;
+    return "";
+  }
+  function analyserNomFichier(nom) {
+    const t = nom.replace(/\.(png|jpe?g|webp|gif|heic|heif)$/i, "").replace(/(\d)_(\d)/g, "$1/$2").trim();
+    const parts = t.split(/\s+[-–—]\s+/).map(x => x.trim()).filter(Boolean);
+    if (parts.length < 2) return null;
+    const r = { marque: parts[0], categorie: devinerCategorie(parts[1]), modele: "", couleur: "" };
+    if (parts.length >= 4) { r.couleur = parts[parts.length - 1]; r.modele = parts.slice(2, -1).join(" - "); }
+    else if (parts.length === 3) { if (COULEUR_EN_TETE.test(sansAccents(parts[2]))) r.couleur = parts[2]; else r.modele = parts[2]; }
+    return r;
+  }
+  // La photo est réduite (900 px au plus) et enregistrée en JPEG.
+  function preparerPhoto(fichier) {
+    return new Promise((ok, ko) => {
+      const url = URL.createObjectURL(fichier);
+      const img = new Image();
+      img.onload = () => {
+        const r = Math.min(1, 900 / Math.max(img.naturalWidth, img.naturalHeight));
+        const cv = document.createElement("canvas");
+        cv.width = Math.max(1, Math.round(img.naturalWidth * r));
+        cv.height = Math.max(1, Math.round(img.naturalHeight * r));
+        const ctx = cv.getContext("2d");
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, cv.width, cv.height);
+        ctx.drawImage(img, 0, 0, cv.width, cv.height);
+        URL.revokeObjectURL(url);
+        cv.toBlob(b => (b ? ok(b) : ko(new Error("export"))), "image/jpeg", 0.86);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); ko(new Error("lecture")); };
+      img.src = url;
+    });
+  }
+  const enDataUrl = blob => new Promise((ok, ko) => { const f = new FileReader(); f.onload = () => ok(f.result); f.onerror = ko; f.readAsDataURL(blob); });
+
+  let pieceEditee = null, photoChoisie = null, retirerPhoto = false, urlApercu = null, enregistrementPiece = false;
+  $("pi-categorie").replaceChildren(new Option("Choisir…", ""), ...CATEGORIES.map(([id, nom]) => new Option(nom, id)));
+  $("pi-reperes").replaceChildren(...REPERES_PIECE.map(([k, nom]) => {
+    const l = element("label", "repere-choix");
+    const c = element("input");
+    c.type = "checkbox";
+    c.id = "pi-rep-" + k;
+    l.append(c, element("span", null, nom));
+    return l;
+  }));
+  function majFormulairePiece() {
+    const t = teinteDe($("pi-couleur").value);
+    $("pi-pastille").style.setProperty("--teinte", t ? TEINTE[t].css : "transparent");
+    REPERES_PIECE.forEach(([k]) => $("pi-rep-" + k).closest(".repere-choix").classList.toggle("coche", $("pi-rep-" + k).checked));
+  }
+  function montrerApercu(src) {
+    $("pi-image").hidden = !src;
+    $("pi-sans-photo").hidden = !!src;
+    if (src) $("pi-image").src = src; else $("pi-image").removeAttribute("src");
+    $("pi-choisir-texte").textContent = src ? "Changer la photo" : "Choisir une photo";
+    $("pi-retirer").hidden = !src || !peutModifierPieces();
+  }
+  function effacerErreurPiece() {
+    $("pi-erreur").hidden = true;
+    $("piece-form").querySelectorAll(".en-erreur").forEach(el => el.classList.remove("en-erreur"));
+  }
+  function erreurPiece(message, champ) {
+    $("pi-erreur").textContent = message;
+    $("pi-erreur").hidden = false;
+    if (champ) { champ.classList.add("en-erreur"); champ.focus(); }
+  }
+
+  function ouvrirPiece(id) {
+    const x = id ? pieces[id] : null;
+    if (id && !x) return;
+    if (!x && !peutModifierPieces()) return;
+    pieceEditee = x;
+    photoChoisie = null;
+    retirerPhoto = false;
+    const modifiable = peutModifierPieces();
+    $("pi-titre").textContent = !x ? "Ajouter une pièce" : modifiable ? "Modifier la pièce" : [x.marque, x.modele].filter(Boolean).join(" · ");
+    $("pi-marque").value = x ? x.marque : "";
+    $("pi-categorie").value = x ? x.categorie : "";
+    $("pi-modele").value = x ? x.modele : "";
+    $("pi-couleur").value = x ? x.couleur : "";
+    $("pi-coupe").value = x ? x.coupe : "";
+    const rayon = x ? x.rayon || "homme" : (document.querySelector('input[name="pi-rayon"]:checked') || {}).value || "homme";
+    document.querySelectorAll('input[name="pi-rayon"]').forEach(r => { r.checked = r.value === rayon; });
+    $("pi-prix").value = x && x.prix != null ? String(x.prix).replace(".", ",") : "";
+    $("pi-ref").value = x ? x.ref : "";
+    $("pi-lien").value = x && x.lien ? x.lien : "";
+    $("pi-note").value = x ? x.note : "";
+    REPERES_PIECE.forEach(([k]) => { $("pi-rep-" + k).checked = !!(x && x.reperes[k]); });
+    $("pi-voir-lien").hidden = !(x && x.lien);
+    if (x && x.lien) $("pi-voir-lien").href = x.lien;
+    montrerApercu(x ? srcPhoto(x.photo) : null);
+    [...$("piece-form").elements].forEach(el => { el.disabled = !modifiable; });
+    $("pi-choisir").hidden = !modifiable;
+    $("pi-aide").hidden = !modifiable;
+    $("pi-enregistrer").hidden = !modifiable;
+    $("pi-supprimer").hidden = !(x && modifiable);
+    desarmer($("pi-supprimer"), "Supprimer");
+    effacerErreurPiece();
+    majFormulairePiece();
+    ouvrir($("fenetre-piece"));
+    $("fenetre-piece").querySelector(".fenetre-corps").scrollTop = 0;
+  }
+  $("gr-ajouter").addEventListener("click", () => ouvrirPiece(null));
+  $("fenetre-piece").addEventListener("close", () => {
+    if (urlApercu) { URL.revokeObjectURL(urlApercu); urlApercu = null; }
+    photoChoisie = null;
+  });
+  $("piece-form").addEventListener("input", () => { effacerErreurPiece(); majFormulairePiece(); });
+  $("piece-form").addEventListener("change", majFormulairePiece);
+
+  $("pi-fichier").addEventListener("change", async () => {
+    const fichier = $("pi-fichier").files[0];
+    $("pi-fichier").value = "";
+    if (!fichier) return;
+    effacerErreurPiece();
+    try { photoChoisie = await preparerPhoto(fichier); }
+    catch (_) { erreurPiece("Cette photo n'a pas pu être lue. Essaie avec une photo en JPEG ou PNG."); return; }
+    retirerPhoto = false;
+    if (urlApercu) URL.revokeObjectURL(urlApercu);
+    urlApercu = URL.createObjectURL(photoChoisie);
+    montrerApercu(urlApercu);
+    // Une photo nommée comme les exports Canva remplit les champs encore vides.
+    const r = analyserNomFichier(fichier.name);
+    if (r) {
+      if (!$("pi-marque").value && r.marque) $("pi-marque").value = r.marque;
+      if (!$("pi-categorie").value && r.categorie) $("pi-categorie").value = r.categorie;
+      if (!$("pi-modele").value && r.modele) $("pi-modele").value = r.modele;
+      if (!$("pi-couleur").value && r.couleur) $("pi-couleur").value = r.couleur;
+      majFormulairePiece();
+    }
+  });
+  $("pi-retirer").addEventListener("click", () => {
+    photoChoisie = null;
+    retirerPhoto = true;
+    if (urlApercu) { URL.revokeObjectURL(urlApercu); urlApercu = null; }
+    montrerApercu(null);
+  });
+
+  // Lit le formulaire : la pièce, ou la première erreur.
+  function lireFormulairePiece() {
+    const val = id => $(id).value.trim();
+    const categorie = $("pi-categorie").value;
+    if (!val("pi-marque") && !val("pi-modele")) return { erreur: "Indique au moins la marque ou le modèle.", champ: $("pi-marque") };
+    if (!NOM_CATEGORIE[categorie]) return { erreur: "Choisis la catégorie.", champ: $("pi-categorie") };
+    let prix = null;
+    if (val("pi-prix")) {
+      prix = Number(val("pi-prix").replace(/\s|€/g, "").replace(",", "."));
+      if (!isFinite(prix) || prix < 0 || prix >= 100000) return { erreur: "Le prix doit être un nombre, par exemple 79,90.", champ: $("pi-prix") };
+      prix = Math.round(prix * 100) / 100;
+    }
+    let lien = val("pi-lien") || null;
+    if (lien && !/^https?:\/\//i.test(lien)) lien = "https://" + lien;
+    if (lien && !/^https?:\/\/[^\s"<>]+\.[^\s"<>]+$/i.test(lien)) return { erreur: "Le lien ne ressemble pas à une adresse de site.", champ: $("pi-lien") };
+    return { piece: {
+      marque: val("pi-marque").slice(0, 60), categorie, modele: val("pi-modele").slice(0, 120),
+      coupe: val("pi-coupe").slice(0, 120), couleur: val("pi-couleur").slice(0, 60),
+      rayon: (document.querySelector('input[name="pi-rayon"]:checked') || {}).value || "homme",
+      prix, ref: val("pi-ref").slice(0, 60), lien,
+      reperes: Object.fromEntries(REPERES_PIECE.map(([k]) => [k, $("pi-rep-" + k).checked])),
+      note: val("pi-note").slice(0, 500),
+    } };
+  }
+  const messagePiece = e => {
+    const code = e && e.code;
+    if (code === "too_large") return "La photo est trop lourde. Essaie avec une autre.";
+    if (code === "unsupported_type") return "Ce format de photo n'est pas accepté. Essaie en JPEG ou PNG.";
+    if (code === "quota_exceeded" || code === "quota_or_state") return "La page est pleine : la pièce n'a pas été enregistrée.";
+    if (code === "stockage_local") return "Ce navigateur n'a plus de place pour garder la pièce et sa photo.";
+    return "La pièce n'a pas été enregistrée. Vérifie ta connexion et réessaie.";
+  };
+
+  $("pi-enregistrer").addEventListener("click", async () => {
+    if (enregistrementPiece || !peutModifierPieces()) return;
+    effacerErreurPiece();
+    const lu = lireFormulairePiece();
+    if (lu.erreur) { erreurPiece(lu.erreur, lu.champ); return; }
+    const avant = pieceEditee;
+    const id = avant ? avant.id : nouvelIdPiece();
+    const anciennePhoto = avant ? avant.photo : null;
+    let photo = anciennePhoto, envoyee = null;
+    enregistrementPiece = true;
+    const bouton = $("pi-enregistrer");
+    bouton.disabled = true;
+    bouton.textContent = "Enregistrement…";
+    try {
+      if (photoChoisie) {
+        if (mode === "base") { envoyee = (await assets.upload(photoChoisie, { type: "image/jpeg" })).id; photo = envoyee; }
+        else photo = await enDataUrl(photoChoisie);
+      } else if (retirerPhoto) photo = null;
+      await ecrirePiece(id, { ...lu.piece, photo, creeLe: avant ? avant.creeLe : new Date().toISOString() });
+      // L'ancienne photo envoyée depuis la page n'est plus utilisée : elle est effacée.
+      if (assets && anciennePhoto && anciennePhoto !== photo && PHOTO_ASSET_RE.test(anciennePhoto)) assets.delete(anciennePhoto).catch(() => {});
+      fermer($("fenetre-piece"));
+      toast(avant ? "Pièce enregistrée." : "Pièce ajoutée.");
+    } catch (e) {
+      if (envoyee && assets) assets.delete(envoyee).catch(() => {});
+      erreurPiece(messagePiece(e));
+    } finally {
+      enregistrementPiece = false;
+      bouton.disabled = false;
+      bouton.textContent = "Enregistrer";
+    }
+  });
+  $("pi-supprimer").addEventListener("click", async e => {
+    const b = e.currentTarget, x = pieceEditee;
+    if (!x || !peutModifierPieces()) return;
+    if (!b.classList.contains("arme")) { armer(b, "Confirmer la suppression", "Supprimer"); return; }
+    desarmer(b, "Supprimer");
+    try {
+      await ecrirePiece(x.id, null);
+      if (assets && x.photo && PHOTO_ASSET_RE.test(x.photo)) assets.delete(x.photo).catch(() => {});
+      fermer($("fenetre-piece"));
+      toast("Pièce supprimée.");
+    } catch (err) { erreurPiece(messagePiece(err)); }
+  });
 
   // ---------- message en bas de l'écran ----------
   let minuterieToast = 0;
