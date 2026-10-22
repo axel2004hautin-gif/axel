@@ -72,7 +72,7 @@ def categorie_de(*textes):
 
 
 def couleur_de(nom):
-    nom = re.sub(r"\s*\d+$", "", (nom or "").strip())   # « Cream 230 » : sans le code couleur
+    nom = re.sub(r"\s+\w*\d\w*$", "", (nom or "").strip())   # « Cream 230 », « Vert nacre 417W » : sans le code couleur
     cle = sans_accents(nom)
     if cle in COULEURS:
         return COULEURS[cle]
