@@ -14,8 +14,8 @@
    tient dans l'écran : semaine, frise (une colonne par jour, une ligne par heure, elle prend toute la
    place qui reste), bilan. « To-do list » : ajout rapide en haut, puis deux colonnes, « À faire » et
    « À dire » (par personne), et ce qui est fait en bas. « Garde-robe Blue Box » : quatre onglets (pièces,
-   tenues sur mannequin, comparateur, ce qu'il manque) ; les pièces en photo, rangées par catégorie. Un seul
-   thème, clair. */
+   tenues, comparateur, ce qu'il manque) ; les pièces en photo, rangées par catégorie ; une tenue est six
+   cases côte à côte, jamais superposées. Un seul thème, clair. */
 :root {
   color-scheme: light;
   --fond: #ffffff;
@@ -31,7 +31,6 @@
   --rouge-doux: #fde8e8;
   --or: #9a6f06;
   --or-doux: #fbf2d9;
-  --mannequin: #e7e4df;
   --bleu: #2b4c9b;
   --sur-marine: #ffffff;
   --sur-marine-2: #c9d2e6;
@@ -58,7 +57,7 @@ body { margin: 0; background: var(--fond); color: var(--encre); font: 400 1.0625
 h1, h2, h3 { margin: 0; text-wrap: balance; }
 p { margin: 0; }
 a { color: inherit; }
-button, select, input { font: inherit; color: inherit; }
+button, select, input, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--marine); outline-offset: 2px; }
 h1:focus { outline: none; }
@@ -451,45 +450,50 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 .compte-selection { font-weight: 700; }
 @media (max-width: 599px) { .barre-selection .espace { display: none; } .barre-selection-dedans > button:not(.lien-discret) { flex: 1 1 auto; } }
 
-/* Le porteur (le modèle en photo, ou le mannequin dessiné) sur fond blanc, les photos détourées posées sur le corps */
-.scene { position: relative; display: block; width: 100%; max-width: 100%; aspect-ratio: 3 / 4; overflow: hidden; border: 1px solid var(--trait); border-radius: 12px; background: var(--fond); }
-.scene svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-.calque { position: absolute; display: block; object-fit: contain; pointer-events: none; filter: drop-shadow(0 2px 3px rgba(15, 25, 50, .14)); }
-.calque.brut { mix-blend-mode: multiply; filter: none; }
-.scene.petite { border-radius: 8px; }
-
-.atelier { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; align-items: start; }
-@media (min-width: 900px) { .atelier { grid-template-columns: minmax(280px, 400px) minmax(0, 1fr); gap: 36px; } }
-.atelier-scene { display: grid; gap: 8px; justify-items: center; }
-.scene-zone { display: grid; justify-items: center; width: 100%; }
-.atelier-scene .scene { max-width: 380px; }
-@media (max-width: 899px) { .atelier-scene .scene { max-width: 320px; } }
-.fond-modele { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; }
-.tete-modele { position: absolute; display: block; pointer-events: none; }
-.total-tenue { color: var(--encre); font: 600 .88rem/1.4 var(--f-mono); text-align: center; }
-.atelier-choix { display: grid; gap: 18px; min-width: 0; }
-.emplacements-tenue { display: grid; grid-template-columns: minmax(0, 1fr); overflow: hidden; border: 1.5px solid var(--trait); border-radius: 12px; }
-.emplacement-ligne { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 8px 10px; border-top: 1px solid var(--trait); }
-.emplacement-ligne:first-child { border-top: 0; }
-.emplacement-vignette { display: grid; place-items: center; width: 44px; max-width: 100%; aspect-ratio: 4 / 5; overflow: hidden; border: 1px solid var(--trait); border-radius: 6px; background: var(--fond); }
-.emplacement-vignette img { display: block; width: 100%; height: 100%; object-fit: contain; }
-.emplacement-vignette.vide { border-style: dashed; }
-.emplacement-texte { display: grid; gap: 1px; min-width: 0; padding: 4px 0; border: 0; background: none; color: var(--encre); text-align: left; }
-.emplacement-nom { font: 600 .68rem/1.2 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--gris); }
-.emplacement-piece { overflow: hidden; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
-.emplacement-piece.vide { color: var(--marine); text-decoration: underline; text-underline-offset: 3px; }
-.emplacement-actions { display: flex; gap: 2px; }
+/* Une tenue : six cases côte à côte (blouson, pull, t-shirt, bas, chaussures, accessoires), un « + » quand elle est vide */
+.atelier { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+.cases-tenue, .cases-comparer { display: grid; gap: 14px; }
+.cases-tenue { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 600px) { .cases-tenue { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1000px) { .cases-tenue { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+.cases-comparer { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 600px) { .cases-comparer { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); } }
+.case { display: grid; gap: 6px; align-content: start; min-width: 0; }
+.case-titre { color: var(--gris); font: 600 .7rem/1.2 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; }
+.case-cadre { position: relative; }
+.case-photo { display: grid; place-items: center; width: 100%; max-width: 100%; aspect-ratio: 4 / 5; overflow: hidden; padding: 0; border: 1.5px solid var(--trait); border-radius: 10px; background: var(--fond); color: var(--marine); }
+.case-photo img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.case-photo:hover { border-color: var(--marine); }
+.case.vide .case-photo { border-style: dashed; border-width: 2px; background: var(--marine-doux); }
+.case-plus { font: 300 3.2rem/1 var(--f-body); }
+.case.vide .case-photo:hover { background: var(--fond); }
+.case-retirer { position: absolute; top: 6px; right: 6px; background: var(--fond); box-shadow: 0 1px 4px rgba(15, 25, 50, .18); }
+.case-nom { overflow: hidden; font-weight: 600; font-size: .92rem; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
+.case-detail { color: var(--gris); font-size: .85rem; }
+.case-photo .apercu-tenue { width: 100%; height: 100%; border: 0; border-radius: 0; }
+.total-tenue { color: var(--encre); font: 600 .9rem/1.4 var(--f-mono); }
+.tenue-infos { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; max-width: 760px; }
+.tenue-infos input, .tenue-infos textarea { width: 100%; }
+.ligne-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .icone-bouton { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 8px; background: none; color: var(--gris); }
 .icone-bouton:hover { background: var(--marine-doux); color: var(--marine); }
-.choix-pieces { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 10px; padding: 4px 0 6px; }
-.choix-piece { display: grid; gap: 4px; min-width: 0; padding: 0; border: 0; background: none; color: var(--encre); font-size: .8rem; line-height: 1.25; text-align: left; }
-.choix-piece:hover .piece-photo, .choix-piece:hover .scene { border-color: var(--marine); }
+
+/* Une tenue en petit : ses pièces côte à côte, trois par ligne */
+.apercu-tenue { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-content: center; gap: 4px; width: 100%; padding: 6px; border: 1px solid var(--trait); border-radius: 10px; background: var(--fond); }
+.apercu-case { display: grid; place-items: center; max-width: 100%; aspect-ratio: 4 / 5; overflow: hidden; border-radius: 5px; background: var(--fond); }
+.apercu-case img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.apercu-case.vide { background: var(--marine-doux); }
+.apercu-case .sans-photo { padding: 2px; font-size: .55rem; }
+
+/* La fenêtre de choix : les pièces (ou les tenues) en photo */
+.choix-recherche { margin-bottom: 12px; }
+.choix-recherche input { flex: 1 1 auto; }
+.choix-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 14px 10px; }
+.choix-piece { display: grid; gap: 4px; min-width: 0; padding: 0; border: 0; background: none; color: var(--encre); font-size: .82rem; line-height: 1.25; text-align: left; }
+.choix-piece:hover .piece-photo, .choix-piece:hover .apercu-tenue { border-color: var(--marine); }
 .choix-piece[aria-pressed="true"] .piece-photo { border-color: var(--marine); box-shadow: 0 0 0 2px var(--marine); }
 .choix-piece .piece-photo { border-radius: 8px; }
 .choix-vide { grid-column: 1 / -1; color: var(--gris); font-size: .95rem; }
-.tenue-infos { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
-.tenue-infos input, .tenue-infos textarea { width: 100%; }
-.ligne-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 
 /* Étoile (favori), cœur (vitrine), caméra (réseaux sociaux) */
 .drapeaux { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -512,18 +516,16 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 @media (max-width: 479px) { .cartes-tenues { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .carte-tenue { display: grid; gap: 4px; align-content: start; min-width: 0; }
 .carte-tenue-ouvrir { display: grid; gap: 6px; min-width: 0; padding: 0; border: 0; background: none; color: var(--encre); text-align: left; }
-.carte-tenue-ouvrir:hover .scene { border-color: var(--marine); }
-.carte-tenue.ouverte .scene { border-color: var(--marine); box-shadow: 0 0 0 2px var(--marine); }
+.carte-tenue-ouvrir:hover .apercu-tenue { border-color: var(--marine); }
+.carte-tenue.ouverte .apercu-tenue { border-color: var(--marine); box-shadow: 0 0 0 2px var(--marine); }
 .carte-tenue-nom { font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; }
 .carte-tenue-pied { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 2px 6px; color: var(--gris); font-size: .85rem; }
 
 /* Comparateur */
 .comparer-zone { display: grid; gap: 14px; min-width: 0; padding: 14px; border: 1.5px solid var(--trait); border-radius: 12px; background: var(--marine-doux); }
-.elements-choisis { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.element-choisi { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; padding: 4px; border: 1.5px solid var(--marine); border-radius: 10px; background: var(--fond); }
-.element-choisi .emplacement-vignette, .element-choisi .mini-scene { width: 36px; flex: none; }
-.element-choisi-nom { max-width: 220px; overflow: hidden; font-weight: 600; font-size: .92rem; text-overflow: ellipsis; white-space: nowrap; }
-.candidats { display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 10px; max-height: 330px; overflow-y: auto; padding: 2px; }
+.emplacement-vignette { display: grid; place-items: center; width: 44px; max-width: 100%; aspect-ratio: 4 / 5; overflow: hidden; border: 1px solid var(--trait); border-radius: 6px; background: var(--fond); }
+.emplacement-vignette img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.emplacement-vignette.vide { border-style: dashed; }
 .table-defile { overflow-x: auto; }
 .table-comparer { width: 100%; min-width: 540px; border-collapse: collapse; table-layout: fixed; }
 .table-comparer th, .table-comparer td { padding: 10px 12px; border-bottom: 1px solid var(--trait); text-align: left; vertical-align: top; overflow-wrap: anywhere; }
@@ -531,7 +533,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 .table-comparer tr.pareil td { color: var(--gris); }
 .pareil-mot { display: block; margin-top: 3px; font-size: .62rem; letter-spacing: 0; text-transform: none; }
 .cellule-element { display: grid; gap: 6px; }
-.cellule-element .piece-photo, .cellule-element .scene { max-width: 170px; }
+.cellule-element .piece-photo, .cellule-element .apercu-tenue { max-width: 170px; }
 .cellule-titre { font-weight: 700; color: var(--encre); }
 .meilleur { display: inline-block; margin: 2px 0 0 6px; padding: 2px 7px; border-radius: 999px; background: var(--argent-doux); color: var(--argent); font: 700 .66rem/1.3 var(--f-mono); text-transform: uppercase; white-space: nowrap; }
 .ecart { color: var(--gris); font-size: .85rem; }
@@ -541,7 +543,8 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 .ligne-comparaison.ouverte .ligne-comparaison-nom { color: var(--marine); }
 .ligne-comparaison-ouvrir { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 0; border: 0; background: none; color: var(--encre); text-align: left; }
 .vignettes { display: flex; flex: none; gap: 4px; }
-.vignettes .emplacement-vignette, .vignettes .mini-scene { width: 34px; }
+.vignettes .emplacement-vignette { width: 34px; }
+.vignettes .apercu-tenue { width: 60px; padding: 3px; gap: 2px; }
 .ligne-comparaison-texte { display: grid; min-width: 0; }
 .ligne-comparaison-nom { overflow: hidden; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
 .ligne-comparaison-type { color: var(--gris); font-size: .85rem; }
@@ -671,7 +674,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
         <li>
           <a class="carte-sous" href="#garde-robe">
             <span class="carte-sous-titre">Garde-robe Blue Box</span>
-            <span class="carte-sous-texte">Les pièces du magasin, les tenues sur mannequin, le comparateur et ce qu'il manque.</span>
+            <span class="carte-sous-texte">Les pièces du magasin, les tenues, le comparateur et ce qu'il manque.</span>
             <span class="mosaique" id="mosaique-pieces" aria-hidden="true" hidden></span>
             <span class="carte-sous-pied"><span id="resume-pieces">Aucune pièce pour l'instant</span><span class="fleche">Ouvrir →</span></span>
           </a>
@@ -821,29 +824,20 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
       </div>
       <nav class="onglets-gr" aria-label="Garde-robe"></nav>
       <div class="atelier">
-        <div class="atelier-scene">
-          <div class="type-tache" role="radiogroup" aria-label="Porté par">
-            <label><input type="radio" name="te-porteur" value="homme"><span>Le modèle</span></label>
-            <label><input type="radio" name="te-porteur" value="mannequin"><span>Le mannequin</span></label>
+        <div class="cases-tenue" id="te-cases"></div>
+        <p class="total-tenue" id="te-total"></p>
+        <div class="champs-tache tenue-infos" id="te-infos">
+          <label class="titre-champ">Nom de la tenue<input type="text" id="te-nom" maxlength="80" placeholder="Ex. : Vitrine de Noël"></label>
+          <label class="titre-champ">Description<textarea id="te-description" maxlength="1000" rows="4" placeholder="Ex. : un look simple et chaud pour l'hiver, le pull zippé bordeaux sur le jean brut."></textarea></label>
+          <div class="ligne-actions">
+            <button class="bouton-second" type="button" id="te-rediger" hidden>Proposer une description</button>
+            <span class="aide" id="te-rediger-etat" role="status"></span>
           </div>
-          <div class="scene-zone" id="te-scene"></div>
-          <p class="total-tenue" id="te-total"></p>
-        </div>
-        <div class="atelier-choix">
-          <div class="emplacements-tenue" id="te-emplacements"></div>
-          <div class="champs-tache tenue-infos" id="te-infos">
-            <label class="titre-champ">Nom de la tenue<input type="text" id="te-nom" maxlength="80" placeholder="Ex. : Vitrine de Noël"></label>
-            <label class="titre-champ">Description<textarea id="te-description" maxlength="1000" rows="4" placeholder="Ex. : un look simple et chaud pour l'hiver, le pull zippé bordeaux sur le jean brut."></textarea></label>
-            <div class="ligne-actions">
-              <button class="bouton-second" type="button" id="te-rediger" hidden>Proposer une description</button>
-              <span class="aide" id="te-rediger-etat" role="status"></span>
-            </div>
-            <div id="te-drapeaux"></div>
-            <p class="fenetre-erreur" id="te-erreur" role="alert" hidden></p>
-            <div class="ligne-actions">
-              <button class="bouton-principal" type="button" id="te-enregistrer">Enregistrer la tenue</button>
-              <button class="bouton-danger" type="button" id="te-supprimer" hidden>Supprimer la tenue</button>
-            </div>
+          <div id="te-drapeaux"></div>
+          <p class="fenetre-erreur" id="te-erreur" role="alert" hidden></p>
+          <div class="ligne-actions">
+            <button class="bouton-principal" type="button" id="te-enregistrer">Enregistrer la tenue</button>
+            <button class="bouton-danger" type="button" id="te-supprimer" hidden>Supprimer la tenue</button>
           </div>
         </div>
       </div>
@@ -873,11 +867,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
           <label><input type="radio" name="co-type" value="pieces" checked><span>Des pièces</span></label>
           <label><input type="radio" name="co-type" value="tenues"><span>Des tenues</span></label>
         </div>
-        <div class="elements-choisis" id="co-choisis"></div>
-        <div class="champs-tache filtres-ligne" id="co-recherche-ligne">
-          <input type="search" id="co-recherche" placeholder="Chercher une pièce à ajouter…" aria-label="Chercher une pièce à ajouter">
-        </div>
-        <div class="candidats" id="co-candidats"></div>
+        <div class="cases-comparer" id="co-cases"></div>
         <p class="aide" id="co-aide"></p>
       </div>
       <div class="table-defile" id="co-table-zone" hidden><table class="table-comparer" id="co-table"></table></div>
@@ -1074,6 +1064,22 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     <button class="bouton-second" type="button" data-fermer>Annuler</button>
     <button class="bouton-second" type="button" id="pi-encore" hidden>Enregistrer et ajouter une autre</button>
     <button class="bouton-principal" type="button" id="pi-enregistrer">Enregistrer</button>
+  </div>
+</dialog>
+
+<dialog class="fenetre fenetre-piece" id="fenetre-choix" aria-labelledby="fc-titre">
+  <div class="fenetre-tete">
+    <h2 id="fc-titre">Choisir</h2>
+    <button class="fermer" type="button" data-fermer aria-label="Fermer">×</button>
+  </div>
+  <div class="fenetre-corps">
+    <div class="champs-tache filtres-ligne choix-recherche" id="fc-recherche-ligne">
+      <input type="search" id="fc-recherche" placeholder="Chercher une marque, un modèle, une couleur…" aria-label="Chercher">
+    </div>
+    <div class="choix-grille" id="fc-grille"></div>
+  </div>
+  <div class="fenetre-pied">
+    <button class="bouton-second" type="button" id="fc-nouvelle">Ajouter une nouvelle pièce</button>
   </div>
 </dialog>
 
@@ -2522,6 +2528,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   $("fenetre-piece").addEventListener("close", () => {
     if (urlApercu) { URL.revokeObjectURL(urlApercu); urlApercu = null; }
     photoChoisie = null;
+    apresAjoutPiece = null;
   });
   $("piece-form").addEventListener("input", () => { effacerErreurPiece(); majFormulairePiece(); });
   $("piece-form").addEventListener("change", majFormulairePiece);
@@ -2616,6 +2623,8 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
       await ecrirePiece(id, { ...lu.piece, photo, creeLe: avant ? avant.creeLe : new Date().toISOString() });
       // L'ancienne photo envoyée depuis la page n'est plus utilisée : elle est effacée.
       if (assets && anciennePhoto && anciennePhoto !== photo && PHOTO_ASSET_RE.test(anciennePhoto)) assets.delete(anciennePhoto).catch(() => {});
+      // Ajoutée depuis une case de tenue ou du comparateur : elle y prend place.
+      if (!avant && apresAjoutPiece) { const poser = apresAjoutPiece; apresAjoutPiece = null; poser(id); }
       fermer($("fenetre-piece"));
       if (continuer) {
         ouvrirPiece(null);
@@ -2647,7 +2656,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     } catch (err) { erreurPiece(messagePiece(err)); }
   });
 
-  // ---------- garde-robe : onglets, collections, mannequin, tenues, comparateur, ce qu'il manque ----------
+  // ---------- garde-robe : onglets, collections, tenues, comparateur, ce qu'il manque ----------
   const ONGLETS_GR = [["garde-robe", "Pièces"], ["tenues", "Tenues"], ["comparer", "Comparer"], ["manque", "Ce qu'il manque"]];
   document.querySelectorAll(".onglets-gr").forEach(nav => nav.replaceChildren(...ONGLETS_GR.map(([vue, nom]) => {
     const a = element("a", null, nom);
@@ -2731,170 +2740,30 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     }));
   }
 
-  // ----- le porteur : le modèle en photo, ou le mannequin dessiné -----
-  // Six emplacements sur le corps. Chaque porteur donne leur zone : [gauche, haut, largeur, hauteur] en % de sa scène.
+  // ----- les six cases d'une tenue -----
   const EMPLACEMENTS = [
-    { id: "dessus", nom: "Veste, blouson ou manteau", cats: ["vestes", "blousons", "manteaux"], ancre: "50% 0%", z: 4 },
-    { id: "pull", nom: "Pull ou sweat", cats: ["pulls", "sweats"], ancre: "50% 0%", z: 3 },
-    { id: "haut", nom: "T-shirt, chemise ou polo", cats: ["t-shirts", "chemises", "polos"], ancre: "50% 0%", z: 2 },
-    { id: "bas", nom: "Jean, pantalon ou short", cats: ["jeans", "pantalons", "shorts"], ancre: "50% 0%", z: 1 },
-    { id: "pieds", nom: "Chaussures", cats: ["chaussures"], ancre: "50% 100%", z: 5 },
-    { id: "accessoire", nom: "Accessoire", cats: ["accessoires"], ancre: "50% 50%", z: 6 },
+    { id: "dessus", nom: "Blouson ou veste", article: "un blouson ou une veste", cats: ["blousons", "vestes", "manteaux"] },
+    { id: "pull", nom: "Pull", article: "un pull", cats: ["pulls", "sweats"] },
+    { id: "haut", nom: "T-shirt ou chemise", article: "un t-shirt ou une chemise", cats: ["t-shirts", "chemises", "polos"] },
+    { id: "bas", nom: "Pantalon ou jean", article: "un pantalon ou un jean", cats: ["pantalons", "jeans", "shorts"] },
+    { id: "pieds", nom: "Chaussures", article: "des chaussures", cats: ["chaussures"] },
+    { id: "accessoire", nom: "Accessoires", article: "un accessoire", cats: ["accessoires"] },
   ];
   const EMPLACEMENT_DE = {};
   EMPLACEMENTS.forEach(e => e.cats.forEach(c => { EMPLACEMENT_DE[c] = e.id; }));
-  // Mannequin de vitrine sans visage, dessiné sur 300 × 400 (la scène 3:4).
-  const MANNEQUIN = '<svg viewBox="0 0 300 400" aria-hidden="true" focusable="false">'
-    + '<ellipse cx="150" cy="388" rx="72" ry="7" fill="#172033" opacity=".07"/>'
-    + '<g fill="var(--mannequin)">'
-    + '<ellipse cx="150" cy="40" rx="19" ry="23"/><path d="M141 56h18l2 22h-22z"/>'
-    + '<path d="M112 80Q150 70 188 80Q203 84 202 102L194 150Q190 180 189 206H111Q110 180 106 150L98 102Q97 84 112 80Z"/>'
-    + '<path d="M112 204H148L146 236L142 368H124L116 250Z"/><path d="M152 204H188L184 250L176 368H158L154 236Z"/>'
-    + '<ellipse cx="132" cy="376" rx="15" ry="7"/><ellipse cx="168" cy="376" rx="15" ry="7"/>'
-    + '<ellipse cx="94" cy="224" rx="8" ry="12"/><ellipse cx="206" cy="224" rx="8" ry="12"/></g>'
-    + '<g fill="none" stroke="var(--mannequin)" stroke-width="16" stroke-linecap="round"><path d="M108 92Q96 150 95 212"/><path d="M192 92Q204 150 205 212"/></g>'
-    + '</svg>';
-
-  // Le modèle : sa photo (400 × 600, 2:3, fond blanc) découpée en calques. Ses propres vêtements (buste, jambes,
-  // pieds) s'effacent quand la tenue met une pièce à leur place, et restent quand l'emplacement est vide.
-  // Sa tête et son cou passent par-dessus les vêtements : les cols restent sous le menton.
-  const PORTEURS = {
-    homme: {
-      ratio: "2 / 3",
-      calques: [
-        { src: "modele/homme-jambes.png", remplace: ["bas"], z: 1 },
-        { src: "modele/homme-buste.png", remplace: ["pull", "haut"], z: 2 },
-        { src: "modele/homme-pieds.png", remplace: ["pieds"], z: 5 },
-        { src: "modele/homme-tete.png", zone: [37.5, 5.83, 27.5, 18.5], z: 9 },
-      ],
-      zones: { dessus: [24, 21.2, 52, 34.5], pull: [26, 21.5, 48, 31.5], haut: [26.5, 21.7, 47, 31.5], bas: [34, 49.6, 30, 38.4], pieds: [33, 86.5, 34, 10], accessoire: [76, 48, 21, 15] },
-    },
-    mannequin: {
-      ratio: "3 / 4", dessin: MANNEQUIN,
-      zones: { dessus: [19.5, 17, 61, 44], pull: [22, 18, 56, 39], haut: [23, 18.5, 54, 39], bas: [32, 49.5, 36, 44], pieds: [31, 89.5, 38, 9], accessoire: [74, 46, 22, 17] },
-    },
-  };
-  const CLE_PORTEUR = "tableau-de-bord-axel:porteur";
-  let porteur = "homme";
-  try { if (PORTEURS[localStorage.getItem(CLE_PORTEUR)]) porteur = localStorage.getItem(CLE_PORTEUR); } catch (_) { /* le modèle par défaut */ }
-  document.querySelectorAll('input[name="te-porteur"]').forEach(r => {
-    r.checked = r.value === porteur;
-    r.addEventListener("change", () => {
-      if (!r.checked) return;
-      porteur = r.value;
-      try { localStorage.setItem(CLE_PORTEUR, porteur); } catch (_) { /* gardé pour cette visite */ }
-      rendreTenues();
-      rendreComparateur();
-    });
-  });
-
-  // Détourage : le fond uni de la photo (blanc, gris clair…) devient transparent, puis la pièce est recadrée
-  // au plus près. Une photo déjà détourée est seulement recadrée. Un fond chargé n'est pas touché.
-  const cacheDetours = new Map();
-  function effacerFond(px, w, h) {
-    const n = w * h, bord = [];
-    for (let x = 0; x < w; x++) bord.push(x, (h - 1) * w + x);
-    for (let y = 1; y < h - 1; y++) bord.push(y * w, y * w + w - 1);
-    if (bord.filter(i => px[i * 4 + 3] < 200).length > bord.length * 0.3) return true;   // déjà détourée
-    // Le fond : sa couleur médiane sur le bord, et sa « teinte » (écart entre le canal le plus fort et le plus
-    // faible). Un fond gris ou blanc n'a presque pas de teinte ; un beige, un rose ou un écru en ont un peu :
-    // c'est ce qui les sépare d'un fond clair quand les couleurs sont proches.
-    const valeurs = f => bord.map(f).sort((a, b) => a - b);
-    const mediane = f => { const v = valeurs(f); return v[v.length >> 1]; };
-    const teinteDu = i => Math.max(px[i * 4], px[i * 4 + 1], px[i * 4 + 2]) - Math.min(px[i * 4], px[i * 4 + 1], px[i * 4 + 2]);
-    const fr = mediane(i => px[i * 4]), fg = mediane(i => px[i * 4 + 1]), fb = mediane(i => px[i * 4 + 2]), ft = mediane(teinteDu);
-    const ecart = i => { const r = px[i * 4] - fr, g = px[i * 4 + 1] - fg, b = px[i * 4 + 2] - fb; return r * r + g * g + b * b; };
-    const TOL_FOND = 40 * 40, TOL_PAS = 12 * 12, TOL_TEINTE = 6;
-    const commeLeFond = i => ecart(i) < TOL_FOND && Math.abs(teinteDu(i) - ft) < TOL_TEINTE;
-    if (bord.filter(commeLeFond).length < bord.length * 0.6) return false;   // fond pas uni
-    const fond = new Uint8Array(n), file = new Int32Array(n);
-    let debut = 0, fin = 0;
-    bord.forEach(i => { if (!fond[i] && commeLeFond(i)) { fond[i] = 1; file[fin++] = i; } });
-    const essayer = (i, j) => {
-      if (fond[j]) return;
-      const r = px[j * 4] - px[i * 4], g = px[j * 4 + 1] - px[i * 4 + 1], b = px[j * 4 + 2] - px[i * 4 + 2];
-      if (r * r + g * g + b * b < TOL_PAS && commeLeFond(j)) { fond[j] = 1; file[fin++] = j; }
-    };
-    while (debut < fin) {
-      const i = file[debut++], x = i % w;
-      if (x > 0) essayer(i, i - 1);
-      if (x < w - 1) essayer(i, i + 1);
-      if (i >= w) essayer(i, i - w);
-      if (i < n - w) essayer(i, i + w);
-    }
-    for (let i = 0; i < n; i++) {
-      if (fond[i]) { px[i * 4 + 3] = 0; continue; }
-      const x = i % w;
-      const touche = (x > 0 && fond[i - 1]) || (x < w - 1 && fond[i + 1]) || (i >= w && fond[i - w]) || (i < n - w && fond[i + w]);
-      if (touche) px[i * 4 + 3] = Math.round(255 * Math.min(1, Math.max(Math.sqrt(ecart(i)) / 60, Math.abs(teinteDu(i) - ft) / 14)));   // bord adouci
-    }
-    return true;
-  }
-  function detourer(src) {
-    if (cacheDetours.has(src)) return cacheDetours.get(src);
-    const promesse = new Promise(resolve => {
-      const img = new Image();
-      img.decoding = "async";
-      img.onload = () => {
-        try {
-          const r = Math.min(1, 640 / Math.max(img.naturalWidth, img.naturalHeight));
-          const w = Math.max(1, Math.round(img.naturalWidth * r)), h = Math.max(1, Math.round(img.naturalHeight * r));
-          const cv = document.createElement("canvas");
-          cv.width = w;
-          cv.height = h;
-          const ctx = cv.getContext("2d", { willReadFrequently: true });
-          ctx.drawImage(img, 0, 0, w, h);
-          const donnees = ctx.getImageData(0, 0, w, h);
-          if (!effacerFond(donnees.data, w, h)) { resolve({ url: src, detoure: false }); return; }
-          let x0 = w, y0 = h, x1 = -1, y1 = -1;
-          for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-            if (donnees.data[(y * w + x) * 4 + 3] > 24) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
-          }
-          if (x1 < 0) { resolve({ url: src, detoure: false }); return; }
-          const sortie = document.createElement("canvas");
-          sortie.width = x1 - x0 + 1;
-          sortie.height = y1 - y0 + 1;
-          sortie.getContext("2d").putImageData(donnees, -x0, -y0, x0, y0, sortie.width, sortie.height);
-          sortie.toBlob(b => resolve(b ? { url: URL.createObjectURL(b), detoure: true } : { url: src, detoure: false }), "image/png");
-        } catch (_) { resolve({ url: src, detoure: false }); }
-      };
-      img.onerror = () => resolve(null);
-      img.src = src;
-    });
-    cacheDetours.set(src, promesse);
-    return promesse;
-  }
-  // La scène : le porteur habillé des pièces données (une par emplacement, la dernière l'emporte).
-  function scene(ids, opts = {}) {
-    const p = PORTEURS[porteur];
-    const el = element("span", "scene" + (opts.petite ? " petite" : ""));
-    el.style.aspectRatio = p.ratio;
-    if (p.dessin) el.innerHTML = p.dessin;
-    const par = {};
-    ids.forEach(id => { const x = pieces[id]; if (x) par[EMPLACEMENT_DE[x.categorie]] = x; });
-    const porte = id => !!(par[id] && srcPhoto(par[id].photo) && !(opts.masques && opts.masques[id]));
-    (p.calques || []).forEach(c => {
-      if (c.remplace && c.remplace.some(porte)) return;
-      const img = element("img", c.zone ? "tete-modele" : "fond-modele");
-      img.alt = "";
-      img.src = c.src;
-      img.style.zIndex = c.z;
-      if (c.zone) Object.assign(img.style, { left: c.zone[0] + "%", top: c.zone[1] + "%", width: c.zone[2] + "%", height: c.zone[3] + "%" });
-      el.append(img);
-    });
+  const parEmplacement = ids => { const r = {}; ids.forEach(id => { const x = pieces[id]; if (x) r[EMPLACEMENT_DE[x.categorie]] = x; }); return r; };
+  // Une tenue en petit : ses six cases, trois par ligne, sans rien superposer.
+  function apercuTenue(ids) {
+    const g = element("span", "apercu-tenue");
+    const par = parEmplacement(ids);
     EMPLACEMENTS.forEach(e => {
-      const x = par[e.id], src = x && srcPhoto(x.photo);
-      if (!src || (opts.masques && opts.masques[e.id])) return;
-      const img = element("img", "calque");
-      img.alt = "";
-      img.hidden = true;
-      const z = p.zones[e.id];
-      Object.assign(img.style, { left: z[0] + "%", top: z[1] + "%", width: z[2] + "%", height: z[3] + "%", objectPosition: e.ancre, zIndex: e.z });
-      detourer(src).then(r => { if (!r) return; img.src = r.url; img.classList.toggle("brut", !r.detoure); img.hidden = false; });
-      el.append(img);
+      const x = par[e.id], c = element("span", "apercu-case" + (x ? "" : " vide"));
+      const src = x && srcPhoto(x.photo);
+      if (src) { const img = element("img"); img.alt = ""; img.loading = "lazy"; img.src = src; c.append(img); }
+      else if (x) c.append(element("span", "sans-photo", NOM_CATEGORIE[x.categorie]));
+      g.append(c);
     });
-    if (opts.libelle) el.setAttribute("aria-label", opts.libelle);
-    return el;
+    return g;
   }
   function vignette(x) {
     const v = element("span", "emplacement-vignette" + (x ? "" : " vide"));
@@ -2938,8 +2807,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 
   const nouvelleTenue = () => ({ id: null, nom: "", choix: {}, description: "", favori: false, vitrine: false, reseaux: false, creeLe: "" });
   let tenueEnCours = nouvelleTenue();
-  let emplacementOuvert = null, filtreTenues = "";
-  const masques = {};
+  let filtreTenues = "";
   const idsEnCours = () => EMPLACEMENTS.map(e => tenueEnCours.choix[e.id]).filter(id => id && pieces[id]);
   // Ouvre une tenue enregistrée dans l'atelier, ou un brouillon (par exemple depuis une sélection de pièces).
   function chargerTenueDansAtelier(t, brouillon) {
@@ -2952,65 +2820,58 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     $("te-description").value = tenueEnCours.description;
     $("te-rediger-etat").textContent = "";
     $("te-erreur").hidden = true;
-    emplacementOuvert = null;
-    Object.keys(masques).forEach(k => delete masques[k]);
     desarmer($("te-supprimer"), "Supprimer la tenue");
     rendreTenues();
   }
-  const PICTO_OEIL = '<svg class="picto" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg>';
-  const PICTO_OEIL_BARRE = '<svg class="picto" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><path d="M4 20L20 4"/></svg>';
   const PICTO_CROIX = '<svg class="picto" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 
+  // Une case : son titre, la photo (ou un « + » quand elle est vide), le nom de la pièce et une croix pour la retirer.
+  function caseElement(titre, contenu, opts) {
+    const c = element("div", "case" + (contenu ? "" : " vide"));
+    if (titre) c.append(element("span", "case-titre", titre));
+    const cadre = element("div", "case-cadre");
+    const b = element("button", "case-photo");
+    b.type = "button";
+    Object.assign(b.dataset, opts.ouvrir);
+    b.setAttribute("aria-label", opts.libelle);
+    if (contenu) b.append(contenu); else b.append(element("span", "case-plus", "+"));
+    b.disabled = !peutModifierGr();
+    cadre.append(b);
+    if (contenu && opts.retirer && peutModifierGr()) {
+      const r = element("button", "icone-bouton case-retirer");
+      r.type = "button";
+      Object.assign(r.dataset, opts.retirer);
+      r.setAttribute("aria-label", opts.libelleRetirer);
+      r.innerHTML = PICTO_CROIX;
+      cadre.append(r);
+    }
+    c.append(cadre);
+    if (opts.nom) c.append(element("span", "case-nom", opts.nom));
+    if (opts.detail) c.append(element("span", "case-detail", opts.detail));
+    return c;
+  }
+  function imagePiece(x) {
+    const src = srcPhoto(x.photo);
+    if (!src) return element("span", "sans-photo", NOM_CATEGORIE[x.categorie]);
+    const img = element("img");
+    img.alt = "";
+    img.src = src;
+    return img;
+  }
+
   function rendreTenues() {
-    Object.keys(tenueEnCours.choix).forEach(k => { if (!pieces[tenueEnCours.choix[k]]) delete tenueEnCours.choix[k]; });
     const modifiable = peutModifierGr();
     const ids = idsEnCours();
-    $("te-scene").replaceChildren(scene(ids, { masques }));
-    $("te-total").textContent = ids.length ? texteTotal(ids.map(id => pieces[id])) : `Choisis les pièces pour habiller ${porteur === "homme" ? "le modèle" : "le mannequin"}.`;
-
-    const toutes = Object.values(pieces).sort(trierPieces);
-    $("te-emplacements").replaceChildren(...EMPLACEMENTS.map(e => {
-      const id = tenueEnCours.choix[e.id], x = id && pieces[id];
-      const ligne = element("div", "emplacement-ligne");
-      const ouvrir = element("button", "emplacement-texte");
-      ouvrir.type = "button";
-      ouvrir.dataset.emplacement = e.id;
-      ouvrir.setAttribute("aria-expanded", String(emplacementOuvert === e.id));
-      ouvrir.append(element("span", "emplacement-nom", e.nom), element("span", "emplacement-piece" + (x ? "" : " vide"), x ? nomCourt(x) : "Choisir…"));
-      const actions = element("span", "emplacement-actions");
-      if (x) {
-        const oeil = element("button", "icone-bouton");
-        oeil.type = "button";
-        oeil.dataset.masquer = e.id;
-        oeil.setAttribute("aria-label", masques[e.id] ? "Remettre la pièce" : "Enlever la pièce pour voir dessous");
-        oeil.title = oeil.getAttribute("aria-label");
-        oeil.innerHTML = masques[e.id] ? PICTO_OEIL_BARRE : PICTO_OEIL;
-        const retirer = element("button", "icone-bouton");
-        retirer.type = "button";
-        retirer.dataset.retirer = e.id;
-        retirer.setAttribute("aria-label", `Retirer ${nomCourt(x)} de la tenue`);
-        retirer.innerHTML = PICTO_CROIX;
-        actions.append(oeil, retirer);
-      }
-      ligne.append(vignette(x), ouvrir, actions);
-      if (emplacementOuvert === e.id) {
-        const grille = element("div", "choix-pieces");
-        const candidates = toutes.filter(p => e.cats.includes(p.categorie));
-        if (!candidates.length) grille.append(element("p", "choix-vide", "Aucune pièce de ce type pour l'instant. Ajoute-en dans l'onglet « Pièces »."));
-        candidates.forEach(p => {
-          const b = element("button", "choix-piece");
-          b.type = "button";
-          b.dataset.choisir = p.id;
-          b.dataset.pour = e.id;
-          b.setAttribute("aria-pressed", String(id === p.id));
-          b.setAttribute("aria-label", nomCourt(p));
-          b.append(photoPiece(p), element("span", null, [p.marque, p.couleur].filter(Boolean).join(" · ") || p.modele));
-          grille.append(b);
-        });
-        ligne.append(grille);
-      }
-      return ligne;
+    $("te-cases").replaceChildren(...EMPLACEMENTS.map(e => {
+      const x = pieces[tenueEnCours.choix[e.id]];
+      return caseElement(e.nom, x ? imagePiece(x) : null, {
+        ouvrir: { emplacement: e.id },
+        libelle: x ? `${e.nom} : ${nomCourt(x)}. Changer` : `Ajouter ${e.article}`,
+        retirer: { retirer: e.id }, libelleRetirer: x ? `Retirer ${nomCourt(x)} de la tenue` : "",
+        nom: x ? [x.marque, x.modele].filter(Boolean).join(" ") : "", detail: x ? [x.couleur, x.prix != null ? formatPrix(x.prix) : ""].filter(Boolean).join(" · ") : "",
+      });
     }));
+    $("te-total").textContent = ids.length ? texteTotal(ids.map(id => pieces[id])) : "Touche un « + » pour ajouter une pièce à la tenue.";
     $("te-drapeaux").replaceChildren(boutonsDrapeaux(tenueEnCours, false, k => { tenueEnCours[k] = !tenueEnCours[k]; rendreTenues(); }));
     $("te-enregistrer").textContent = tenueEnCours.id ? "Enregistrer les modifications" : "Enregistrer la tenue";
     $("te-enregistrer").hidden = !modifiable;
@@ -3032,7 +2893,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
       ouvrir.dataset.tenue = t.id;
       const xs = piecesDe(t);
       ouvrir.setAttribute("aria-label", `${t.nom || "Tenue sans nom"} : ${xs.map(nomCourt).join(", ") || "aucune pièce"}`);
-      ouvrir.append(scene(t.pieces, { petite: true }), element("span", "carte-tenue-nom", t.nom || "Tenue sans nom"));
+      ouvrir.append(apercuTenue(t.pieces), element("span", "carte-tenue-nom", t.nom || "Tenue sans nom"));
       const pied = element("div", "carte-tenue-pied");
       const { total } = totalPrix(xs);
       pied.append(element("span", null, total ? formatPrix(total) : `${xs.length} pièce${xs.length > 1 ? "s" : ""}`),
@@ -3042,22 +2903,16 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     }));
     $("te-compte").textContent = tout.length ? `${tout.length} tenue${tout.length > 1 ? "s" : ""}` : "";
     $("te-vide").hidden = liste.length > 0;
-    $("te-vide").textContent = tout.length ? "Aucune tenue avec ce repère." : "Aucune tenue enregistrée. Habille le mannequin, donne un nom à la tenue et enregistre-la.";
+    $("te-vide").textContent = tout.length ? "Aucune tenue avec ce repère." : "Aucune tenue enregistrée. Ajoute des pièces avec les « + », donne un nom à la tenue et enregistre-la.";
   }
 
   document.querySelector('[data-vue="tenues"]').addEventListener("click", e => {
-    const t = e.target.closest("[data-emplacement], [data-choisir], [data-masquer], [data-retirer], [data-tenue]");
+    const t = e.target.closest("[data-emplacement], [data-retirer], [data-tenue]");
     if (!t) return;
-    if (t.dataset.emplacement) emplacementOuvert = emplacementOuvert === t.dataset.emplacement ? null : t.dataset.emplacement;
-    else if (t.dataset.choisir) { tenueEnCours.choix[t.dataset.pour] = t.dataset.choisir; delete masques[t.dataset.pour]; emplacementOuvert = null; }
-    else if (t.dataset.masquer) masques[t.dataset.masquer] = !masques[t.dataset.masquer];
-    else if (t.dataset.retirer) { delete tenueEnCours.choix[t.dataset.retirer]; delete masques[t.dataset.retirer]; }
-    else if (t.dataset.tenue) {
-      chargerTenueDansAtelier(tenues.docs[t.dataset.tenue]);
-      $("te-scene").scrollIntoView({ block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
-      return;
-    }
-    rendreTenues();
+    if (t.dataset.emplacement) { ouvrirChoix({ pour: "tenue", emplacement: t.dataset.emplacement }); return; }
+    if (t.dataset.retirer) { delete tenueEnCours.choix[t.dataset.retirer]; rendreTenues(); return; }
+    chargerTenueDansAtelier(tenues.docs[t.dataset.tenue]);
+    window.scrollTo(0, 0);
   });
   $("te-nouvelle").addEventListener("click", () => chargerTenueDansAtelier(null));
   $("te-description").addEventListener("input", () => {
@@ -3133,17 +2988,17 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 
   // ----- comparateur -----
   // Un document par comparaison dans « comparaisons » : { type: "pieces" | "tenues", elements: [ids], nom, favori, vitrine, reseaux, creeLe }.
-  const MAX_COMPARER = { pieces: 4, tenues: 3 };
+  const MAX_COMPARER = { pieces: 5, tenues: 5 };
   function lireComparaison(id, d) {
     if (!d || typeof d !== "object" || !Array.isArray(d.elements)) return null;
-    return { id, type: d.type === "tenues" ? "tenues" : "pieces", elements: d.elements.filter(x => typeof x === "string" && x.length <= 200).slice(0, 4),
+    return { id, type: d.type === "tenues" ? "tenues" : "pieces", elements: d.elements.filter(x => typeof x === "string" && x.length <= 200).slice(0, 5),
       nom: texteBorne(d.nom, 80), ...lireDrapeaux(d), creeLe: texteBorne(d.creeLe, 40) };
   }
   const corpsComparaison = c => ({ type: c.type, elements: c.elements, nom: c.nom || null, favori: c.favori, vitrine: c.vitrine, reseaux: c.reseaux, creeLe: c.creeLe });
   const comparaisons = creerCollection("comparaisons", "tableau-de-bord-axel:comparaisons", lireComparaison, rendreComparateur);
   const nouvelleComparaison = type => ({ id: null, type, elements: [], nom: "", favori: false, vitrine: false, reseaux: false, creeLe: "" });
   let compEnCours = nouvelleComparaison("pieces");
-  let rechercheComparer = "", filtreComparaisons = "";
+  let filtreComparaisons = "";
   const elementDe = (type, id) => (type === "pieces" ? pieces[id] : tenues.docs[id]);
   const nomElement = (type, x) => (type === "pieces" ? nomCourt(x) : x.nom || "Tenue sans nom");
   function chargerComparaison(c) {
@@ -3155,9 +3010,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   }
   function apercuElement(type, x, petit) {
     if (type === "pieces") return petit ? vignette(x) : photoPiece(x);
-    const s = scene(x.pieces, { petite: true });
-    if (petit) s.classList.add("mini-scene");
-    return s;
+    return apercuTenue(x.pieces);
   }
 
   // Une ligne du tableau ; « pareil » quand toutes les valeurs sont les mêmes.
@@ -3215,7 +3068,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   }
   function lignesTenues(ts) {
     const l = [];
-    l.push(ligneTable("", ts.map(t => { const d = element("div", "cellule-element"); d.append(scene(t.pieces, { petite: true }), element("span", "cellule-titre", t.nom || "Tenue sans nom")); return d; })));
+    l.push(ligneTable("", ts.map(t => { const d = element("div", "cellule-element"); d.append(apercuTenue(t.pieces), element("span", "cellule-titre", t.nom || "Tenue sans nom")); return d; })));
     l.push(ligneTable("Pièces", ts.map(t => { const ul = element("ul", "liste-pieces-tenue"); piecesDe(t).forEach(x => ul.append(element("li", null, `${NOM_CATEGORIE[x.categorie]} : ${nomCourt(x)}`))); return ul; })));
     const totaux = ts.map(t => totalPrix(piecesDe(t)));
     l.push(ligneTable("Prix total", cellulePrix(totaux.map(x => x.total || null))));
@@ -3231,42 +3084,22 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 
   function rendreComparateur() {
     const type = compEnCours.type, max = MAX_COMPARER[type], modifiable = peutModifierGr();
-    compEnCours.elements = compEnCours.elements.filter(id => elementDe(type, id)).slice(0, max);
     document.querySelectorAll('input[name="co-type"]').forEach(r => { r.checked = r.value === type; });
-    const choisis = compEnCours.elements.map(id => elementDe(type, id));
-    $("co-choisis").replaceChildren(...compEnCours.elements.map((id, i) => {
-      const chip = element("span", "element-choisi");
-      const retirer = element("button", "icone-bouton");
-      retirer.type = "button";
-      retirer.dataset.enlever = id;
-      retirer.setAttribute("aria-label", `Retirer ${nomElement(type, choisis[i])} de la comparaison`);
-      retirer.innerHTML = PICTO_CROIX;
-      chip.append(apercuElement(type, choisis[i], true), element("span", "element-choisi-nom", nomElement(type, choisis[i])), retirer);
-      return chip;
-    }));
-    // Les candidats : pour des pièces, celles de la même catégorie que la première d'abord.
-    const plein = compEnCours.elements.length >= max;
-    $("co-recherche-ligne").hidden = type !== "pieces" || plein;
-    let candidats = [];
-    if (type === "pieces") {
-      const q = sansAccents(rechercheComparer.trim()), cat = choisis[0] && choisis[0].categorie;
-      candidats = Object.values(pieces).filter(x => !compEnCours.elements.includes(x.id)
-        && (!q || sansAccents([x.marque, x.modele, x.couleur, x.matiere, NOM_CATEGORIE[x.categorie]].join(" ")).includes(q)))
-        .sort((a, b) => ((b.categorie === cat) - (a.categorie === cat)) || trierPieces(a, b));
-    } else candidats = Object.values(tenues.docs).filter(t => !compEnCours.elements.includes(t.id)).sort((a, b) => (b.modifieLe || b.creeLe).localeCompare(a.modifieLe || a.creeLe));
-    $("co-candidats").hidden = plein || !candidats.length;
-    $("co-candidats").replaceChildren(...(plein ? [] : candidats.map(x => {
-      const b = element("button", "choix-piece");
-      b.type = "button";
-      b.dataset.ajouter = x.id;
-      b.setAttribute("aria-label", `Ajouter ${nomElement(type, x)}`);
-      b.append(apercuElement(type, x, false), element("span", null, type === "pieces" ? [x.marque, x.couleur].filter(Boolean).join(" · ") || x.modele : nomElement(type, x)));
-      return b;
-    })));
-    const nomType = type === "pieces" ? "pièces" : "tenues";
-    $("co-aide").textContent = plein ? `${max} ${nomType} au plus : retire-en une pour en ajouter une autre.`
-      : !candidats.length && !compEnCours.elements.length ? (type === "pieces" ? "Ajoute d'abord des pièces dans l'onglet « Pièces »." : "Enregistre d'abord des tenues dans l'onglet « Tenues ».")
-      : compEnCours.elements.length < 2 ? `Choisis de 2 à ${max} ${nomType} à comparer.` : "";
+    // Les éléments encore présents (une pièce ou une tenue supprimée disparaît de la comparaison).
+    const presents = compEnCours.elements.filter(id => elementDe(type, id)).slice(0, max);
+    const choisis = presents.map(id => elementDe(type, id));
+    // Deux « + » au départ ; dès que tout est rempli, un « + » de plus, jusqu'à cinq.
+    const plus = presents.length < 2 ? 2 - presents.length : presents.length < max ? 1 : 0;
+    const libelleType = type === "pieces" ? "une pièce" : "une tenue";
+    $("co-cases").replaceChildren(
+      ...presents.map((id, i) => caseElement("", type === "pieces" ? imagePiece(choisis[i]) : apercuTenue(choisis[i].pieces), {
+        ouvrir: { remplacer: id }, libelle: `${nomElement(type, choisis[i])}. Changer`,
+        retirer: { enlever: id }, libelleRetirer: `Retirer ${nomElement(type, choisis[i])} de la comparaison`,
+        nom: type === "pieces" ? [choisis[i].marque, choisis[i].modele].filter(Boolean).join(" ") : nomElement(type, choisis[i]),
+        detail: type === "pieces" ? [choisis[i].couleur, choisis[i].prix != null ? formatPrix(choisis[i].prix) : ""].filter(Boolean).join(" · ") : texteTotal(piecesDe(choisis[i])),
+      })),
+      ...Array.from({ length: plus }, () => caseElement("", null, { ouvrir: { ajouterCase: "1" }, libelle: `Ajouter ${libelleType} à comparer` })));
+    $("co-aide").textContent = presents.length >= max ? `${max} ${type === "pieces" ? "pièces" : "tenues"} au plus.` : presents.length < 2 ? `Touche les « + » pour ajouter ${type === "pieces" ? "les pièces" : "les tenues"} à comparer.` : "";
     $("co-aide").hidden = !$("co-aide").textContent;
 
     $("co-table-zone").hidden = choisis.length < 2;
@@ -3304,19 +3137,20 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   }
 
   document.querySelector('[data-vue="comparer"]').addEventListener("click", e => {
-    const t = e.target.closest("[data-ajouter], [data-enlever], [data-comparaison]");
+    const t = e.target.closest("[data-ajouter-case], [data-remplacer], [data-enlever], [data-comparaison]");
     if (!t) return;
-    if (t.dataset.ajouter && compEnCours.elements.length < MAX_COMPARER[compEnCours.type]) compEnCours.elements.push(t.dataset.ajouter);
-    else if (t.dataset.enlever) compEnCours.elements = compEnCours.elements.filter(id => id !== t.dataset.enlever);
-    else if (t.dataset.comparaison) { chargerComparaison(comparaisons.docs[t.dataset.comparaison]); window.scrollTo(0, 0); return; }
-    rendreComparateur();
+    if (t.dataset.ajouterCase) { ouvrirChoix({ pour: "comparer" }); return; }
+    if (t.dataset.remplacer) { ouvrirChoix({ pour: "comparer", remplacer: t.dataset.remplacer }); return; }
+    if (t.dataset.enlever) { compEnCours.elements = compEnCours.elements.filter(id => id !== t.dataset.enlever); rendreComparateur(); return; }
+    chargerComparaison(comparaisons.docs[t.dataset.comparaison]);
+    window.scrollTo(0, 0);
   });
   document.querySelectorAll('input[name="co-type"]').forEach(r => r.addEventListener("change", () => {
     if (r.checked && r.value !== compEnCours.type) chargerComparaison({ ...nouvelleComparaison(r.value), elements: [] });
   }));
-  $("co-recherche").addEventListener("input", e => { rechercheComparer = e.target.value; rendreComparateur(); });
   $("co-nouvelle").addEventListener("click", () => { chargerComparaison(null); });
   $("co-enregistrer").addEventListener("click", async () => {
+    compEnCours.elements = compEnCours.elements.filter(id => elementDe(compEnCours.type, id));
     if (!peutModifierGr() || compEnCours.elements.length < 2) return;
     $("co-erreur").hidden = true;
     const els = compEnCours.elements.map(id => elementDe(compEnCours.type, id));
@@ -3338,6 +3172,96 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     desarmer(b, "Supprimer la comparaison");
     try { await comparaisons.ecrire(id, null); chargerComparaison(null); toast("Comparaison supprimée."); }
     catch (err) { toast(messageEcriture(err), "erreur"); }
+  });
+
+  // ----- la fenêtre de choix : une pièce pour une case de tenue, une pièce ou une tenue à comparer -----
+  let choixEnCours = null;   // { pour: "tenue", emplacement } ou { pour: "comparer", remplacer? }
+  function candidatsDuChoix() {
+    const q = sansAccents($("fc-recherche").value.trim());
+    if (choixEnCours.pour === "comparer" && compEnCours.type === "tenues") {
+      return Object.values(tenues.docs).filter(t => !compEnCours.elements.includes(t.id) && (!q || sansAccents(t.nom).includes(q)))
+        .sort((a, b) => (b.modifieLe || b.creeLe).localeCompare(a.modifieLe || a.creeLe));
+    }
+    const cherche = x => !q || sansAccents([x.marque, x.modele, x.couleur, x.matiere, NOM_CATEGORIE[x.categorie]].join(" ")).includes(q);
+    if (choixEnCours.pour === "tenue") {
+      const e = EMPLACEMENTS.find(x => x.id === choixEnCours.emplacement);
+      return Object.values(pieces).filter(x => e.cats.includes(x.categorie) && cherche(x)).sort(trierPieces);
+    }
+    // Pour comparer : celles de la même catégorie que la première pièce d'abord.
+    const premiere = pieces[compEnCours.elements.find(id => pieces[id] && id !== choixEnCours.remplacer)];
+    const cat = premiere && premiere.categorie;
+    return Object.values(pieces).filter(x => !compEnCours.elements.includes(x.id) && cherche(x))
+      .sort((a, b) => ((b.categorie === cat) - (a.categorie === cat)) || trierPieces(a, b));
+  }
+  function rendreChoix() {
+    const tenuesAComparer = choixEnCours.pour === "comparer" && compEnCours.type === "tenues";
+    const liste = candidatsDuChoix();
+    const choisi = choixEnCours.pour === "tenue" ? tenueEnCours.choix[choixEnCours.emplacement] : null;
+    $("fc-grille").replaceChildren(...liste.map(x => {
+      const b = element("button", "choix-piece");
+      b.type = "button";
+      b.dataset.choix = x.id;
+      b.setAttribute("aria-pressed", String(x.id === choisi));
+      if (tenuesAComparer) {
+        b.setAttribute("aria-label", x.nom || "Tenue sans nom");
+        b.append(apercuTenue(x.pieces), element("span", null, x.nom || "Tenue sans nom"));
+      } else {
+        b.setAttribute("aria-label", nomCourt(x));
+        b.append(photoPiece(x), element("span", null, [x.marque, x.couleur].filter(Boolean).join(" · ") || x.modele));
+      }
+      return b;
+    }));
+    if (!liste.length) {
+      const vide = $("fc-recherche").value.trim() ? "Aucun résultat pour cette recherche."
+        : tenuesAComparer ? "Aucune tenue à ajouter. Enregistre d'abord des tenues dans l'onglet « Tenues »."
+        : "Aucune pièce de ce type dans la garde-robe pour l'instant. Ajoute-la avec le bouton ci-dessous.";
+      $("fc-grille").append(element("p", "choix-vide", vide));
+    }
+  }
+  function ouvrirChoix(mode) {
+    if (!peutModifierGr()) return;
+    choixEnCours = mode;
+    const tenuesAComparer = mode.pour === "comparer" && compEnCours.type === "tenues";
+    const e = mode.pour === "tenue" && EMPLACEMENTS.find(x => x.id === mode.emplacement);
+    $("fc-titre").textContent = e ? `Choisir ${e.article}` : tenuesAComparer ? "Choisir une tenue à comparer" : "Choisir une pièce à comparer";
+    $("fc-recherche").value = "";
+    $("fc-recherche").placeholder = tenuesAComparer ? "Chercher une tenue par son nom…" : "Chercher une marque, un modèle, une couleur…";
+    $("fc-nouvelle").hidden = tenuesAComparer || !peutModifierPieces();
+    rendreChoix();
+    ouvrir($("fenetre-choix"));
+    $("fenetre-choix").querySelector(".fenetre-corps").scrollTop = 0;
+  }
+  // Pose l'élément choisi dans sa case.
+  function poserChoix(mode, id) {
+    if (mode.pour === "tenue") { tenueEnCours.choix[mode.emplacement] = id; rendreTenues(); return; }
+    const i = mode.remplacer ? compEnCours.elements.indexOf(mode.remplacer) : -1;
+    if (i >= 0) compEnCours.elements[i] = id;
+    else if (!compEnCours.elements.includes(id)) compEnCours.elements.push(id);
+    compEnCours.elements = compEnCours.elements.slice(0, MAX_COMPARER[compEnCours.type]);
+    rendreComparateur();
+  }
+  $("fc-recherche").addEventListener("input", rendreChoix);
+  $("fc-grille").addEventListener("click", e => {
+    const b = e.target.closest("[data-choix]");
+    if (!b || !choixEnCours) return;
+    const mode = choixEnCours;
+    fermer($("fenetre-choix"));
+    poserChoix(mode, b.dataset.choix);
+  });
+  // « Ajouter une nouvelle pièce » : la fenêtre d'ajout s'ouvre sur la bonne catégorie ; une fois
+  // enregistrée, la pièce rejoint la garde-robe et prend place dans la case.
+  let apresAjoutPiece = null;
+  $("fc-nouvelle").addEventListener("click", () => {
+    const mode = choixEnCours;
+    fermer($("fenetre-choix"));
+    const e = mode.pour === "tenue" && EMPLACEMENTS.find(x => x.id === mode.emplacement);
+    const premiere = mode.pour === "comparer" && pieces[compEnCours.elements.find(id => pieces[id])];
+    const categorie = e ? e.cats[0] : premiere ? premiere.categorie : "";
+    ouvrirPiece(null);
+    apresAjoutPiece = id => poserChoix(mode, id);
+    $("pi-encore").hidden = true;
+    $("pi-categorie").value = categorie;
+    champsRepris = { categorie };
   });
 
   // ----- ce qu'il manque : les demandes des clients -----
