@@ -971,7 +971,68 @@ CLAUDE_TOOLS.push(
      if(!pm)throw new Error("Match introuvable dans le programme des prochaines nuits : donne une équipe qui joue et la nuit du match.");
      const r=marketProba(pm,i.type,findTeam(i.equipe||""),i.ligne,i.sens);if(!r)throw new Error("Les cotes DraftKings de ce match ne sont pas encore publiées : estime la probabilité toi-même avec la base.");
      return{match:pm.id,probabilite:Math.round(r.p*1000)/1000,methode:r.methode,ligne_draftkings:{handicap_domicile:pm.cotes.ecartDom,total:pm.cotes.total}}}});
-const EVAL_TOOLS=["programme_soir","proba_marche","chercher_joueurs","stats_joueur","quarts_joueur","stats_equipe","details_match"];
+/* Probabilité tirée de la base : l'utilisateur la veut fondée sur ses matchs, pas sur les cotes des bookmakers.
+   Équipes : points marqués et encaissés sur la période, ramenés vers la moyenne de la ligue tant qu'il y a peu de matchs
+   (kEquipe matchs fictifs à la moyenne), avantage du terrain, fatigue du back-to-back ; écart et total suivent une loi normale.
+   Joueurs : moyenne et écart-type de la stat sur ses matchs, puis probabilité ramenée vers 50 % tant qu'il y a peu de matchs.
+   Claude peut ajuster de ajustMax au plus, pour ce que la base ne voit pas (un absent ce soir…). */
+const MODELE={terrain:2.5,b2b:1.5,sigEcart:12.5,sigTotal:18,sigEquipe:12,kEquipe:5,kJoueur:3,ajustMax:0.05};
+const perKey=per=>!per||per==="match"?"full":per;
+const perFrac=per=>!per||per==="match"?1:per==="h1"||per==="h2"?0.5:0.25;
+const round3=v=>Math.round(v*1000)/1000;
+const fiabDe=n=>n>=15?"bonne":n>=5?"moyenne":"faible";
+function moyLigue(per){const ms=getM();if(!ms.length)return 115*perFrac(per);let t=0;for(const m of ms)t+=sidePts(m,"dom",perKey(per))+sidePts(m,"ext",perKey(per));return t/(2*ms.length)}
+function niveauEquipe(t,per,avant){
+  const g=getM().filter(m=>(m.dom===t||m.ext===t)&&(!avant||m.date<avant)),L=moyLigue(per),k=MODELE.kEquipe;let po=0,pc=0;
+  for(const m of g){const h=m.dom===t;po+=sidePts(m,h?"dom":"ext",perKey(per));pc+=sidePts(m,h?"ext":"dom",perKey(per))}
+  return{n:g.length,marques:(po+k*L)/(g.length+k),encaisses:(pc+k*L)/(g.length+k)};
+}
+function reposAvant(t,nuit){const d=(index().sched[t]||[]).filter(x=>x<nuit);return d.length?dayN(nuit)-dayN(d[d.length-1])-1:null}
+function probaEquipe(c,ext,dom,nuit){
+  const per=c.periode||"match",f=perFrac(per),D=niveauEquipe(dom,per,nuit),E=niveauEquipe(ext,per,nuit);
+  const rD=reposAvant(dom,nuit),rE=reposAvant(ext,nuit),fat=r=>r===0?MODELE.b2b*f:0;
+  const ptsD=(D.marques+E.encaisses)/2+MODELE.terrain*f/2-fat(rD),ptsE=(E.marques+D.encaisses)/2-MODELE.terrain*f/2-fat(rE);
+  const sE=MODELE.sigEcart*Math.sqrt(f),sT=MODELE.sigTotal*Math.sqrt(f),sQ=MODELE.sigEquipe*Math.sqrt(f);
+  const side=c.equipe===dom?"dom":c.equipe===ext?"ext":null,L=Number(c.ligne),ecart=side==="ext"?ptsE-ptsD:ptsD-ptsE;let p=null;
+  if(c.type==="victoire"&&side)p=Phi(ecart/sE);
+  else if(c.type==="handicap"&&side&&Number.isFinite(L))p=Phi((ecart+L)/sE);
+  else if(c.type==="total_match"&&Number.isFinite(L)){const o=1-Phi((L-(ptsD+ptsE))/sT);p=c.sens==="moins"?1-o:o}
+  else if(c.type==="total_equipe"&&side&&Number.isFinite(L)){const o=1-Phi((L-(side==="dom"?ptsD:ptsE))/sQ);p=c.sens==="moins"?1-o:o}
+  if(p==null)return null;
+  return{p,n:Math.min(D.n,E.n),detail:`Score attendu ${dom} ${String(r1(ptsD)).replace(".",",")} – ${String(r1(ptsE)).replace(".",",")} ${ext}${per==="match"?"":" ("+PER_NAME[perKey(per)].toLowerCase()+")"}, d'après ${D.n} match${D.n>1?"s":""} de ${dom} et ${E.n} de ${ext}${rD===0?`, ${dom} en back-to-back`:""}${rE===0?`, ${ext} en back-to-back`:""}.`};
+}
+async function probaJoueur(c){
+  const ix=index();let nom=ix.players[c.joueur]?c.joueur:null;
+  if(!nom){const f=findPlayers(c.joueur||"");if(f.length===1)nom=f[0].nom}
+  if(!nom)return{p:null,n:0};
+  const per=c.periode||"match",ms=getM().filter(m=>(m.joueurs||[]).some(x=>x.nom===nom)).sort((a,b)=>b.date.localeCompare(a.date));let vals=[];
+  if(per==="match")vals=ms.map(m=>statVal(m.joueurs.find(x=>x.nom===nom),c.stat));
+  else{
+    const ds=await Promise.all(ms.slice(0,20).map(m=>readDetails(m.id).catch(()=>null)));
+    for(const d of ds){const j=d&&(d.joueurs||[]).find(x=>x.nom===nom);if(!j||!Object.keys(((d.equipes||{})[j.equipe]||{}).periodes||{}).length)continue;
+      const keys=per==="h1"?["q1","q2"]:per==="h2"?["q3","q4",...Object.keys(j.periodes||{}).filter(k=>k.startsWith("ot"))]:[per],o={};
+      d.colonnes.forEach(cn=>o[cn]=0);keys.forEach(k=>{const row=(j.periodes||{})[k];if(row)d.colonnes.forEach((cn,i)=>o[cn]+=row[i]||0)});vals.push(statVal(o,c.stat))}
+  }
+  vals=vals.filter(Number.isFinite);const n=vals.length;if(!n)return{p:null,n:0};
+  const L=Number(c.ligne),plus=c.sens!=="moins",moy=vals.reduce((a,b)=>a+b,0)/n;let pm;
+  if(c.stat==="dd"||c.stat==="td"){const h=vals.filter(v=>v>=1).length;pm=(h+1)/(n+2);if(!plus)pm=1-pm}
+  else{const sd=n>1?Math.sqrt(vals.reduce((a,b)=>a+(b-moy)**2,0)/(n-1)):0,sig=Math.max(sd,Math.sqrt(Math.max(moy,1)))*Math.sqrt(1+1/n);
+    const hi=Number.isInteger(L)?L+0.5:L,lo=Number.isInteger(L)?L-0.5:L;pm=plus?1-Phi((hi-moy)/sig):Phi((lo-moy)/sig)}
+  const der=vals.slice(0,5),hits=vals.filter(v=>plus?v>L:v<L).length;
+  return{p:0.5+(pm-0.5)*n/(n+MODELE.kJoueur),n,detail:`${nom} : ${String(r1(moy)).replace(".",",")} en moyenne sur ${n} match${n>1?"s":""}${n>5?`, ${String(r1(der.reduce((a,b)=>a+b,0)/der.length)).replace(".",",")} sur les 5 derniers`:""}, pari passé ${hits} fois sur ${n}.`};
+}
+async function probaBase(c,ext,dom,nuit){
+  if(["victoire","handicap","total_match","total_equipe"].includes(c.type))return probaEquipe(c,ext,dom,nuit);
+  if(c.type==="stat_joueur")return probaJoueur(c);
+  return null;
+}
+CLAUDE_TOOLS.push({name:"proba_base",description:"Probabilité qu'un pronostic passe, calculée à partir des matchs de la base de l'utilisateur (pas des cotes) : victoire, handicap, total_match, total_equipe (par période possible) ou stat_joueur. Renvoie la probabilité, le nombre de matchs utilisés, la fiabilité et le détail du calcul. Donne la condition comme pour la correction automatique, avec ext, dom et nuit du match.",
+  inputSchema:{type:"object",properties:{type:{type:"string",enum:["victoire","handicap","total_match","total_equipe","stat_joueur"]},ext:{type:"string"},dom:{type:"string"},nuit:{type:"string"},equipe:{type:"string"},joueur:{type:"string"},stat:{type:"string"},sens:{type:"string",enum:["plus","moins"]},ligne:{type:"number"},periode:{type:"string",enum:["match","q1","q2","q3","q4","h1","h2"]}},required:["type","ext","dom","nuit"]},
+  async execute(i){chatStatus("Claude calcule la probabilité avec la base…");const ext=findTeam(i.ext),dom=findTeam(i.dom);if(!ext||!dom)throw new Error("Donne les sigles ext et dom du match.");
+    const c={...i,equipe:i.equipe?findTeam(i.equipe):undefined};const r=await probaBase(c,ext,dom,String(i.nuit||""));
+    if(!r||r.p==null)throw new Error(r&&r.n===0?"Aucun match utile dans la base pour ce pari.":"Pas de calcul possible pour ce type de pari.");
+    return{probabilite:round3(r.p),matchs_utilises:r.n,fiabilite:fiabDe(r.n),detail:r.detail}}});
+const EVAL_TOOLS=["programme_soir","proba_base","chercher_joueurs","stats_joueur","quarts_joueur","stats_equipe","details_match"];
 function toolsFor(names){const list=names?CLAUDE_TOOLS.filter(t=>names.includes(t.name)):CLAUDE_TOOLS;return list.slice(0,S.toolMax||list.length)}
 function evalPrompt(q){
   const now=new Intl.DateTimeFormat("fr-FR",{timeZone:TZ_FR,weekday:"long",day:"numeric",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit"}).format(new Date());
@@ -980,30 +1041,36 @@ function evalPrompt(q){
     `Nous sommes le ${now} (heure de Paris). Nuits NBA au programme : ${upcoming().map(pg=>`${pg.nuit} (${nuitLabel(pg.nuit).toLowerCase()})`).join(", ")||"aucune"}.`,
     `Pronostic de l'utilisateur : « ${q} »`,
     "1. Trouve le match concerné avec programme_soir. Si le pronostic ne porte sur aucun match du programme, ou s'il est trop vague pour être corrigé, réponds {\"erreur\": \"explication courte en français\"}.",
-    "2. Victoire, handicap ou total du match entier : appelle proba_marche (avec la nuit du match) et reprends sa probabilité telle quelle (fiabilite « marché »). Si les cotes du match ne sont pas encore publiées, estime-la avec la base et mets fiabilite « faible » ou « moyenne ».",
-    "3. Autre pronostic (stats d'un joueur ou d'une équipe, quart-temps, mi-temps, premier panier…) : estime la probabilité avec la base (stats_joueur, quarts_joueur, stats_equipe, details_match) en tenant compte des minutes, du lieu, de l'adversaire, du repos et des blessés de ce soir (programme_soir). Une ligne de bookmaker est en général proche de 50 % : avec peu de matchs, ne t'en éloigne pas beaucoup. fiabilite : « faible » sous 5 matchs utiles, « moyenne » de 5 à 14, « bonne » à partir de 15.",
-    "4. Mise en % de la bankroll, une valeur parmi 0.5, 1, 1.5, 2, 2.5, 3 : fiabilité faible → 0.5 ; moyenne → 1 (1.5 si probabilité ≥ 65 %) ; bonne ou marché → 1.5 ou 2 selon la probabilité ; 2.5 ou 3 seulement si probabilité ≥ 70 % et fiabilité bonne ou marché ; probabilité sous 40 % → 0.5 au plus.",
-    "5. Condition pour la correction automatique, un de ces types : stat_joueur {joueur (nom exact de la base), stat (pts, reb, ast, stl, blk, tp = 3 pts réussis, tpa, tov, fgm, fga, ftm, fta, oreb, dreb, pf, pm, min, pra, pr, pa, ra, sb, dd = double-double, td = triple-double), sens (plus|moins), ligne, periode} ; victoire {equipe} ; handicap {equipe, ligne} ; total_match {sens, ligne, periode} ; total_equipe {equipe, sens, ligne, periode} ; premier_panier {joueur} ; premiers_points {equipe} ; autre {description}. periode : match, q1, q2, q3, q4, h1 ou h2. Prolongations comprises pour match et h2. Pour un double-double : stat dd, sens plus, ligne 0.5.",
-    "Réponds UNIQUEMENT avec un objet JSON : {\"intitule\": \"pronostic court en français avec la ligne et l'adversaire\", \"nuit\": \"AAAA-MM-JJ\", \"ext\": \"SIGLE\", \"dom\": \"SIGLE\", \"condition\": {…}, \"probabilite\": 0.57, \"fiabilite\": \"marché|bonne|moyenne|faible\", \"mise_pct\": 1.5, \"raison\": \"une ou deux phrases en français\"}",
+    "2. Écris la condition, un de ces types : stat_joueur {joueur (nom exact de la base), stat (pts, reb, ast, stl, blk, tp = 3 pts réussis, tpa, tov, fgm, fga, ftm, fta, oreb, dreb, pf, pm, min, pra, pr, pa, ra, sb, dd = double-double, td = triple-double), sens (plus|moins), ligne, periode} ; victoire {equipe} ; handicap {equipe, ligne} ; total_match {sens, ligne, periode} ; total_equipe {equipe, sens, ligne, periode} ; premier_panier {joueur} ; premiers_points {equipe} ; autre {description}. periode : match, q1, q2, q3, q4, h1 ou h2. Prolongations comprises pour match et h2. Pour un double-double : stat dd, sens plus, ligne 0.5.",
+    "3. Appelle proba_base avec cette condition. C'est la probabilité qui compte : l'utilisateur veut une probabilité fondée sur sa base de données, pas sur les cotes des bookmakers. N'utilise jamais les cotes DraftKings pour la probabilité.",
+    "4. ajustement : un nombre entre -0.05 et 0.05, seulement pour ce que la base ne voit pas (un joueur blessé ou absent ce soir d'après programme_soir, un rôle ou des minutes qui changent). Mets 0 sinon, et dis-le dans raison.",
+    "5. Si proba_base ne sait pas calculer ce pari (premier panier, autre…) ou ne trouve aucun match, donne ta propre estimation dans probabilite, prudente : proche de 50 % pour une ligne de bookmaker.",
+    "6. Mise en % de la bankroll, une valeur parmi 0.5, 1, 1.5, 2, 2.5, 3, selon la fiabilité donnée par proba_base et la probabilité finale : faible → 0.5 ; moyenne → 1 (1.5 si probabilité ≥ 65 %) ; bonne → 1.5 ou 2 ; 2.5 ou 3 seulement si probabilité ≥ 70 % et fiabilité bonne ; probabilité sous 40 % → 0.5 au plus.",
+    "Réponds UNIQUEMENT avec un objet JSON : {\"intitule\": \"pronostic court en français avec la ligne et l'adversaire\", \"nuit\": \"AAAA-MM-JJ\", \"ext\": \"SIGLE\", \"dom\": \"SIGLE\", \"condition\": {…}, \"ajustement\": 0, \"probabilite\": null, \"mise_pct\": 1, \"raison\": \"une ou deux phrases en français\"}",
     `Sigles des équipes : ${TEAMS.map(([a,n])=>a+" = "+n).join(", ")}.`
   ].join("\n\n");
 }
-function checkCard(r,q){
+async function checkCard(r,q){
   if(!r||typeof r!=="object")return{erreur:"Claude n'a pas rendu de pronostic lisible. Réessaie."};
   if(r.erreur)return{erreur:String(r.erreur)};
   const ext=findTeam(r.ext),dom=findTeam(r.dom);
-  if(!ext||!dom||!/^\d{4}-\d{2}-\d{2}$/.test(String(r.nuit||"")))return{erreur:"Claude n'a pas trouvé le match de ce pronostic dans le programme de ce soir."};
+  if(!ext||!dom||!/^\d{4}-\d{2}-\d{2}$/.test(String(r.nuit||"")))return{erreur:"Claude n'a pas trouvé le match de ce pronostic dans le programme."};
   let c=r.condition&&typeof r.condition==="object"?Object.assign({},r.condition):{};
   if(!COND_TYPES.includes(c.type)||(c.type==="stat_joueur"&&!COND_STATS.includes(c.stat)))c={type:"autre",description:String(r.intitule||q)};
   if(c.periode&&!PERIODES.includes(c.periode))c.periode="match";
   if(c.equipe)c.equipe=findTeam(c.equipe)||c.equipe;
-  let p=Math.min(0.99,Math.max(0.01,Number(r.probabilite)||0.5)),fiab=["marché","bonne","moyenne","faible"].includes(r.fiabilite)?r.fiabilite:"faible",methode=null;
   const pg=(S.programmes||[]).find(x=>x.nuit===r.nuit),pm=pg&&(pg.matchs||[]).find(m=>m.ext===ext&&m.dom===dom);
-  // Victoire, handicap, total du match entier : la probabilité du marché, calculée ici
-  if(pm&&["victoire","handicap","total_match"].includes(c.type)&&(c.periode||"match")==="match"){const mk=marketProba(pm,c.type,c.equipe,c.ligne,c.sens);if(mk){p=mk.p;fiab="marché";methode=mk.methode}}
+  // La probabilité vient de la base, calculée ici ; Claude ne peut que l'ajuster un peu
+  const base=await probaBase(c,ext,dom,r.nuit).catch(()=>null);
+  let p,pBase=null,aj=0,n=0,detail;
+  if(base&&base.p!=null){pBase=base.p;n=base.n;detail=base.detail;aj=Math.max(-MODELE.ajustMax,Math.min(MODELE.ajustMax,Number(r.ajustement)||0));p=pBase+aj}
+  else{p=Number(r.probabilite)||0.5;detail=base&&base.n===0?"Aucun match utile dans la base : estimation de Claude.":"Pas de calcul possible avec la base pour ce pari : estimation de Claude."}
+  p=Math.min(0.97,Math.max(0.03,p));
+  const mk=pm&&["victoire","handicap","total_match"].includes(c.type)&&(c.periode||"match")==="match"?marketProba(pm,c.type,c.equipe,c.ligne,c.sens):null;
   const mise=BK.mises.reduce((a,v)=>Math.abs(v-r.mise_pct)<Math.abs(a-r.mise_pct)?v:a,1);
   return{cree:new Date().toISOString(),nuit:r.nuit,match:`${r.nuit}_${ext}-${dom}`,ext,dom,debut:pm?pm.debut:null,intitule:String(r.intitule||q).slice(0,200),demande:q.slice(0,300),
-    condition:c,probabilite:Math.round(p*1000)/1000,cote_juste:Math.round(100/p)/100,fiabilite:fiab,mise_pct:mise,raison:String(r.raison||"").slice(0,400),methode,decision:null,resultat:null};
+    condition:c,probabilite:round3(p),proba_base:pBase==null?null:round3(pBase),ajustement:round3(aj),n_matchs:n,detail,marche:mk?round3(mk.p):null,
+    cote_juste:Math.round(100/p)/100,fiabilite:pBase==null?"faible":fiabDe(n),mise_pct:mise,raison:String(r.raison||"").slice(0,400),decision:null,resultat:null};
 }
 async function evaluerProno(q){
   q=String(q||"").trim();if(!q||VAL.busy||!S.sample||!S.db)return;
@@ -1011,7 +1078,7 @@ async function evaluerProno(q){
   VAL.busy=true;VAL.msg="";VAL.status="Claude analyse le pronostic…";const ctl=VAL.ctl=new AbortController();renderValue();
   try{
     const r=await S.sample.json(evalPrompt(q),{signal:ctl.signal,tools:toolsFor(EVAL_TOOLS),modelTier:"default"});
-    const card=checkCard(r,q);
+    const card=await checkCard(r,q);
     if(card.erreur)VAL.msg=card.erreur;
     else{await S.db.collection("pronostics").doc("p"+newId()).set(clean(card));$("#pronoInput").value=""}
   }catch(e){const c=e&&e.code;VAL.msg=c==="cancelled"?"":c==="invalid_json"?"Claude n'a pas rendu de pronostic lisible. Réessaie.":errCopy(c);if(BLOCKING.includes(c))S.sampleBlocked=errCopy(c)}
@@ -1049,14 +1116,17 @@ async function saveBet(){
 }
 async function deleteBet(id){S.pendingBetDel=null;try{await S.db.collection("paris").doc(id).delete();toast("Pari supprimé")}catch(e){toast("Suppression impossible pour le moment")}}
 function pickCard(p){
-  const when=p.debut?frWhen(p):dshort(p.nuit);
-  const fiab={["marché"]:'<span class="chip ok">Probabilité du marché</span>',bonne:'<span class="chip ok">Fiabilité bonne</span>',moyenne:'<span class="chip warn">Fiabilité moyenne</span>',faible:'<span class="chip under">Fiabilité faible</span>'}[p.fiabilite]||"";
+  const when=p.debut?frWhen(p):dshort(p.nuit),nm=p.n_matchs?` · ${p.n_matchs} match${p.n_matchs>1?"s":""}`:"";
+  const fiab={["marché"]:'<span class="chip ok">Probabilité du marché</span>',bonne:`<span class="chip ok">Fiabilité bonne${nm}</span>`,moyenne:`<span class="chip warn">Fiabilité moyenne${nm}</span>`,faible:`<span class="chip under">Fiabilité faible${nm}</span>`}[p.fiabilite]||"";
+  const aj=p.ajustement?` ${p.ajustement>0?"+":"−"} ${pct(Math.abs(p.ajustement)*100)} Claude`:"";
+  const sous=p.proba_base!=null?`base ${pct(p.proba_base*100)}${aj}`:p.fiabilite==="marché"?"probabilité du marché":"estimation de Claude";
   return`<article class="pick"><div class="row"><span class="note">${esc(p.ext)} @ ${esc(p.dom)} · ${esc(when)}</span><span class="spacer"></span>${fiab}</div>
     <h3>${esc(p.intitule)}</h3>
-    <div class="odds"><div class="tile"><span class="k">Probabilité</span><span class="v">${pct(p.probabilite*100)}</span><span class="s">que le pronostic passe</span></div>
+    <div class="odds"><div class="tile"><span class="k">Probabilité</span><span class="v">${pct(p.probabilite*100)}</span><span class="s">${esc(sous)}</span></div>
       <div class="tile"><span class="k">Cote juste</span><span class="v">${odds(p.cote_juste)}</span><span class="s">value si Winamax paie plus</span></div>
       <div class="tile"><span class="k">Mise de Claude</span><span class="v">${pct(p.mise_pct)}</span><span class="s">${eur(miseEur(p.mise_pct))}</span></div></div>
-    ${p.raison||p.methode?`<p class="note" style="margin:0">${esc(p.raison||"")}${p.methode?` <i>(${esc(p.methode)})</i>`:""}</p>`:""}
+    <p class="note" style="margin:0">${esc(p.detail||"")} ${esc(p.raison||"")}${p.methode?` <i>(${esc(p.methode)})</i>`:""}</p>
+    ${p.marche!=null?`<p class="note" style="margin:0">Pour comparer, le marché (DraftKings, sans marge) donne ${pct(p.marche*100)}.</p>`:""}
     <div class="acts"><button class="btn go" data-act="joue" data-id="${esc(p.id)}">Je joue</button><button class="btn stop" data-act="passe" data-id="${esc(p.id)}">Je ne joue pas</button></div></article>`;
 }
 function renderValue(){
@@ -1105,7 +1175,7 @@ function claudeRules(){
     `Nous sommes le ${now} (heure de Paris). L'utilisateur raisonne en heure de Paris : « cette nuit » ou « ce soir » désigne les matchs joués la nuit en France.`,
     ms.length?`La base contient ${ms.length} match${ms.length>1?"s":""}, des nuits NBA du ${dshort(nuits[0])} au ${dshort(nuits[nuits.length-1])}${S.demo?" (ATTENTION : la page est en mode exemple, ces données sont fictives)":""}. La nuit NBA est la date du match à New York ; c'est elle qui compte pour le repos et les back-to-back.`:"La base ne contient encore aucun match.",
     "Pour toute question sur des joueurs, des équipes ou des matchs, consulte la base avec tes outils et cite ses chiffres ; n'invente jamais un chiffre de la base. Pour l'équipe d'un joueur cette saison, la base fait foi sur tes connaissances.",
-    "programme_soir donne les matchs de la prochaine nuit avec les cotes DraftKings (bookmaker américain) et les blessés du jour ; proba_marche donne la probabilité du marché pour une victoire, un handicap ou un total. Pour juger si une cote Winamax est « value », compare-la à la cote juste (1 / probabilité).",
+    "programme_soir donne les matchs des prochaines nuits avec les cotes DraftKings (bookmaker américain) et les blessés du jour. Pour une probabilité, sers-toi d'abord de proba_base, calculée sur les matchs de la base : c'est ce que veut l'utilisateur. proba_marche (cotes DraftKings) ne sert que de comparaison. Une cote Winamax est « value » si elle dépasse la cote juste (1 / probabilité).",
     "Les matchs remplis automatiquement (Basketball-Reference, vérifié avec ESPN) ont en plus : tirs, lancers, rebonds offensifs et défensifs, fautes, +/-, titulaire, et la ligne DraftKings d'avant-match (ecartDom = handicap de l'équipe à domicile, total, cotes décimales). details_match et quarts_joueur lisent le reste : stats par quart-temps, stats avancées, déroulé (premier panier, course aux points, séries), absents, arbitres. Va chercher ces détails quand la question porte sur un quart-temps, une mi-temps, un premier panier, une série ou un absent.",
     "Tu n'as pas accès à internet ni à l'actualité : tu ignores les blessures, les absences, les transferts récents et le programme de ce soir, sauf ce que l'utilisateur te donne. Quand la question en dépend, dis-le en une phrase, donne ce que tu sais en précisant que c'est peut-être dépassé, et propose de coller le rapport officiel de blessures de la NBA dans la question.",
     "Pour une prévision (points d'un joueur, total d'un match…), appuie-toi sur la base : moyenne, médiane, derniers matchs, domicile ou extérieur, adversaire, repos, minutes. Donne une fourchette et une valeur centrale ; si l'utilisateur donne une ligne, indique combien de matchs de la base sont au-dessus et en dessous. Signale un échantillon petit. Jamais de certitude.",
