@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Carnet NBA 2026-27</title>
+<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&display=swap">
@@ -235,7 +236,7 @@ h2.sec{font-family:var(--f-display);font-weight:700;font-size:1.35rem;letter-spa
 
     <div class="stack">
       <div class="row"><h2 class="sec">Matchs saisis</h2><span class="spacer"></span>
-        <span class="row" id="localTools" hidden><button class="btn small" id="exportBtn">Exporter (.json)</button><button class="btn small" id="importBtn">Importer</button><input type="file" id="importFile" accept=".json,application/json" hidden></span></div>
+        <span class="row" id="dataTools" hidden><button class="btn small" id="exportBtn" hidden>Exporter (.json)</button><button class="btn small" id="importBtn" hidden>Importer (.json)</button><input type="file" id="importFile" accept=".json,application/json" hidden></span></div>
       <p class="note" id="localNote" hidden>Les matchs sont enregistrés dans ce navigateur. Pour les retrouver sur un autre appareil, exporte-les ici puis importe le fichier là-bas.</p>
       <div id="s-list"></div>
     </div>
@@ -247,300 +248,6 @@ h2.sec{font-family:var(--f-display);font-weight:700;font-size:1.35rem;letter-spa
 <datalist id="dl-dom"></datalist>
 <div class="toast" id="toast" hidden></div>
 
-<script>
-// Matchs déjà saisis dans la page publiée sur claude.ai, chargés à la première ouverture
-// de la page hors de Claude (tant que ce navigateur n'a encore rien enregistré).
-window.MATCHS_INITIAUX = [
- {
-  "id": "2026-10-20_BOS-DET",
-  "date": "2026-10-20",
-  "dom": "DET",
-  "ext": "BOS",
-  "joueurs": [
-   {
-    "ast": 11,
-    "blk": 0,
-    "equipe": "BOS",
-    "min": 37.8,
-    "nom": "Jyason Tatum",
-    "pts": 13,
-    "reb": 4,
-    "stl": 0,
-    "tov": 2,
-    "tp": 0
-   },
-   {
-    "ast": 3,
-    "blk": 0,
-    "equipe": "BOS",
-    "min": 30.6,
-    "nom": "Paul George",
-    "pts": 38,
-    "reb": 5,
-    "stl": 5,
-    "tov": 3,
-    "tp": 7
-   },
-   {
-    "ast": 1,
-    "blk": 2,
-    "equipe": "BOS",
-    "min": 18.1,
-    "nom": "Mitchell Robinson",
-    "pts": 4,
-    "reb": 3,
-    "stl": 1,
-    "tov": 2,
-    "tp": 0
-   },
-   {
-    "ast": 8,
-    "blk": 0,
-    "equipe": "BOS",
-    "min": 35.9,
-    "nom": "Derrick White",
-    "pts": 17,
-    "reb": 1,
-    "stl": 1,
-    "tov": 4,
-    "tp": 3
-   },
-   {
-    "ast": 1,
-    "blk": 1,
-    "equipe": "BOS",
-    "min": 13.5,
-    "nom": "Jordan Walsh",
-    "pts": 0,
-    "reb": 6,
-    "stl": 1,
-    "tov": 0,
-    "tp": 0
-   },
-   {
-    "ast": 2,
-    "blk": 2,
-    "equipe": "BOS",
-    "min": 22.1,
-    "nom": "Neemias Queta",
-    "pts": 3,
-    "reb": 4,
-    "stl": 1,
-    "tov": 1,
-    "tp": 0
-   },
-   {
-    "ast": 1,
-    "blk": 0,
-    "equipe": "BOS",
-    "min": 18.2,
-    "nom": "Sam Hauser",
-    "pts": 11,
-    "reb": 4,
-    "stl": 0,
-    "tov": 0,
-    "tp": 3
-   },
-   {
-    "ast": 1,
-    "blk": 0,
-    "equipe": "BOS",
-    "min": 27.5,
-    "nom": "Payton Pritchard",
-    "pts": 17,
-    "reb": 4,
-    "stl": 0,
-    "tov": 0,
-    "tp": 2
-   },
-   {
-    "ast": 0,
-    "blk": 0,
-    "equipe": "BOS",
-    "min": 18.2,
-    "nom": "Baylor Scheierman",
-    "pts": 8,
-    "reb": 3,
-    "stl": 1,
-    "tov": 1,
-    "tp": 2
-   },
-   {
-    "ast": 0,
-    "blk": 0,
-    "equipe": "BOS",
-    "min": 9.7,
-    "nom": "Hugo Gonzalez",
-    "pts": 0,
-    "reb": 3,
-    "stl": 0,
-    "tov": 0,
-    "tp": 0
-   },
-   {
-    "ast": 0,
-    "blk": 0,
-    "equipe": "BOS",
-    "min": 8.4,
-    "nom": "Luka Garza",
-    "pts": 2,
-    "reb": 2,
-    "stl": 0,
-    "tov": 1,
-    "tp": 0
-   },
-   {
-    "ast": 5,
-    "blk": 0,
-    "equipe": "DET",
-    "min": 35.3,
-    "nom": "Ausar Thompson",
-    "pts": 11,
-    "reb": 11,
-    "stl": 1,
-    "tov": 3,
-    "tp": 0
-   },
-   {
-    "ast": 1,
-    "blk": 1,
-    "equipe": "DET",
-    "min": 25.5,
-    "nom": "John Collins",
-    "pts": 6,
-    "reb": 5,
-    "stl": 1,
-    "tov": 0,
-    "tp": 0
-   },
-   {
-    "ast": 1,
-    "blk": 1,
-    "equipe": "DET",
-    "min": 28,
-    "nom": "Jalen Duren",
-    "pts": 22,
-    "reb": 9,
-    "stl": 1,
-    "tov": 1,
-    "tp": 0
-   },
-   {
-    "ast": 2,
-    "blk": 0,
-    "equipe": "DET",
-    "min": 27.8,
-    "nom": "Duncan Robinson",
-    "pts": 21,
-    "reb": 2,
-    "stl": 1,
-    "tov": 3,
-    "tp": 5
-   },
-   {
-    "ast": 8,
-    "blk": 1,
-    "equipe": "DET",
-    "min": 35.3,
-    "nom": "Cade Cunningham",
-    "pts": 22,
-    "reb": 4,
-    "stl": 1,
-    "tov": 5,
-    "tp": 1
-   },
-   {
-    "ast": 2,
-    "blk": 1,
-    "equipe": "DET",
-    "min": 19.3,
-    "nom": "Isaiah Joe",
-    "pts": 8,
-    "reb": 2,
-    "stl": 1,
-    "tov": 1,
-    "tp": 2
-   },
-   {
-    "ast": 2,
-    "blk": 0,
-    "equipe": "DET",
-    "min": 16.7,
-    "nom": "Paul Reed",
-    "pts": 6,
-    "reb": 6,
-    "stl": 1,
-    "tov": 2,
-    "tp": 0
-   },
-   {
-    "ast": 1,
-    "blk": 1,
-    "equipe": "DET",
-    "min": 2.8,
-    "nom": "Ron Holland",
-    "pts": 0,
-    "reb": 1,
-    "stl": 0,
-    "tov": 1,
-    "tp": 0
-   },
-   {
-    "ast": 3,
-    "blk": 0,
-    "equipe": "DET",
-    "min": 15.3,
-    "nom": "Daniss Jenkins",
-    "pts": 3,
-    "reb": 2,
-    "stl": 0,
-    "tov": 1,
-    "tp": 1
-   },
-   {
-    "ast": 2,
-    "blk": 0,
-    "equipe": "DET",
-    "min": 18.3,
-    "nom": "Kevin Huerter",
-    "pts": 3,
-    "reb": 3,
-    "stl": 0,
-    "tov": 0,
-    "tp": 1
-   },
-   {
-    "ast": 0,
-    "blk": 0,
-    "equipe": "DET",
-    "min": 17.8,
-    "nom": "Javonte Green",
-    "pts": 19,
-    "reb": 4,
-    "stl": 0,
-    "tov": 0,
-    "tp": 5
-   }
-  ],
-  "maj": "2026-10-22T10:01:25.014Z",
-  "otDom": 0,
-  "otExt": 0,
-  "qtDom": [
-   27,
-   18,
-   37,
-   39
-  ],
-  "qtExt": [
-   28,
-   30,
-   30,
-   25
-  ],
-  "saison": "2026-27"
- }
-];
-</script>
 <script>
 (function(){
 "use strict";
@@ -885,7 +592,8 @@ function setTab(t,user){
   S.tab=t;if(user)S.userTab=true;
   $$("nav.tabs button").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.tab===t)));
   ["joueurs","equipes","classement","saisie"].forEach(k=>$("#v-"+k).hidden=k!==t);
-  try{if(location.hash!=="#"+t)history.replaceState(null,"","#"+t)}catch(e){}
+  // Dans claude.ai, réécrire l'adresse peut rendre la page introuvable : seulement hors de Claude.
+  if(!window.claude)try{if(location.hash!=="#"+t)history.replaceState(null,"","#"+t)}catch(e){}
   renderCurrent();
 }
 function renderCurrent(){
@@ -987,9 +695,10 @@ async function removeMatch(id){
   onData();
 }
 function validMatch(m){return m&&typeof m==="object"&&/^\d{4}-\d{2}-\d{2}$/.test(m.date||"")&&TEAM_NAME[m.dom]&&TEAM_NAME[m.ext]&&Array.isArray(m.qtDom)&&Array.isArray(m.qtExt)}
-function exportMatches(){
-  const blob=new Blob([JSON.stringify(S.matches,null,1)],{type:"application/json"});
-  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`carnet-nba-2026-27_${todayUS()}.json`;
+async function exportMatches(){
+  const data=JSON.stringify(S.matches,null,1),filename=`carnet-nba-2026-27_${todayUS()}.json`;
+  if(S.downloads){try{await S.downloads.save({filename,data})}catch(e){if(!e||e.code!=="declined")toast("Export impossible sur cet affichage")}return}
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([data],{type:"application/json"}));a.download=filename;
   document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
 async function importMatches(file){
@@ -997,16 +706,23 @@ async function importMatches(file){
   if(!Array.isArray(list)){toast("Fichier illisible : choisis un export du carnet (.json)");return}
   const ok=list.filter(validMatch).map(m=>Object.assign({},m,{id:m.id||`${m.date}_${m.ext}-${m.dom}`}));
   if(!ok.length){toast("Aucun match reconnu dans ce fichier");return}
+  const done=n=>toast(`${n} match${n>1?"s":""} importé${n>1?"s":""}`);
+  if(S.db){
+    const btn=$("#importBtn");btn.disabled=true;let n=0;
+    try{for(const m of ok){const{id,...data}=m;await S.db.collection("matchs").doc(id).set(data);n++}done(n)}
+    catch(e){toast(n?`Import interrompu après ${n} match${n>1?"s":""}. Réessaie pour le reste.`:"Import impossible : seul le propriétaire peut ajouter des matchs.")}
+    finally{btn.disabled=false}
+    return;
+  }
   const ids=new Set(ok.map(m=>m.id));const prev=S.matches;
   S.matches=[...prev.filter(x=>!ids.has(x.id)),...ok];
   if(!saveLocal()){S.matches=prev;toast("Ce navigateur refuse l'enregistrement");return}
-  onData();toast(`${ok.length} match${ok.length>1?"s":""} importé${ok.length>1?"s":""}`);
+  onData();done(ok.length);
 }
 function connectLocal(){
   let saved=null;try{saved=JSON.parse(localStorage.getItem(LOCAL_KEY)||"null")}catch(e){saved=null}
-  S.local=true;S.matches=Array.isArray(saved)?saved:(window.MATCHS_INITIAUX||[]).slice();
-  if(!Array.isArray(saved))saveLocal();
-  S.loaded=true;$("#localTools").hidden=false;$("#localNote").hidden=false;
+  S.local=true;S.matches=Array.isArray(saved)?saved:[];
+  S.loaded=true;$("#dataTools").hidden=false;$("#exportBtn").hidden=false;$("#importBtn").hidden=false;$("#localNote").hidden=false;
   setSync("ok","Enregistré dans ce navigateur");onData();
 }
 
@@ -1017,6 +733,8 @@ async function connect(){
   if(!db){S.loaded=true;setSync("bad","Base non connectée (lecture seule)");$("#count").textContent="0 match saisi";renderCurrent();return}
   S.db=db;
   try{const user=await window.claude.use("user");if(user&&user.can){const c=await user.can("data.write");if(c===false){S.canWrite=false;$("#saveBtn").disabled=true;$("#formMsg").textContent="Lecture seule : seul le propriétaire peut saisir des matchs."}}}catch(e){}
+  try{S.downloads=await window.claude.use("downloads")}catch(e){S.downloads=null}
+  $("#exportBtn").hidden=!S.downloads;$("#importBtn").hidden=!S.canWrite;$("#dataTools").hidden=!S.downloads&&!S.canWrite;
   db.collection("matchs").onSnapshot(snap=>{
     S.matches=snap.docs.map(d=>Object.assign({id:d.id},d.data()));S.loaded=true;
     setSync(snap.metadata.fromCache?"":"ok",snap.metadata.fromCache?"Synchronisation…":"Base synchronisée");onData();

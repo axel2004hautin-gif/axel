@@ -133,6 +133,8 @@ Dans la base de la page : `achats` (pièces ajoutées), `etat/semaine` (semaine 
 
 ## Carnet NBA 2026-27
 
-Le carnet de stats NBA (joueurs, équipes et totaux, classement, saisie des matchs) est dans `nba/` : ouvre `nba/index.html` dans un navigateur (un seul fichier, rien d'autre à télécharger), ou en ligne : <https://raw.githack.com/axel2004hautin-gif/axel/claude/charming-thompson-f4toa2/nba/index.html>.
+Le carnet de stats NBA (joueurs, équipes et totaux, classement, saisie des matchs) est publié sur claude.ai : <https://claude.ai/artifact/6iJEbW2tLmKX8R2jFa2uPx>. Les matchs sont enregistrés dans la base de la page (collection `matchs`) : ils sont les mêmes sur tous tes appareils, et seul le propriétaire peut en ajouter, modifier ou supprimer.
 
-Hors de Claude, les matchs sont enregistrés dans le navigateur. « Exporter (.json) » et « Importer », sous « Matchs saisis », les font passer d'un appareil à l'autre. À la première ouverture, la page reprend les matchs saisis sur la page claude.ai, copiés au début du script de `nba/index.html`. Publiée sur claude.ai avec la capacité `db`, la même page utilise la base de la page (collection `matchs`).
+Sous « Matchs saisis », « Importer (.json) » ajoute des matchs exportés depuis la version fichier, et « Exporter (.json) » en garde une sauvegarde. Un match du même jour avec les deux mêmes équipes est remplacé.
+
+La source est `nba/index.html`. Ouverte en fichier local, la page garde les matchs dans le navigateur. La version publiée en est tirée par `outils/version-artefact-nba.sh > carnet-nba.html`, avec les capacités `db` (écriture réservée au propriétaire), `user` et `downloads`.
