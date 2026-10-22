@@ -146,24 +146,23 @@ def main():
         coupe = champs.get("coupe", "").strip()
         matiere = re.sub(r"(\d)\s*%", r"\1 %", champs.get("matiere", "")).strip()
         matiere = matiere[:1].upper() + matiere[1:].lower()   # « 100 % Coton » → « 100 % coton »
-        # En promo sur le site : le prix normal, et la promo dans la note.
+        # Les promos du site ne valent pas en magasin : toujours le prix normal.
         prix, barre = d.get("price"), d.get("compare_at_price")
         promo = isinstance(barre, int) and isinstance(prix, int) and barre > prix
-        euros = lambda c: f"{c / 100:.2f}".replace(".", ",") + " €"
-        ref = next((t for t in d.get("tags", []) if re.fullmatch(r"\d{6,}[A-Z]?", t)), "")
+        ref = next((t for t in d.get("tags", []) if re.fullmatch(r"\d{6,}[A-Z0-9]*", t)), "")   # 11018388D, 10117266DL32
         piece = {
             "marque": (d.get("vendor") or "")[:60] or None,
             "categorie": categorie_de(d.get("type", ""), d.get("title", ""), d.get("handle", "").replace("-", " ")) or None,
             "modele": (d.get("title") or "")[:120] or None,
             "coupe": coupe[:120] or None,
-            "couleur": couleur_de(champs.get("couleur", ""))[:60] or None,
+            "couleur": couleur_de(champs.get("couleur") or champs.get("coloris", ""))[:60] or None,
             "matiere": matiere[:120] or None,
             "rayon": "homme",
             "prix": round((barre if promo else prix) / 100, 2) if isinstance(prix, int) else None,
             "ref": ref or None,
             "lien": adresse,
             "reperes": {"nouveaute": False, "promo": False, "vitrine": False, "reseaux": False},
-            "note": f"En promo sur le site : {euros(prix)} au lieu de {euros(barre)}." if promo else None,
+            "note": None,
             "creeLe": datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
         }
         images = []
