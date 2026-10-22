@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Le site d'Axel</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+/* Layout : un site d'une page. Barre collante (nom, trois rubriques) ; l'accueil présente les rubriques
+   en trois grands blocs numérotés dans l'ordre choisi ; chaque rubrique a sa couleur, reprise partout. */
+:root {
+  --bg: #f2f4f7;
+  --surface: #ffffff;
+  --ink: #121826;
+  --muted: #586074;
+  --line: #d6dbe4;
+  --on-color: #ffffff;
+  --travail: #2b4c9b;
+  --travail-soft: #e3e9f7;
+  --argent: #1d6b52;
+  --argent-soft: #dcefe6;
+  --sport: #b5421a;
+  --sport-soft: #f8e3d8;
+  --c: var(--ink);
+  --c-soft: var(--surface);
+  --f-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --f-body: "Source Sans 3", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --radius: 12px;
+  --max: 1120px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f131b; --surface: #171c27; --ink: #e8ebf2; --muted: #9aa3b6; --line: #2a3243; --on-color: #0f131b;
+    --travail: #93abef; --travail-soft: #1d2744; --argent: #6fcfa6; --argent-soft: #132b22; --sport: #f0905f; --sport-soft: #351f15;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f131b; --surface: #171c27; --ink: #e8ebf2; --muted: #9aa3b6; --line: #2a3243; --on-color: #0f131b;
+  --travail: #93abef; --travail-soft: #1d2744; --argent: #6fcfa6; --argent-soft: #132b22; --sport: #f0905f; --sport-soft: #351f15;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 1.0625rem/1.55 var(--f-body); -webkit-font-smoothing: antialiased; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+p { margin: 0; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; border-radius: 4px; }
+h1:focus { outline: none; }
+
+.r-travail { --c: var(--travail); --c-soft: var(--travail-soft); }
+.r-argent { --c: var(--argent); --c-soft: var(--argent-soft); }
+.r-sport { --c: var(--sport); --c-soft: var(--sport-soft); }
+
+.cadre { width: 100%; max-width: var(--max); margin-inline: auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+@media (min-width: 720px) { .cadre { padding-left: max(32px, env(safe-area-inset-left, 0px)); padding-right: max(32px, env(safe-area-inset-right, 0px)); } }
+
+.eyebrow { font: 500 .75rem/1.3 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+
+/* Barre du haut : le nom ramène à l'accueil, puis les trois rubriques */
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--bg); }
+.entete { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); }
+.entete .cadre { display: flex; align-items: stretch; justify-content: space-between; gap: 16px; min-height: 60px; }
+.nom { align-self: center; font-family: var(--f-display); font-weight: 800; font-stretch: 120%; font-size: 1.35rem; line-height: 1; letter-spacing: -.01em; text-decoration: none; }
+.nav { display: flex; gap: 2px; }
+.nav a { position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; color: var(--muted); text-decoration: none; font: 600 1rem/1 var(--f-body); }
+.nav a:hover, .nav a[aria-current="page"] { color: var(--ink); }
+.nav a[aria-current="page"]::after { content: ""; position: absolute; left: 8px; right: 8px; bottom: -1px; height: 3px; border-radius: 3px 3px 0 0; background: var(--c); }
+.pastille { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+@media (max-width: 440px) { .nav a { padding: 0 8px; } .pastille { display: none; } }
+
+/* Accueil */
+.une { display: grid; gap: 14px; padding-block: 48px 36px; }
+.geant { font-family: var(--f-display); font-weight: 850; font-stretch: 125%; font-size: clamp(3.75rem, 15vw, 8rem); line-height: .88; letter-spacing: -.035em; }
+.chapo { max-width: 34em; font-size: 1.2rem; line-height: 1.45; color: var(--muted); }
+.chapo b { color: var(--c); font-weight: 700; }
+
+.rubriques { list-style: none; margin: 0; padding: 0 0 56px; display: grid; gap: 16px; }
+@media (min-width: 820px) { .rubriques { grid-template-columns: repeat(3, 1fr); } }
+.carte-rubrique { display: flex; flex-direction: column; gap: 10px; height: 100%; padding: 22px 22px 18px; border: 1.5px solid transparent; border-radius: var(--radius); background: var(--c-soft); text-decoration: none; transition: border-color .15s ease; }
+.carte-rubrique:hover { border-color: var(--c); }
+.numero { font-family: var(--f-display); font-weight: 800; font-stretch: 62%; font-size: 3.5rem; line-height: .85; color: var(--c); font-variant-numeric: tabular-nums; }
+.carte-titre { font-family: var(--f-display); font-weight: 800; font-stretch: 112%; font-size: 2rem; line-height: 1; letter-spacing: -.01em; }
+.carte-texte { color: var(--muted); }
+.carte-pied { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: auto; padding-top: 14px; border-top: 1px solid var(--line); border-top-color: color-mix(in srgb, var(--c) 28%, transparent); font: 500 .8rem/1.3 var(--f-mono); color: var(--muted); }
+.fleche { color: var(--c); font-weight: 600; white-space: nowrap; }
+@media (min-width: 820px) { .carte-rubrique { min-height: 260px; padding: 26px 26px 20px; } .numero { font-size: 4.5rem; } }
+@media (prefers-reduced-motion: no-preference) {
+  .fleche { display: inline-block; transition: transform .15s ease; }
+  .carte-rubrique:hover .fleche { transform: translateX(3px); }
+}
+
+/* Une rubrique : bandeau à sa couleur, puis ce qu'elle contiendra */
+.bandeau { background: var(--c-soft); border-bottom: 1px solid var(--line); }
+.bandeau .cadre { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 0 24px; padding-block: 40px 32px; }
+.bandeau-texte { display: grid; gap: 10px; min-width: 0; }
+.bandeau h1 { font-family: var(--f-display); font-weight: 850; font-stretch: 125%; font-size: clamp(2.75rem, 11vw, 5.5rem); line-height: .9; letter-spacing: -.03em; color: var(--c); }
+.bandeau .chapo { color: var(--ink); }
+.numero-fond { font-family: var(--f-display); font-weight: 800; font-stretch: 62%; font-size: clamp(5rem, 20vw, 10rem); line-height: .78; color: var(--c); opacity: .22; font-variant-numeric: tabular-nums; }
+
+.contenu { display: grid; gap: 24px; padding-block: 40px 56px; }
+.section-tete { display: grid; gap: 4px; }
+.section-tete h2 { font-family: var(--f-display); font-weight: 750; font-stretch: 105%; font-size: 1.5rem; line-height: 1.15; }
+.section-tete p { color: var(--muted); }
+
+.emplacements { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
+@media (min-width: 560px) { .emplacements { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1000px) { .emplacements { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.emplacement { display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 20px; border: 1.5px dashed var(--line); border-radius: 8px; }
+.emplacement h3 { font-family: var(--f-display); font-weight: 700; font-size: 1.2rem; line-height: 1.2; }
+.emplacement p { color: var(--muted); font-size: 1rem; }
+.statut { align-self: flex-start; padding: 4px 8px; border: 1px dashed var(--c); border-radius: 999px; font: 600 .7rem/1.2 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--c); }
+.emplacement.pret { border-style: solid; border-color: var(--c); background: var(--surface); }
+.pret .statut { border-style: solid; background: var(--c); color: var(--on-color); }
+.a-relier { margin-top: auto; padding-top: 6px; font: 500 .8rem/1.3 var(--f-mono); color: var(--muted); }
+
+.suite { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
+.suite a { display: grid; gap: 2px; align-content: start; padding-block: 8px; text-decoration: none; }
+.suite a + a { text-align: right; }
+.suite strong { font-family: var(--f-display); font-weight: 750; font-stretch: 110%; font-size: 1.25rem; line-height: 1.2; color: var(--c); }
+.suite a:hover strong { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 2px; }
+
+.pied { border-top: 1px solid var(--line); }
+.pied .cadre { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 24px; padding-block: 20px 28px; color: var(--muted); font-size: .95rem; }
+.pied .mono { font: 500 .8rem/1.5 var(--f-mono); }
+.insecable { white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<header class="entete">
+  <div class="cadre">
+    <a class="nom" href="#accueil" data-aller="accueil">Axel</a>
+    <nav class="nav" aria-label="Rubriques">
+      <a class="r-travail" href="#travail" data-aller="travail"><span class="pastille" aria-hidden="true"></span>Travail</a>
+      <a class="r-argent" href="#argent" data-aller="argent"><span class="pastille" aria-hidden="true"></span>Argent</a>
+      <a class="r-sport" href="#sport" data-aller="sport"><span class="pastille" aria-hidden="true"></span>Sport</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section data-vue="accueil" aria-labelledby="titre-accueil">
+    <div class="cadre">
+      <div class="une">
+        <p class="eyebrow" id="aujourdhui">Aujourd'hui</p>
+        <h1 class="geant" id="titre-accueil" tabindex="-1">Axel</h1>
+        <p class="chapo">Mon site perso. Pour l'instant, trois rubriques : le <b class="r-travail">travail</b>, l'<b class="r-argent">argent</b> et le <b class="r-sport">sport</b>.</p>
+      </div>
+      <ol class="rubriques">
+        <li class="r-travail">
+          <a class="carte-rubrique" href="#travail">
+            <span class="numero" aria-hidden="true">1</span>
+            <span class="carte-titre">Travail</span>
+            <span class="carte-texte">Mon boulot chez Blue Box, et la <span class="insecable">garde-robe</span> qui va avec.</span>
+            <span class="carte-pied"><span>1 outil prêt · 3 idées</span><span class="fleche">Ouvrir →</span></span>
+          </a>
+        </li>
+        <li class="r-argent">
+          <a class="carte-rubrique" href="#argent">
+            <span class="numero" aria-hidden="true">2</span>
+            <span class="carte-titre">Argent</span>
+            <span class="carte-texte">Ce qui rentre, ce qui sort et ce que je mets de côté.</span>
+            <span class="carte-pied"><span>4 idées</span><span class="fleche">Ouvrir →</span></span>
+          </a>
+        </li>
+        <li class="r-sport">
+          <a class="carte-rubrique" href="#sport">
+            <span class="numero" aria-hidden="true">3</span>
+            <span class="carte-titre">Sport</span>
+            <span class="carte-texte">Mes séances, mon programme et mes progrès.</span>
+            <span class="carte-pied"><span>4 idées</span><span class="fleche">Ouvrir →</span></span>
+          </a>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="r-travail" data-vue="travail" aria-labelledby="titre-travail" hidden>
+    <div class="bandeau">
+      <div class="cadre">
+        <div class="bandeau-texte">
+          <p class="eyebrow">Rubrique 1 sur 3</p>
+          <h1 id="titre-travail" tabindex="-1">Travail</h1>
+          <p class="chapo">Tout ce qui touche à mon boulot chez Blue Box.</p>
+        </div>
+        <span class="numero-fond" aria-hidden="true">1</span>
+      </div>
+    </div>
+    <div class="cadre contenu">
+      <div class="section-tete">
+        <h2>À construire</h2>
+        <p>Des pistes pour démarrer. Rien n'est décidé : on garde, on change ou on enlève.</p>
+      </div>
+      <ul class="emplacements">
+        <li class="emplacement pret">
+          <span class="statut">Déjà prête</span>
+          <h3>Ma <span class="insecable">garde-robe</span> Blue Box</h3>
+          <p>Mes 16 pièces du magasin, la tenue du jour et celles de la semaine.</p>
+          <span class="a-relier">Lien à ajouter</span>
+        </li>
+        <li class="emplacement">
+          <span class="statut">Idée</span>
+          <h3>Mon planning</h3>
+          <p>Mes jours et mes horaires de service, semaine par semaine.</p>
+        </li>
+        <li class="emplacement">
+          <span class="statut">Idée</span>
+          <h3>Mes objectifs</h3>
+          <p>Ce que je vise au magasin : ventes, primes, ce que je veux apprendre.</p>
+        </li>
+        <li class="emplacement">
+          <span class="statut">Idée</span>
+          <h3>Mes notes du magasin</h3>
+          <p>Ce qui s'est passé pendant le service et les idées à proposer.</p>
+        </li>
+      </ul>
+      <nav class="suite" aria-label="Autres pages">
+        <a href="#accueil"><span class="eyebrow">Retour</span><strong>← Accueil</strong></a>
+        <a class="r-argent" href="#argent"><span class="eyebrow">Rubrique suivante</span><strong>Argent →</strong></a>
+      </nav>
+    </div>
+  </section>
+
+  <section class="r-argent" data-vue="argent" aria-labelledby="titre-argent" hidden>
+    <div class="bandeau">
+      <div class="cadre">
+        <div class="bandeau-texte">
+          <p class="eyebrow">Rubrique 2 sur 3</p>
+          <h1 id="titre-argent" tabindex="-1">Argent</h1>
+          <p class="chapo">Mon budget, mes dépenses et mon épargne, au même endroit.</p>
+        </div>
+        <span class="numero-fond" aria-hidden="true">2</span>
+      </div>
+    </div>
+    <div class="cadre contenu">
+      <div class="section-tete">
+        <h2>À construire</h2>
+        <p>Des pistes pour démarrer. Rien n'est décidé : on garde, on change ou on enlève.</p>
+      </div>
+      <ul class="emplacements">
+        <li class="emplacement">
+          <span class="statut">Idée</span>
+          <h3>Mon budget du mois</h3>
+          <p>Le salaire qui rentre, les charges qui sortent et ce qu'il reste à dépenser.</p>
+        </li>
+        <li class="emplacement">
+          <span class="statut">Idée</span>
+          <h3>Mes dépenses</h3>
+          <p>Notées au fil de l'eau et rangées par catégorie.</p>
+        </li>
+        <li class="emplacement">
+          <span class="statut">Idée</span>
+          <h3>Mon épargne</h3>
+          <p>Mes objectifs d'épargne et où j'en suis pour chacun.</p>
+        </li>
+        <li class="emplacement">
+          <span class="statut">Idée</span>
+          <h3>Mes achats prévus</h3>
+          <p>Ce que je veux m'offrir, avec son prix et la date visée.</p>
+        </li>
+      </ul>
+      <nav class="suite" aria-label="Autres pages">
+        <a class="r-travail" href="#travail"><span class="eyebrow">Rubrique précédente</span><strong>← Travail</strong></a>
+        <a class="r-sport" href="#sport"><span class="eyebrow">Rubrique suivante</span><strong>Sport →</strong></a>
+      </nav>
+    </div>
+  </section>
+
+  <section class="r-sport" data-vue="sport" aria-labelledby="titre-sport" hidden>
+    <div class="bandeau">
+      <div class="cadre">
+        <div class="bandeau-texte">
+          <p class="eyebrow">Rubrique 3 sur 3</p>
+          <h1 id="titre-sport" tabindex="-1">Sport</h1>
+          <p class="chapo">Mes entraînements, du programme aux résultats.</p>
+        </div>
+        <span class="numero-fond" aria-hidden="true">3</span>
+      </div>
+    </div>
+    <div class="cadre contenu">
+      <div class="section-tete">
+        <h2>À construire</h2>
+        <p>Des pistes pour démarrer. Rien n'est décidé : on garde, on change ou on enlève.</p>
+      </div>
+      <ul class="emplacements">
+        <li class="emplacement">
+          <span class="statut">Idée</span>
+          <h3>Mes séances</h3>
+          <p>Ce que j'ai fait, quand et combien de temps.</p>
+        </li>
+        <li class="emplacement">
+          <span class="statut">Idée</span>
+          <h3>Mon programme</h3>
+          <p>Les séances prévues dans la semaine.</p>
+        </li>
+        <li class="emplacement">
+          <span class="statut">Idée</span>
+          <h3>Mes progrès</h3>
+          <p>Mes charges, mes temps et mes distances, pour voir l'évolution.</p>
+        </li>
+        <li class="emplacement">
+          <span class="statut">Idée</span>
+          <h3>Ma forme</h3>
+          <p>Poids, sommeil et énergie, d'une semaine à l'autre.</p>
+        </li>
+      </ul>
+      <nav class="suite" aria-label="Autres pages">
+        <a class="r-argent" href="#argent"><span class="eyebrow">Rubrique précédente</span><strong>← Argent</strong></a>
+        <a href="#accueil"><span class="eyebrow">Retour</span><strong>Accueil →</strong></a>
+      </nav>
+    </div>
+  </section>
+</main>
+
+<footer class="pied">
+  <div class="cadre">
+    <span>Le site d'Axel</span>
+    <span class="mono">Commencé le 22 octobre 2026</span>
+  </div>
+</footer>
+
+<script>
+(() => {
+  // Une seule page : chaque rubrique est une vue. La page ne modifie jamais son adresse
+  // (dans le cadre de claude.ai, une adresse réécrite rend la page introuvable) ;
+  // un lien direct (#travail, #argent, #sport) ouvre sa rubrique.
+  const VUES = ["accueil", "travail", "argent", "sport"];
+  let vueActive = "accueil";
+
+  function montrer(nom, opts = {}) {
+    if (!VUES.includes(nom)) return false;
+    vueActive = nom;
+    document.querySelectorAll("[data-vue]").forEach(v => { v.hidden = v.dataset.vue !== nom; });
+    document.querySelectorAll("[data-aller]").forEach(a => {
+      if (a.dataset.aller === nom) a.setAttribute("aria-current", "page");
+      else a.removeAttribute("aria-current");
+    });
+    if (!opts.garderDefilement) window.scrollTo(0, 0);
+    if (opts.focus) {
+      const titre = document.querySelector(`[data-vue="${nom}"] h1`);
+      if (titre) titre.focus({ preventScroll: true });
+    }
+    return true;
+  }
+
+  document.addEventListener("click", e => {
+    const a = e.target.closest('a[href^="#"]');
+    if (a && montrer(a.getAttribute("href").slice(1), { focus: true })) e.preventDefault();
+  });
+  const cibleAdresse = () => { try { return decodeURIComponent(location.hash.slice(1)); } catch (_) { return ""; } };
+  window.addEventListener("hashchange", () => { if (cibleAdresse()) montrer(cibleAdresse()); });
+
+  // La date du jour et la semaine (numérotation ISO, celle des plannings).
+  const semaineISO = d => {
+    const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    t.setUTCDate(t.getUTCDate() + 4 - (t.getUTCDay() || 7));
+    return Math.ceil(((t - Date.UTC(t.getUTCFullYear(), 0, 1)) / 86400000 + 1) / 7);
+  };
+  try {
+    const d = new Date();
+    const jour = new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(d);
+    document.getElementById("aujourdhui").textContent = `${jour.charAt(0).toUpperCase()}${jour.slice(1)} · semaine ${semaineISO(d)}`;
+  } catch (_) { /* « Aujourd'hui » reste affiché */ }
+
+  // Quand la page publiée est mise à jour, elle reste sur la rubrique ouverte.
+  window.claude?.hot?.snapshot?.(() => ({ vue: vueActive }));
+  const demarrer = data => montrer((data && data.vue) || cibleAdresse() || "accueil", { garderDefilement: true });
+  window.claude?.hot?.ready ? window.claude.hot.ready(demarrer) : demarrer(window.claude?.hot?.data ?? {});
+})();
+</script>
+</body>
+</html>
