@@ -135,6 +135,20 @@ h2.sec{font-family:var(--f-display);font-weight:700;font-size:1.35rem;letter-spa
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-weight:600;z-index:20;max-width:calc(100% - 32px)}
 .msg-err{color:var(--under);font-weight:600;font-size:.9rem}
 .list-match td .row{justify-content:flex-end;flex-wrap:nowrap}
+/* Demander à Claude */
+.chat{display:flex;flex-direction:column;gap:12px;min-width:0}
+.msg{max-width:min(46rem,100%);padding:10px 14px;border-radius:var(--r);line-height:1.5;overflow-wrap:anywhere;min-width:0}
+.msg.user{align-self:flex-end;background:var(--accent-soft);white-space:pre-wrap}
+.msg.bot{align-self:flex-start;background:var(--surface-2);border:1px solid var(--line)}
+.msg.bot.err{border-color:var(--under)}
+.msg p{margin:0 0 8px}.msg p:last-child{margin-bottom:0}
+.msg ul{margin:0 0 8px;padding-left:1.2em}.msg li{margin:2px 0}
+.msg .who{display:block;font-size:.72rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);margin-bottom:4px}
+.chat-empty{display:flex;flex-direction:column;gap:10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip-q{border:1px solid var(--line);background:var(--surface-2);border-radius:999px;padding:6px 12px;cursor:pointer;font-size:.88rem;text-align:left}
+.chip-q:hover{border-color:var(--accent);color:var(--accent)}
+#askInput{min-height:4.2rem;resize:vertical}
 @media (prefers-reduced-motion:no-preference){nav.tabs button{transition:color .15s,border-color .15s}}
 </style>
 </head>
@@ -150,6 +164,7 @@ h2.sec{font-family:var(--f-display);font-weight:700;font-size:1.35rem;letter-spa
     <button role="tab" data-tab="joueurs" aria-selected="false">Joueurs</button>
     <button role="tab" data-tab="equipes" aria-selected="false">Équipes &amp; totaux</button>
     <button role="tab" data-tab="classement" aria-selected="false">Classement</button>
+    <button role="tab" data-tab="claude" aria-selected="false">Demander à Claude</button>
     <button role="tab" data-tab="saisie" aria-selected="true">Saisie</button>
   </nav>
 
@@ -208,15 +223,29 @@ h2.sec{font-family:var(--f-display);font-weight:700;font-size:1.35rem;letter-spa
     <div id="c-out" class="stack"></div>
   </section>
 
+  <!-- DEMANDER À CLAUDE -->
+  <section id="v-claude" class="stack" hidden>
+    <div class="panel stack">
+      <div class="chat" id="chatLog" aria-live="polite"></div>
+      <form class="stack" id="askForm" hidden>
+        <label class="f"><span>Ta question</span><textarea id="askInput" rows="2" placeholder="Ex. : combien de points Paolo Banchero peut-il marquer contre Atlanta ?"></textarea></label>
+        <div class="row"><button class="btn primary" id="askBtn" type="submit">Demander</button><button class="btn" id="stopBtn" type="button" hidden>Arrêter</button><span class="spacer"></span><button class="btn small" id="newChat" type="button" hidden>Nouvelle conversation</button></div>
+        <p class="note">Claude lit les matchs de ta base et s'appuie sur ce qu'il sait du basket. Il n'a pas accès à l'actualité : pour les absences ou les blessures de ce soir, colle le rapport officiel dans ta question. Chaque question utilise ton compte Claude.</p>
+      </form>
+    </div>
+  </section>
+
   <!-- SAISIE -->
   <section id="v-saisie" class="stack" hidden>
     <div class="panel stack" id="formPanel">
       <div class="row"><h2 class="sec" id="formTitle">Nouveau match</h2><span class="spacer"></span><button class="btn small" id="resetForm">Vider le formulaire</button></div>
       <div class="filters">
-        <label class="f"><span>Date (heure US)</span><input type="date" id="s-date"></label>
+        <label class="f"><span>Date (Paris)</span><input type="date" id="s-date"></label>
+        <label class="f"><span>Heure (Paris)</span><input type="time" id="s-heure"></label>
         <label class="f wide"><span>Extérieur</span><select id="s-ext"></select></label>
         <label class="f wide"><span>Domicile</span><select id="s-dom"></select></label>
       </div>
+      <p class="note" id="s-nuit"></p>
       <div class="tbl-wrap">
         <table class="score-grid">
           <thead><tr><th class="l">Équipe</th><th>QT1</th><th>QT2</th><th>QT3</th><th>QT4</th><th>Prol.</th><th>Total</th></tr></thead>
@@ -274,7 +303,20 @@ const dshort=d=>{const [y,m,dd]=d.split("-");return dd+"/"+m};
 const dayN=d=>{const [y,m,dd]=d.split("-").map(Number);return Date.UTC(y,m-1,dd)/864e5};
 const fillSel=(el,opts,val)=>{el.innerHTML=opts.map(([v,l])=>`<option value="${esc(v)}">${esc(l)}</option>`).join("");if(val!==undefined)el.value=val};
 const teamOpts=(first)=>[...(first?[first]:[]),...TEAMS.map(([a,n])=>[a,a+" — "+n])];
+/* Dates : la saisie se fait en heure de Paris ; « date » garde la nuit NBA (date à New York), qui sert au repos et aux back-to-back. */
+const TZ_FR="Europe/Paris",TZ_US="America/New_York";
+function tzParts(tz,d){const o={};new Intl.DateTimeFormat("en-GB",{timeZone:tz,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(d).forEach(p=>o[p.type]=p.value);return o}
+const ymdIn=(tz,d)=>{const p=tzParts(tz,d);return`${p.year}-${p.month}-${p.day}`};
+const hmIn=(tz,d)=>{const p=tzParts(tz,d);return`${p.hour}:${p.minute}`};
+function parisToDate(ymd,hm){
+  const[y,mo,da]=ymd.split("-").map(Number),[h,mi]=hm.split(":").map(Number);const want=Date.UTC(y,mo-1,da,h,mi);let t=want;
+  for(let i=0;i<3;i++){const p=tzParts(TZ_FR,new Date(t));t+=want-Date.UTC(+p.year,+p.month-1,+p.day,+p.hour,+p.minute)}
+  return new Date(t);
+}
+const frWhen=r=>{if(!r.debut)return dshort(r.date);const d=new Date(r.debut);return dshort(ymdIn(TZ_FR,d))+" · "+hmIn(TZ_FR,d).replace(":","h")};
+const frDay=r=>r.debut?dshort(ymdIn(TZ_FR,new Date(r.debut))):dshort(r.date);
 
+const TABS=["joueurs","equipes","classement","claude","saisie"];
 const S={matches:[],demo:false,db:null,canWrite:true,tab:"saisie",userTab:false,edit:null,loaded:false,confirmReplace:false};
 let DEMO=null;
 const getM=()=>S.demo?(DEMO||(DEMO=makeDemo())):S.matches;
@@ -313,7 +355,7 @@ function passRest(r,f){if(f==="all")return true;if(r===null)return false;return 
 function teamGames(team,mes,per,f){
   let rows=getM().filter(m=>m.dom===team||m.ext===team).map(m=>{
     const home=m.dom===team;const fo=sidePts(m,home?"dom":"ext",per),ag=sidePts(m,home?"ext":"dom",per);
-    return{date:m.date,home,opp:home?m.ext:m.dom,fo,ag,val:mes==="pour"?fo:mes==="contre"?ag:fo+ag,rest:restDays(team,m.date)};
+    return{date:m.date,debut:m.debut,home,opp:home?m.ext:m.dom,fo,ag,val:mes==="pour"?fo:mes==="contre"?ag:fo+ag,rest:restDays(team,m.date)};
   }).sort((a,b)=>b.date.localeCompare(a.date));
   rows=rows.filter(r=>(f.lieu==="all"||(f.lieu==="dom")===r.home)&&(!f.adv||f.adv==="all"||r.opp===f.adv)&&passRest(r.rest,f.repos||"all"));
   if(f.n&&f.n!=="all")rows=rows.slice(0,Number(f.n));
@@ -322,7 +364,7 @@ function teamGames(team,mes,per,f){
 function playerGames(name,stat,f){
   let rows=[];
   for(const m of getM()){for(const p of (m.joueurs||[])){if(p.nom!==name)continue;
-    const home=m.dom===p.equipe;rows.push({date:m.date,team:p.equipe,home,opp:home?m.ext:m.dom,min:Number(p.min)||0,val:statVal(p,stat),rest:restDays(p.equipe,m.date)});}}
+    const home=m.dom===p.equipe;rows.push({date:m.date,debut:m.debut,team:p.equipe,home,opp:home?m.ext:m.dom,min:Number(p.min)||0,val:statVal(p,stat),rest:restDays(p.equipe,m.date)});}}
   rows.sort((a,b)=>b.date.localeCompare(a.date));
   rows=rows.filter(r=>(f.lieu==="all"||(f.lieu==="dom")===r.home)&&(!f.adv||f.adv==="all"||r.opp===f.adv)&&passRest(r.rest,f.repos||"all")&&(!(f.minMin>0)||r.min>=f.minMin));
   if(f.n&&f.n!=="all")rows=rows.slice(0,Number(f.n));
@@ -362,8 +404,8 @@ function chartHTML(rows,line){
   pts.forEach((r,i)=>{
     const x=padL+i*bw+gap/2,w=Math.max(1.5,bw-gap),yy=y(r.val),h=y(0)-yy;
     const cls=Number.isFinite(line)?(r.val>line?"bar-over":r.val<line?"bar-under":"bar-push"):"bar-n";
-    g+=`<rect class="${cls}" x="${x.toFixed(1)}" y="${yy.toFixed(1)}" width="${w.toFixed(1)}" height="${Math.max(0,h).toFixed(1)}" rx="2"><title>${dshort(r.date)} ${r.home?"vs":"@"} ${r.opp} : ${fmt(r.val)}</title></rect>`;
-    if(n<=20){g+=`<text class="val" x="${(x+w/2).toFixed(1)}" y="${(yy-4).toFixed(1)}" text-anchor="middle">${fmt(r.val)}</text><text x="${(x+w/2).toFixed(1)}" y="${H-padB+14}" text-anchor="middle">${r.home?"":"@"}${r.opp}</text><text x="${(x+w/2).toFixed(1)}" y="${H-padB+27}" text-anchor="middle">${dshort(r.date)}</text>`}
+    g+=`<rect class="${cls}" x="${x.toFixed(1)}" y="${yy.toFixed(1)}" width="${w.toFixed(1)}" height="${Math.max(0,h).toFixed(1)}" rx="2"><title>${frWhen(r)} ${r.home?"vs":"@"} ${r.opp} : ${fmt(r.val)}</title></rect>`;
+    if(n<=20){g+=`<text class="val" x="${(x+w/2).toFixed(1)}" y="${(yy-4).toFixed(1)}" text-anchor="middle">${fmt(r.val)}</text><text x="${(x+w/2).toFixed(1)}" y="${H-padB+14}" text-anchor="middle">${r.home?"":"@"}${r.opp}</text><text x="${(x+w/2).toFixed(1)}" y="${H-padB+27}" text-anchor="middle">${frDay(r)}</text>`}
   });
   if(Number.isFinite(line)&&line<=top){g+=`<line class="lineref" x1="${padL}" x2="${W-padR}" y1="${y(line)}" y2="${y(line)}"/><text class="lbl-line" x="${W-padR}" y="${y(line)-5}" text-anchor="end">${fmt(line)}</text>`}
   return `<div class="panel"><svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Valeur par match, du plus ancien au plus récent">${g}</svg><p class="note" style="margin:6px 0 0">Du plus ancien (gauche) au plus récent (droite). @ = match à l'extérieur.</p></div>`;
@@ -387,7 +429,7 @@ function renderJ(){
   const head=`<div class="row"><h2 class="sec">${esc(name)}</h2><span class="note">${esc(TEAM_NAME[team]||team)} · ${esc(STAT_NAME[stat])}</span></div>`;
   if(!rows.length){out.innerHTML=head+emptyHTML("Aucun match avec ces filtres","Élargis un filtre (lieu, adversaire, repos, minutes) pour retrouver des matchs.",false);return}
   const sm=summary(rows.map(r=>r.val),line);
-  const tb=rows.map(r=>`<tr><td>${dshort(r.date)}</td><td class="l">${r.home?"vs":"@"} ${r.opp}</td><td>${r.rest===null?"—":r.rest===0?'<span class="chip warn">B2B</span>':r.rest+" j"}</td><td>${fmt(r.min)}</td><td class="big">${fmt(r.val)}</td><td>${res(r.val,line)}</td></tr>`).join("");
+  const tb=rows.map(r=>`<tr><td>${frWhen(r)}</td><td class="l">${r.home?"vs":"@"} ${r.opp}</td><td>${r.rest===null?"—":r.rest===0?'<span class="chip warn">B2B</span>':r.rest+" j"}</td><td>${fmt(r.min)}</td><td class="big">${fmt(r.val)}</td><td>${res(r.val,line)}</td></tr>`).join("");
   out.innerHTML=head+verdictHTML(sm,line,STAT_NAME[stat].toLowerCase()+" par match")+chartHTML(rows,line)+
     `<div class="tbl-wrap"><table><thead><tr><th>Date</th><th class="l">Adversaire</th><th>Repos</th><th>Min</th><th>${esc(STAT_NAME[stat])}</th><th>Résultat</th></tr></thead><tbody>${tb}</tbody></table></div>`;
 }
@@ -402,7 +444,7 @@ function renderE(){
   const head=`<div class="row"><h2 class="sec">${esc(TEAM_NAME[team])}</h2><span class="note">${esc(MES_NAME[mes])} · ${esc(PER_NAME[per])}</span></div>`;
   if(!rows.length){out.innerHTML=head+emptyHTML("Aucun match avec ces filtres",index().sched[team]?"Élargis un filtre pour retrouver des matchs.":"Cette équipe n'a encore aucun match saisi.",false);return}
   const sm=summary(rows.map(r=>r.val),line);
-  const tb=rows.map(r=>`<tr><td>${dshort(r.date)}</td><td class="l">${r.home?"vs":"@"} ${r.opp}</td><td>${r.rest===null?"—":r.rest===0?'<span class="chip warn">B2B</span>':r.rest+" j"}</td><td>${r.fo} – ${r.ag}</td><td class="big">${r.val}</td><td>${res(r.val,line)}</td></tr>`).join("");
+  const tb=rows.map(r=>`<tr><td>${frWhen(r)}</td><td class="l">${r.home?"vs":"@"} ${r.opp}</td><td>${r.rest===null?"—":r.rest===0?'<span class="chip warn">B2B</span>':r.rest+" j"}</td><td>${r.fo} – ${r.ag}</td><td class="big">${r.val}</td><td>${res(r.val,line)}</td></tr>`).join("");
   out.innerHTML=head+verdictHTML(sm,line,"points par match")+chartHTML(rows,line)+
     `<div class="tbl-wrap"><table><thead><tr><th>Date</th><th class="l">Adversaire</th><th>Repos</th><th>Score (${esc(PER_NAME[per]).toLowerCase()})</th><th>Valeur</th><th>Résultat</th></tr></thead><tbody>${tb}</tbody></table></div>`;
 }
@@ -462,6 +504,7 @@ function readRows(side,team){
 }
 function qVals(side){return[0,1,2,3].map(i=>num($(`#q-${side}-${i}`).value))}
 function updateTotals(){
+  updateNuit();
   const dom=$("#s-dom").value,ext=$("#s-ext").value;
   $("#lbl-dom").textContent=dom;$("#lbl-ext").textContent=ext;
   $('[data-lbl="dom"]').textContent="Domicile · "+(TEAM_NAME[dom]||dom);
@@ -492,20 +535,26 @@ function lastRoster(team){
 function clearRows(side){$(`tbody[data-rows="${side}"]`).innerHTML=""}
 function resetForm(keepDate){
   S.edit=null;S.confirmReplace=false;
-  if(!keepDate)$("#s-date").value=todayUS();
+  if(!keepDate)$("#s-date").value=ymdIn(TZ_FR,new Date());
+  $("#s-heure").value="";
   for(const side of["dom","ext"]){for(let i=0;i<4;i++)$(`#q-${side}-${i}`).value="";$(`#q-${side}-ot`).value="";clearRows(side);for(let i=0;i<5;i++)addRow(side)}
   $("#formTitle").textContent="Nouveau match";$("#cancelEdit").hidden=true;$("#saveBtn").textContent="Enregistrer le match";$("#formMsg").textContent="";
   updateTotals();
 }
-function todayUS(){const d=new Date(Date.now()-14*3600e3);return d.toISOString().slice(0,10)}
+function updateNuit(){
+  const d=$("#s-date").value,h=$("#s-heure").value,el=$("#s-nuit");
+  if(!d||!h){el.textContent="Date et heure du coup d'envoi en heure de Paris. La page en déduit la nuit NBA (date à New York), qui sert au repos et aux back-to-back.";return}
+  const t=parisToDate(d,h);el.textContent=`Coup d'envoi à ${hmIn(TZ_US,t).replace(":","h")} à New York : nuit NBA du ${dshort(ymdIn(TZ_US,t))}, date utilisée pour le repos et les back-to-back.`;
+}
 function loadForm(m){
-  $("#s-date").value=m.date;$("#s-dom").value=m.dom;$("#s-ext").value=m.ext;
+  if(m.debut){const d=new Date(m.debut);$("#s-date").value=ymdIn(TZ_FR,d);$("#s-heure").value=hmIn(TZ_FR,d)}else{$("#s-date").value=m.date;$("#s-heure").value=""}
+  $("#s-dom").value=m.dom;$("#s-ext").value=m.ext;
   for(const side of["dom","ext"]){const q=side==="dom"?m.qtDom:m.qtExt;for(let i=0;i<4;i++)$(`#q-${side}-${i}`).value=q?.[i]??"";$(`#q-${side}-ot`).value=(side==="dom"?m.otDom:m.otExt)||"";
     clearRows(side);const team=side==="dom"?m.dom:m.ext;const ps=(m.joueurs||[]).filter(p=>p.equipe===team);ps.forEach(p=>addRow(side,p));addRow(side)}
   S.confirmReplace=false;$("#formMsg").textContent="";updateTotals();
 }
 function formState(){
-  return{date:$("#s-date").value,dom:$("#s-dom").value,ext:$("#s-ext").value,
+  return{date:$("#s-date").value,heure:$("#s-heure").value,dom:$("#s-dom").value,ext:$("#s-ext").value,
     qtDom:qVals("dom"),qtExt:qVals("ext"),otDom:num($("#q-dom-ot").value)||0,otExt:num($("#q-ext-ot").value)||0,
     rawRows:{dom:rawRows("dom"),ext:rawRows("ext")},edit:S.edit};
 }
@@ -515,7 +564,7 @@ function saveDraft(){clearTimeout(draftT);draftT=setTimeout(()=>{try{localStorag
 function restoreDraft(){
   let d=null;try{d=JSON.parse(localStorage.getItem("carnet-nba-draft")||"null")}catch(e){}
   if(!d||!d.date)return false;
-  $("#s-date").value=d.date;$("#s-dom").value=d.dom;$("#s-ext").value=d.ext;
+  $("#s-date").value=d.date;$("#s-heure").value=d.heure||"";$("#s-dom").value=d.dom;$("#s-ext").value=d.ext;
   for(const side of["dom","ext"]){const q=side==="dom"?d.qtDom:d.qtExt;for(let i=0;i<4;i++)$(`#q-${side}-${i}`).value=Number.isFinite(q?.[i])?q[i]:"";
     $(`#q-${side}-ot`).value=(side==="dom"?d.otDom:d.otExt)||"";clearRows(side);(d.rawRows?.[side]||[]).forEach(p=>addRow(side,p));if(!(d.rawRows?.[side]||[]).length)for(let i=0;i<5;i++)addRow(side)}
   if(d.edit){S.edit=d.edit;$("#formTitle").textContent="Modifier le match";$("#cancelEdit").hidden=false;$("#saveBtn").textContent="Enregistrer les modifications"}
@@ -526,16 +575,18 @@ function clearDraft(){try{localStorage.removeItem("carnet-nba-draft")}catch(e){}
 async function saveMatch(){
   const msg=$("#formMsg");msg.textContent="";
   if(!S.db&&!S.local){msg.textContent="Enregistrement indisponible : la base n'est pas connectée sur cet affichage. Ouvre la page depuis Claude en étant connecté.";return}
-  const date=$("#s-date").value,dom=$("#s-dom").value,ext=$("#s-ext").value;
-  if(!date){msg.textContent="Indique la date du match.";return}
+  const dateFr=$("#s-date").value,heure=$("#s-heure").value,dom=$("#s-dom").value,ext=$("#s-ext").value;
+  if(!dateFr){msg.textContent="Indique la date du match (heure de Paris).";return}
+  if(!heure){msg.textContent="Indique l'heure du coup d'envoi (heure de Paris).";return}
   if(dom===ext){msg.textContent="Choisis deux équipes différentes.";return}
   const qD=qVals("dom"),qE=qVals("ext");
   if([...qD,...qE].some(v=>!Number.isFinite(v))){msg.textContent="Remplis les 4 quart-temps des deux équipes.";return}
-  const m={date,saison:"2026-27",dom,ext,qtDom:qD,qtExt:qE,otDom:num($("#q-dom-ot").value)||0,otExt:num($("#q-ext-ot").value)||0,
+  const t0=parisToDate(dateFr,heure),date=ymdIn(TZ_US,t0);
+  const m={date,debut:t0.toISOString(),saison:"2026-27",dom,ext,qtDom:qD,qtExt:qE,otDom:num($("#q-dom-ot").value)||0,otExt:num($("#q-ext-ot").value)||0,
     joueurs:[...readRows("ext",ext),...readRows("dom",dom)],maj:new Date().toISOString()};
   const id=`${date}_${ext}-${dom}`;
   if(!S.edit&&S.matches.some(x=>x.id===id)&&!S.confirmReplace){
-    S.confirmReplace=true;msg.textContent=`${ext} @ ${dom} du ${dshort(date)} existe déjà. Clique encore pour le remplacer.`;$("#saveBtn").textContent="Remplacer le match existant";return}
+    S.confirmReplace=true;msg.textContent=`${ext} @ ${dom} du ${frWhen(m)} existe déjà. Clique encore pour le remplacer.`;$("#saveBtn").textContent="Remplacer le match existant";return}
   const btn=$("#saveBtn");btn.disabled=true;
   try{
     await putMatch(id,m);
@@ -546,14 +597,14 @@ async function saveMatch(){
   }finally{btn.disabled=false}
 }
 function renderList(){
-  const el=$("#s-list");const ms=[...S.matches].sort((a,b)=>b.date.localeCompare(a.date)||a.id.localeCompare(b.id));
+  const el=$("#s-list");const ms=[...S.matches].sort((a,b)=>(b.debut||b.date).localeCompare(a.debut||a.date)||a.id.localeCompare(b.id));
   if(!S.loaded){el.innerHTML='<div class="panel note">Chargement de la base…</div>';return}
   if(!ms.length){el.innerHTML=emptyHTML("Base vide","Saisis ton premier match ci-dessus : date, équipes, scores par quart-temps, puis les lignes des joueurs.",false);return}
   el.innerHTML=`<div class="tbl-wrap"><table class="list-match"><thead><tr><th>Date</th><th class="l">Match</th><th>Score</th><th>Joueurs</th><th>Contrôle</th><th></th></tr></thead><tbody>${ms.map(m=>{
     const td=sidePts(m,"dom","full"),te=sidePts(m,"ext","full");const ps=m.joueurs||[];
     const sd=ps.filter(p=>p.equipe===m.dom).reduce((a,p)=>a+(p.pts||0),0),se=ps.filter(p=>p.equipe===m.ext).reduce((a,p)=>a+(p.pts||0),0);
     const ok=ps.length&&sd===td&&se===te;const chk=!ps.length?'<span class="chip push">sans joueurs</span>':ok?'<span class="chip ok">✓</span>':'<span class="chip warn">écart pts</span>';
-    return `<tr><td>${dshort(m.date)}</td><td class="l">${m.ext} @ <b>${m.dom}</b>${(m.otDom||m.otExt)?' <span class="note">(prol.)</span>':""}</td><td>${te} – ${td}</td><td>${ps.length}</td><td>${chk}</td><td><div class="row">${
+    return `<tr><td>${frWhen(m)}</td><td class="l">${m.ext} @ <b>${m.dom}</b>${(m.otDom||m.otExt)?' <span class="note">(prol.)</span>':""}</td><td>${te} – ${td}</td><td>${ps.length}</td><td>${chk}</td><td><div class="row">${
       S.pendingDel===m.id?`<button class="btn small danger" data-act="delYes" data-id="${esc(m.id)}">Confirmer la suppression</button><button class="btn small" data-act="delNo">Annuler</button>`:
       `<button class="btn small" data-act="edit" data-id="${esc(m.id)}">Modifier</button><button class="btn small danger" data-act="delAsk" data-id="${esc(m.id)}">Supprimer</button>`}</div></td></tr>`}).join("")}</tbody></table></div>`;
 }
@@ -591,14 +642,14 @@ function arrowNav(e){
 function setTab(t,user){
   S.tab=t;if(user)S.userTab=true;
   $$("nav.tabs button").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.tab===t)));
-  ["joueurs","equipes","classement","saisie"].forEach(k=>$("#v-"+k).hidden=k!==t);
+  TABS.forEach(k=>$("#v-"+k).hidden=k!==t);
   // Dans claude.ai, réécrire l'adresse peut rendre la page introuvable : seulement hors de Claude.
   if(!window.claude)try{if(location.hash!=="#"+t)history.replaceState(null,"","#"+t)}catch(e){}
   renderCurrent();
 }
 function renderCurrent(){
   $("#demoBanner").hidden=!S.demo;
-  if(S.tab==="joueurs")renderJ();else if(S.tab==="equipes")renderE();else if(S.tab==="classement")renderC();else renderList();
+  if(S.tab==="joueurs")renderJ();else if(S.tab==="equipes")renderE();else if(S.tab==="classement")renderC();else if(S.tab==="claude")renderChat();else renderList();
 }
 function refreshPlayersDL(){const ix=index();$("#dl-players").innerHTML=Object.keys(ix.players).sort((a,b)=>a.localeCompare(b,"fr")).map(n=>`<option value="${esc(n)}">${esc(ix.players[n].team)}</option>`).join("")}
 function onData(){
@@ -651,6 +702,7 @@ function init(){
     if(!b)return;const a=b.dataset.act,side=b.dataset.side;
     if(a==="demoOn"){S.demo=true;IDX={ref:null};refreshPlayersDL();if(S.tab==="joueurs"&&!$("#j-nom").value)$("#j-nom").value="Exemple M (BOS)";renderCurrent()}
     else if(a==="goSaisie")setTab("saisie",true);
+    else if(a==="askSugg"){const i=$("#askInput");i.value=b.dataset.q;i.focus()}
     else if(a==="addRow"){addRow(side);saveDraft()}
     else if(a==="delRow"){b.closest("tr").remove();updateTotals();saveDraft()}
     else if(a==="pasteToggle"){const p=$(`[data-paste="${side}"]`);p.hidden=!p.hidden}
@@ -659,13 +711,17 @@ function init(){
       if(!names.length){toast(`Aucun match précédent pour ${team}`);return}
       $$(`tbody[data-rows="${side}"] tr`).forEach(tr=>{if(!tr.querySelector(".nm").value.trim())tr.remove()});
       const have=new Set(readRows(side,team).map(p=>p.nom));names.filter(n=>!have.has(n)).forEach(n=>addRow(side,{nom:n}));addRow(side);updateTotals();saveDraft()}
-    else if(a==="edit"){const m=S.matches.find(x=>x.id===b.dataset.id);if(!m)return;S.edit=m.id;loadForm(m);$("#formTitle").textContent=`Modifier ${m.ext} @ ${m.dom} du ${dshort(m.date)}`;$("#cancelEdit").hidden=false;$("#saveBtn").textContent="Enregistrer les modifications";saveDraft();$("#formPanel").scrollIntoView({behavior:"smooth",block:"start"})}
+    else if(a==="edit"){const m=S.matches.find(x=>x.id===b.dataset.id);if(!m)return;S.edit=m.id;loadForm(m);$("#formTitle").textContent=`Modifier ${m.ext} @ ${m.dom} du ${frWhen(m)}`;$("#cancelEdit").hidden=false;$("#saveBtn").textContent="Enregistrer les modifications";saveDraft();$("#formPanel").scrollIntoView({behavior:"smooth",block:"start"})}
     else if(a==="delAsk"){S.pendingDel=b.dataset.id;renderList()}
     else if(a==="delNo"){S.pendingDel=null;renderList()}
     else if(a==="delYes"){const id=b.dataset.id;S.pendingDel=null;if(S.db||S.local)removeMatch(id).then(()=>toast("Match supprimé")).catch(()=>toast("Suppression impossible pour le moment"));if(S.edit===id){clearDraft();resetForm(true)}}
   });
   $("#demoOff").addEventListener("click",()=>{S.demo=false;IDX={ref:null};if($("#j-nom").value.startsWith("Exemple"))$("#j-nom").value="";refreshPlayersDL();renderCurrent()});
   $("#saveBtn").addEventListener("click",saveMatch);
+  $("#askForm").addEventListener("submit",e=>{e.preventDefault();ask($("#askInput").value)});
+  $("#askInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey&&!e.isComposing){e.preventDefault();ask(e.target.value)}});
+  $("#stopBtn").addEventListener("click",()=>{if(CHAT.ctl)CHAT.ctl.abort()});
+  $("#newChat").addEventListener("click",()=>{CHAT.turns=[];renderChat()});
   $("#exportBtn").addEventListener("click",exportMatches);
   $("#importBtn").addEventListener("click",()=>$("#importFile").click());
   $("#importFile").addEventListener("change",e=>{const f=e.target.files[0];e.target.value="";if(f)importMatches(f)});
@@ -675,8 +731,127 @@ function init(){
   $("#formPanel").addEventListener("change",e=>{if(e.target.matches("select"))saveDraft()});
   $("#formPanel").addEventListener("keydown",arrowNav);
 
-  const h=(location.hash||"").slice(1);setTab(["joueurs","equipes","classement","saisie"].includes(h)?h:"saisie",!!h);
+  const h=(location.hash||"").slice(1);setTab(TABS.includes(h)?h:"saisie",!!h);
   connect();
+}
+
+/* ---------- DEMANDER À CLAUDE ---------- */
+const CHAT={turns:[],busy:false,ctl:null,status:""};
+const SUGGESTIONS=["Quelle équipe marque le plus de points en 1re mi-temps ?","Paolo Banchero peut-il dépasser 27,5 points contre Atlanta ?","Quels joueurs des 76ers risquent d'être absents ce soir ?","Qui sont les meilleurs passeurs de la base ?"];
+const r1=v=>Math.round(v*10)/10;
+const norm=s=>String(s??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
+function findPlayers(q,team){const toks=norm(q).split(" ").filter(Boolean),ix=index();
+  return Object.keys(ix.players).filter(k=>(!team||ix.players[k].team===team)&&toks.every(t=>norm(k).includes(t))).sort((a,b)=>a.localeCompare(b,"fr")).map(k=>({nom:k,equipe:ix.players[k].team}))}
+function findTeam(q){const s=String(q??"").trim().toUpperCase();if(TEAM_NAME[s])return s;const n=norm(q);if(!n)return null;
+  const hit=TEAMS.find(([,name])=>norm(name).includes(n)||n.includes(norm(name).split(" ").pop()));return hit?hit[0]:null}
+const scoreLine=m=>`${m.ext} ${sidePts(m,"ext","full")} – ${sidePts(m,"dom","full")} ${m.dom}${(m.otDom||m.otExt)?" (prol.)":""}`;
+function chatStatus(t){CHAT.status=t;renderChat()}
+const CLAUDE_TOOLS=[
+  {name:"chercher_joueurs",description:"Cherche des joueurs dans la base par nom (partiel, accents ignorés) et/ou par équipe. Renvoie leur nom exact tel qu'enregistré et leur équipe dans la base. Sans texte ni équipe : tous les joueurs.",
+   inputSchema:{type:"object",properties:{texte:{type:"string",description:"Nom ou partie du nom"},equipe:{type:"string",description:"Sigle de l'équipe (PHI, NYK…)"}}},
+   execute(i){const team=i.equipe?findTeam(i.equipe):null;if(i.equipe&&!team)throw new Error(`Équipe inconnue : ${i.equipe}`);
+     chatStatus("Claude cherche des joueurs dans la base…");const r=findPlayers(i.texte||"",team);return{nombre:r.length,joueurs:r.slice(0,80)}}},
+  {name:"stats_joueur",description:"Matchs d'un joueur dans la base, du plus ancien au plus récent : nuit NBA, heure de Paris, adversaire, domicile ou extérieur, jours de repos, score, minutes, points, rebonds, passes, 3 pts réussis (tp3), interceptions, contres, balles perdues, et ses moyennes.",
+   inputSchema:{type:"object",properties:{nom:{type:"string",description:"Nom du joueur"}},required:["nom"]},
+   execute(i){const q=String(i.nom||"").trim(),ix=index();let nom=ix.players[q]?q:null;
+     if(!nom){const c=findPlayers(q);if(c.length===1)nom=c[0].nom;else if(c.length>1)return{ambigu:true,candidats:c.slice(0,15)};else throw new Error(`Aucun joueur « ${q} » dans la base.`)}
+     chatStatus(`Claude consulte les stats de ${nom}…`);
+     const rows=[];for(const m of getM())for(const p of m.joueurs||[]){if(p.nom!==nom)continue;const home=m.dom===p.equipe;
+       rows.push({nuit_nba:m.date,heure_paris:frWhen(m),equipe:p.equipe,adversaire:home?m.ext:m.dom,lieu:home?"domicile":"extérieur",repos_jours:restDays(p.equipe,m.date),score:scoreLine(m),min:p.min,pts:p.pts,reb:p.reb,ast:p.ast,tp3:p.tp,stl:p.stl,blk:p.blk,tov:p.tov})}
+     rows.sort((a,b)=>a.nuit_nba.localeCompare(b.nuit_nba));
+     const avg=k=>r1(rows.reduce((s,r)=>s+(Number(r[k])||0),0)/rows.length);
+     return{nom,equipe:ix.players[nom].team,matchs_joues:rows.length,moyennes:Object.fromEntries(["min","pts","reb","ast","tp3","stl","blk","tov"].map(k=>[k,avg(k)])),matchs:rows.slice(-40)}}},
+  {name:"stats_equipe",description:"Matchs d'une équipe dans la base : nuit NBA, heure de Paris, adversaire, lieu, repos, points marqués et encaissés par quart-temps et en prolongation, et ses moyennes (marqués, encaissés, total du match, 1re mi-temps).",
+   inputSchema:{type:"object",properties:{equipe:{type:"string",description:"Sigle (PHI, NYK, ORL…)"}},required:["equipe"]},
+   execute(i){const t=findTeam(i.equipe);if(!t)throw new Error(`Équipe inconnue : ${i.equipe}. Utilise un sigle comme PHI ou NYK.`);
+     chatStatus(`Claude consulte les matchs de ${TEAM_NAME[t]}…`);
+     const ms=getM().filter(m=>m.dom===t||m.ext===t).sort((a,b)=>a.date.localeCompare(b.date));
+     if(!ms.length)return{equipe:t,nom:TEAM_NAME[t],matchs_joues:0};
+     const me=m=>m.dom===t?"dom":"ext",op=m=>m.dom===t?"ext":"dom",avg=f=>r1(ms.reduce((s,m)=>s+f(m),0)/ms.length);
+     const rows=ms.map(m=>{const home=m.dom===t;return{nuit_nba:m.date,heure_paris:frWhen(m),adversaire:home?m.ext:m.dom,lieu:home?"domicile":"extérieur",repos_jours:restDays(t,m.date),
+       quarts_pour:home?m.qtDom:m.qtExt,quarts_contre:home?m.qtExt:m.qtDom,prolongation_pour:(home?m.otDom:m.otExt)||0,prolongation_contre:(home?m.otExt:m.otDom)||0,marques:sidePts(m,me(m),"full"),encaisses:sidePts(m,op(m),"full")}});
+     return{equipe:t,nom:TEAM_NAME[t],matchs_joues:ms.length,moyennes:{marques:avg(m=>sidePts(m,me(m),"full")),encaisses:avg(m=>sidePts(m,op(m),"full")),total_match:avg(m=>sidePts(m,"dom","full")+sidePts(m,"ext","full")),
+       marques_1re_mi_temps:avg(m=>sidePts(m,me(m),"h1")),encaisses_1re_mi_temps:avg(m=>sidePts(m,op(m),"h1"))},matchs:rows.slice(-40)}}},
+  {name:"classement",description:"Classement par moyenne sur la base. type equipes : mesure total (2 équipes), pour ou contre, periode full, h1, h2, q1 à q4. type joueurs : stat pts, reb, ast, tp (3 pts), pra, pr, pa, ra, stl, blk, sb, tov ou min, avec min_matchs joués. lieu : all, dom ou ext.",
+   inputSchema:{type:"object",properties:{type:{type:"string",enum:["equipes","joueurs"]},mesure:{type:"string",enum:["total","pour","contre"]},periode:{type:"string",enum:["full","h1","h2","q1","q2","q3","q4"]},stat:{type:"string"},lieu:{type:"string",enum:["all","dom","ext"]},min_matchs:{type:"number"}},required:["type"]},
+   execute(i){const f={lieu:["dom","ext"].includes(i.lieu)?i.lieu:"all",n:"all"};
+     if(i.type==="joueurs"){const stat=STAT_NAME[i.stat]?i.stat:"pts",gp=Math.max(1,Number(i.min_matchs)||1),ix=index();chatStatus("Claude classe les joueurs…");
+       const list=Object.keys(ix.players).map(nm=>{const s=summary(playerGames(nm,stat,f).map(x=>x.val));return{nom:nm,equipe:ix.players[nm].team,matchs:s.n,moyenne:s.n?r1(s.avg):null,mediane:s.n?r1(s.med):null,max:s.n?s.max:null}})
+         .filter(x=>x.matchs>=gp).sort((a,b)=>b.moyenne-a.moyenne).slice(0,40);
+       return{stat:STAT_NAME[stat],lieu:f.lieu,classement:list}}
+     const mes=MES_NAME[i.mesure]?i.mesure:"pour",per=PER_NAME[i.periode]?i.periode:"full";chatStatus("Claude classe les équipes…");
+     const list=TEAMS.map(([t])=>{const s=summary(teamGames(t,mes,per,f).map(x=>x.val));return{equipe:t,matchs:s.n,moyenne:s.n?r1(s.avg):null,mediane:s.n?r1(s.med):null,min:s.n?s.min:null,max:s.n?s.max:null}})
+       .filter(x=>x.matchs).sort((a,b)=>b.moyenne-a.moyenne);
+     return{mesure:MES_NAME[mes],periode:PER_NAME[per],lieu:f.lieu,classement:list}}},
+  {name:"liste_matchs",description:"Matchs de la base, du plus récent au plus ancien (100 au plus) : nuit NBA, heure de Paris, équipes, scores par quart-temps, prolongation et score final. Filtre facultatif par équipe.",
+   inputSchema:{type:"object",properties:{equipe:{type:"string",description:"Sigle (PHI, NYK…)"}}},
+   execute(i){const t=i.equipe?findTeam(i.equipe):null;if(i.equipe&&!t)throw new Error(`Équipe inconnue : ${i.equipe}`);chatStatus("Claude parcourt les matchs…");
+     const all=getM().filter(m=>!t||m.dom===t||m.ext===t).sort((a,b)=>(b.debut||b.date).localeCompare(a.debut||a.date));
+     return{nombre_total:all.length,matchs:all.slice(0,100).map(m=>({nuit_nba:m.date,heure_paris:frWhen(m),exterieur:m.ext,domicile:m.dom,quarts_exterieur:m.qtExt,quarts_domicile:m.qtDom,prolongation:(m.otDom||m.otExt)?{exterieur:m.otExt||0,domicile:m.otDom||0}:null,score:scoreLine(m)}))}}}
+];
+function claudeRules(){
+  const ms=getM(),nuits=ms.map(m=>m.date).sort();
+  const now=new Intl.DateTimeFormat("fr-FR",{timeZone:TZ_FR,weekday:"long",day:"numeric",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit"}).format(new Date());
+  return[
+    "Tu réponds dans l'onglet « Demander à Claude » de « Base de données NBA 2026-27 », une page où l'utilisateur saisit à la main les stats des matchs NBA de la saison 2026-27 pour les comparer aux lignes des bookmakers.",
+    `Nous sommes le ${now} (heure de Paris). L'utilisateur raisonne en heure de Paris : « cette nuit » ou « ce soir » désigne les matchs joués la nuit en France.`,
+    ms.length?`La base contient ${ms.length} match${ms.length>1?"s":""}, des nuits NBA du ${dshort(nuits[0])} au ${dshort(nuits[nuits.length-1])}${S.demo?" (ATTENTION : la page est en mode exemple, ces données sont fictives)":""}. La nuit NBA est la date du match à New York ; c'est elle qui compte pour le repos et les back-to-back.`:"La base ne contient encore aucun match.",
+    "Pour toute question sur des joueurs, des équipes ou des matchs, consulte la base avec tes outils et cite ses chiffres ; n'invente jamais un chiffre de la base. Pour l'équipe d'un joueur cette saison, la base fait foi sur tes connaissances.",
+    "Tu n'as pas accès à internet ni à l'actualité : tu ignores les blessures, les absences, les transferts récents et le programme de ce soir, sauf ce que l'utilisateur te donne. Quand la question en dépend, dis-le en une phrase, donne ce que tu sais en précisant que c'est peut-être dépassé, et propose de coller le rapport officiel de blessures de la NBA dans la question.",
+    "Pour une prévision (points d'un joueur, total d'un match…), appuie-toi sur la base : moyenne, médiane, derniers matchs, domicile ou extérieur, adversaire, repos, minutes. Donne une fourchette et une valeur centrale ; si l'utilisateur donne une ligne, indique combien de matchs de la base sont au-dessus et en dessous. Signale un échantillon petit. Jamais de certitude.",
+    `Sigles des équipes : ${TEAMS.map(([a,n])=>a+" = "+n).join(", ")}.`,
+    "Réponds en français, directement et brièvement : quelques phrases ou une courte liste à tirets. Pas de tableau ni de titre ; le gras **…** est permis."
+  ].join("\n\n");
+}
+function baseResume(){
+  const ix=index(),ms=[...getM()].sort((a,b)=>b.date.localeCompare(a.date));
+  const lines=ms.slice(0,150).map(m=>`${m.date} (${frWhen(m)}) ${m.ext} ${m.qtExt.join("-")}${m.otExt?"+"+m.otExt:""} @ ${m.dom} ${m.qtDom.join("-")}${m.otDom?"+"+m.otDom:""} : ${scoreLine(m)}`);
+  const per={};for(const m of ms)for(const p of m.joueurs||[])(per[p.nom]=per[p.nom]||[]).push(p);
+  const pl=Object.keys(per).map(nm=>{const r=per[nm],a=k=>r1(r.reduce((s,p)=>s+(Number(p[k])||0),0)/r.length);return`${nm} (${ix.players[nm].team}, ${r.length} m.) min ${a("min")} pts ${a("pts")} reb ${a("reb")} pas ${a("ast")} 3pts ${a("tp")} int ${a("stl")} ctr ${a("blk")} bp ${a("tov")}`});
+  return("Extrait de la base :\nMatchs (nuit NBA, heure de Paris, quart-temps ext @ dom) :\n"+lines.join("\n")+"\n\nMoyennes des joueurs :\n"+pl.join("\n")).slice(0,150000);
+}
+function mdLite(t){
+  let html="",list=false,para=[];const flush=()=>{if(para.length){html+=`<p>${para.join("<br>")}</p>`;para=[]}};
+  for(const raw of esc(t).split("\n")){const l=raw.trim(),li=l.match(/^[-*•]\s+(.*)/);
+    if(li){flush();if(!list){html+="<ul>";list=true}html+=`<li>${li[1]}</li>`;continue}
+    if(list){html+="</ul>";list=false}
+    if(!l){flush();continue}
+    const h=l.match(/^#{1,4}\s+(.*)/);if(h){flush();html+=`<p><b>${h[1]}</b></p>`;continue}
+    para.push(l)}
+  flush();if(list)html+="</ul>";
+  return html.replace(/\*\*(.+?)\*\*/g,"<b>$1</b>");
+}
+function errCopy(c){return({not_granted:"Cette page n'a pas l'autorisation d'utiliser Claude. Autorise-la dans le menu Permissions de la page, puis recharge-la.",sampling_disabled:"Claude n'est pas disponible pour ce compte.",not_declared:"Cette version de la page ne peut plus joindre Claude. Recharge-la.",capability_disabled:"Claude n'est pas disponible sur cet affichage.",capability_removed:"Claude n'est pas disponible sur cet affichage. Mets à jour l'application.",rate_limited:"Trop de questions d'un coup, ou limite d'utilisation atteinte. Réessaie dans un moment.",session_expired:"Ta session Claude a expiré : reconnecte-toi puis réessaie.",refused:"Claude n'a pas répondu à cette question. Reformule-la.",prompt_too_large:"La conversation est trop longue : clique sur « Nouvelle conversation ».",empty_completion:"Pas de réponse. Reformule ou simplifie la question.",tools_unavailable:"Claude ne peut pas lire la base sur cet affichage."})[c]||"La réponse a été interrompue. Réessaie."}
+const BLOCKING=["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"];
+async function ask(q){
+  q=String(q||"").trim();if(!q||CHAT.busy||!S.sample||S.sampleBlocked)return;
+  const hist=CHAT.turns.filter(t=>t.content&&!t.pending).slice(-12).map(t=>({role:t.role,content:t.content}));
+  CHAT.turns.push({role:"user",content:q});const bot={role:"assistant",content:"",pending:true};CHAT.turns.push(bot);
+  CHAT.busy=true;CHAT.status="Claude réfléchit…";const ctl=CHAT.ctl=new AbortController();$("#askInput").value="";renderChat();
+  const input=[{role:"user",content:claudeRules()+(S.sampleTools?"":"\n\n"+baseResume())},...hist,{role:"user",content:q}];
+  const opts={signal:ctl.signal,onText:({text})=>{bot.content=text;CHAT.status="";renderChat()}};
+  if(S.sampleTools)opts.tools=CLAUDE_TOOLS;else opts.cache=false;
+  try{const r=await S.sample(input,opts);bot.content=r.text;if(r.truncated)bot.note="Réponse coupée : pose une question plus précise."}
+  catch(e){const c=e&&e.code;bot.content=(e&&e.text)||"";
+    if(c==="cancelled")bot.note="Arrêté.";else{bot.error=!bot.content;bot.note=errCopy(c);if(BLOCKING.includes(c))S.sampleBlocked=errCopy(c)}}
+  finally{bot.pending=false;CHAT.busy=false;CHAT.status="";CHAT.ctl=null;renderChat()}
+}
+function renderChat(){
+  if(S.tab!=="claude")return;
+  const log=$("#chatLog"),blocked=S.sampleBlocked&&!CHAT.turns.length;
+  $("#askForm").hidden=!S.sample||!!S.sampleBlocked;
+  if(!S.sample||blocked){
+    log.innerHTML=emptyHTML(S.sampleChecking?"Connexion à Claude…":"Claude n'est pas disponible ici",S.sampleBlocked?esc(S.sampleBlocked):S.local?"Ouverte en fichier, la page ne peut pas joindre Claude. Ouvre la page publiée sur claude.ai pour poser tes questions.":S.sampleChecking?"Un instant.":"Ouvre la page dans claude.ai, en étant connecté, pour poser tes questions.",false);return}
+  if(!CHAT.turns.length){log.innerHTML=`<div class="chat-empty"><p class="note">Pose une question sur un joueur, une équipe ou un match. Claude lit les stats de ta base pour répondre. Quelques idées :</p><div class="chips">${SUGGESTIONS.map(s=>`<button type="button" class="chip-q" data-act="askSugg" data-q="${esc(s)}">${esc(s)}</button>`).join("")}</div></div>`}
+  else log.innerHTML=CHAT.turns.map(t=>t.role==="user"?`<div class="msg user">${esc(t.content)}</div>`:
+    `<div class="msg bot${t.error?" err":""}"><span class="who">Claude</span>${t.content?mdLite(t.content):""}${t.pending&&CHAT.status?`<p class="note">${esc(CHAT.status)}</p>`:""}${t.note?`<p class="note">${esc(t.note)}</p>`:""}</div>`).join("");
+  $("#askBtn").disabled=CHAT.busy;$("#stopBtn").hidden=!CHAT.busy;$("#newChat").hidden=!CHAT.turns.length||CHAT.busy;
+}
+async function initClaude(){
+  S.sampleChecking=true;
+  try{S.sample=await window.claude.use("sample")}catch(e){S.sample=null}
+  if(S.sample){try{const l=await S.sample.limits();S.sampleTools=!!(l&&l.tools&&l.tools.maxCount>=CLAUDE_TOOLS.length)}catch(e){S.sampleTools=false}}
+  S.sampleChecking=false;renderChat();
 }
 
 /* Hors de Claude (fichier ouvert directement ou lien dans un onglet), les matchs vivent dans ce navigateur. */
@@ -696,7 +871,7 @@ async function removeMatch(id){
 }
 function validMatch(m){return m&&typeof m==="object"&&/^\d{4}-\d{2}-\d{2}$/.test(m.date||"")&&TEAM_NAME[m.dom]&&TEAM_NAME[m.ext]&&Array.isArray(m.qtDom)&&Array.isArray(m.qtExt)}
 async function exportMatches(){
-  const data=JSON.stringify(S.matches,null,1),filename=`carnet-nba-2026-27_${todayUS()}.json`;
+  const data=JSON.stringify(S.matches,null,1),filename=`base-nba-2026-27_${ymdIn(TZ_FR,new Date())}.json`;
   if(S.downloads){try{await S.downloads.save({filename,data})}catch(e){if(!e||e.code!=="declined")toast("Export impossible sur cet affichage")}return}
   const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([data],{type:"application/json"}));a.download=filename;
   document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
@@ -729,6 +904,7 @@ function connectLocal(){
 async function connect(){
   renderList();
   if(!(window.claude&&window.claude.use)){connectLocal();return}
+  initClaude();
   let db=null;try{db=await window.claude.use("db")}catch(e){db=null}
   if(!db){S.loaded=true;setSync("bad","Base non connectée (lecture seule)");$("#count").textContent="0 match saisi";renderCurrent();return}
   S.db=db;

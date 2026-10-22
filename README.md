@@ -133,8 +133,12 @@ Dans la base de la page : `achats` (pièces ajoutées), `etat/semaine` (semaine 
 
 ## Base de données NBA 2026-27
 
-La base de stats NBA (joueurs, équipes et totaux, classement, saisie des matchs) est publié sur claude.ai : <https://claude.ai/artifact/6iJEbW2tLmKX8R2jFa2uPx>. Les matchs sont enregistrés dans la base de la page (collection `matchs`) : ils sont les mêmes sur tous tes appareils, et seul le propriétaire peut en ajouter, modifier ou supprimer.
+La base de stats NBA (joueurs, équipes et totaux, classement, Demander à Claude, saisie des matchs) est publiée sur claude.ai : <https://claude.ai/artifact/6iJEbW2tLmKX8R2jFa2uPx>. Les matchs sont enregistrés dans la base de la page (collection `matchs`) : ils sont les mêmes sur tous tes appareils, et seul le propriétaire peut en ajouter, modifier ou supprimer.
 
-Sous « Matchs saisis », « Importer (.json) » ajoute des matchs exportés depuis la version fichier, et « Exporter (.json) » en garde une sauvegarde. Un match du même jour avec les deux mêmes équipes est remplacé.
+**Dates.** Un match se saisit avec sa date et son heure de coup d'envoi en heure de Paris. La page en déduit la nuit NBA (la date du match à New York), qui sert au repos et aux back-to-back : un match à 1h00 le 21/10 à Paris compte pour la nuit NBA du 20/10. Les tableaux affichent la date et l'heure de Paris. Dans la base, `date` est la nuit NBA et `debut` le coup d'envoi (UTC).
 
-La source est `nba/index.html`. Ouverte en fichier local, la page garde les matchs dans le navigateur. La version publiée en est tirée par `outils/version-artefact-nba.sh > base-nba.html`, avec les capacités `db` (écriture réservée au propriétaire), `user` et `downloads`.
+**Demander à Claude.** Pose une question sur un joueur, une équipe ou un match : Claude lit les stats de la base (matchs d'un joueur, d'une équipe, classements) pour répondre, et donne une fourchette pour une prévision. Il n'a pas accès à l'actualité : pour les absences de ce soir, colle le rapport officiel de blessures dans la question. Chaque question utilise le compte Claude de la personne qui la pose.
+
+Sous « Matchs saisis », « Importer (.json) » ajoute des matchs exportés depuis la version fichier, et « Exporter (.json) » en garde une sauvegarde. Un match de la même nuit avec les deux mêmes équipes est remplacé.
+
+La source est `nba/index.html`. Ouverte en fichier local, la page garde les matchs dans le navigateur et l'onglet Demander à Claude n'est pas disponible. La version publiée en est tirée par `outils/version-artefact-nba.sh > base-nba.html`, avec les capacités `db` (écriture réservée au propriétaire), `user`, `downloads` et `sample`.
