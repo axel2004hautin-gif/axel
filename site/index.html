@@ -12,7 +12,8 @@
 /* Layout : fond blanc, titre marine, bandeau marine des rubriques ; au survol d'une rubrique, ses
    sous-rubriques s'affichent dessous. Une rubrique ouvre la page de ses sous-rubriques. « Mon planning »
    tient dans l'écran : semaine, frise (une colonne par jour, une ligne par heure, elle prend toute la
-   place qui reste), bilan. Un seul thème, clair. */
+   place qui reste), bilan. « To-do list » : ajout rapide en haut, puis deux colonnes, « À faire » et
+   « À dire » (par personne), et ce qui est fait en bas. Un seul thème, clair. */
 :root {
   color-scheme: light;
   --fond: #ffffff;
@@ -25,6 +26,7 @@
   --trait-doux: #f0f2f6;
   --trait-heure: #c3cad7;
   --rouge: #c62828;
+  --rouge-doux: #fde8e8;
   --bleu: #2b4c9b;
   --sur-marine: #ffffff;
   --sur-marine-2: #c9d2e6;
@@ -273,6 +275,88 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 .mini-repere { position: absolute; left: 0; right: 0; height: 1px; background: var(--rouge); }
 .mini-lettre { font: 600 .7rem/1 var(--f-mono); color: var(--gris); }
 
+/* Aperçu de la to-do list dans sa carte */
+.apercu { display: grid; gap: 6px; }
+.apercu-ligne { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.apercu-ligne::before { content: ""; flex: none; width: 13px; height: 13px; border: 1.5px solid var(--gris); border-radius: 3px; background: var(--fond); }
+.apercu-texte { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* To-do list */
+.todo { display: grid; gap: 20px; padding-block: 28px 56px; }
+.todo-tete { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 8px 24px; }
+.todo-tete h1 { margin-top: 6px; font-family: var(--f-display); font-weight: 850; font-stretch: 120%; font-size: clamp(2rem, 6vw, 3.25rem); line-height: .95; letter-spacing: -.02em; color: var(--marine); }
+.todo-compte { font: 600 .85rem/1.4 var(--f-mono); color: var(--gris); }
+.todo-compte .rouge { color: var(--rouge); }
+
+.ajout-tache { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 14px; border: 1.5px solid var(--trait); border-radius: 12px; background: var(--marine-doux); }
+.type-tache { display: inline-flex; padding: 3px; border: 1.5px solid var(--trait); border-radius: 10px; background: var(--fond); }
+.type-tache label { position: relative; flex: 1; }
+.type-tache input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.type-tache span { display: block; padding: 8px 14px; border-radius: 7px; color: var(--gris); font-weight: 600; text-align: center; white-space: nowrap; }
+.type-tache input:checked + span { background: var(--marine); color: var(--sur-marine); }
+.type-tache input:focus-visible + span { outline: 2px solid var(--marine); outline-offset: 2px; }
+.champs-tache input[type="text"], .champs-tache input[type="date"], .champs-tache select { min-height: 44px; padding: 8px 12px; border: 1.5px solid var(--trait); border-radius: 8px; background: var(--fond); color: var(--encre); font-size: 1rem; }
+.champs-tache .en-erreur { border-color: var(--erreur); background: var(--erreur-doux); }
+.ajout-tache .champ-texte { flex: 1 1 240px; min-width: 0; }
+.ajout-tache .champ-personne { flex: 0 1 160px; min-width: 0; }
+.ajout-tache .champ-pour { flex: 0 1 230px; min-width: 0; }
+.ajout-tache .champ-date { flex: 0 1 170px; min-width: 0; }
+.urgent-choix { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border: 1.5px solid var(--trait); border-radius: 999px; background: var(--fond); color: var(--gris); font-weight: 600; cursor: pointer; }
+.urgent-choix input { width: 18px; height: 18px; margin: 0; accent-color: var(--rouge); }
+.urgent-choix.coche { border-color: var(--rouge); background: var(--rouge-doux); color: var(--rouge); }
+.erreur-tache { flex: 1 1 100%; color: var(--erreur); font-weight: 600; }
+@media (max-width: 599px) {
+  .ajout-tache { padding: 12px; }
+  .ajout-tache .type-tache, .ajout-tache .champ-texte, .ajout-tache .champ-personne, .ajout-tache .bouton-principal { flex: 1 1 100%; }
+  .ajout-tache .champ-pour, .ajout-tache .champ-date { flex: 1 1 0; }
+}
+
+.listes { display: grid; gap: 28px; align-items: start; }
+@media (min-width: 900px) { .listes { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; } }
+.liste { display: grid; gap: 4px; min-width: 0; }
+.liste h2 { display: flex; align-items: baseline; gap: 10px; padding-bottom: 8px; border-bottom: 2px solid var(--marine); font-family: var(--f-display); font-weight: 800; font-size: 1.35rem; line-height: 1.2; color: var(--marine); }
+.nombre { font: 600 .85rem/1 var(--f-mono); color: var(--gris); }
+.taches { list-style: none; margin: 0; padding: 0; display: grid; }
+.tache { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 4px 10px; padding: 10px 0 10px 2px; border-bottom: 1px solid var(--trait); }
+.tache.urgente { padding-left: 10px; box-shadow: inset 3px 0 0 var(--rouge); }
+.tache-case { display: flex; align-items: flex-start; gap: 12px; min-width: 0; cursor: pointer; }
+.tache-case input { flex: none; width: 22px; height: 22px; margin: 1px 0 0; accent-color: var(--bleu); cursor: pointer; }
+.tache-texte { min-width: 0; font-size: 1.05rem; line-height: 1.4; overflow-wrap: anywhere; }
+.tache.faite .tache-texte { color: var(--gris); text-decoration: line-through; }
+.tache-meta { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+.puce { padding: 3px 8px; border-radius: 999px; background: var(--marine-doux); color: var(--marine); font: 600 .72rem/1.3 var(--f-mono); white-space: nowrap; }
+.puce.urgente { background: var(--rouge-doux); color: var(--rouge); }
+.puce.retard { background: var(--rouge); color: var(--sur-marine); }
+.puce.jour { background: var(--marine); color: var(--sur-marine); }
+.puce.fait { background: none; color: var(--gris); }
+.tache-modifier { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 8px; background: none; color: var(--gris); }
+.tache-modifier:hover { background: var(--marine-doux); color: var(--marine); }
+@media (max-width: 599px) {
+  .tache { grid-template-columns: minmax(0, 1fr) auto; }
+  .tache-meta { grid-column: 1; grid-row: 2; justify-content: flex-start; padding-left: 34px; }
+  .tache-modifier { grid-column: 2; grid-row: 1 / 3; }
+}
+.personne { display: grid; }
+.personne-nom { display: flex; align-items: center; gap: 10px; padding: 14px 0 4px; font-weight: 700; }
+.personne:first-child .personne-nom { padding-top: 8px; }
+.initiale { display: grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--bleu); color: var(--sur-marine); font: 700 .85rem/1 var(--f-display); }
+.liste-vide { padding: 14px 0; color: var(--gris); }
+.faites { border-top: 1px solid var(--trait); }
+.faites summary { padding: 14px 0 8px; color: var(--gris); font-weight: 700; cursor: pointer; }
+.faites .bouton-second { margin-top: 12px; }
+.bouton-second.arme { border-color: var(--erreur); background: var(--erreur); color: var(--sur-marine); }
+
+.edition { display: grid; gap: 14px; padding-top: 16px; }
+.titre-champ { display: grid; gap: 6px; font-weight: 600; font-size: .95rem; }
+.edition .champ-texte, .edition .champ-personne { width: 100%; }
+.ligne-champs { display: flex; flex-wrap: wrap; gap: 10px; }
+.ligne-champs > * { flex: 1 1 160px; min-width: 0; }
+.edition .type-tache { justify-self: start; }
+.edition .urgent-choix { justify-self: start; }
+.bouton-danger { min-height: 44px; margin-right: auto; padding: 10px 16px; border: 1.5px solid transparent; border-radius: 10px; background: none; color: var(--erreur); font-weight: 600; }
+.bouton-danger:hover { background: var(--erreur-doux); }
+.bouton-danger.arme { background: var(--erreur); color: var(--sur-marine); }
+
 /* Argent et Sport : rubriques encore à construire */
 .rubrique { display: grid; gap: 24px; padding-block: 32px 56px; }
 .rubrique-tete { display: grid; gap: 8px; }
@@ -307,6 +391,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
         <div class="sous-bande" role="group" aria-label="Sous-rubriques de Travail">
           <div class="cadre sous-bande-dedans">
             <a href="#planning" data-aller="planning">Mon planning</a>
+            <a href="#todo" data-aller="todo">To-do list</a>
           </div>
         </div>
       </div>
@@ -328,7 +413,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
           <a class="carte-rubrique" href="#travail">
             <span class="numero" aria-hidden="true">1</span>
             <span class="carte-titre">Travail</span>
-            <span class="carte-texte">Mon planning, avec mes heures et mon jour de repos.</span>
+            <span class="carte-texte">Mon planning de la semaine et ma to-do list du magasin.</span>
             <span class="carte-pied"><span id="resume-travail">Planning de la semaine</span><span class="fleche">Ouvrir →</span></span>
           </a>
         </li>
@@ -367,6 +452,14 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
             <span class="mini" id="mini-planning" aria-hidden="true" hidden></span>
             <span class="carte-sous-ligne" id="aujourdhui-planning" hidden></span>
             <span class="carte-sous-pied"><span id="resume-planning">Planning de la semaine</span><span class="fleche">Ouvrir →</span></span>
+          </a>
+        </li>
+        <li>
+          <a class="carte-sous" href="#todo">
+            <span class="carte-sous-titre">To-do list</span>
+            <span class="carte-sous-texte">Ce que je dois faire au magasin et ce que je dois dire à quelqu'un.</span>
+            <span class="apercu" id="apercu-todo" hidden></span>
+            <span class="carte-sous-pied"><span id="resume-todo">Rien à faire pour l'instant</span><span class="fleche">Ouvrir →</span></span>
           </a>
         </li>
       </ul>
@@ -409,6 +502,52 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
         <button class="bouton-principal" id="ouvrir-modif" type="button" disabled>Modifier le planning</button>
         <p class="note-lecture" id="note-lecture" hidden>Seul le propriétaire du tableau peut modifier le planning.</p>
       </div>
+    </div>
+  </section>
+
+  <section class="r-travail" data-vue="todo" aria-labelledby="titre-todo" hidden>
+    <div class="cadre todo">
+      <div class="todo-tete">
+        <div>
+          <p class="eyebrow">Travail</p>
+          <h1 id="titre-todo" tabindex="-1">To-do list</h1>
+        </div>
+        <p class="todo-compte" id="todo-compte"></p>
+      </div>
+
+      <form class="ajout-tache champs-tache" id="ajout-tache" autocomplete="off" novalidate>
+        <div class="type-tache" role="radiogroup" aria-label="Type de tâche">
+          <label><input type="radio" name="a-type" value="faire" checked><span>À faire</span></label>
+          <label><input type="radio" name="a-type" value="dire"><span>À dire</span></label>
+        </div>
+        <input class="champ-texte" id="a-texte" type="text" maxlength="300" placeholder="Ex. : refaire la table des pulls" aria-label="Quoi ?">
+        <input class="champ-personne" id="a-personne" type="text" maxlength="60" list="personnes" placeholder="À qui ?" aria-label="À qui ?" hidden>
+        <select class="champ-pour" id="a-pour" aria-label="Pour quand ?"></select>
+        <input class="champ-date" id="a-date" type="date" aria-label="Date" hidden>
+        <label class="urgent-choix"><input type="checkbox" id="a-urgent"><span>Urgent</span></label>
+        <button class="bouton-principal" type="submit">Ajouter</button>
+        <p class="erreur-tache" id="a-erreur" role="alert" hidden></p>
+      </form>
+      <p class="note-lecture" id="todo-lecture" hidden>Seul le propriétaire du tableau peut modifier la to-do list.</p>
+
+      <div class="listes">
+        <section class="liste" aria-labelledby="titre-faire">
+          <h2 id="titre-faire">À faire au magasin <span class="nombre" id="nombre-faire"></span></h2>
+          <ul class="taches" id="liste-faire"></ul>
+          <p class="liste-vide" id="vide-faire">Rien à faire pour l'instant.</p>
+        </section>
+        <section class="liste" aria-labelledby="titre-dire">
+          <h2 id="titre-dire">À dire <span class="nombre" id="nombre-dire"></span></h2>
+          <div id="liste-dire"></div>
+          <p class="liste-vide" id="vide-dire">Rien à dire pour l'instant.</p>
+        </section>
+      </div>
+
+      <details class="faites" id="faites" hidden>
+        <summary>Fait <span class="nombre" id="nombre-faites"></span></summary>
+        <ul class="taches" id="liste-faites"></ul>
+        <button class="bouton-second" type="button" id="effacer-faites">Effacer ce qui est fait</button>
+      </details>
     </div>
   </section>
 
@@ -494,6 +633,36 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   </div>
 </dialog>
 
+<dialog class="fenetre fenetre-petite" id="fenetre-tache" aria-labelledby="ft-titre">
+  <div class="fenetre-tete">
+    <h2 id="ft-titre">Modifier la tâche</h2>
+    <button class="fermer" type="button" data-fermer aria-label="Fermer sans enregistrer">×</button>
+  </div>
+  <form class="fenetre-corps champs-tache edition" id="edition-tache" autocomplete="off" novalidate>
+    <div class="type-tache" role="radiogroup" aria-label="Type de tâche">
+      <label><input type="radio" name="e-type" value="faire"><span>À faire</span></label>
+      <label><input type="radio" name="e-type" value="dire"><span>À dire</span></label>
+    </div>
+    <label class="titre-champ">Quoi ?<input class="champ-texte" id="e-texte" type="text" maxlength="300"></label>
+    <label class="titre-champ" id="e-personne-bloc">À qui ?<input class="champ-personne" id="e-personne" type="text" maxlength="60" list="personnes"></label>
+    <div class="titre-champ">Pour quand ?
+      <div class="ligne-champs">
+        <select class="champ-pour" id="e-pour" aria-label="Pour quand ?"></select>
+        <input class="champ-date" id="e-date" type="date" aria-label="Date" hidden>
+      </div>
+    </div>
+    <label class="urgent-choix"><input type="checkbox" id="e-urgent"><span>Urgent</span></label>
+  </form>
+  <div class="fenetre-pied">
+    <p class="fenetre-erreur" id="e-erreur" role="alert" hidden></p>
+    <button class="bouton-danger" type="button" id="ft-supprimer">Supprimer</button>
+    <button class="bouton-second" type="button" data-fermer>Annuler</button>
+    <button class="bouton-principal" type="button" id="ft-enregistrer">Enregistrer</button>
+  </div>
+</dialog>
+
+<datalist id="personnes"></datalist>
+
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 <script>
@@ -504,9 +673,9 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   // ---------- vues : une rubrique à la fois ----------
   // La page ne modifie jamais son adresse (dans le cadre de claude.ai, une adresse réécrite
   // rend la page introuvable) ; un lien direct ouvre sa page : une rubrique (#travail, #argent,
-  // #sport) ou une sous-rubrique (#planning).
-  const VUES = ["accueil", "travail", "planning", "argent", "sport"];
-  const RUBRIQUE_DE = { planning: "travail" };
+  // #sport) ou une sous-rubrique (#planning, #todo).
+  const VUES = ["accueil", "travail", "planning", "todo", "argent", "sport"];
+  const RUBRIQUE_DE = { planning: "travail", todo: "travail" };
   let vueActive = "accueil";
 
   function montrer(nom, opts = {}) {
@@ -619,6 +788,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
       const brut = JSON.parse(localStorage.getItem(CLE_LOCALE) || "{}");
       for (const [cle, d] of Object.entries(brut)) { const s = CLE_RE.test(cle) && lireSemaine(d); if (s) semaines[cle] = s; }
     } catch (_) { /* rien de gardé dans ce navigateur */ }
+    chargerTodoLocal();
   }
   function sauverLocal() {
     try { localStorage.setItem(CLE_LOCALE, JSON.stringify(semaines)); return true; } catch (_) { return false; }
@@ -640,6 +810,12 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
       semaines = m;
       rendreTout();
     }, () => toast("Le planning n'a pas pu être chargé. Recharge la page.", "erreur"));
+    db.collection("todo").onSnapshot(snap => {
+      const m = Object.create(null);
+      snap.docs.forEach(doc => { const t = doc.exists && lireTache(doc.id, doc.data()); if (t) m[doc.id] = t; });
+      taches = m;
+      rendreTodo();
+    }, () => toast("La to-do list n'a pas pu être chargée. Recharge la page.", "erreur"));
     rendreTout();
   }
 
@@ -841,6 +1017,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     rendrePlanning();
     rendreResume();
     rendreCartePlanning();
+    rendreTodo();
     if ($("fenetre-semaine").open) rendreGrilleSemaines();
   }
 
@@ -1069,6 +1246,335 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
       $("fp-enregistrer").disabled = false;
     }
   });
+
+  // ---------- to-do list : à faire au magasin, à dire à quelqu'un ----------
+  // Un document par tâche dans « todo » : { texte, type: "faire" | "dire", personne, pour (AAAA-MM-JJ),
+  // urgent, fait, faitLe, creeLe }. Hors de claude.ai, la liste est gardée dans le navigateur.
+  const CLE_LOCALE_TODO = "tableau-de-bord-axel:todo";
+  const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
+  const JOURS_SEMAINE = ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."];
+  let taches = Object.create(null);
+
+  const texteBorne = (v, max) => (typeof v === "string" ? v.trim().slice(0, max) : "");
+  function lireTache(id, d) {
+    if (!d || typeof d !== "object") return null;
+    const texte = texteBorne(d.texte, 300);
+    if (!texte) return null;
+    const type = d.type === "dire" ? "dire" : "faire";
+    return {
+      id, texte, type,
+      personne: type === "dire" ? texteBorne(d.personne, 60) || "Quelqu'un" : "",
+      pour: typeof d.pour === "string" && ISO_RE.test(d.pour) ? d.pour : null,
+      urgent: d.urgent === true,
+      fait: d.fait === true,
+      faitLe: texteBorne(d.faitLe, 40) || null,
+      creeLe: texteBorne(d.creeLe, 40),
+    };
+  }
+  const corpsDe = t => ({ texte: t.texte, type: t.type, personne: t.type === "dire" ? t.personne : null, pour: t.pour, urgent: t.urgent, fait: t.fait, faitLe: t.faitLe, creeLe: t.creeLe });
+
+  function chargerTodoLocal() {
+    taches = Object.create(null);
+    try {
+      const brut = JSON.parse(localStorage.getItem(CLE_LOCALE_TODO) || "{}");
+      for (const [id, d] of Object.entries(brut)) { const t = lireTache(id, d); if (t) taches[id] = t; }
+    } catch (_) { /* rien de gardé dans ce navigateur */ }
+  }
+  function sauverTodoLocal() {
+    try {
+      localStorage.setItem(CLE_LOCALE_TODO, JSON.stringify(Object.fromEntries(Object.values(taches).map(t => [t.id, corpsDe(t)]))));
+      return true;
+    } catch (_) { return false; }
+  }
+
+  // Une écriture à la fois par tâche ; corps null = supprimer. La base renvoie aussitôt le
+  // nouvel état par onSnapshot ; en local, la liste est mise à jour ici.
+  const filesTodo = Object.create(null);
+  function ecrireTache(id, corps) {
+    if (mode === "local") {
+      if (corps) taches[id] = lireTache(id, corps); else delete taches[id];
+      if (!sauverTodoLocal()) toast("Ce navigateur ne garde rien : la liste sera perdue en fermant la page.", "erreur");
+      rendreTodo();
+      return Promise.resolve();
+    }
+    const ref = db.doc("todo/" + id);
+    const suite = (filesTodo[id] || Promise.resolve()).catch(() => {}).then(() => (corps ? ref.set(corps) : ref.delete()));
+    filesTodo[id] = suite;
+    return suite;
+  }
+  const nouvelId = () => (mode === "base" ? db.collection("todo").doc().id : "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7));
+  const peutModifierTodo = () => mode === "base" || mode === "local";
+  const echecEcriture = e => toast(e && e.code === "quota_exceeded"
+    ? "La page est pleine : efface ce qui est fait pour faire de la place."
+    : "La modification n'a pas été enregistrée. Vérifie ta connexion et réessaie.", "erreur");
+
+  // Dates : AAAA-MM-JJ, comparées à aujourd'hui.
+  const versIso = t => new Date(t).toISOString().slice(0, 10);
+  const depuisIso = iso => Date.UTC(Number(iso.slice(0, 4)), Number(iso.slice(5, 7)) - 1, Number(iso.slice(8, 10)));
+  const dateCourte = t => { const d = new Date(t); return `${JOURS_SEMAINE[d.getUTCDay()]} ${d.getUTCDate()} ${MOIS_COURTS[d.getUTCMonth()]}`; };
+  // Le prochain jour travaillé d'après le planning, à partir de demain (trois semaines au plus).
+  function prochainService() {
+    for (let t = aujourdhui() + JOUR_MS, fin = aujourdhui() + 21 * JOUR_MS; t <= fin; t += JOUR_MS) {
+      const i = (new Date(t).getUTCDay() || 7) - 1;
+      const s = semaines[infoSemaine(lundiDe(t)).cle];
+      if (i < 6 && s && dureeJour(s.jours[JOURS[i]]) > 0) return t;
+    }
+    return null;
+  }
+  function echeance(iso) {
+    const t = depuisIso(iso), ecart = Math.round((t - aujourdhui()) / JOUR_MS);
+    if (ecart < 0) return { texte: `En retard · ${dateCourte(t)}`, classe: "retard" };
+    if (ecart === 0) return { texte: "Aujourd'hui", classe: "jour" };
+    if (ecart === 1) return { texte: "Demain", classe: "" };
+    return { texte: majuscule(dateCourte(t)), classe: "" };
+  }
+  const rangEcheance = t => (t.pour ? depuisIso(t.pour) : Infinity);
+  const trierTaches = (a, b) => (b.urgent - a.urgent) || (rangEcheance(a) - rangEcheance(b)) || a.creeLe.localeCompare(b.creeLe);
+
+  // ----- les deux formulaires (ajout en haut, modification dans la fenêtre) partagent leurs champs -----
+  const typeChoisi = prefixe => (document.querySelector(`input[name="${prefixe}-type"]:checked`) || {}).value || "faire";
+  function majChamps(prefixe) {
+    const dire = typeChoisi(prefixe) === "dire";
+    ($(prefixe + "-personne-bloc") || $(prefixe + "-personne")).hidden = !dire;
+    $(prefixe + "-texte").placeholder = dire ? "Ex. : le réassort des 502 arrive mardi" : "Ex. : refaire la table des pulls";
+    $(prefixe + "-date").hidden = $(prefixe + "-pour").value !== "autre";
+    $(prefixe + "-urgent").closest(".urgent-choix").classList.toggle("coche", $(prefixe + "-urgent").checked);
+  }
+  function optionsPour(prefixe) {
+    const sel = $(prefixe + "-pour");
+    const garde = sel.value;
+    const service = prochainService();
+    const options = [["", "Pas de date"], ["aujourdhui", "Aujourd'hui"], ["demain", "Demain"]];
+    if (service) options.push(["service", `Prochain service · ${dateCourte(service)}`]);
+    options.push(["autre", "Choisir une date…"]);
+    sel.replaceChildren(...options.map(([v, l]) => new Option(l, v)));
+    sel.value = options.some(o => o[0] === garde) ? garde : "";
+  }
+  function effacerErreurTache(prefixe) {
+    $(prefixe + "-erreur").hidden = true;
+    document.querySelectorAll(`[id^="${prefixe}-"].en-erreur`).forEach(el => el.classList.remove("en-erreur"));
+  }
+  // Lit un formulaire : la tâche (texte, type, personne, pour, urgent), ou la première erreur.
+  function lireChamps(prefixe) {
+    const type = typeChoisi(prefixe);
+    const texte = $(prefixe + "-texte").value.trim();
+    const personne = $(prefixe + "-personne").value.trim();
+    if (!texte) return { erreur: type === "dire" ? "Écris ce que tu dois dire." : "Écris ce que tu dois faire.", champ: $(prefixe + "-texte") };
+    if (type === "dire" && !personne) return { erreur: "Dis à qui.", champ: $(prefixe + "-personne") };
+    const choix = $(prefixe + "-pour").value;
+    let pour = null;
+    if (choix === "aujourdhui") pour = versIso(aujourdhui());
+    else if (choix === "demain") pour = versIso(aujourdhui() + JOUR_MS);
+    else if (choix === "service") { const t = prochainService(); pour = t ? versIso(t) : null; }
+    else if (choix === "autre") {
+      if (!ISO_RE.test($(prefixe + "-date").value)) return { erreur: "Choisis la date.", champ: $(prefixe + "-date") };
+      pour = $(prefixe + "-date").value;
+    }
+    return { tache: { texte: texte.slice(0, 300), type, personne: type === "dire" ? personne.slice(0, 60) : "", pour, urgent: $(prefixe + "-urgent").checked } };
+  }
+  function signalerTache(prefixe, lu) {
+    $(prefixe + "-erreur").textContent = lu.erreur;
+    $(prefixe + "-erreur").hidden = false;
+    lu.champ.classList.add("en-erreur");
+    lu.champ.focus();
+  }
+  ["a", "e"].forEach(prefixe => {
+    const form = prefixe === "a" ? $("ajout-tache") : $("edition-tache");
+    form.addEventListener("change", () => { majChamps(prefixe); effacerErreurTache(prefixe); });
+    form.addEventListener("input", () => effacerErreurTache(prefixe));
+  });
+
+  // ----- ajouter -----
+  $("ajout-tache").addEventListener("submit", async e => {
+    e.preventDefault();
+    if (!peutModifierTodo()) return;
+    effacerErreurTache("a");
+    const lu = lireChamps("a");
+    if (lu.erreur) { signalerTache("a", lu); return; }
+    const corps = { ...lu.tache, personne: lu.tache.type === "dire" ? lu.tache.personne : null, fait: false, faitLe: null, creeLe: new Date().toISOString() };
+    // On vide tout de suite pour enchaîner ; le type et la personne restent pour la tâche suivante.
+    $("a-texte").value = "";
+    $("a-pour").value = "";
+    $("a-urgent").checked = false;
+    majChamps("a");
+    $("a-texte").focus();
+    try { await ecrireTache(nouvelId(), corps); } catch (err) { echecEcriture(err); }
+  });
+
+  // ----- cocher, décocher -----
+  document.querySelector('[data-vue="todo"]').addEventListener("change", async e => {
+    const cb = e.target.closest(".tache-case input");
+    if (!cb || !taches[cb.dataset.id]) return;
+    const t = taches[cb.dataset.id];
+    try { await ecrireTache(t.id, { ...corpsDe(t), fait: cb.checked, faitLe: cb.checked ? new Date().toISOString() : null }); }
+    catch (err) { cb.checked = !cb.checked; echecEcriture(err); }
+  });
+
+  // ----- modifier, supprimer -----
+  let tacheEditee = null;
+  function ouvrirEdition(id) {
+    const t = taches[id];
+    if (!t || !peutModifierTodo()) return;
+    tacheEditee = id;
+    document.querySelector(`input[name="e-type"][value="${t.type}"]`).checked = true;
+    $("e-texte").value = t.texte;
+    $("e-personne").value = t.type === "dire" ? t.personne : "";
+    optionsPour("e");
+    const auj = versIso(aujourdhui()), demain = versIso(aujourdhui() + JOUR_MS);
+    $("e-pour").value = !t.pour ? "" : t.pour === auj ? "aujourdhui" : t.pour === demain ? "demain" : "autre";
+    $("e-date").value = $("e-pour").value === "autre" ? t.pour : "";
+    $("e-urgent").checked = t.urgent;
+    effacerErreurTache("e");
+    desarmer($("ft-supprimer"), "Supprimer");
+    majChamps("e");
+    ouvrir($("fenetre-tache"));
+    $("e-texte").focus();
+  }
+  document.querySelector('[data-vue="todo"]').addEventListener("click", e => {
+    const b = e.target.closest(".tache-modifier");
+    if (b) ouvrirEdition(b.dataset.id);
+  });
+  $("ft-enregistrer").addEventListener("click", async () => {
+    const t = taches[tacheEditee];
+    if (!t) { fermer($("fenetre-tache")); return; }
+    effacerErreurTache("e");
+    const lu = lireChamps("e");
+    if (lu.erreur) { signalerTache("e", lu); return; }
+    fermer($("fenetre-tache"));
+    try { await ecrireTache(t.id, { ...corpsDe(t), ...lu.tache, personne: lu.tache.type === "dire" ? lu.tache.personne : null }); }
+    catch (err) { echecEcriture(err); }
+  });
+
+  // Les boutons qui effacent demandent un second appui (les fenêtres de confirmation du navigateur sont bloquées ici).
+  const minuteriesArme = new WeakMap();
+  function desarmer(b, texte) { b.classList.remove("arme"); b.textContent = texte; clearTimeout(minuteriesArme.get(b)); }
+  function armer(b, texte, texteRepos) {
+    b.classList.add("arme");
+    b.textContent = texte;
+    clearTimeout(minuteriesArme.get(b));
+    minuteriesArme.set(b, setTimeout(() => desarmer(b, texteRepos), 4000));
+  }
+  $("ft-supprimer").addEventListener("click", async e => {
+    const b = e.currentTarget, t = taches[tacheEditee];
+    if (!t) return;
+    if (!b.classList.contains("arme")) { armer(b, "Confirmer la suppression", "Supprimer"); return; }
+    desarmer(b, "Supprimer");
+    fermer($("fenetre-tache"));
+    try { await ecrireTache(t.id, null); toast("Tâche supprimée."); } catch (err) { echecEcriture(err); }
+  });
+  $("effacer-faites").addEventListener("click", async e => {
+    const b = e.currentTarget;
+    const faites = Object.values(taches).filter(t => t.fait);
+    if (!faites.length || !peutModifierTodo()) return;
+    if (!b.classList.contains("arme")) { armer(b, `Confirmer : effacer ${faites.length} tâche${faites.length > 1 ? "s" : ""}`, "Effacer ce qui est fait"); return; }
+    desarmer(b, "Effacer ce qui est fait");
+    try { for (const t of faites) await ecrireTache(t.id, null); toast("Ce qui est fait a été effacé."); }
+    catch (err) { echecEcriture(err); }
+  });
+
+  // ----- affichage -----
+  const PICTO_CRAYON = '<svg class="picto" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"/></svg>';
+  function ligneTache(t, avecPersonne) {
+    const li = element("li", "tache" + (t.urgent && !t.fait ? " urgente" : "") + (t.fait ? " faite" : ""));
+    const label = element("label", "tache-case");
+    const cb = element("input");
+    cb.type = "checkbox";
+    cb.checked = t.fait;
+    cb.dataset.id = t.id;
+    cb.disabled = !peutModifierTodo();
+    label.append(cb, element("span", "tache-texte", avecPersonne && t.type === "dire" ? `Dire à ${t.personne} : ${t.texte}` : t.texte));
+    const meta = element("span", "tache-meta");
+    if (t.fait) {
+      if (t.faitLe && !isNaN(Date.parse(t.faitLe))) { const d = new Date(t.faitLe); meta.append(element("span", "puce fait", `Fait le ${d.getDate()} ${MOIS_COURTS[d.getMonth()]}`)); }
+    } else {
+      if (t.urgent) meta.append(element("span", "puce urgente", "Urgent"));
+      if (t.pour) { const e = echeance(t.pour); meta.append(element("span", "puce " + e.classe, e.texte)); }
+    }
+    li.append(label, meta);
+    if (peutModifierTodo()) {
+      const b = element("button", "tache-modifier");
+      b.type = "button";
+      b.dataset.id = t.id;
+      b.setAttribute("aria-label", `Modifier : ${t.texte}`);
+      b.innerHTML = PICTO_CRAYON;
+      li.append(b);
+    }
+    return li;
+  }
+
+  function rendreTodo() {
+    const toutes = Object.values(taches);
+    const enCours = toutes.filter(t => !t.fait).sort(trierTaches);
+    const faire = enCours.filter(t => t.type === "faire");
+    const dire = enCours.filter(t => t.type === "dire");
+    const urgentes = enCours.filter(t => t.urgent).length;
+
+    // En-tête et compteurs
+    const compte = $("todo-compte");
+    compte.replaceChildren(document.createTextNode(`${faire.length} à faire · ${dire.length} à dire`));
+    if (urgentes) compte.append(document.createTextNode(" · "), element("span", "rouge", `${urgentes} urgente${urgentes > 1 ? "s" : ""}`));
+    $("nombre-faire").textContent = faire.length ? String(faire.length) : "";
+    $("nombre-dire").textContent = dire.length ? String(dire.length) : "";
+
+    // À faire
+    $("liste-faire").replaceChildren(...faire.map(t => ligneTache(t, false)));
+    $("vide-faire").hidden = faire.length > 0;
+
+    // À dire, regroupé par personne (dans l'ordre de leur tâche la plus pressante)
+    const groupes = new Map();
+    dire.forEach(t => {
+      const cle = t.personne.toLocaleLowerCase("fr");
+      if (!groupes.has(cle)) groupes.set(cle, { nom: t.personne, taches: [] });
+      groupes.get(cle).taches.push(t);
+    });
+    $("liste-dire").replaceChildren(...[...groupes.values()].map(g => {
+      const bloc = element("div", "personne");
+      const nom = element("div", "personne-nom");
+      nom.append(element("span", "initiale", g.nom.charAt(0).toLocaleUpperCase("fr")), element("span", null, g.nom), element("span", "nombre", String(g.taches.length)));
+      const ul = element("ul", "taches");
+      ul.append(...g.taches.map(t => ligneTache(t, false)));
+      bloc.append(nom, ul);
+      return bloc;
+    }));
+    $("vide-dire").hidden = dire.length > 0;
+
+    // Fait, du plus récent au plus ancien
+    const faites = toutes.filter(t => t.fait).sort((a, b) => (b.faitLe || "").localeCompare(a.faitLe || ""));
+    $("faites").hidden = !faites.length;
+    $("nombre-faites").textContent = String(faites.length);
+    $("liste-faites").replaceChildren(...faites.map(t => ligneTache(t, true)));
+    $("effacer-faites").hidden = !peutModifierTodo();
+
+    // Prénoms déjà utilisés, proposés dans « À qui ? »
+    const noms = new Map();
+    toutes.filter(t => t.type === "dire").forEach(t => { const k = t.personne.toLocaleLowerCase("fr"); if (!noms.has(k)) noms.set(k, t.personne); });
+    $("personnes").replaceChildren(...[...noms.values()].sort((a, b) => a.localeCompare(b, "fr")).map(n => new Option(n)));
+
+    // Formulaire d'ajout selon qui regarde
+    optionsPour("a");
+    majChamps("a");
+    $("ajout-tache").hidden = mode === "lecture";
+    [...$("ajout-tache").elements].forEach(el => { el.disabled = mode === "attente"; });
+    $("todo-lecture").hidden = mode !== "lecture";
+
+    rendreCarteTodo(enCours, faire.length, dire.length, urgentes);
+  }
+
+  // La carte de la page Travail : les compteurs et les trois tâches les plus pressantes.
+  function rendreCarteTodo(enCours, nFaire, nDire, urgentes) {
+    $("resume-todo").textContent = enCours.length
+      ? `${nFaire} à faire · ${nDire} à dire` + (urgentes ? ` · ${urgentes} urgente${urgentes > 1 ? "s" : ""}` : "")
+      : "Rien à faire pour l'instant";
+    const apercu = $("apercu-todo");
+    apercu.hidden = !enCours.length;
+    apercu.replaceChildren(...enCours.slice(0, 3).map(t => {
+      const l = element("span", "apercu-ligne");
+      l.append(element("span", "apercu-texte", t.type === "dire" ? `Dire à ${t.personne} : ${t.texte}` : t.texte));
+      if (t.urgent) l.append(element("span", "puce urgente", "Urgent"));
+      else if (t.pour) { const e = echeance(t.pour); l.append(element("span", "puce " + e.classe, e.texte)); }
+      return l;
+    }));
+  }
 
   // ---------- message en bas de l'écran ----------
   let minuterieToast = 0;
