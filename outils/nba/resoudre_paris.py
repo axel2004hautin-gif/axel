@@ -20,6 +20,7 @@ Un joueur qui n'a pas joué rend le pari remboursé, comme chez les bookmakers. 
 à écrire avec set), et affiche le bilan et la bankroll.
 """
 import datetime, glob, json, os, re, sys, unicodedata, zoneinfo
+from statistics import NormalDist
 
 PARIS = zoneinfo.ZoneInfo("Europe/Paris")
 norm = lambda s: re.sub(r"[^a-z0-9]", "", unicodedata.normalize("NFD", str(s or "")).encode("ascii", "ignore").decode().lower())
@@ -111,9 +112,32 @@ def evaluer(cond, m, det):
     return "a_trancher", None, "condition à trancher à la lecture des données"
 
 
+def proba_marche(pm, cond):
+    """Probabilité sans marge du marché (DraftKings, dernier programme d'avant-match) pour une victoire, un handicap ou un total
+    du match entier ; sur une autre ligne, loi normale (écart-type 12,5 pour l'écart, 18 pour le total), comme la page."""
+    c, p = (pm or {}).get("cotes"), (pm or {}).get("proba")
+    if not c or not p or (cond.get("periode") or "match") != "match":
+        return None
+    t, N, home = cond.get("type"), NormalDist(), cond.get("equipe") == pm["dom"]
+    try:
+        if t == "victoire":
+            return p["victoireDom"] if home else p["victoireExt"]
+        L = float(cond.get("ligne"))
+        if t == "handicap":
+            mu = 12.5 * N.inv_cdf(p["couvreDom"]) - c["ecartDom"]
+            return N.cdf((mu + L) / 12.5) if home else N.cdf((L - mu) / 12.5)
+        if t == "total_match":
+            mu = c["total"] - 18 * N.inv_cdf(1 - p["over"]); o = 1 - N.cdf((L - mu) / 18)
+            return 1 - o if cond.get("sens") == "moins" else o
+    except (TypeError, KeyError, ValueError):
+        return None
+    return None
+
+
 def main():
     work, base_dir = sys.argv[1], sys.argv[2]
     matchs, details = load_dir(f"{base_dir}/matchs"), load_dir(f"{base_dir}/details")
+    programmes = load_dir(f"{base_dir}/programme")
     paris, pronos = load_dir(f"{base_dir}/paris"), load_dir(f"{base_dir}/pronostics")
     reglage = load_dir(f"{base_dir}/reglages").get("bankroll") or {}
     out = os.path.join(work, "resolution", "a_ecrire")
@@ -147,11 +171,18 @@ def main():
         mise, cote = b.get("mise_eur") or 0, b.get("cote")
         gain = round(mise * (cote - 1), 2) if res == "gagne" and cote else -mise if res == "perdu" else 0 if res == "rembourse" else None
         nb = {**b, "statut": res, "valeur": val, "gain": gain, "resolu": now, **({"note": note} if note else {})}
+        # Écart à la clôture : cote prise / cote juste du marché juste avant le match
+        pm = next((x for x in (programmes.get(b.get("nuit") or "") or {}).get("matchs", []) if x.get("id") == b.get("match")), None)
+        pf = proba_marche(pm, b.get("condition") or {})
+        if pf and cote:
+            nb["cote_cloture"] = round(1 / pf, 3)
+            nb["clv"] = round(cote * pf - 1, 4)
         if res == "gagne" and not cote:
             nb["note"] = "gagné, mais la cote n'a pas été saisie : gain non calculé"
         json.dump(nb, open(f"{out}/paris/{i}.json", "w"), ensure_ascii=False)
         paris[i] = nb
-        lignes.append(f"pari « {b.get('intitule')} » : {res} ({val}) · mise {mise} € à {cote} → {gain if gain is not None else '?'} €")
+        lignes.append(f"pari « {b.get('intitule')} » : {res} ({val}) · mise {mise} € à {cote} → {gain if gain is not None else '?'} €"
+                      + (f" · clôture {nb['cote_cloture']} ({nb['clv']:+.1%})" if "clv" in nb else ""))
     for i, p in sorted(pronos.items()):
         if p.get("resultat"):
             continue

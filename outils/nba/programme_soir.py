@@ -52,10 +52,10 @@ def main():
     out = os.path.join(work, "programme")
     os.makedirs(out, exist_ok=True)
     for k in range(n_nuits):
-        nuit(out, (first + datetime.timedelta(days=k)).strftime("%Y%m%d"), known)
+        nuit(out, (first + datetime.timedelta(days=k)).strftime("%Y%m%d"), known, base_dir)
 
 
-def nuit(out, night, known):
+def nuit(out, night, known, base_dir=None):
     date_ny = f"{night[:4]}-{night[4:6]}-{night[6:]}"
     sb = curl_json(f"https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates={night}")
     matchs = []
@@ -68,6 +68,14 @@ def nuit(out, night, known):
         m = {"id": f"{date_ny}_{ext}-{dom}", "espn": e["id"], "debut": e["date"].replace("Z", ":00.000Z") if len(e["date"]) == 17 else e["date"],
              "ext": ext, "dom": dom, "statut": c["status"]["type"]["name"], "cotes": None, "proba": None, "blessures": []}
         pc = (s.get("pickcenter") or [None])[0]
+        # Match commencé ou fini : on garde les dernières cotes d'avant-match déjà enregistrées (référence de clôture)
+        avant = None
+        if base_dir and m["statut"] != "STATUS_SCHEDULED" and os.path.exists(os.path.join(base_dir, "programme", f"{date_ny}.json")):
+            ancien = json.load(open(os.path.join(base_dir, "programme", f"{date_ny}.json")))
+            avant = next((x for x in ancien.get("matchs", []) if x.get("id") == m["id"] and x.get("cotes")), None)
+        if avant:
+            m.update(cotes=avant["cotes"], proba=avant["proba"], cotes_figees=True)
+            pc = None
         if pc:
             h, a = pc.get("homeTeamOdds") or {}, pc.get("awayTeamOdds") or {}
             cotes = {"source": (pc.get("provider") or {}).get("name"), "ecartDom": pc.get("spread"),

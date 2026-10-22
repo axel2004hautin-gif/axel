@@ -906,7 +906,28 @@ async function readDetails(id){
   const d=await S.db.collection("details").doc(id).get();return d.exists?d.data():null;
 }
 /* ---------- VALUE ET MES PARIS ---------- */
-const BK={depart:1000,pas:250,mises:[0.5,1,1.5,2,2.5,3]};
+const BK={depart:1000,pas:250,mises:[0.5,1,1.5,2,2.5,3],seuil:0.05,seuilFaible:0.10,plafondMatch:3,plafondNuit:10,parisNuit:5};
+/* Stratégie validée par l'utilisateur : value d'au moins 5 % selon la base (10 % en fiabilité faible) et value face au marché
+   quand il existe ; un seul pari par idée et par match ; au plus 3 % de mise sur un match, 10 % et 5 paris sur une nuit. */
+const seuilDe=pr=>pr.proba_base==null||pr.fiabilite==="faible"?BK.seuilFaible:BK.seuil;
+function coteMin(pr){if(!pr||!pr.probabilite)return null;return Math.ceil(Math.max((1+seuilDe(pr))/pr.probabilite,pr.marche?1/pr.marche:0)*100)/100}
+// Une même « idée » : le même marché du même match, quel que soit le côté ou la ligne
+function ideeKey(c){if(!c)return"";const per=c.periode||"match";
+  return{victoire:`ecart|${per}`,handicap:`ecart|${per}`,total_match:`total|${per}`,total_equipe:`te|${c.equipe}|${per}`,stat_joueur:`sj|${norm(c.joueur||"")}|${c.stat}|${per}`,premier_panier:"premier",premiers_points:"premier"}[c.type]||`autre|${Math.random()}`}
+function betChecks(pr,m,c){
+  const w=[];if(!pr)return w;
+  if(Number.isFinite(c)&&c>1){const vb=pr.probabilite*c-1,sv=seuilDe(pr);
+    if(vb<sv)w.push(`value de ${pct(vb*100)} selon ta base, il faut au moins ${pct(sv*100)}`);
+    if(pr.marche!=null&&pr.marche*c-1<=0)w.push(`pas de value face au marché (cote juste DraftKings ${odds(1/pr.marche)})`)}
+  const same=(S.paris||[]).filter(b=>b.match&&b.match===pr.match),nuit=(S.paris||[]).filter(b=>b.nuit&&b.nuit===pr.nuit);
+  if(same.some(b=>!RESULT_CHIP[b.statut]&&ideeKey(b.condition)===ideeKey(pr.condition)))w.push("tu as déjà un pari sur la même idée dans ce match");
+  const tm=same.reduce((t,b)=>t+(b.mise_pct||0),0)+m;if(tm>BK.plafondMatch)w.push(`${pct(tm)} misés sur ce match, au-delà du plafond de ${pct(BK.plafondMatch)}`);
+  const tn=nuit.reduce((t,b)=>t+(b.mise_pct||0),0)+m;if(tn>BK.plafondNuit)w.push(`${pct(tn)} misés sur la nuit, au-delà du plafond de ${pct(BK.plafondNuit)}`);
+  if(nuit.length+1>BK.parisNuit)w.push(`${nuit.length+1} paris sur la nuit, au-delà du plafond de ${BK.parisNuit}`);
+  return w;
+}
+// Écart à la clôture : cote prise / cote juste du marché juste avant le match (calculé au règlement du matin)
+const clvChip=v=>v==null?'<span class="note">—</span>':`<span class="chip ${v>0?"ok":"under"}">${v>0?"+":""}${pct(v*100)}</span>`;
 const VAL={busy:false,ctl:null,status:"",msg:""};
 const COND_TYPES=["stat_joueur","victoire","handicap","total_match","total_equipe","premier_panier","premiers_points","autre"];
 const COND_STATS=["pts","reb","ast","stl","blk","tp","tpa","tov","fgm","fga","ftm","fta","oreb","dreb","pf","pm","min","pra","pr","pa","ra","sb","dd","td"];
@@ -1087,7 +1108,7 @@ async function evaluerProno(q){
 async function passProno(id){try{await S.db.collection("pronostics").doc(id).update({decision:"passe"})}catch(e){toast("Impossible pour le moment, réessaie")}}
 function startBet(id){const pr=(S.pronos||[]).find(x=>x.id===id);if(!pr)return;openBetForm(pr);setTab("paris",true)}
 function openBetForm(pr){
-  S.betDraft=pr||null;$("#betPanel").hidden=false;$("#b-msg").textContent="";$("#b-cote").value="";
+  S.betDraft=pr||null;S.betForce=false;$("#b-save").textContent="Enregistrer le pari";$("#betPanel").hidden=false;$("#b-msg").textContent="";$("#b-cote").value="";
   $("#betTitle").textContent=pr?"Nouveau pari":"Nouveau pari (hors pronostic)";
   $("#b-titre").value=pr?pr.intitule:"";
   fillSel($("#b-pct"),BK.mises.map(m=>[String(m),`${pct(m)} · ${eur(miseEur(m))}`]),String(pr?pr.mise_pct:1));
@@ -1095,9 +1116,12 @@ function openBetForm(pr){
 }
 function updateBetInfo(){
   const pr=S.betDraft,m=Number($("#b-pct").value)||1,c=num($("#b-cote").value),el=$("#b-info");
+  if(S.betForce){S.betForce=false;$("#b-save").textContent="Enregistrer le pari";$("#b-msg").textContent=""}
   let t=`Mise : <b>${eur(miseEur(m))}</b> (${pct(m)} du palier de ${eur(palier(bankroll()))}${pr&&Number(pr.mise_pct)===m?", mise choisie par Claude":""}).`;
-  if(pr){t+=` Probabilité ${pct(pr.probabilite*100)}, cote juste ${odds(pr.cote_juste)}.`;
-    if(Number.isFinite(c)&&c>1){const v=pr.probabilite*c-1;t+=v>0?` <span class="val-ok">Value : +${pct(v*100)}. La cote Winamax dépasse la cote juste.</span>`:` <span class="val-ko">Pas de value : ${pct(v*100)}. À cette cote, Claude te conseille de ne pas jouer.</span>`}}
+  if(pr){t+=` Probabilité ${pct(pr.probabilite*100)}, cote juste ${odds(pr.cote_juste)} : joue à <b>${odds(coteMin(pr))}</b> ou plus.`;
+    const w=betChecks(pr,m,c);
+    if(Number.isFinite(c)&&c>1&&!w.length)t+=` <span class="val-ok">Jouable : value de +${pct((pr.probabilite*c-1)*100)} selon ta base${pr.marche!=null?` et de +${pct((pr.marche*c-1)*100)} face au marché`:""}.</span>`;
+    else if(w.length)t+=` <span class="val-ko">${Number.isFinite(c)&&c>1?"Pas jouable":"Attention"} : ${w.join(" ; ")}.</span>`}
   el.innerHTML=t;
 }
 async function saveBet(){
@@ -1105,12 +1129,15 @@ async function saveBet(){
   const titre=$("#b-titre").value.trim(),m=Number($("#b-pct").value),c=num($("#b-cote").value),pr=S.betDraft;
   if(!titre){msg.textContent="Indique le pari.";return}
   if(!(Number.isFinite(c)&&c>1)){msg.textContent="Indique la cote Winamax (par exemple 1,85).";return}
+  // Hors stratégie : un premier clic prévient, un second enregistre quand même (le pari garde la trace des alertes)
+  const w=betChecks(pr,m,c);
+  if(w.length&&!S.betForce){S.betForce=true;$("#b-save").textContent="Enregistrer quand même";msg.textContent="Ce pari sort de ta stratégie. Clique encore pour l'enregistrer quand même.";return}
   const id="b"+newId(),bk=bankroll();
-  const bet={cree:new Date().toISOString(),intitule:titre,mise_pct:m,mise_eur:miseEur(m),palier:palier(bk),bankroll_avant:bk,cote:c,statut:"en_attente",gain:null,
+  const bet={cree:new Date().toISOString(),intitule:titre,mise_pct:m,mise_eur:miseEur(m),palier:palier(bk),bankroll_avant:bk,cote:c,statut:"en_attente",gain:null,...(w.length?{hors_strategie:true,alertes:w}:{}),
     ...(pr?{pronostic:pr.id,nuit:pr.nuit,match:pr.match,ext:pr.ext,dom:pr.dom,debut:pr.debut,condition:pr.condition,probabilite:pr.probabilite,cote_juste:pr.cote_juste}:{condition:{type:"autre",description:titre}})};
   const btn=$("#b-save");btn.disabled=true;
   try{await S.db.collection("paris").doc(id).set(clean(bet));if(pr)await S.db.collection("pronostics").doc(pr.id).update({decision:"joue",pari:id});
-    S.betDraft=null;$("#betPanel").hidden=true;toast(`Pari enregistré : ${eur(bet.mise_eur)} à ${odds(c)}`)}
+    S.betDraft=null;S.betForce=false;$("#b-save").textContent="Enregistrer le pari";$("#betPanel").hidden=true;toast(`Pari enregistré : ${eur(bet.mise_eur)} à ${odds(c)}`)}
   catch(e){msg.textContent=e&&e.code==="invalid_argument"?"Enregistrement refusé : seul le propriétaire peut ajouter des paris.":"Enregistrement impossible pour le moment. Réessaie."}
   finally{btn.disabled=false}
 }
@@ -1123,7 +1150,7 @@ function pickCard(p){
   return`<article class="pick"><div class="row"><span class="note">${esc(p.ext)} @ ${esc(p.dom)} · ${esc(when)}</span><span class="spacer"></span>${fiab}</div>
     <h3>${esc(p.intitule)}</h3>
     <div class="odds"><div class="tile"><span class="k">Probabilité</span><span class="v">${pct(p.probabilite*100)}</span><span class="s">${esc(sous)}</span></div>
-      <div class="tile"><span class="k">Cote juste</span><span class="v">${odds(p.cote_juste)}</span><span class="s">value si Winamax paie plus</span></div>
+      <div class="tile"><span class="k">Cote juste</span><span class="v">${odds(p.cote_juste)}</span><span class="s">joue à ${odds(coteMin(p))} ou plus</span></div>
       <div class="tile"><span class="k">Mise de Claude</span><span class="v">${pct(p.mise_pct)}</span><span class="s">${eur(miseEur(p.mise_pct))}</span></div></div>
     <p class="note" style="margin:0">${esc(p.detail||"")} ${esc(p.raison||"")}${p.methode?` <i>(${esc(p.methode)})</i>`:""}</p>
     ${p.marche!=null?`<p class="note" style="margin:0">Pour comparer, le marché (DraftKings, sans marge) donne ${pct(p.marche*100)}.</p>`:""}
@@ -1159,11 +1186,11 @@ function renderParis(){
   const staked=done.filter(b=>b.statut!=="rembourse").reduce((s,b)=>s+(b.mise_eur||0),0),gain=round2(bk-BK.depart);
   $("#bkTiles").innerHTML=`<div class="tile ${gain>0?"hit":gain<0?"miss":""}"><span class="k">Bankroll</span><span class="v">${eur(bk)}</span><span class="s">départ ${eur(BK.depart)} · ${gain>=0?"+":""}${eur(gain)}</span></div>
     <div class="tile"><span class="k">1 % de mise</span><span class="v">${eur(miseEur(1))}</span><span class="s">palier ${eur(palier(bk))}</span></div>
-    <div class="tile"><span class="k">Bilan</span><span class="v">${done.filter(b=>b.statut==="gagne").length} – ${done.filter(b=>b.statut==="perdu").length}</span><span class="s">gagnés – perdus · rendement ${staked?pct(gain/staked*100):"—"}</span></div>
+    <div class="tile"><span class="k">Bilan</span><span class="v">${done.filter(b=>b.statut==="gagne").length} – ${done.filter(b=>b.statut==="perdu").length}</span><span class="s">gagnés – perdus · rendement ${staked?pct(gain/staked*100):"—"}${(()=>{const v=done.filter(b=>b.clv!=null);return v.length?` · clôture ${v.reduce((t,b)=>t+b.clv,0)/v.length>0?"+":""}${pct(v.reduce((t,b)=>t+b.clv,0)/v.length*100)}`:""})()}</span></div>
     <div class="tile"><span class="k">En attente</span><span class="v">${wait.length}</span><span class="s">${eur(wait.reduce((s,b)=>s+(b.mise_eur||0),0))} misés</span></div>`;
   $("#b-new").hidden=!S.db;
   if(!S.db){$("#betList").innerHTML=emptyHTML("Disponible sur la page claude.ai","Ouverte en fichier, la page ne peut pas enregistrer tes paris.",false);return}
-  $("#betList").innerHTML=bets.length?`<div class="tbl-wrap"><table class="list-match"><thead><tr><th>Date</th><th class="l">Pari</th><th>Mise</th><th>Cote</th><th>Résultat</th><th>Gain</th><th></th></tr></thead><tbody>${bets.map(b=>`<tr><td>${b.debut?frWhen(b):dshort(String(b.cree).slice(0,10))}</td><td class="l">${esc(b.intitule)}${b.note?`<br><span class="note">${esc(b.note)}</span>`:""}</td><td>${eur(b.mise_eur)} <span class="note">(${pct(b.mise_pct)})</span></td><td>${odds(b.cote)}</td><td>${RESULT_CHIP[b.statut]||'<span class="chip warn">En attente</span>'}</td><td class="big">${b.gain==null?"—":(b.gain>0?"+":"")+eur(b.gain)}</td><td>${RESULT_CHIP[b.statut]?"":S.pendingBetDel===b.id?`<div class="row"><button class="btn small danger" data-act="betDelYes" data-id="${esc(b.id)}">Confirmer</button><button class="btn small" data-act="betDelNo">Annuler</button></div>`:`<button class="btn small danger" data-act="betDelAsk" data-id="${esc(b.id)}">Supprimer</button>`}</td></tr>`).join("")}</tbody></table></div>`:
+  $("#betList").innerHTML=bets.length?`<div class="tbl-wrap"><table class="list-match"><thead><tr><th>Date</th><th class="l">Pari</th><th>Mise</th><th>Cote</th><th>Résultat</th><th>Gain</th><th title="Ta cote comparée à la cote juste du marché juste avant le match">Clôture</th><th></th></tr></thead><tbody>${bets.map(b=>`<tr><td>${b.debut?frWhen(b):dshort(String(b.cree).slice(0,10))}</td><td class="l">${esc(b.intitule)}${b.hors_strategie?' <span class="chip warn">hors stratégie</span>':""}${b.note?`<br><span class="note">${esc(b.note)}</span>`:""}</td><td>${eur(b.mise_eur)} <span class="note">(${pct(b.mise_pct)})</span></td><td>${odds(b.cote)}</td><td>${RESULT_CHIP[b.statut]||'<span class="chip warn">En attente</span>'}</td><td class="big">${b.gain==null?"—":(b.gain>0?"+":"")+eur(b.gain)}</td><td>${clvChip(b.clv)}</td><td>${RESULT_CHIP[b.statut]?"":S.pendingBetDel===b.id?`<div class="row"><button class="btn small danger" data-act="betDelYes" data-id="${esc(b.id)}">Confirmer</button><button class="btn small" data-act="betDelNo">Annuler</button></div>`:`<button class="btn small danger" data-act="betDelAsk" data-id="${esc(b.id)}">Supprimer</button>`}</td></tr>`).join("")}</tbody></table></div>`:
     emptyHTML("Aucun pari","Choisis un pronostic dans l'onglet Value et touche « Je joue », ou ajoute un pari à la main.",false);
 }
 
