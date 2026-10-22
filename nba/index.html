@@ -163,6 +163,10 @@ h2.sec{font-family:var(--f-display);font-weight:700;font-size:1.35rem;letter-spa
 .soir{display:flex;flex-direction:column;gap:8px}
 .soir .g{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .soir .g b{font-family:var(--f-display);font-size:1.05rem;letter-spacing:.03em;margin-right:4px}
+.soir details.nuit{border-top:1px solid var(--line);padding-top:8px}
+.soir details.nuit>summary{cursor:pointer;padding:4px 0;list-style-position:inside}
+.soir details.nuit>summary b{font-family:var(--f-display);font-size:1.15rem;letter-spacing:.03em}
+.soir details.nuit .g{margin-top:8px}
 #pronoInput{min-height:3.4rem;resize:vertical}
 .val-ok{color:var(--over);font-weight:600}.val-ko{color:var(--under);font-weight:600}
 @media (prefers-reduced-motion:no-preference){nav.tabs button{transition:color .15s,border-color .15s}}
@@ -948,16 +952,24 @@ function marketProba(pm,type,equipe,ligne,sens){
   }
   return null;
 }
-function progMatch(equipe){const t=findTeam(equipe);return t&&S.programme?(S.programme.matchs||[]).find(m=>m.dom===t||m.ext===t):null}
+// Nuit NBA en cours : la date de Paris, sauf avant 8h où les matchs de la veille ne sont pas encore tous finis
+function nuitCourante(){const d=new Date(),p=tzParts(TZ_FR,d);return ymdIn(TZ_FR,+p.hour<8?new Date(d.getTime()-864e5):d)}
+function upcoming(){const n=nuitCourante();return(S.programmes||[]).filter(pg=>pg.nuit>=n).sort((a,b)=>a.nuit.localeCompare(b.nuit))}
+function nuitLabel(n){const c=nuitCourante(),dd=dayN(n)-dayN(c);return dd===0?"Ce soir":dd===1?"Demain soir":`Nuit du ${dshort(n)}`}
+function progMatch(equipe,nuit){const t=findTeam(equipe);if(!t)return null;for(const pg of upcoming()){if(nuit&&pg.nuit!==nuit)continue;const m=(pg.matchs||[]).find(m=>m.dom===t||m.ext===t);if(m)return m}return null}
 CLAUDE_TOOLS.push(
-  {name:"programme_soir",description:"Matchs de la prochaine nuit NBA : heure de Paris, équipes, cotes DraftKings (bookmaker américain) du vainqueur, du handicap et du total avec les probabilités sans marge, et la liste des blessés avec leur statut (Out, Day-To-Day…).",
-   execute(){chatStatus("Claude lit le programme de ce soir…");const pg=S.programme;if(!pg)throw new Error("Pas encore de programme pour ce soir dans la base.");
-     return{nuit_nba:pg.nuit,mis_a_jour:pg.maj,matchs:(pg.matchs||[]).map(m=>({match:m.id,heure_paris:frWhen(m),exterieur:m.ext,domicile:m.dom,cotes_draftkings:m.cotes,probabilites_sans_marge:m.proba,blesses:(m.blessures||[]).map(b=>`${b.equipe} ${b.nom} : ${b.statut}${b.blessure?" ("+b.blessure+")":""}`)}))}}},
-  {name:"proba_marche",description:"Probabilité donnée par le marché (DraftKings, marge retirée) pour un pari sur le match entier de ce soir : type victoire (equipe), handicap (equipe, ligne ajoutée à son score, ex. -3.5) ou total_match (sens plus ou moins, ligne). Sur une autre ligne que DraftKings, la probabilité est ajustée (approximation).",
-   inputSchema:{type:"object",properties:{type:{type:"string",enum:["victoire","handicap","total_match"]},equipe:{type:"string"},ligne:{type:"number"},sens:{type:"string",enum:["plus","moins"]}},required:["type"]},
-   execute(i){chatStatus("Claude calcule la probabilité du marché…");const pm=progMatch(i.equipe||"");
-     if(!pm)throw new Error("Match introuvable dans le programme de ce soir : donne une équipe qui joue ce soir.");
-     const r=marketProba(pm,i.type,findTeam(i.equipe||""),i.ligne,i.sens);if(!r)throw new Error("Pas de cote DraftKings pour ce pari.");
+  {name:"programme_soir",description:"Matchs des prochaines nuits NBA (ce soir, demain, après-demain) : heure de Paris, équipes, cotes DraftKings (bookmaker américain) du vainqueur, du handicap et du total avec les probabilités sans marge quand elles sont publiées, et les blessés avec leur statut (Out, Day-To-Day…). Option nuit (AAAA-MM-JJ) pour une seule nuit.",
+   inputSchema:{type:"object",properties:{nuit:{type:"string",description:"Nuit NBA AAAA-MM-JJ (facultatif)"}}},
+   execute(i){chatStatus("Claude lit le programme des prochaines nuits…");const pgs=upcoming().filter(pg=>!i.nuit||pg.nuit===String(i.nuit));
+     if(!pgs.length)throw new Error("Pas de programme pour cette nuit dans la base.");
+     const build=withInj=>({nuits:pgs.map(pg=>({nuit_nba:pg.nuit,quand:nuitLabel(pg.nuit),mis_a_jour:pg.maj,matchs:(pg.matchs||[]).map(m=>({match:m.id,heure_paris:frWhen(m),exterieur:m.ext,domicile:m.dom,cotes_draftkings:m.cotes||"pas encore publiées",probabilites_sans_marge:m.proba||null,
+       ...(withInj?{blesses:(m.blessures||[]).map(b=>`${b.equipe} ${b.nom} : ${b.statut}${b.blessure?" ("+b.blessure+")":""}`)}:{})}))}))});
+     const full=build(true);return JSON.stringify(full).length<30000?full:{...build(false),note:"Blessés retirés pour la taille : appelle programme_soir avec nuit pour les avoir."}}},
+  {name:"proba_marche",description:"Probabilité donnée par le marché (DraftKings, marge retirée) pour un pari sur le match entier d'une des prochaines nuits : type victoire (equipe), handicap (equipe, ligne ajoutée à son score, ex. -3.5) ou total_match (sens plus ou moins, ligne). Sur une autre ligne que DraftKings, la probabilité est ajustée (approximation).",
+   inputSchema:{type:"object",properties:{type:{type:"string",enum:["victoire","handicap","total_match"]},equipe:{type:"string"},nuit:{type:"string",description:"Nuit NBA AAAA-MM-JJ du match"},ligne:{type:"number"},sens:{type:"string",enum:["plus","moins"]}},required:["type"]},
+   execute(i){chatStatus("Claude calcule la probabilité du marché…");const pm=progMatch(i.equipe||"",i.nuit?String(i.nuit):null);
+     if(!pm)throw new Error("Match introuvable dans le programme des prochaines nuits : donne une équipe qui joue et la nuit du match.");
+     const r=marketProba(pm,i.type,findTeam(i.equipe||""),i.ligne,i.sens);if(!r)throw new Error("Les cotes DraftKings de ce match ne sont pas encore publiées : estime la probabilité toi-même avec la base.");
      return{match:pm.id,probabilite:Math.round(r.p*1000)/1000,methode:r.methode,ligne_draftkings:{handicap_domicile:pm.cotes.ecartDom,total:pm.cotes.total}}}});
 const EVAL_TOOLS=["programme_soir","proba_marche","chercher_joueurs","stats_joueur","quarts_joueur","stats_equipe","details_match"];
 function toolsFor(names){const list=names?CLAUDE_TOOLS.filter(t=>names.includes(t.name)):CLAUDE_TOOLS;return list.slice(0,S.toolMax||list.length)}
@@ -965,10 +977,10 @@ function evalPrompt(q){
   const now=new Intl.DateTimeFormat("fr-FR",{timeZone:TZ_FR,weekday:"long",day:"numeric",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit"}).format(new Date());
   return[
     "Tu évalues un pronostic de paris sportifs NBA pour l'onglet Value de « Base de données NBA 2026-27 ». L'utilisateur parie sur Winamax et raisonne en heure de Paris.",
-    `Nous sommes le ${now} (heure de Paris). Prochaine nuit NBA dans la base : ${S.programme?S.programme.nuit:"inconnue"}.`,
+    `Nous sommes le ${now} (heure de Paris). Nuits NBA au programme : ${upcoming().map(pg=>`${pg.nuit} (${nuitLabel(pg.nuit).toLowerCase()})`).join(", ")||"aucune"}.`,
     `Pronostic de l'utilisateur : « ${q} »`,
     "1. Trouve le match concerné avec programme_soir. Si le pronostic ne porte sur aucun match du programme, ou s'il est trop vague pour être corrigé, réponds {\"erreur\": \"explication courte en français\"}.",
-    "2. Victoire, handicap ou total du match entier : appelle proba_marche et reprends sa probabilité telle quelle (fiabilite « marché »).",
+    "2. Victoire, handicap ou total du match entier : appelle proba_marche (avec la nuit du match) et reprends sa probabilité telle quelle (fiabilite « marché »). Si les cotes du match ne sont pas encore publiées, estime-la avec la base et mets fiabilite « faible » ou « moyenne ».",
     "3. Autre pronostic (stats d'un joueur ou d'une équipe, quart-temps, mi-temps, premier panier…) : estime la probabilité avec la base (stats_joueur, quarts_joueur, stats_equipe, details_match) en tenant compte des minutes, du lieu, de l'adversaire, du repos et des blessés de ce soir (programme_soir). Une ligne de bookmaker est en général proche de 50 % : avec peu de matchs, ne t'en éloigne pas beaucoup. fiabilite : « faible » sous 5 matchs utiles, « moyenne » de 5 à 14, « bonne » à partir de 15.",
     "4. Mise en % de la bankroll, une valeur parmi 0.5, 1, 1.5, 2, 2.5, 3 : fiabilité faible → 0.5 ; moyenne → 1 (1.5 si probabilité ≥ 65 %) ; bonne ou marché → 1.5 ou 2 selon la probabilité ; 2.5 ou 3 seulement si probabilité ≥ 70 % et fiabilité bonne ou marché ; probabilité sous 40 % → 0.5 au plus.",
     "5. Condition pour la correction automatique, un de ces types : stat_joueur {joueur (nom exact de la base), stat (pts, reb, ast, stl, blk, tp = 3 pts réussis, tpa, tov, fgm, fga, ftm, fta, oreb, dreb, pf, pm, min, pra, pr, pa, ra, sb, dd = double-double, td = triple-double), sens (plus|moins), ligne, periode} ; victoire {equipe} ; handicap {equipe, ligne} ; total_match {sens, ligne, periode} ; total_equipe {equipe, sens, ligne, periode} ; premier_panier {joueur} ; premiers_points {equipe} ; autre {description}. periode : match, q1, q2, q3, q4, h1 ou h2. Prolongations comprises pour match et h2. Pour un double-double : stat dd, sens plus, ligne 0.5.",
@@ -986,7 +998,7 @@ function checkCard(r,q){
   if(c.periode&&!PERIODES.includes(c.periode))c.periode="match";
   if(c.equipe)c.equipe=findTeam(c.equipe)||c.equipe;
   let p=Math.min(0.99,Math.max(0.01,Number(r.probabilite)||0.5)),fiab=["marché","bonne","moyenne","faible"].includes(r.fiabilite)?r.fiabilite:"faible",methode=null;
-  const pm=(S.programme&&S.programme.matchs||[]).find(m=>m.ext===ext&&m.dom===dom);
+  const pg=(S.programmes||[]).find(x=>x.nuit===r.nuit),pm=pg&&(pg.matchs||[]).find(m=>m.ext===ext&&m.dom===dom);
   // Victoire, handicap, total du match entier : la probabilité du marché, calculée ici
   if(pm&&["victoire","handicap","total_match"].includes(c.type)&&(c.periode||"match")==="match"){const mk=marketProba(pm,c.type,c.equipe,c.ligne,c.sens);if(mk){p=mk.p;fiab="marché";methode=mk.methode}}
   const mise=BK.mises.reduce((a,v)=>Math.abs(v-r.mise_pct)<Math.abs(a-r.mise_pct)?v:a,1);
@@ -1055,11 +1067,13 @@ function renderValue(){
   $("#pronoForm").hidden=!!off;
   $("#pronoBtn").disabled=VAL.busy;$("#pronoStop").hidden=!VAL.busy;
   $("#pronoMsg").textContent=off||VAL.status||VAL.msg;
-  const pg=S.programme;
-  $("#soirChips").innerHTML=off?"":!pg?'<p class="note">Le programme de ce soir arrive avec le remplissage du matin.</p>':
-    `<p class="note" style="margin:0">Ce soir (nuit NBA du ${dshort(pg.nuit)}) : touche un pari pour le préparer, puis « Évaluer avec Claude ».</p>`+
-    (pg.matchs||[]).map(m=>{const c=m.cotes||{},L=x=>String(x).replace(".",","),ch=q=>`<button type="button" class="chip-q" data-act="pronoFill" data-q="${esc(q)}">${esc(q)}</button>`;
-      return`<div class="g"><b>${m.ext} @ ${m.dom}</b><span class="note">${esc(frWhen(m))}</span>${ch(`${m.dom} gagne contre ${m.ext}`)}${ch(`${m.ext} gagne contre ${m.dom}`)}${c.total!=null?ch(`Plus de ${L(c.total)} points dans ${m.ext}-${m.dom}`)+ch(`Moins de ${L(c.total)} points dans ${m.ext}-${m.dom}`):""}${c.ecartDom!=null?ch(`${m.dom} ${c.ecartDom>0?"+":""}${L(c.ecartDom)} contre ${m.ext}`):""}</div>`}).join("");
+  const pgs=upcoming();
+  $("#soirChips").innerHTML=off?"":!pgs.length?'<p class="note">Le programme des prochaines nuits arrive avec le remplissage du matin.</p>':
+    `<p class="note" style="margin:0">Touche un pari pour le préparer, puis « Évaluer avec Claude ». La cote juste est sans marge : un bookmaker paie toujours un peu moins, et un pari n'est value que si la cote Winamax dépasse la cote juste.</p>`+
+    pgs.map((pg,k)=>{const sansCotes=(pg.matchs||[]).every(m=>!m.cotes);
+      return`<details class="nuit"${k===0?" open":""}><summary><b>${esc(nuitLabel(pg.nuit))}</b> <span class="note">${nuitLabel(pg.nuit).startsWith("Nuit")?"":`nuit NBA du ${dshort(pg.nuit)} · `}${(pg.matchs||[]).length} match${(pg.matchs||[]).length>1?"s":""}${sansCotes?" · cotes pas encore publiées":""}</span></summary>`+
+      (pg.matchs||[]).map(m=>{const c=m.cotes||{},L=x=>String(x).replace(".",","),ch=q=>`<button type="button" class="chip-q" data-act="pronoFill" data-q="${esc(q)}">${esc(q)}</button>`,quand=nuitLabel(pg.nuit).toLowerCase();
+        return`<div class="g"><b>${m.ext} @ ${m.dom}</b><span class="note">${esc(frWhen(m))}</span>${ch(`${m.dom} gagne contre ${m.ext} ${quand}`)}${ch(`${m.ext} gagne contre ${m.dom} ${quand}`)}${c.total!=null?ch(`Plus de ${L(c.total)} points dans ${m.ext}-${m.dom} ${quand}`)+ch(`Moins de ${L(c.total)} points dans ${m.ext}-${m.dom} ${quand}`):""}${c.ecartDom!=null?ch(`${m.dom} ${c.ecartDom>0?"+":""}${L(c.ecartDom)} contre ${m.ext} ${quand}`):""}</div>`}).join("")+`</details>`}).join("");
   const pr=(S.pronos||[]).slice().sort((a,b)=>String(b.cree).localeCompare(String(a.cree)));
   const open=pr.filter(p=>!p.decision&&!p.resultat);
   $("#pronoList").innerHTML=open.length?`<h2 class="sec">À décider</h2>`+open.map(pickCard).join(""):(off?"":emptyHTML("Aucun pronostic en attente","Écris un pronostic ci-dessus, ou touche un pari de ce soir : Claude donne sa probabilité, la cote juste et la mise.",false));
@@ -1213,7 +1227,7 @@ async function connect(){
   $("#exportBtn").hidden=!S.downloads;$("#importBtn").hidden=!S.canWrite;$("#dataTools").hidden=!S.downloads&&!S.canWrite;
   db.collection("paris").onSnapshot(snap=>{S.paris=snap.docs.map(d=>Object.assign({id:d.id},d.data()));if(["value","paris"].includes(S.tab))renderCurrent()},()=>{});
   db.collection("pronostics").onSnapshot(snap=>{S.pronos=snap.docs.map(d=>Object.assign({id:d.id},d.data()));if(S.tab==="value")renderValue()},()=>{});
-  db.collection("programme").orderBy("nuit","desc").limit(1).onSnapshot(snap=>{S.programme=snap.docs.length?snap.docs[0].data():null;if(S.tab==="value")renderValue()},()=>{});
+  db.collection("programme").orderBy("nuit","desc").limit(6).onSnapshot(snap=>{S.programmes=snap.docs.map(d=>d.data());if(S.tab==="value")renderValue()},()=>{});
   db.doc("reglages/bankroll").onSnapshot(d=>{if(d.exists)Object.assign(BK,d.data());if(["value","paris"].includes(S.tab))renderCurrent()},()=>{});
   db.collection("matchs").onSnapshot(snap=>{
     S.matches=snap.docs.map(d=>Object.assign({id:d.id},d.data()));S.loaded=true;

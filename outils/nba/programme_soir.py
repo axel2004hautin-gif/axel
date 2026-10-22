@@ -1,14 +1,15 @@
-"""Programme d'une nuit NBA à venir, pour l'onglet Value de la Base de données NBA 2026-27.
+"""Programme des prochaines nuits NBA, pour l'onglet Value de la Base de données NBA 2026-27.
 
-Usage : programme_soir.py <dossier de travail> [<dossier de la base>] [AAAAMMJJ]
-  Sans date : la nuit NBA de ce soir (date de Paris du jour).
+Usage : programme_soir.py <dossier de travail> [<dossier de la base>] [AAAAMMJJ] [--nuits N]
+  Sans date : à partir de la nuit NBA de ce soir (date de Paris du jour). N nuits (3 par défaut) :
+  ce soir, demain et après-demain. Les cotes n'apparaissent en général qu'un à deux jours avant le match.
   <dossier de la base> (facultatif) contient matchs/ : les noms des blessés y reprennent l'orthographe de la base.
 
 Pour chaque match, ESPN donne les cotes du bookmaker américain DraftKings (vainqueur, handicap, total) pour les deux
 côtés de chaque pari. On en retire la marge du bookmaker pour obtenir la probabilité estimée par le marché.
 ESPN donne aussi la liste des blessés et leur statut.
 
-Écrit <dossier de travail>/programme-<AAAAMMJJ>/programme/<AAAA-MM-JJ>.json, document de la collection « programme ».
+Écrit <dossier de travail>/programme/<AAAA-MM-JJ>.json pour chaque nuit, documents de la collection « programme ».
 """
 import datetime, glob, json, os, re, subprocess, sys, unicodedata, zoneinfo
 
@@ -35,16 +36,27 @@ def sans_marge(a, b):
 
 
 def main():
-    work = sys.argv[1]
-    base_dir = sys.argv[2] if len(sys.argv) > 2 and not re.fullmatch(r"\d{8}", sys.argv[2]) else None
-    night = next((a for a in sys.argv[2:] if re.fullmatch(r"\d{8}", a)), datetime.datetime.now(PARIS).strftime("%Y%m%d"))
-    date_ny = f"{night[:4]}-{night[4:6]}-{night[6:]}"
+    args = sys.argv[1:]
+    n_nuits = 3
+    if "--nuits" in args:
+        i = args.index("--nuits"); n_nuits = int(args[i + 1]); del args[i:i + 2]
+    work = args[0]
+    base_dir = args[1] if len(args) > 1 and not re.fullmatch(r"\d{8}", args[1]) else None
+    start = next((a for a in args[1:] if re.fullmatch(r"\d{8}", a)), datetime.datetime.now(PARIS).strftime("%Y%m%d"))
+    first = datetime.date(int(start[:4]), int(start[4:6]), int(start[6:]))
     known = {}
     if base_dir:
         for f in glob.glob(os.path.join(base_dir, "matchs", "*.json")):
             for p in json.load(open(f)).get("joueurs", []):
                 known.setdefault(norm(p["nom"]), p["nom"])
+    out = os.path.join(work, "programme")
+    os.makedirs(out, exist_ok=True)
+    for k in range(n_nuits):
+        nuit(out, (first + datetime.timedelta(days=k)).strftime("%Y%m%d"), known)
 
+
+def nuit(out, night, known):
+    date_ny = f"{night[:4]}-{night[4:6]}-{night[6:]}"
     sb = curl_json(f"https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates={night}")
     matchs = []
     for e in sb.get("events", []):
@@ -76,10 +88,8 @@ def main():
         matchs.append(m)
 
     doc = {"nuit": date_ny, "maj": datetime.datetime.now(datetime.timezone.utc).isoformat(), "source": "espn.com (cotes DraftKings)", "matchs": matchs}
-    out = os.path.join(work, f"programme-{night}", "programme")
-    os.makedirs(out, exist_ok=True)
     json.dump(doc, open(os.path.join(out, f"{date_ny}.json"), "w"), ensure_ascii=False)
-    print(f"Nuit NBA du {date_ny} : {len(matchs)} match(s)")
+    print(f"Nuit NBA du {date_ny} : {len(matchs)} match(s), {sum(1 for m in matchs if m['cotes'])} avec cotes")
     for m in matchs:
         d = datetime.datetime.fromisoformat(m["debut"].replace("Z", "+00:00")).astimezone(PARIS)
         c, p = m["cotes"] or {}, m["proba"] or {}
