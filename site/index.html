@@ -435,6 +435,13 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 .champ-couleur input { padding-left: 32px !important; }
 .bouton-nuancier { justify-self: start; font-size: .88rem; }
 .piece-form .champs-grille > * { align-self: start; }
+.remplissage { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; padding: 10px 12px; border-radius: 10px; background: var(--marine-doux); color: var(--encre); font-size: .9rem; line-height: 1.4; }
+.remplissage.erreur { background: var(--erreur-doux); }
+.remplissage .lien-discret { padding: 0; font-size: .9rem; }
+.remplissage.en-cours .remplissage-texte::before { content: ""; display: inline-block; width: 12px; height: 12px; margin-right: 8px; vertical-align: -1px; border: 2px solid var(--marine); border-right-color: transparent; border-radius: 50%; }
+@media (prefers-reduced-motion: no-preference) { .remplissage.en-cours .remplissage-texte::before { animation: tourne .8s linear infinite; } }
+@keyframes tourne { to { transform: rotate(360deg); } }
+.champs-tache .auto-rempli:not(.en-erreur) { border-color: #e3c56b; background: var(--or-doux); }
 .nuancier { display: grid; gap: 12px; padding: 14px; border: 1px solid var(--trait); border-radius: 12px; background: var(--trait-doux); }
 .nuancier-groupes { display: flex; flex-wrap: wrap; gap: 6px; }
 .nuancier-groupe { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid var(--trait); border-radius: 999px; background: #fff; color: var(--encre); font-weight: 600; font-size: .85rem; }
@@ -1108,21 +1115,22 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
       </div>
     </div>
     <div class="champs-grille">
+      <label class="titre-champ large">Lien sur le site de la marque<input type="url" id="pi-lien" maxlength="500" placeholder="Colle l'adresse de la page de l'article, https://…"></label>
+      <div class="remplissage large" id="pi-remplissage" aria-live="polite" hidden><span class="remplissage-texte" id="pi-remplissage-texte"></span><button class="lien-discret" type="button" id="pi-remplissage-action" hidden></button></div>
+      <label class="titre-champ">Prix<input type="text" id="pi-prix" inputmode="decimal" maxlength="12" placeholder="Ex. : 79,90"></label>
+      <label class="titre-champ">Référence<input type="text" id="pi-ref" maxlength="60"></label>
       <label class="titre-champ">Marque<input type="text" id="pi-marque" maxlength="60" list="marques"></label>
       <label class="titre-champ">Catégorie<select id="pi-categorie"></select></label>
       <label class="titre-champ large">Modèle<input type="text" id="pi-modele" maxlength="120" placeholder="Ex. : Jean 502 Taper"></label>
       <div class="titre-champ"><label for="pi-couleur">Couleur</label><span class="champ-couleur"><span class="pastille-couleur" id="pi-pastille"></span><input type="text" id="pi-couleur" maxlength="60" list="couleurs" placeholder="Ex. : Bleu marine"></span>
         <button class="lien-discret bouton-nuancier" type="button" id="pi-nuancier-bouton" aria-expanded="false" aria-controls="pi-nuancier">Choisir dans le nuancier</button></div>
-      <label class="titre-champ">Matière<input type="text" id="pi-matiere" maxlength="120" list="matieres" placeholder="Ex. : 100 % coton"></label>
+      <label class="titre-champ">Coupe<input type="text" id="pi-coupe" maxlength="120" placeholder="Ex. : slim, jambe droite"></label>
       <div class="nuancier large" id="pi-nuancier" hidden>
         <div class="nuancier-groupes" id="pi-groupes" role="group" aria-label="Familles de couleurs"></div>
         <div class="nuancier-nuances" id="pi-nuances" role="group" aria-label="Nuances"></div>
         <p class="aide">Une nuance qui n'y est pas : tape-la dans le champ Couleur.</p>
       </div>
-      <label class="titre-champ">Coupe<input type="text" id="pi-coupe" maxlength="120" placeholder="Ex. : slim, jambe droite"></label>
-      <label class="titre-champ">Prix<input type="text" id="pi-prix" inputmode="decimal" maxlength="12" placeholder="Ex. : 79,90"></label>
-      <label class="titre-champ">Référence<input type="text" id="pi-ref" maxlength="60"></label>
-      <label class="titre-champ large">Lien sur le site de la marque<input type="url" id="pi-lien" maxlength="500" placeholder="Colle l'adresse de la page de l'article, https://…"></label>
+      <label class="titre-champ large">Matière<input type="text" id="pi-matiere" maxlength="120" list="matieres" placeholder="Ex. : 100 % coton"></label>
       <div class="titre-champ large">Repères<div class="reperes-choix" id="pi-reperes"></div></div>
       <label class="titre-champ large">Note<textarea id="pi-note" maxlength="500" rows="2" placeholder="Ex. : tailles S à XL, se vend bien"></textarea></label>
     </div>
@@ -2632,6 +2640,227 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     $("pi-retirer").hidden = !modifiable || !vue;
   }
   const libererPhotosFiche = () => { photosFiche.forEach(f => { if (f.url) URL.revokeObjectURL(f.url); }); photosFiche = []; photoVue = 0; };
+  // ----- remplir la fiche toute seule : depuis le lien, puis Claude avec les photos -----
+  // Les champs remplis automatiquement (fond jaune) peuvent être remplacés par un meilleur remplissage,
+  // jamais ceux que l'on a tapés soi-même.
+  const CHAMPS_AUTO = [["marque", "pi-marque", 60], ["categorie", "pi-categorie", 0], ["modele", "pi-modele", 120], ["couleur", "pi-couleur", 60],
+    ["coupe", "pi-coupe", 120], ["matiere", "pi-matiere", 120], ["ref", "pi-ref", 60]];
+  const NOM_CHAMP = { marque: "marque", categorie: "catégorie", modele: "modèle", couleur: "couleur", coupe: "coupe", matiere: "matière", ref: "référence" };
+  let champsAuto = new Set();
+  function poserAuto(cle, valeur) {
+    const [, id, max] = CHAMPS_AUTO.find(c => c[0] === cle);
+    const champ = $(id);
+    const v = String(valeur || "").trim().slice(0, max || 60);
+    if (!v || (cle === "categorie" && !NOM_CATEGORIE[v])) return false;
+    if (champ.value.trim() && !champsAuto.has(id)) return false;   // tapé à la main : on n'y touche pas
+    if (champ.value === v) return false;
+    champ.value = v;
+    champsAuto.add(id);
+    champ.classList.add("auto-rempli");
+    return true;
+  }
+  function oublierAuto() {
+    champsAuto.forEach(id => $(id).classList.remove("auto-rempli"));
+    champsAuto = new Set();
+  }
+  $("piece-form").addEventListener("input", e => {
+    if (e.isTrusted && champsAuto.delete(e.target.id)) e.target.classList.remove("auto-rempli");
+  });
+
+  // Le lien seul : la marque (le site), et dans l'adresse, la catégorie, le modèle, la couleur et la coupe.
+  const MARQUES_SITES = [
+    [/tommy-?jeans/, "Tommy Jeans"], [/tommy|hilfiger/, "Tommy Hilfiger"], [/teddy-?smith/, "Teddy Smith"], [/levi/, "Levi's"],
+    [/calvin-?klein/, "Calvin Klein"], [/jack-?(and-?)?jones/, "Jack & Jones"], [/pepe-?jeans/, "Pepe Jeans"], [/g-?star/, "G-Star Raw"],
+    [/ralph-?lauren/, "Ralph Lauren"], [/hugo-?boss/, "BOSS"], [/new-?balance/, "New Balance"], [/the-?north-?face/, "The North Face"],
+  ];
+  const COULEURS_ANGLAIS = {
+    "black": "Noir", "white": "Blanc", "middle white": "Blanc", "optic white": "Blanc", "off white": "Blanc cassé", "offwhite": "Blanc cassé", "ivory": "Ivoire",
+    "cream": "Crème", "ecru": "Écru", "grey": "Gris", "gray": "Gris", "light grey": "Gris clair", "light gray": "Gris clair", "dark grey": "Anthracite",
+    "dark gray": "Anthracite", "heather grey": "Gris chiné", "grey melange": "Gris chiné", "grey mel": "Gris chiné", "charcoal": "Gris charbon",
+    "navy": "Bleu marine", "navy blue": "Bleu marine", "dark navy": "Bleu nuit", "blue": "Bleu", "light blue": "Bleu clair", "sky blue": "Bleu ciel",
+    "royal blue": "Bleu roi", "dark blue": "Bleu marine", "raw": "Bleu brut", "rinse": "Bleu brut", "stone": "Bleu stone", "green": "Vert",
+    "dark green": "Vert sapin", "bottle green": "Vert bouteille", "khaki": "Kaki", "olive": "Vert olive", "sage": "Vert sauge", "mint": "Vert menthe",
+    "red": "Rouge", "burgundy": "Bordeaux", "wine": "Lie de vin", "pink": "Rose", "yellow": "Jaune", "mustard": "Moutarde", "rust": "Rouille",
+    "brown": "Marron", "dark brown": "Chocolat", "chocolate": "Chocolat", "tan": "Camel", "sand": "Sable", "purple": "Violet", "lilac": "Lilas",
+    "lavender": "Lavande", "multicolor": "Multicolore", "multi": "Multicolore", "striped": "Rayé", "stripes": "Rayé", "check": "Carreaux", "camo": "Camouflage",
+  };
+  const COUPES = { slim: "Slim", skinny: "Skinny", regular: "Regular", loose: "Loose", ample: "Ample", oversize: "Oversize", oversized: "Oversize",
+    relaxed: "Relaxed", straight: "Droite", droit: "Droite", droite: "Droite", tapered: "Fuselée", taper: "Fuselée", boxy: "Boxy", wide: "Large", baggy: "Baggy" };
+  const MOTS_VIDES = new Set(["homme", "hommes", "men", "mens", "man", "femme", "pour", "de", "du", "des", "la", "le", "les", "en", "et", "a", "avec", "fit", "html", "htm", "fr", "products", "product", "p"]);
+  const majusculeMot = m => (m.length <= 3 && !/[aeiouy]/.test(m) ? m.toUpperCase() : /^\d/.test(m) ? m : m.charAt(0).toUpperCase() + m.slice(1));
+  function lireLien(texte) {
+    let url;
+    try { url = new URL(/^https?:\/\//i.test(texte) ? texte : "https://" + texte); } catch (_) { return null; }
+    const hote = sansAccents(url.hostname).replace(/^www\d?\./, "");
+    const segments = url.pathname.split("/").map(x => { try { return decodeURIComponent(x); } catch (_) { return x; } }).filter(Boolean);
+    const i = segments.findIndex(x => /^products?$/.test(x));
+    const segment = i >= 0 && /[a-z]{2,}/i.test(segments[i + 1] || "") ? segments[i + 1]
+      : segments.map(x => x.replace(/\.html?$/, "")).filter(x => (x.match(/[a-z]{2,}/gi) || []).length >= 2).sort((a, b) => b.length - a.length)[0] || "";
+    const r = { marque: "", categorie: "", modele: "", couleur: "", coupe: "", ref: "" };
+    // La marque : une marque déjà dans la garde-robe dont le nom est dans l'adresse, sinon les sites connus, sinon le nom du site.
+    const compact = v => sansAccents(v).replace(/[^a-z0-9]/g, "");
+    const connue = [...new Set(Object.values(pieces).map(x => x.marque).filter(Boolean))].sort((a, b) => b.length - a.length)
+      .find(m => compact(m).length >= 3 && compact(hote).includes(compact(m)));
+    const site = MARQUES_SITES.find(([re]) => re.test(hote + " " + sansAccents(segment)));
+    const nomSite = hote.split(".").slice(-2, -1)[0] || "";
+    r.marque = connue || (site && site[1]) || nomSite.split("-").map(majusculeMot).join(" ");
+    // Les mots de l'adresse : sans les codes (gardés comme référence), sans les mots vides.
+    let mots = sansAccents(segment).split(/[-_\s]+/).filter(Boolean);
+    const estCode = m => /\d/.test(m) && /^[a-z0-9]{6,}$/.test(m);
+    const code = mots.find(estCode) || segments.map(x => sansAccents(x).replace(/\.html?$/, "")).reverse().find(estCode);
+    if (code) r.ref = code.toUpperCase();
+    // Sans les mots de la marque : « sweat-tommy-jeans-noir » → « sweat noir ».
+    const motsMarque = new Set(sansAccents(r.marque).split(/[^a-z0-9]+/).filter(m => m.length > 1));
+    mots = mots.filter(m => m !== code && !MOTS_VIDES.has(m) && !motsMarque.has(m));
+    // La catégorie (« t-shirt » est coupé en deux mots dans l'adresse).
+    for (let j = 0; j < mots.length && !r.categorie; j++) {
+      for (const n of [2, 1]) {
+        const mot = mots.slice(j, j + n).join("-");
+        const cat = n <= mots.length - j ? devinerCategorie(mot) : "";
+        if (cat) { r.categorie = cat; mots.splice(j, n); break; }
+      }
+    }
+    // La couleur : les derniers mots de l'adresse.
+    for (const n of [3, 2, 1]) {
+      if (mots.length < n) continue;
+      const fin = mots.slice(-n), phrase = fin.join(" ");
+      let couleur = COULEURS_ANGLAIS[phrase] || (NUANCE.get(phrase) || {}).nom || "";
+      // Une couleur en français suivie d'une précision (« vert nacre ») est gardée telle quelle.
+      if (!couleur && n > 1 && !COULEURS_ANGLAIS[fin[0]] && (COULEUR_EN_TETE.test(fin[0]) || NUANCE.has(fin[0]))) couleur = majuscule(phrase);
+      if (couleur) { r.couleur = couleur; mots = mots.slice(0, -n); break; }
+    }
+    // La coupe.
+    const coupe = mots.find(m => COUPES[m]);
+    if (coupe) { r.coupe = COUPES[coupe]; mots = mots.filter(m => !COUPES[m] || m === "taper"); }
+    // Le modèle : le reste, mis en forme (« t mountain mc » → « T-Mountain MC »).
+    const parts = [];
+    for (let j = 0; j < mots.length; j++) {
+      if (mots[j].length === 1 && /[a-z]/.test(mots[j]) && mots[j + 1]) { parts.push(mots[j].toUpperCase() + "-" + majusculeMot(mots[j + 1])); j++; }
+      else parts.push(majusculeMot(mots[j]));
+    }
+    r.modele = parts.join(" ");
+    return r;
+  }
+  let dernierLienLu = "";
+  function remplirDepuisLien() {
+    const texte = $("pi-lien").value.trim();
+    if (!texte || texte === dernierLienLu || !peutModifierPieces()) return;
+    dernierLienLu = texte;
+    const r = lireLien(texte);
+    if (!r) return;
+    const faits = ["marque", "categorie", "modele", "couleur", "coupe", "ref"].filter(cle => poserAuto(cle, r[cle]));
+    majFormulairePiece();
+    if (faits.length) etatRemplissage("lien", faits);
+    planifierClaude();
+  }
+  let minuterieLien = null;
+  $("pi-lien").addEventListener("input", () => { clearTimeout(minuterieLien); minuterieLien = setTimeout(remplirDepuisLien, 500); });
+  $("pi-lien").addEventListener("change", () => { clearTimeout(minuterieLien); remplirDepuisLien(); });
+
+  // Claude regarde les photos (et le lien) et remplit ce qui reste. Tout seul pour une nouvelle pièce, à la
+  // demande pour une pièce déjà enregistrée.
+  let remplissageEnCours = null, minuterieClaude = null, etatRemplir = null;
+  const listeChamps = cles => listeFr(cles.map(c => NOM_CHAMP[c]));
+  function etatRemplissage(etat, info) {
+    etatRemplir = etat;
+    const zone = $("pi-remplissage"), action = $("pi-remplissage-action");
+    const claude = !!sampleNs && peutModifierPieces();
+    let texte = "", bouton = "";
+    if (etat === "attente") {
+      texte = claude ? "Ajoute les photos et colle le lien : la fiche se remplit toute seule. Il ne restera que le prix." : "Colle le lien : la marque, la catégorie, le modèle et la couleur se remplissent tout seuls.";
+      bouton = claude && photosFiche.length ? "Remplir avec Claude" : "";
+    } else if (etat === "existante") { texte = ""; bouton = claude && photosFiche.length ? "Compléter avec Claude (champs vides)" : ""; }
+    else if (etat === "lien") {
+      texte = `Rempli depuis le lien : ${listeChamps(info)}.` + (claude && photosFiche.length ? "" : claude ? " Ajoute les photos : Claude complétera le reste." : " Vérifie avant d'enregistrer.");
+      bouton = claude && photosFiche.length && !remplissageEnCours ? "Remplir avec Claude" : "";
+    } else if (etat === "en-cours") { texte = "Claude regarde les photos et remplit la fiche…"; bouton = "Arrêter"; }
+    else if (etat === "fait") {
+      texte = info.champs.length ? `Rempli par Claude : ${listeChamps(info.champs)}. Les champs en jaune sont à vérifier.` : "Claude n'a rien trouvé de plus à remplir.";
+      if (info.remarque) texte += " " + info.remarque;
+      bouton = "Refaire";
+    } else if (etat === "erreur") { texte = info; bouton = sampleNs ? "Réessayer" : ""; }
+    zone.className = "remplissage large" + (etat === "en-cours" ? " en-cours" : etat === "erreur" ? " erreur" : "");
+    $("pi-remplissage-texte").textContent = texte;
+    action.textContent = bouton;
+    action.hidden = !bouton;
+    zone.hidden = !texte && !bouton;
+  }
+  function planifierClaude() {
+    clearTimeout(minuterieClaude);
+    if (!sampleNs || !peutModifierPieces() || pieceEditee || !photosFiche.length) { if (etatRemplir === "attente") etatRemplissage("attente"); return; }
+    minuterieClaude = setTimeout(() => remplirAvecClaude(), 900);
+  }
+  $("pi-remplissage-action").addEventListener("click", () => {
+    if (remplissageEnCours) { remplissageEnCours.abort(); return; }
+    remplirAvecClaude();
+  });
+  async function imagesPourClaude(max) {
+    const blobs = [];
+    for (const f of photosFiche.slice(0, max)) {
+      if (f.fichier) blobs.push(f.fichier);
+      else { try { const r = await fetch(srcPhoto(f.stockee)); if (r.ok) blobs.push(await r.blob()); } catch (_) { /* illisible : on passe */ } }
+    }
+    return blobs;
+  }
+  async function remplirAvecClaude() {
+    clearTimeout(minuterieClaude);
+    if (!sampleNs || !peutModifierPieces()) return;
+    if (remplissageEnCours) remplissageEnCours.abort();
+    const ctl = new AbortController();
+    remplissageEnCours = ctl;
+    const fiche = pieceEditee;
+    etatRemplissage("en-cours");
+    try {
+      const limites = await sampleNs.limits();
+      if (!limites.images) throw { code: "images_unavailable" };
+      const images = (await imagesPourClaude(Math.min(3, limites.images.maxCount)))
+        .filter(b => limites.images.mediaTypes.includes(b.type) && b.size <= limites.images.maxInputBytes);
+      if (!images.length) throw { code: "sans_photo" };
+      if (ctl.signal.aborted) throw { code: "cancelled" };
+      const val = id => $(id).value.trim();
+      const deja = CHAMPS_AUTO.filter(([, id]) => val(id) && !champsAuto.has(id)).map(([cle, id]) => `${NOM_CHAMP[cle]} : ${cle === "categorie" ? NOM_CATEGORIE[val(id)] : val(id)}`);
+      const indices = CHAMPS_AUTO.filter(([, id]) => val(id) && champsAuto.has(id)).map(([cle, id]) => `${NOM_CHAMP[cle]} : ${val(id)}`);
+      const marque = val("pi-marque");
+      const exemples = Object.values(pieces).filter(x => x.modele && (!marque || sansAccents(x.marque) === sansAccents(marque)))
+        .sort((a, b) => (b.creeLe || "").localeCompare(a.creeLe || "")).slice(0, 3)
+        .map(x => `- ${x.marque} · ${NOM_CATEGORIE[x.categorie]} · modèle « ${x.modele} » · couleur ${x.couleur || "?"} · coupe ${x.coupe || "?"} · matière ${x.matiere || "?"}`);
+      const lien = val("pi-lien");
+      const consigne = `Tu aides un vendeur du magasin de vêtements Blue Box (rayon homme) à remplir la fiche d'un article. `
+        + `Les ${images.length > 1 ? `${images.length} photos montrent` : "photo montre"} l'article.`
+        + (lien ? ` Lien de l'article sur le site de la marque : ${lien} (tu ne peux pas l'ouvrir, mais son adresse donne souvent la marque, le modèle et la couleur).` : "")
+        + (deja.length ? `\n\nDéjà rempli par le vendeur, à garder tel quel :\n${deja.join("\n")}` : "")
+        + (indices.length ? `\n\nDéduit automatiquement du lien (à corriger si les photos montrent autre chose) :\n${indices.join("\n")}` : "")
+        + (exemples.length ? `\n\nPièces déjà enregistrées, pour écrire dans le même style :\n${exemples.join("\n")}` : "")
+        + `\n\nRéponds seulement avec un objet JSON : {"marque": "", "categorie": "", "modele": "", "couleur": "", "coupe": "", "matiere": "", "remarque": ""}.`
+        + `\n- categorie : un de ces identifiants : ${CATEGORIES.map(([id]) => id).join(", ")}. Gilets et cardigans : pulls ; surchemises et blazers : vestes ; doudounes : blousons ; chinos : pantalons.`
+        + `\n- couleur : la couleur principale de l'article, écrite exactement comme une de ces nuances : ${NUANCES.map(n => n[0]).join(", ")}. Un petit imprimé sur un fond uni : la couleur du fond.`
+        + `\n- coupe : un ou deux mots (Slim, Regular, Ample, Oversize, Droite, Fuselée, Large…), seulement si elle se voit ou si le lien la donne.`
+        + `\n- matiere : seulement si une étiquette la montre ou si elle se voit sans doute possible (jean, cuir, daim, maille, velours côtelé), sinon "".`
+        + `\n- modele : le nom du modèle, comme sur le site de la marque si le lien le donne.`
+        + `\n- marque : celle du lien ou du logo visible, sinon "".`
+        + `\n- remarque : une phrase courte sur ce qui reste à vérifier, ou "".`
+        + `\nN'invente rien : un champ incertain reste "".`;
+      const r = await sampleNs.json(consigne, { images, signal: ctl.signal });
+      if (remplissageEnCours !== ctl || pieceEditee !== fiche || !$("fenetre-piece").open) return;
+      const champs = r && typeof r === "object" ? ["marque", "categorie", "modele", "couleur", "coupe", "matiere"].filter(cle => typeof r[cle] === "string" && poserAuto(cle, r[cle])) : [];
+      majFormulairePiece();
+      etatRemplissage("fait", { champs, remarque: r && typeof r.remarque === "string" ? r.remarque.trim().slice(0, 200) : "" });
+    } catch (e) {
+      if (remplissageEnCours !== ctl) return;
+      const code = e && e.code;
+      if (code === "cancelled") etatRemplissage(pieceEditee ? "existante" : "attente");
+      else if (["not_granted", "sampling_disabled", "not_declared", "capability_disabled", "capability_removed"].includes(code)) {
+        sampleNs = null;
+        etatRemplissage("erreur", "Claude n'est pas disponible ici : remplis la fiche à la main.");
+      } else if (code === "images_unavailable") etatRemplissage("erreur", "Claude ne peut pas regarder les photos ici : remplis la fiche à la main.");
+      else if (code === "sans_photo") etatRemplissage("erreur", "Les photos n'ont pas pu être lues. Ajoute-les à nouveau.");
+      else if (code === "rate_limited") etatRemplissage("erreur", "Trop de demandes pour l'instant. Réessaie dans un moment.");
+      else etatRemplissage("erreur", "Claude n'a pas pu remplir la fiche.");
+    } finally {
+      if (remplissageEnCours === ctl) remplissageEnCours = null;
+    }
+  }
+
   // ----- le nuancier -----
   let groupeNuancier = GROUPES_NUANCES[0][0];
   const groupeDe = couleur => { const t = teinteDe(couleur); const g = GROUPES_NUANCES.find(([, , familles]) => familles.includes(t)); return g ? g[0] : null; };
@@ -2674,6 +2903,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     const b = e.target.closest("[data-nuance]");
     if (!b) return;
     $("pi-couleur").value = b.dataset.nuance;
+    if (champsAuto.delete("pi-couleur")) $("pi-couleur").classList.remove("auto-rempli");
     effacerErreurPiece();
     majFormulairePiece();
     montrerNuancier(false);
@@ -2697,6 +2927,10 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     pieceEditee = x;
     champsRepris = {};
     libererPhotosFiche();
+    oublierAuto();
+    dernierLienLu = x && x.lien ? x.lien : "";
+    clearTimeout(minuterieClaude);
+    if (remplissageEnCours) { remplissageEnCours.abort(); remplissageEnCours = null; }
     photosFiche = x ? x.photos.map(v => ({ stockee: v })) : [];
     const modifiable = peutModifierPieces();
     $("pi-titre").textContent = !x ? "Ajouter une pièce" : modifiable ? "Modifier la pièce" : [x.marque, x.modele].filter(Boolean).join(" · ");
@@ -2717,6 +2951,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     if (x && x.lien) $("pi-voir-lien").href = x.lien;
     [...$("piece-form").elements].forEach(el => { el.disabled = !modifiable; });
     rendrePhotosFiche();   // après : les vignettes restent touchables pour regarder les photos
+    etatRemplissage(!modifiable ? null : x ? "existante" : "attente");
     $("pi-aide").hidden = !modifiable;
     $("pi-enregistrer").hidden = !modifiable;
     $("pi-encore").hidden = !modifiable || !!x;
@@ -2730,6 +2965,8 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   $("gr-ajouter").addEventListener("click", () => ouvrirPiece(null));
   $("fenetre-piece").addEventListener("close", () => {
     libererPhotosFiche();
+    clearTimeout(minuterieClaude);
+    if (remplissageEnCours) { remplissageEnCours.abort(); remplissageEnCours = null; }
     apresAjoutPiece = null;
   });
   $("piece-form").addEventListener("input", () => { effacerErreurPiece(); majFormulairePiece(); });
@@ -2753,6 +2990,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     if (premiere != null) { photoVue = premiere; rendrePhotosFiche(); }
     if (illisibles) erreurPiece(illisibles > 1 ? `${illisibles} photos n'ont pas pu être lues. Essaie en JPEG ou PNG.` : "Une photo n'a pas pu être lue. Essaie en JPEG ou PNG.");
     else if (fichiers.length > gardes.length) erreurPiece(`${MAX_PHOTOS} photos au plus par pièce : ${pluriel(fichiers.length - gardes.length, "photo")} en trop n'${fichiers.length - gardes.length > 1 ? "ont" : "a"} pas été ajoutée${fichiers.length - gardes.length > 1 ? "s" : ""}.`);
+    if (premiere != null) planifierClaude();
     // Une photo nommée comme les exports Canva remplit les champs encore vides.
     const r = gardes.map(f => analyserNomFichier(f.name)).find(Boolean);
     if (r) {
@@ -2850,6 +3088,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
         $("pi-marque").value = lu.piece.marque;
         $("pi-categorie").value = lu.piece.categorie;
         champsRepris = { marque: lu.piece.marque, categorie: lu.piece.categorie };
+        ["pi-marque", "pi-categorie"].forEach(id => { if ($(id).value) { champsAuto.add(id); $(id).classList.add("auto-rempli"); } });
         $("pi-choisir").focus();
         toast("Pièce ajoutée. À la suivante !");
       } else toast(avant ? "Pièce enregistrée." : "Pièce ajoutée.");
