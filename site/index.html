@@ -13,8 +13,9 @@
    sous-rubriques s'affichent dessous. Une rubrique ouvre la page de ses sous-rubriques. « Mon planning »
    tient dans l'écran : semaine, frise (une colonne par jour, une ligne par heure, elle prend toute la
    place qui reste), bilan. « To-do list » : ajout rapide en haut, puis deux colonnes, « À faire » et
-   « À dire » (par personne), et ce qui est fait en bas. « Garde-robe Blue Box » : filtres en haut, puis
-   les pièces en photo, rangées par catégorie. Un seul thème, clair. */
+   « À dire » (par personne), et ce qui est fait en bas. « Garde-robe Blue Box » : quatre onglets (pièces,
+   tenues sur mannequin, comparateur, ce qu'il manque) ; les pièces en photo, rangées par catégorie. Un seul
+   thème, clair. */
 :root {
   color-scheme: light;
   --fond: #ffffff;
@@ -28,6 +29,9 @@
   --trait-heure: #c3cad7;
   --rouge: #c62828;
   --rouge-doux: #fde8e8;
+  --or: #9a6f06;
+  --or-doux: #fbf2d9;
+  --mannequin: #e7e4df;
   --bleu: #2b4c9b;
   --sur-marine: #ffffff;
   --sur-marine-2: #c9d2e6;
@@ -360,7 +364,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 .bouton-danger.arme { background: var(--erreur); color: var(--sur-marine); }
 
 /* Garde-robe Blue Box */
-.catalogue { display: grid; gap: 18px; padding-block: 28px 56px; }
+.catalogue { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; padding-block: 28px 56px; }
 .page-tete-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
 .filtres { display: grid; gap: 10px; min-width: 0; padding: 14px; border: 1.5px solid var(--trait); border-radius: 12px; background: var(--marine-doux); }
 .filtres-ligne { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -427,6 +431,133 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 .repere-choix input { width: 18px; height: 18px; margin: 0; accent-color: var(--marine); }
 .repere-choix.coche { border-color: var(--marine); background: var(--marine-doux); color: var(--marine); }
 .lien-fiche { color: var(--marine); font-weight: 600; }
+
+/* Onglets de la garde-robe */
+.onglets-gr { display: flex; gap: 4px 24px; overflow-x: auto; border-bottom: 1px solid var(--trait); scrollbar-width: none; }
+.onglets-gr::-webkit-scrollbar { display: none; }
+.onglets-gr a { position: relative; flex: none; padding: 10px 2px 12px; color: var(--gris); font-weight: 600; text-decoration: none; white-space: nowrap; }
+.onglets-gr a:hover, .onglets-gr a[aria-current="page"] { color: var(--marine); }
+.onglets-gr a[aria-current="page"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 3px; border-radius: 3px 3px 0 0; background: var(--marine); }
+
+/* Sélection de plusieurs pièces */
+.coche-piece { position: absolute; top: 8px; right: 8px; display: grid; place-items: center; width: 26px; height: 26px; border: 2px solid var(--trait-heure); border-radius: 50%; background: var(--fond); color: transparent; }
+.selectionnable .piece-reperes { right: 40px; }
+.piece[aria-pressed="true"] .piece-photo { border-color: var(--marine); box-shadow: 0 0 0 2px var(--marine); }
+.piece[aria-pressed="true"] .coche-piece { border-color: var(--marine); background: var(--marine); color: var(--sur-marine); }
+.catalogue.en-selection { padding-bottom: 150px; }
+.barre-selection { position: fixed; left: 0; right: 0; bottom: 0; z-index: 25; padding-bottom: env(safe-area-inset-bottom, 0px); border-top: 1px solid var(--trait); background: var(--fond); box-shadow: 0 -8px 24px rgba(15, 25, 50, .12); }
+.barre-selection-dedans { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding-block: 12px; }
+.barre-selection .espace { flex: 1; }
+.compte-selection { font-weight: 700; }
+@media (max-width: 599px) { .barre-selection .espace { display: none; } .barre-selection-dedans > button:not(.lien-discret) { flex: 1 1 auto; } }
+
+/* Le mannequin : une scène 3:4 sur fond blanc, les photos détourées posées sur le corps */
+.scene { position: relative; display: block; width: 100%; max-width: 100%; aspect-ratio: 3 / 4; overflow: hidden; border: 1px solid var(--trait); border-radius: 12px; background: var(--fond); }
+.scene svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.calque { position: absolute; display: block; object-fit: contain; pointer-events: none; filter: drop-shadow(0 2px 3px rgba(15, 25, 50, .14)); }
+.calque.brut { mix-blend-mode: multiply; filter: none; }
+.scene.petite { border-radius: 8px; }
+
+.atelier { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; align-items: start; }
+@media (min-width: 900px) { .atelier { grid-template-columns: minmax(280px, 400px) minmax(0, 1fr); gap: 36px; } }
+.atelier-scene { display: grid; gap: 8px; justify-items: center; }
+.atelier-scene .scene { max-width: 400px; }
+@media (max-width: 899px) { .atelier-scene .scene { max-width: 340px; } }
+.total-tenue { color: var(--encre); font: 600 .88rem/1.4 var(--f-mono); text-align: center; }
+.atelier-choix { display: grid; gap: 18px; min-width: 0; }
+.emplacements-tenue { display: grid; grid-template-columns: minmax(0, 1fr); overflow: hidden; border: 1.5px solid var(--trait); border-radius: 12px; }
+.emplacement-ligne { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 8px 10px; border-top: 1px solid var(--trait); }
+.emplacement-ligne:first-child { border-top: 0; }
+.emplacement-vignette { display: grid; place-items: center; width: 44px; max-width: 100%; aspect-ratio: 4 / 5; overflow: hidden; border: 1px solid var(--trait); border-radius: 6px; background: var(--fond); }
+.emplacement-vignette img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.emplacement-vignette.vide { border-style: dashed; }
+.emplacement-texte { display: grid; gap: 1px; min-width: 0; padding: 4px 0; border: 0; background: none; color: var(--encre); text-align: left; }
+.emplacement-nom { font: 600 .68rem/1.2 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--gris); }
+.emplacement-piece { overflow: hidden; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.emplacement-piece.vide { color: var(--marine); text-decoration: underline; text-underline-offset: 3px; }
+.emplacement-actions { display: flex; gap: 2px; }
+.icone-bouton { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 8px; background: none; color: var(--gris); }
+.icone-bouton:hover { background: var(--marine-doux); color: var(--marine); }
+.choix-pieces { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 10px; padding: 4px 0 6px; }
+.choix-piece { display: grid; gap: 4px; min-width: 0; padding: 0; border: 0; background: none; color: var(--encre); font-size: .8rem; line-height: 1.25; text-align: left; }
+.choix-piece:hover .piece-photo, .choix-piece:hover .scene { border-color: var(--marine); }
+.choix-piece[aria-pressed="true"] .piece-photo { border-color: var(--marine); box-shadow: 0 0 0 2px var(--marine); }
+.choix-piece .piece-photo { border-radius: 8px; }
+.choix-vide { grid-column: 1 / -1; color: var(--gris); font-size: .95rem; }
+.tenue-infos { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.tenue-infos input, .tenue-infos textarea { width: 100%; }
+.ligne-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+
+/* Étoile (favori), cœur (vitrine), caméra (réseaux sociaux) */
+.drapeaux { display: flex; flex-wrap: wrap; gap: 8px; }
+.drapeau { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 12px; border: 1.5px solid var(--trait); border-radius: 999px; background: var(--fond); color: var(--gris); font-weight: 600; }
+.drapeau svg { flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; }
+.drapeau:hover { border-color: var(--gris); }
+.drapeau[aria-pressed="true"][data-drapeau="favori"] { border-color: var(--or); background: var(--or-doux); color: var(--or); }
+.drapeau[aria-pressed="true"][data-drapeau="vitrine"] { border-color: var(--rouge); background: var(--rouge-doux); color: var(--rouge); }
+.drapeau[aria-pressed="true"][data-drapeau="reseaux"] { border-color: var(--bleu); background: var(--marine-doux); color: var(--bleu); }
+.drapeau[aria-pressed="true"][data-drapeau="favori"] svg, .drapeau[aria-pressed="true"][data-drapeau="vitrine"] svg { fill: currentColor; }
+.drapeau[aria-pressed="true"][data-drapeau="reseaux"] svg { stroke-width: 2.4; }
+.drapeaux.compacts { gap: 0; }
+.drapeaux.compacts .drapeau { justify-content: center; width: 32px; min-height: 32px; padding: 0; border-color: transparent; background: none; }
+.drapeaux.compacts .drapeau[aria-pressed="false"] { color: var(--trait-heure); }
+.drapeau:disabled { cursor: default; }
+
+.section-tete-ligne { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 20px; padding-bottom: 8px; border-bottom: 2px solid var(--marine); }
+.section-tete-ligne h2 { font-family: var(--f-display); font-weight: 800; font-size: 1.3rem; line-height: 1.2; color: var(--marine); }
+.cartes-tenues { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr)); gap: 20px 14px; }
+@media (max-width: 479px) { .cartes-tenues { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.carte-tenue { display: grid; gap: 4px; align-content: start; min-width: 0; }
+.carte-tenue-ouvrir { display: grid; gap: 6px; min-width: 0; padding: 0; border: 0; background: none; color: var(--encre); text-align: left; }
+.carte-tenue-ouvrir:hover .scene { border-color: var(--marine); }
+.carte-tenue.ouverte .scene { border-color: var(--marine); box-shadow: 0 0 0 2px var(--marine); }
+.carte-tenue-nom { font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; }
+.carte-tenue-pied { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 2px 6px; color: var(--gris); font-size: .85rem; }
+
+/* Comparateur */
+.comparer-zone { display: grid; gap: 14px; min-width: 0; padding: 14px; border: 1.5px solid var(--trait); border-radius: 12px; background: var(--marine-doux); }
+.elements-choisis { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.element-choisi { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; padding: 4px; border: 1.5px solid var(--marine); border-radius: 10px; background: var(--fond); }
+.element-choisi .emplacement-vignette, .element-choisi .mini-scene { width: 36px; flex: none; }
+.element-choisi-nom { max-width: 220px; overflow: hidden; font-weight: 600; font-size: .92rem; text-overflow: ellipsis; white-space: nowrap; }
+.candidats { display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 10px; max-height: 330px; overflow-y: auto; padding: 2px; }
+.table-defile { overflow-x: auto; }
+.table-comparer { width: 100%; min-width: 540px; border-collapse: collapse; table-layout: fixed; }
+.table-comparer th, .table-comparer td { padding: 10px 12px; border-bottom: 1px solid var(--trait); text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+.table-comparer th[scope="row"] { width: 130px; color: var(--gris); font: 600 .72rem/1.3 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; }
+.table-comparer tr.pareil td { color: var(--gris); }
+.pareil-mot { display: block; margin-top: 3px; font-size: .62rem; letter-spacing: 0; text-transform: none; }
+.cellule-element { display: grid; gap: 6px; }
+.cellule-element .piece-photo, .cellule-element .scene { max-width: 170px; }
+.cellule-titre { font-weight: 700; color: var(--encre); }
+.meilleur { display: inline-block; margin: 2px 0 0 6px; padding: 2px 7px; border-radius: 999px; background: var(--argent-doux); color: var(--argent); font: 700 .66rem/1.3 var(--f-mono); text-transform: uppercase; white-space: nowrap; }
+.ecart { color: var(--gris); font-size: .85rem; }
+.liste-pieces-tenue { margin: 0; padding-left: 16px; }
+.liste-comparaisons { list-style: none; margin: 0; padding: 0; display: grid; }
+.ligne-comparaison { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--trait); }
+.ligne-comparaison.ouverte .ligne-comparaison-nom { color: var(--marine); }
+.ligne-comparaison-ouvrir { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 0; border: 0; background: none; color: var(--encre); text-align: left; }
+.vignettes { display: flex; flex: none; gap: 4px; }
+.vignettes .emplacement-vignette, .vignettes .mini-scene { width: 34px; }
+.ligne-comparaison-texte { display: grid; min-width: 0; }
+.ligne-comparaison-nom { overflow: hidden; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.ligne-comparaison-type { color: var(--gris); font-size: .85rem; }
+
+/* Ce qu'il manque */
+.demandes { list-style: none; margin: 0; padding: 0; display: grid; }
+.demande { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px 14px; padding: 12px 0; border-bottom: 1px solid var(--trait); }
+.demande-nombre { display: grid; place-items: center; min-width: 50px; height: 50px; padding: 0 6px; border-radius: 12px; background: var(--marine); color: var(--sur-marine); font: 800 1.1rem/1 var(--f-display); font-variant-numeric: tabular-nums; }
+.demande.refuse .demande-nombre { background: var(--trait); color: var(--gris); }
+.demande.refuse .demande-quoi { color: var(--gris); text-decoration: line-through; }
+.demande.commande .demande-nombre { background: var(--argent); }
+.demande-texte { display: grid; gap: 4px; min-width: 0; }
+.demande-quoi { font-weight: 700; font-size: 1.05rem; overflow-wrap: anywhere; }
+.demande-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; color: var(--gris); font-size: .88rem; }
+.demande-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; }
+.demande-actions select { min-height: 38px; padding: 6px 10px; border: 1.5px solid var(--trait); border-radius: 8px; background: var(--fond); color: var(--encre); font-weight: 600; font-size: .92rem; }
+.bouton-petit { min-height: 38px; padding: 6px 12px; font-size: .92rem; }
+@media (max-width: 699px) { .demande { grid-template-columns: auto minmax(0, 1fr); } .demande-actions { grid-column: 1 / -1; justify-content: flex-start; } }
+.rayons-vides { display: grid; gap: 10px; }
 
 /* Argent et Sport : rubriques encore à construire */
 .rubrique { display: grid; gap: 24px; padding-block: 32px 56px; }
@@ -537,7 +668,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
         <li>
           <a class="carte-sous" href="#garde-robe">
             <span class="carte-sous-titre">Garde-robe Blue Box</span>
-            <span class="carte-sous-texte">Les pièces du magasin en photo, pour penser les vitrines, les tenues et les posts.</span>
+            <span class="carte-sous-texte">Les pièces du magasin, les tenues sur mannequin, le comparateur et ce qu'il manque.</span>
             <span class="mosaique" id="mosaique-pieces" aria-hidden="true" hidden></span>
             <span class="carte-sous-pied"><span id="resume-pieces">Aucune pièce pour l'instant</span><span class="fleche">Ouvrir →</span></span>
           </a>
@@ -640,19 +771,16 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
         </div>
         <div class="page-tete-actions">
           <p class="todo-compte" id="gr-compte"></p>
+          <button class="bouton-second" type="button" id="gr-selectionner" hidden>Sélectionner</button>
           <button class="bouton-principal" type="button" id="gr-ajouter" disabled>Ajouter une pièce</button>
         </div>
       </div>
+      <nav class="onglets-gr" aria-label="Garde-robe"></nav>
 
       <div class="filtres champs-tache" role="search">
         <div class="filtres-ligne">
           <input type="search" id="gr-recherche" placeholder="Chercher un modèle, une marque, une couleur…" aria-label="Chercher une pièce">
           <select id="gr-marque" aria-label="Marque"></select>
-          <div class="type-tache" role="radiogroup" aria-label="Rayon">
-            <label><input type="radio" name="gr-rayon" value="" checked><span>Tout</span></label>
-            <label><input type="radio" name="gr-rayon" value="homme"><span>Homme</span></label>
-            <label><input type="radio" name="gr-rayon" value="femme"><span>Femme</span></label>
-          </div>
         </div>
         <div class="puces-filtre" id="gr-categories" role="group" aria-label="Catégorie"></div>
         <div class="puces-filtre" id="gr-teintes" role="group" aria-label="Couleur"></div>
@@ -662,6 +790,133 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
       <p class="resultat" id="gr-resultat"></p>
       <div class="groupes-pieces" id="gr-grille"></div>
       <p class="liste-vide" id="gr-vide" hidden></p>
+    </div>
+    <div class="barre-selection" id="gr-barre" hidden>
+      <div class="cadre barre-selection-dedans">
+        <span class="compte-selection" id="gr-nb-choisies">Aucune pièce sélectionnée</span>
+        <button class="lien-discret" type="button" id="gr-tout">Tout sélectionner</button>
+        <span class="espace"></span>
+        <button class="bouton-second" type="button" id="gr-comparer">Comparer</button>
+        <button class="bouton-second" type="button" id="gr-tenue">Créer une tenue</button>
+        <button class="bouton-danger" type="button" id="gr-supprimer-choix">Supprimer</button>
+        <button class="bouton-principal" type="button" id="gr-terminer">Terminer</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="r-travail" data-vue="tenues" aria-labelledby="titre-tenues" hidden>
+    <div class="cadre catalogue">
+      <div class="page-tete">
+        <div>
+          <p class="eyebrow">Garde-robe Blue Box</p>
+          <h1 id="titre-tenues" tabindex="-1">Tenues</h1>
+        </div>
+        <div class="page-tete-actions">
+          <p class="todo-compte" id="te-compte"></p>
+          <button class="bouton-second" type="button" id="te-nouvelle">Nouvelle tenue</button>
+        </div>
+      </div>
+      <nav class="onglets-gr" aria-label="Garde-robe"></nav>
+      <div class="atelier">
+        <div class="atelier-scene">
+          <div class="scene" id="te-scene"></div>
+          <p class="total-tenue" id="te-total"></p>
+        </div>
+        <div class="atelier-choix">
+          <div class="emplacements-tenue" id="te-emplacements"></div>
+          <div class="champs-tache tenue-infos" id="te-infos">
+            <label class="titre-champ">Nom de la tenue<input type="text" id="te-nom" maxlength="80" placeholder="Ex. : Vitrine de Noël"></label>
+            <label class="titre-champ">Description<textarea id="te-description" maxlength="1000" rows="4" placeholder="Ex. : un look simple et chaud pour l'hiver, le pull zippé bordeaux sur le jean brut."></textarea></label>
+            <div class="ligne-actions">
+              <button class="bouton-second" type="button" id="te-rediger" hidden>Proposer une description</button>
+              <span class="aide" id="te-rediger-etat" role="status"></span>
+            </div>
+            <div id="te-drapeaux"></div>
+            <p class="fenetre-erreur" id="te-erreur" role="alert" hidden></p>
+            <div class="ligne-actions">
+              <button class="bouton-principal" type="button" id="te-enregistrer">Enregistrer la tenue</button>
+              <button class="bouton-danger" type="button" id="te-supprimer" hidden>Supprimer la tenue</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="section-tete-ligne">
+        <h2>Mes tenues</h2>
+        <div class="puces-filtre" id="te-filtres" role="group" aria-label="Afficher"></div>
+      </div>
+      <div class="cartes-tenues" id="te-liste"></div>
+      <p class="liste-vide" id="te-vide" hidden></p>
+    </div>
+  </section>
+
+  <section class="r-travail" data-vue="comparer" aria-labelledby="titre-comparer" hidden>
+    <div class="cadre catalogue">
+      <div class="page-tete">
+        <div>
+          <p class="eyebrow">Garde-robe Blue Box</p>
+          <h1 id="titre-comparer" tabindex="-1">Comparer</h1>
+        </div>
+        <div class="page-tete-actions">
+          <button class="bouton-second" type="button" id="co-nouvelle">Nouvelle comparaison</button>
+        </div>
+      </div>
+      <nav class="onglets-gr" aria-label="Garde-robe"></nav>
+      <div class="comparer-zone">
+        <div class="type-tache" role="radiogroup" aria-label="Que comparer ?">
+          <label><input type="radio" name="co-type" value="pieces" checked><span>Des pièces</span></label>
+          <label><input type="radio" name="co-type" value="tenues"><span>Des tenues</span></label>
+        </div>
+        <div class="elements-choisis" id="co-choisis"></div>
+        <div class="champs-tache filtres-ligne" id="co-recherche-ligne">
+          <input type="search" id="co-recherche" placeholder="Chercher une pièce à ajouter…" aria-label="Chercher une pièce à ajouter">
+        </div>
+        <div class="candidats" id="co-candidats"></div>
+        <p class="aide" id="co-aide"></p>
+      </div>
+      <div class="table-defile" id="co-table-zone" hidden><table class="table-comparer" id="co-table"></table></div>
+      <div class="champs-tache tenue-infos" id="co-infos" hidden>
+        <label class="titre-champ">Nom de la comparaison<input type="text" id="co-nom" maxlength="80" placeholder="Ex. : Pulls zippés pour la vitrine"></label>
+        <div id="co-drapeaux"></div>
+        <p class="fenetre-erreur" id="co-erreur" role="alert" hidden></p>
+        <div class="ligne-actions">
+          <button class="bouton-principal" type="button" id="co-enregistrer">Enregistrer la comparaison</button>
+          <button class="bouton-danger" type="button" id="co-supprimer" hidden>Supprimer la comparaison</button>
+        </div>
+      </div>
+      <div class="section-tete-ligne">
+        <h2>Mes comparaisons</h2>
+        <div class="puces-filtre" id="co-filtres" role="group" aria-label="Afficher"></div>
+      </div>
+      <ul class="liste-comparaisons" id="co-liste"></ul>
+      <p class="liste-vide" id="co-vide-liste" hidden></p>
+    </div>
+  </section>
+
+  <section class="r-travail" data-vue="manque" aria-labelledby="titre-manque" hidden>
+    <div class="cadre catalogue">
+      <div class="page-tete">
+        <div>
+          <p class="eyebrow">Garde-robe Blue Box</p>
+          <h1 id="titre-manque" tabindex="-1">Ce qu'il manque</h1>
+        </div>
+        <div class="page-tete-actions">
+          <p class="todo-compte" id="ma-compte"></p>
+        </div>
+      </div>
+      <nav class="onglets-gr" aria-label="Garde-robe"></nav>
+      <form class="ajout-tache champs-tache" id="ma-form" autocomplete="off" novalidate>
+        <input class="champ-texte" type="text" id="ma-quoi" maxlength="200" placeholder="Ce qu'un client a demandé, ex. : chemise en lin blanche" aria-label="Ce qu'un client a demandé">
+        <select class="champ-pour" id="ma-categorie" aria-label="Catégorie (facultatif)"></select>
+        <button class="bouton-principal" type="submit">Ajouter la demande</button>
+        <p class="erreur-tache" id="ma-erreur" role="alert" hidden></p>
+      </form>
+      <p class="aide">Si la même demande revient, elle compte une fois de plus. Les plus demandées passent en premier : ce sont les idées à proposer à Maxime.</p>
+      <ul class="demandes" id="ma-liste"></ul>
+      <p class="liste-vide" id="ma-vide" hidden>Aucune demande pour l'instant. Note ici ce que les clients cherchent et que le magasin n'a pas.</p>
+      <div class="rayons-vides" id="ma-rayons" hidden>
+        <div class="section-tete-ligne"><h2>Aucune pièce en magasin dans ces catégories</h2></div>
+        <div class="puces-filtre" id="ma-rayons-liste"></div>
+      </div>
     </div>
   </section>
 
@@ -797,14 +1052,8 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
       <label class="titre-champ">Catégorie<select id="pi-categorie"></select></label>
       <label class="titre-champ large">Modèle<input type="text" id="pi-modele" maxlength="120" placeholder="Ex. : Jean 502 Taper"></label>
       <label class="titre-champ">Couleur<span class="champ-couleur"><span class="pastille-couleur" id="pi-pastille"></span><input type="text" id="pi-couleur" maxlength="60" list="couleurs"></span></label>
+      <label class="titre-champ">Matière<input type="text" id="pi-matiere" maxlength="120" list="matieres" placeholder="Ex. : 100 % coton"></label>
       <label class="titre-champ">Coupe<input type="text" id="pi-coupe" maxlength="120" placeholder="Ex. : slim, jambe droite"></label>
-      <div class="titre-champ">Rayon
-        <div class="type-tache" role="radiogroup" aria-label="Rayon">
-          <label><input type="radio" name="pi-rayon" value="homme" checked><span>Homme</span></label>
-          <label><input type="radio" name="pi-rayon" value="femme"><span>Femme</span></label>
-          <label><input type="radio" name="pi-rayon" value="mixte"><span>Mixte</span></label>
-        </div>
-      </div>
       <label class="titre-champ">Prix<input type="text" id="pi-prix" inputmode="decimal" maxlength="12" placeholder="Ex. : 79,90"></label>
       <label class="titre-champ">Référence<input type="text" id="pi-ref" maxlength="60"></label>
       <label class="titre-champ">Lien de la fiche produit<input type="url" id="pi-lien" maxlength="500" placeholder="https://…"></label>
@@ -816,12 +1065,14 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     <p class="fenetre-erreur" id="pi-erreur" role="alert" hidden></p>
     <button class="bouton-danger" type="button" id="pi-supprimer" hidden>Supprimer</button>
     <button class="bouton-second" type="button" data-fermer>Annuler</button>
+    <button class="bouton-second" type="button" id="pi-encore" hidden>Enregistrer et ajouter une autre</button>
     <button class="bouton-principal" type="button" id="pi-enregistrer">Enregistrer</button>
   </div>
 </dialog>
 
 <datalist id="marques"></datalist>
 <datalist id="couleurs"></datalist>
+<datalist id="matieres"></datalist>
 
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
@@ -833,9 +1084,12 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   // ---------- vues : une rubrique à la fois ----------
   // La page ne modifie jamais son adresse (dans le cadre de claude.ai, une adresse réécrite
   // rend la page introuvable) ; un lien direct ouvre sa page : une rubrique (#travail, #argent,
-  // #sport) ou une sous-rubrique (#planning, #todo, #garde-robe).
-  const VUES = ["accueil", "travail", "planning", "todo", "garde-robe", "argent", "sport"];
-  const RUBRIQUE_DE = { planning: "travail", todo: "travail", "garde-robe": "travail" };
+  // #sport), une sous-rubrique (#planning, #todo, #garde-robe) ou un onglet de la garde-robe (#tenues,
+  // #comparer, #manque).
+  const VUES = ["accueil", "travail", "planning", "todo", "garde-robe", "tenues", "comparer", "manque", "argent", "sport"];
+  const RUBRIQUE_DE = { planning: "travail", todo: "travail", "garde-robe": "travail", tenues: "travail", comparer: "travail", manque: "travail" };
+  // Les onglets de la garde-robe restent sous la sous-rubrique « Garde-robe Blue Box ».
+  const SOUS_RUBRIQUE_DE = { tenues: "garde-robe", comparer: "garde-robe", manque: "garde-robe" };
   let vueActive = "accueil";
 
   function montrer(nom, opts = {}) {
@@ -844,9 +1098,12 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     document.querySelectorAll("[data-vue]").forEach(v => { v.hidden = v.dataset.vue !== nom; });
     // Dans le bandeau, la rubrique reste marquée quand une de ses sous-rubriques est ouverte.
     document.querySelectorAll(".bande [data-aller]").forEach(a => {
-      const cible = a.closest(".sous-bande") ? nom : RUBRIQUE_DE[nom] || nom;
+      const cible = a.closest(".sous-bande") ? SOUS_RUBRIQUE_DE[nom] || nom : RUBRIQUE_DE[nom] || nom;
       if (a.dataset.aller === cible) a.setAttribute("aria-current", "page");
       else a.removeAttribute("aria-current");
+    });
+    document.querySelectorAll(".onglets-gr a").forEach(a => {
+      if (a.dataset.onglet === nom) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
     if (!opts.garderDefilement) window.scrollTo(0, 0);
     if (opts.focus) {
@@ -950,6 +1207,9 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     } catch (_) { /* rien de gardé dans ce navigateur */ }
     chargerTodoLocal();
     chargerPiecesLocal();
+    tenues.chargerLocal();
+    comparaisons.chargerLocal();
+    demandes.chargerLocal();
   }
   function sauverLocal() {
     try { localStorage.setItem(CLE_LOCALE, JSON.stringify(semaines)); return true; } catch (_) { return false; }
@@ -981,8 +1241,13 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
       const m = Object.create(null);
       snap.docs.forEach(doc => { const x = doc.exists && lirePiece(doc.id, doc.data()); if (x) m[doc.id] = x; });
       pieces = m;
-      rendreGardeRobe();
+      rendreAutourDesPieces();
     }, () => toast("La garde-robe n'a pas pu être chargée. Recharge la page.", "erreur"));
+    tenues.abonner();
+    comparaisons.abonner();
+    demandes.abonner();
+    // Claude, pour proposer une description de tenue : seulement pour qui peut modifier.
+    if (proprio) c.use("sample").then(ns => { sampleNs = ns; rendreTenues(); }, () => {});
     rendreTout();
   }
 
@@ -1185,7 +1450,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     rendreResume();
     rendreCartePlanning();
     rendreTodo();
-    rendreGardeRobe();
+    rendreAutourDesPieces();
     if ($("fenetre-semaine").open) rendreGrilleSemaines();
   }
 
@@ -1745,7 +2010,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   }
 
   // ---------- garde-robe Blue Box : les pièces du magasin ----------
-  // Un document par pièce dans « pieces » : { marque, categorie, modele, coupe, couleur, rayon, prix, ref,
+  // Un document par pièce dans « pieces » : { marque, categorie, modele, coupe, couleur, matiere, rayon, prix, ref,
   // lien, photo, reperes: { nouveaute, promo, vitrine, reseaux }, note, creeLe }. La photo est l'id d'un
   // fichier envoyé depuis la page, ou une image publiée avec elle (images/…jpg). Hors de claude.ai, la
   // liste et ses photos réduites sont gardées dans le navigateur.
@@ -1788,12 +2053,13 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     ["orange", "orange|rouille|brique"],
     ["violet", "violet|violette|mauve|lilas|lavande|purple"],
   ].map(([id, mots]) => [id, new RegExp("\\b(" + mots + ")s?\\b")]);
+  const MATIERES_PROPOSEES = ["100 % coton", "Coton bio", "Coton et élasthanne", "Denim", "Laine", "Laine mérinos", "Cachemire", "Lin", "Polyester", "Viscose", "Velours côtelé", "Cuir", "Daim", "Nylon"];
   const COULEURS_PROPOSEES = ["Noir", "Blanc", "Écru", "Gris clair", "Gris moyen", "Anthracite", "Beige", "Camel", "Marron", "Bleu marine", "Bleu", "Bleu clair", "Kaki", "Vert", "Bordeaux", "Rouge", "Rose", "Jaune", "Orange"];
   const sansAccents = v => String(v || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
   const teinteDe = couleur => { const c = sansAccents(couleur); for (const [id, re] of REGLES_TEINTE) if (re.test(c)) return id; return ""; };
   const PHOTO_ASSET_RE = /^[0-9a-f]{32}$/i;
   const PHOTO_FICHIER_RE = /^images\/[a-z0-9-]+\.jpg$/;
-  const PHOTO_LOCALE_RE = /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/;
+  const PHOTO_LOCALE_RE = /^data:image\/(jpeg|png);base64,[A-Za-z0-9+/=]+$/;
   const srcPhoto = photo => (!photo ? null : PHOTO_ASSET_RE.test(photo) ? "/_blob/" + photo : photo);
   const formatPrix = n => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", minimumFractionDigits: n % 1 ? 2 : 0 }).format(n);
   let pieces = Object.create(null);
@@ -1810,7 +2076,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     const r = d.reperes && typeof d.reperes === "object" ? d.reperes : {};
     return {
       id, categorie, marque, modele,
-      coupe: texteBorne(d.coupe, 120), couleur: texteBorne(d.couleur, 60),
+      coupe: texteBorne(d.coupe, 120), couleur: texteBorne(d.couleur, 60), matiere: texteBorne(d.matiere, 120),
       rayon: typeof d.rayon === "string" && RAYONS[d.rayon] ? d.rayon : null,
       prix, ref: texteBorne(d.ref, 60), lien, photo,
       reperes: Object.fromEntries(REPERES_PIECE.map(([k]) => [k, r[k] === true])),
@@ -1818,7 +2084,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     };
   }
   const corpsPiece = x => ({
-    marque: x.marque || null, categorie: x.categorie, modele: x.modele || null, coupe: x.coupe || null, couleur: x.couleur || null,
+    marque: x.marque || null, categorie: x.categorie, modele: x.modele || null, coupe: x.coupe || null, couleur: x.couleur || null, matiere: x.matiere || null,
     rayon: x.rayon, prix: x.prix, ref: x.ref || null, lien: x.lien, photo: x.photo, reperes: { ...x.reperes }, note: x.note || null, creeLe: x.creeLe,
   });
 
@@ -1845,7 +2111,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
         if (avant) pieces[id] = avant; else delete pieces[id];
         return Promise.reject({ code: "stockage_local" });
       }
-      rendreGardeRobe();
+      rendreAutourDesPieces();
       return Promise.resolve();
     }
     const ref = db.doc("pieces/" + id);
@@ -1859,17 +2125,16 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     || a.marque.localeCompare(b.marque, "fr") || a.modele.localeCompare(b.modele, "fr") || a.couleur.localeCompare(b.couleur, "fr");
 
   // ----- filtres -----
-  const filtres = { recherche: "", marque: "", rayon: "", categorie: "", teinte: "", repere: "" };
+  const filtres = { recherche: "", marque: "", categorie: "", teinte: "", repere: "" };
   const filtreActif = () => Object.values(filtres).some(Boolean);
   function piecesFiltrees() {
     const q = sansAccents(filtres.recherche.trim());
     return Object.values(pieces).filter(x =>
       (!filtres.marque || x.marque === filtres.marque) &&
-      (!filtres.rayon || x.rayon === filtres.rayon || x.rayon === "mixte") &&
       (!filtres.categorie || x.categorie === filtres.categorie) &&
       (!filtres.teinte || teinteDe(x.couleur) === filtres.teinte) &&
       (!filtres.repere || x.reperes[filtres.repere]) &&
-      (!q || sansAccents([x.marque, x.modele, x.coupe, x.couleur, x.ref, x.note, NOM_CATEGORIE[x.categorie]].join(" ")).includes(q))
+      (!q || sansAccents([x.marque, x.modele, x.coupe, x.couleur, x.matiere, x.ref, x.note, NOM_CATEGORIE[x.categorie]].join(" ")).includes(q))
     ).sort(trierPieces);
   }
   function puceFiltre(cle, valeur, texte, nombre, teinte) {
@@ -1902,14 +2167,14 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     $("gr-teintes").hidden = !teintes.size;
     $("gr-reperes").replaceChildren(element("span", "etiquette-filtre", "Repères"),
       ...REPERES_PIECE.map(([k, nom]) => puceFiltre("repere", k, nom, toutes.filter(x => x.reperes[k]).length)));
-    document.querySelectorAll('input[name="gr-rayon"]').forEach(r => { r.checked = r.value === filtres.rayon; });
     $("gr-categories").hidden = !cats.size;
   }
 
   function cartePiece(x) {
-    const b = element("button", "piece");
+    const b = element("button", "piece" + (modeSelection ? " selectionnable" : ""));
     b.type = "button";
     b.dataset.id = x.id;
+    if (modeSelection) b.setAttribute("aria-pressed", String(selection.has(x.id)));
     const cadre = element("span", "piece-photo");
     const src = srcPhoto(x.photo);
     const sansPhoto = element("span", "sans-photo", NOM_CATEGORIE[x.categorie]);
@@ -1924,6 +2189,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     } else cadre.append(sansPhoto);
     const reps = REPERES_PIECE.filter(([k]) => x.reperes[k]);
     if (reps.length) { const r = element("span", "piece-reperes"); r.append(...reps.map(([k, nom]) => element("span", "rep rep-" + k, nom))); cadre.append(r); }
+    if (modeSelection) { const c = element("span", "coche-piece"); c.setAttribute("aria-hidden", "true"); c.innerHTML = PICTO_COCHE; cadre.append(c); }
     b.append(cadre);
     if (x.marque) b.append(element("span", "piece-marque", x.marque));
     b.append(element("span", "piece-modele", x.modele || NOM_CATEGORIE[x.categorie]));
@@ -1988,12 +2254,36 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     const couleurs = new Map(COULEURS_PROPOSEES.map(c => [sansAccents(c), c]));
     toutes.forEach(x => { if (x.couleur && !couleurs.has(sansAccents(x.couleur))) couleurs.set(sansAccents(x.couleur), x.couleur); });
     $("couleurs").replaceChildren(...[...couleurs.values()].sort((a, b) => a.localeCompare(b, "fr")).map(c => new Option(c)));
+    const matieres = new Map(MATIERES_PROPOSEES.map(m => [sansAccents(m), m]));
+    toutes.forEach(x => { if (x.matiere && !matieres.has(sansAccents(x.matiere))) matieres.set(sansAccents(x.matiere), x.matiere); });
+    $("matieres").replaceChildren(...[...matieres.values()].sort((a, b) => a.localeCompare(b, "fr")).map(m => new Option(m)));
 
     $("gr-ajouter").hidden = mode === "lecture" || (mode === "base" && !assets);
     $("gr-ajouter").disabled = mode === "attente";
+    $("gr-selectionner").hidden = !peutModifierPieces() || !toutes.length || modeSelection;
 
-    // Carte de la page Travail
-    $("resume-pieces").textContent = resume;
+    // Mode sélection : la barre en bas de l'écran
+    [...selection].forEach(id => { if (!pieces[id]) selection.delete(id); });
+    $("gr-barre").hidden = !modeSelection;
+    $("gr-grille").closest(".catalogue").classList.toggle("en-selection", modeSelection);
+    if (modeSelection) {
+      const n = selection.size;
+      $("gr-nb-choisies").textContent = n ? `${n} pièce${n > 1 ? "s" : ""} sélectionnée${n > 1 ? "s" : ""}` : "Touche les pièces à sélectionner";
+      $("gr-tout").textContent = liste.length && liste.every(x => selection.has(x.id)) ? "Tout désélectionner" : "Tout sélectionner";
+      $("gr-comparer").disabled = n < 2;
+      $("gr-tenue").disabled = !n;
+      $("gr-supprimer-choix").disabled = !n;
+    }
+    rendreCarteGardeRobe();
+  }
+
+  // La carte de la page Travail : six photos, et ce que contient la garde-robe.
+  function rendreCarteGardeRobe() {
+    const toutes = Object.values(pieces);
+    const nT = Object.keys(tenues.docs).length, nD = Object.values(demandes.docs).filter(d => d.statut !== "refuse").length;
+    $("resume-pieces").textContent = toutes.length || nT || nD
+      ? [`${toutes.length} pièce${toutes.length > 1 ? "s" : ""}`, nT ? `${nT} tenue${nT > 1 ? "s" : ""}` : "", nD ? `${nD} demande${nD > 1 ? "s" : ""}` : ""].filter(Boolean).join(" · ")
+      : "Aucune pièce pour l'instant";
     const mosaique = $("mosaique-pieces");
     const avecPhoto = toutes.filter(x => x.photo).sort(trierPieces).slice(0, 6);
     mosaique.hidden = !avecPhoto.length;
@@ -2011,7 +2301,6 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   // Filtres : recherche, marque, rayon, puces
   $("gr-recherche").addEventListener("input", e => { filtres.recherche = e.target.value; rendreGardeRobe(); });
   $("gr-marque").addEventListener("change", e => { filtres.marque = e.target.value; rendreGardeRobe(); });
-  document.querySelectorAll('input[name="gr-rayon"]').forEach(r => r.addEventListener("change", () => { filtres.rayon = r.value; rendreGardeRobe(); }));
   document.querySelector('[data-vue="garde-robe"]').addEventListener("click", e => {
     const puce = e.target.closest(".puce-filtre");
     if (puce) {
@@ -2026,7 +2315,65 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
       return;
     }
     const carte = e.target.closest(".piece");
-    if (carte) ouvrirPiece(carte.dataset.id);
+    if (!carte) return;
+    if (modeSelection) {
+      if (selection.has(carte.dataset.id)) selection.delete(carte.dataset.id); else selection.add(carte.dataset.id);
+      rendreGardeRobe();
+    } else ouvrirPiece(carte.dataset.id);
+  });
+
+  // ----- sélectionner plusieurs pièces : supprimer, comparer, créer une tenue -----
+  let modeSelection = false;
+  const selection = new Set();
+  const PICTO_COCHE = '<svg class="picto" width="16" height="16" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  function quitterSelection() { modeSelection = false; selection.clear(); desarmer($("gr-supprimer-choix"), "Supprimer"); rendreGardeRobe(); }
+  $("gr-selectionner").addEventListener("click", () => { modeSelection = true; rendreGardeRobe(); });
+  $("gr-terminer").addEventListener("click", quitterSelection);
+  $("gr-tout").addEventListener("click", () => {
+    const liste = piecesFiltrees();
+    const tout = liste.length && liste.every(x => selection.has(x.id));
+    liste.forEach(x => { if (tout) selection.delete(x.id); else selection.add(x.id); });
+    rendreGardeRobe();
+  });
+  $("gr-supprimer-choix").addEventListener("click", async e => {
+    const b = e.currentTarget, ids = [...selection].filter(id => pieces[id]);
+    if (!ids.length || !peutModifierPieces()) return;
+    if (!b.classList.contains("arme")) { armer(b, `Confirmer : supprimer ${ids.length} pièce${ids.length > 1 ? "s" : ""}`, "Supprimer"); return; }
+    desarmer(b, "Supprimer");
+    b.disabled = true;
+    let faites = 0;
+    try {
+      for (const id of ids) {
+        const photo = pieces[id] && pieces[id].photo;
+        await ecrirePiece(id, null);
+        if (assets && photo && PHOTO_ASSET_RE.test(photo)) assets.delete(photo).catch(() => {});
+        faites++;
+      }
+      toast(`${faites} pièce${faites > 1 ? "s" : ""} supprimée${faites > 1 ? "s" : ""}.`);
+      quitterSelection();
+    } catch (err) {
+      toast(`${faites} pièce${faites > 1 ? "s" : ""} supprimée${faites > 1 ? "s" : ""} ; les autres n'ont pas pu l'être. Réessaie.`, "erreur");
+      rendreGardeRobe();
+    } finally { b.disabled = false; }
+  });
+  $("gr-comparer").addEventListener("click", () => {
+    const ids = piecesFiltrees().map(x => x.id).filter(id => selection.has(id));
+    if (ids.length > MAX_COMPARER.pieces) toast(`Le comparateur prend ${MAX_COMPARER.pieces} pièces au plus : les ${MAX_COMPARER.pieces} premières sont comparées.`);
+    chargerComparaison({ ...nouvelleComparaison("pieces"), elements: ids.slice(0, MAX_COMPARER.pieces) });
+    quitterSelection();
+    montrer("comparer", { focus: true });
+  });
+  $("gr-tenue").addEventListener("click", () => {
+    const t = nouvelleTenue();
+    let ecartees = 0;
+    piecesFiltrees().filter(x => selection.has(x.id)).forEach(x => {
+      const emp = EMPLACEMENT_DE[x.categorie];
+      if (t.choix[emp]) ecartees++; else t.choix[emp] = x.id;
+    });
+    chargerTenueDansAtelier(null, t);
+    if (ecartees) toast("Une seule pièce par emplacement (un haut, un bas…) : les autres ont été laissées de côté.");
+    quitterSelection();
+    montrer("tenues", { focus: true });
   });
 
   // ----- ajouter, modifier une pièce -----
@@ -2061,7 +2408,8 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     else if (parts.length === 3) { if (COULEUR_EN_TETE.test(sansAccents(parts[2]))) r.couleur = parts[2]; else r.modele = parts[2]; }
     return r;
   }
-  // La photo est réduite (900 px au plus) et enregistrée en JPEG.
+  // La photo est réduite (900 px au plus). Une photo détourée (fond transparent) reste en PNG pour garder
+  // sa transparence ; les autres passent en JPEG sur fond blanc.
   function preparerPhoto(fichier) {
     return new Promise((ok, ko) => {
       const url = URL.createObjectURL(fichier);
@@ -2072,11 +2420,19 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
         cv.width = Math.max(1, Math.round(img.naturalWidth * r));
         cv.height = Math.max(1, Math.round(img.naturalHeight * r));
         const ctx = cv.getContext("2d");
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, cv.width, cv.height);
         ctx.drawImage(img, 0, 0, cv.width, cv.height);
         URL.revokeObjectURL(url);
-        cv.toBlob(b => (b ? ok(b) : ko(new Error("export"))), "image/jpeg", 0.86);
+        let transparente = false;
+        try {
+          const d = ctx.getImageData(0, 0, cv.width, cv.height).data;
+          for (let i = 3; i < d.length; i += 16) if (d[i] < 250) { transparente = true; break; }
+        } catch (_) { /* illisible : traitée comme opaque */ }
+        if (!transparente) {
+          ctx.globalCompositeOperation = "destination-over";
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, cv.width, cv.height);
+        }
+        cv.toBlob(b => (b ? ok(b) : ko(new Error("export"))), transparente ? "image/png" : "image/jpeg", 0.86);
       };
       img.onerror = () => { URL.revokeObjectURL(url); ko(new Error("lecture")); };
       img.src = url;
@@ -2085,6 +2441,9 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   const enDataUrl = blob => new Promise((ok, ko) => { const f = new FileReader(); f.onload = () => ok(f.result); f.onerror = ko; f.readAsDataURL(blob); });
 
   let pieceEditee = null, photoChoisie = null, retirerPhoto = false, urlApercu = null, enregistrementPiece = false;
+  // Marque et catégorie reprises de la pièce précédente (« Enregistrer et ajouter une autre ») : le nom de la
+  // photo suivante peut les remplacer, tant qu'elles n'ont pas été retouchées.
+  let champsRepris = {};
   $("pi-categorie").replaceChildren(new Option("Choisir…", ""), ...CATEGORIES.map(([id, nom]) => new Option(nom, id)));
   $("pi-reperes").replaceChildren(...REPERES_PIECE.map(([k, nom]) => {
     const l = element("label", "repere-choix");
@@ -2121,6 +2480,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     if (id && !x) return;
     if (!x && !peutModifierPieces()) return;
     pieceEditee = x;
+    champsRepris = {};
     photoChoisie = null;
     retirerPhoto = false;
     const modifiable = peutModifierPieces();
@@ -2130,8 +2490,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     $("pi-modele").value = x ? x.modele : "";
     $("pi-couleur").value = x ? x.couleur : "";
     $("pi-coupe").value = x ? x.coupe : "";
-    const rayon = x ? x.rayon || "homme" : (document.querySelector('input[name="pi-rayon"]:checked') || {}).value || "homme";
-    document.querySelectorAll('input[name="pi-rayon"]').forEach(r => { r.checked = r.value === rayon; });
+    $("pi-matiere").value = x ? x.matiere : "";
     $("pi-prix").value = x && x.prix != null ? String(x.prix).replace(".", ",") : "";
     $("pi-ref").value = x ? x.ref : "";
     $("pi-lien").value = x && x.lien ? x.lien : "";
@@ -2144,6 +2503,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     $("pi-choisir").hidden = !modifiable;
     $("pi-aide").hidden = !modifiable;
     $("pi-enregistrer").hidden = !modifiable;
+    $("pi-encore").hidden = !modifiable || !!x;
     $("pi-supprimer").hidden = !(x && modifiable);
     desarmer($("pi-supprimer"), "Supprimer");
     effacerErreurPiece();
@@ -2173,10 +2533,14 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     // Une photo nommée comme les exports Canva remplit les champs encore vides.
     const r = analyserNomFichier(fichier.name);
     if (r) {
-      if (!$("pi-marque").value && r.marque) $("pi-marque").value = r.marque;
-      if (!$("pi-categorie").value && r.categorie) $("pi-categorie").value = r.categorie;
-      if (!$("pi-modele").value && r.modele) $("pi-modele").value = r.modele;
-      if (!$("pi-couleur").value && r.couleur) $("pi-couleur").value = r.couleur;
+      const remplir = (id, cle) => {
+        const champ = $(id);
+        if (r[cle] && (!champ.value || champ.value === champsRepris[cle])) champ.value = r[cle];
+      };
+      remplir("pi-marque", "marque");
+      remplir("pi-categorie", "categorie");
+      remplir("pi-modele", "modele");
+      remplir("pi-couleur", "couleur");
       majFormulairePiece();
     }
   });
@@ -2204,8 +2568,8 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     if (lien && !/^https?:\/\/[^\s"<>]+\.[^\s"<>]+$/i.test(lien)) return { erreur: "Le lien ne ressemble pas à une adresse de site.", champ: $("pi-lien") };
     return { piece: {
       marque: val("pi-marque").slice(0, 60), categorie, modele: val("pi-modele").slice(0, 120),
-      coupe: val("pi-coupe").slice(0, 120), couleur: val("pi-couleur").slice(0, 60),
-      rayon: (document.querySelector('input[name="pi-rayon"]:checked') || {}).value || "homme",
+      coupe: val("pi-coupe").slice(0, 120), couleur: val("pi-couleur").slice(0, 60), matiere: val("pi-matiere").slice(0, 120),
+      rayon: "homme",
       prix, ref: val("pi-ref").slice(0, 60), lien,
       reperes: Object.fromEntries(REPERES_PIECE.map(([k]) => [k, $("pi-rep-" + k).checked])),
       note: val("pi-note").slice(0, 500),
@@ -2220,7 +2584,10 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     return "La pièce n'a pas été enregistrée. Vérifie ta connexion et réessaie.";
   };
 
-  $("pi-enregistrer").addEventListener("click", async () => {
+  $("pi-enregistrer").addEventListener("click", () => enregistrerPiece(false));
+  $("pi-encore").addEventListener("click", () => enregistrerPiece(true));
+  // continuer : la fenêtre se rouvre vide, avec la même marque et la même catégorie, pour enchaîner.
+  async function enregistrerPiece(continuer) {
     if (enregistrementPiece || !peutModifierPieces()) return;
     effacerErreurPiece();
     const lu = lireFormulairePiece();
@@ -2230,28 +2597,36 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     const anciennePhoto = avant ? avant.photo : null;
     let photo = anciennePhoto, envoyee = null;
     enregistrementPiece = true;
-    const bouton = $("pi-enregistrer");
-    bouton.disabled = true;
+    const bouton = continuer ? $("pi-encore") : $("pi-enregistrer");
+    const texteBouton = bouton.textContent;
+    $("pi-enregistrer").disabled = $("pi-encore").disabled = true;
     bouton.textContent = "Enregistrement…";
     try {
       if (photoChoisie) {
-        if (mode === "base") { envoyee = (await assets.upload(photoChoisie, { type: "image/jpeg" })).id; photo = envoyee; }
+        if (mode === "base") { envoyee = (await assets.upload(photoChoisie, { type: photoChoisie.type || "image/jpeg" })).id; photo = envoyee; }
         else photo = await enDataUrl(photoChoisie);
       } else if (retirerPhoto) photo = null;
       await ecrirePiece(id, { ...lu.piece, photo, creeLe: avant ? avant.creeLe : new Date().toISOString() });
       // L'ancienne photo envoyée depuis la page n'est plus utilisée : elle est effacée.
       if (assets && anciennePhoto && anciennePhoto !== photo && PHOTO_ASSET_RE.test(anciennePhoto)) assets.delete(anciennePhoto).catch(() => {});
       fermer($("fenetre-piece"));
-      toast(avant ? "Pièce enregistrée." : "Pièce ajoutée.");
+      if (continuer) {
+        ouvrirPiece(null);
+        $("pi-marque").value = lu.piece.marque;
+        $("pi-categorie").value = lu.piece.categorie;
+        champsRepris = { marque: lu.piece.marque, categorie: lu.piece.categorie };
+        $("pi-choisir").focus();
+        toast("Pièce ajoutée. À la suivante !");
+      } else toast(avant ? "Pièce enregistrée." : "Pièce ajoutée.");
     } catch (e) {
       if (envoyee && assets) assets.delete(envoyee).catch(() => {});
       erreurPiece(messagePiece(e));
     } finally {
       enregistrementPiece = false;
-      bouton.disabled = false;
-      bouton.textContent = "Enregistrer";
+      $("pi-enregistrer").disabled = $("pi-encore").disabled = false;
+      bouton.textContent = texteBouton;
     }
-  });
+  }
   $("pi-supprimer").addEventListener("click", async e => {
     const b = e.currentTarget, x = pieceEditee;
     if (!x || !peutModifierPieces()) return;
@@ -2264,6 +2639,769 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
       toast("Pièce supprimée.");
     } catch (err) { erreurPiece(messagePiece(err)); }
   });
+
+  // ---------- garde-robe : onglets, collections, mannequin, tenues, comparateur, ce qu'il manque ----------
+  const ONGLETS_GR = [["garde-robe", "Pièces"], ["tenues", "Tenues"], ["comparer", "Comparer"], ["manque", "Ce qu'il manque"]];
+  document.querySelectorAll(".onglets-gr").forEach(nav => nav.replaceChildren(...ONGLETS_GR.map(([vue, nom]) => {
+    const a = element("a", null, nom);
+    a.href = "#" + vue;
+    a.dataset.onglet = vue;
+    return a;
+  })));
+  const peutModifierGr = () => mode === "base" || mode === "local";
+  let sampleNs = null;   // Claude, pour proposer une description de tenue
+  const maintenant = () => new Date().toISOString();
+  const dateLisible = iso => { const d = new Date(iso); return isNaN(d) ? "" : `${d.getDate()} ${MOIS_COURTS[d.getMonth()]}`; };
+  const nomCourt = x => [x.marque, x.modele].filter(Boolean).join(" ") + (x.couleur ? ` · ${x.couleur}` : "");
+
+  // Une collection de la base (ou du navigateur hors de claude.ai) : lecture vérifiée, une écriture à la fois par document.
+  function creerCollection(nom, cleLocale, lire, rendu) {
+    const c = { docs: Object.create(null), brut: {}, files: Object.create(null) };
+    const depuisBrut = () => { c.docs = Object.create(null); for (const [id, d] of Object.entries(c.brut)) { const x = lire(id, d); if (x) c.docs[id] = x; } };
+    c.chargerLocal = () => {
+      try { const b = JSON.parse(localStorage.getItem(cleLocale) || "{}"); c.brut = b && typeof b === "object" ? b : {}; } catch (_) { c.brut = {}; }
+      depuisBrut();
+    };
+    c.abonner = () => db.collection(nom).onSnapshot(snap => {
+      const m = Object.create(null);
+      snap.docs.forEach(doc => { const x = doc.exists && lire(doc.id, doc.data()); if (x) m[doc.id] = x; });
+      c.docs = m;
+      rendu();
+    }, () => toast("Une partie de la garde-robe n'a pas pu être chargée. Recharge la page.", "erreur"));
+    c.ecrire = (id, corps) => {
+      if (mode === "local") {
+        const avant = c.brut[id];
+        if (corps) c.brut[id] = corps; else delete c.brut[id];
+        try { localStorage.setItem(cleLocale, JSON.stringify(c.brut)); }
+        catch (_) { if (avant) c.brut[id] = avant; else delete c.brut[id]; return Promise.reject({ code: "stockage_local" }); }
+        depuisBrut();
+        rendu();
+        return Promise.resolve();
+      }
+      const ref = db.doc(nom + "/" + id);
+      const suite = (c.files[id] || Promise.resolve()).catch(() => {}).then(() => (corps ? ref.set(corps) : ref.delete()));
+      c.files[id] = suite;
+      return suite;
+    };
+    c.nouvelId = () => (mode === "base" ? db.collection(nom).doc().id : "x" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7));
+    return c;
+  }
+  const messageEcriture = e => (e && (e.code === "quota_exceeded" || e.code === "stockage_local")
+    ? "Plus de place pour enregistrer. Supprime ce qui ne sert plus."
+    : "Ce n'a pas été enregistré. Vérifie ta connexion et réessaie.");
+
+  // ----- étoile (favori), cœur (vitrine), caméra (réseaux sociaux) -----
+  const DRAPEAUX = [
+    ["favori", "Favori", '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.6l2.6 5.2 5.8.9-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.2-4.1 5.8-.9z"/></svg>'],
+    ["vitrine", "Vitrine", '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.2s-7.4-4.6-7.4-10.3A4.1 4.1 0 0 1 12 7.4a4.1 4.1 0 0 1 7.4 2.5c0 5.7-7.4 10.3-7.4 10.3z"/></svg>'],
+    ["reseaux", "Réseaux sociaux", '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.5h3.2L8.8 6h6.4l1.6 2.5H20V19H4z"/><circle cx="12" cy="13.6" r="3.3"/></svg>'],
+  ];
+  const lireDrapeaux = d => Object.fromEntries(DRAPEAUX.map(([k]) => [k, d[k] === true]));
+  function boutonsDrapeaux(objet, compacts, basculer) {
+    const div = element("div", "drapeaux" + (compacts ? " compacts" : ""));
+    DRAPEAUX.forEach(([k, nom, svg]) => {
+      const b = element("button", "drapeau");
+      b.type = "button";
+      b.dataset.drapeau = k;
+      b.title = nom;
+      b.setAttribute("aria-pressed", String(!!objet[k]));
+      b.innerHTML = svg;
+      if (compacts) b.setAttribute("aria-label", nom); else b.append(element("span", null, nom));
+      b.disabled = !peutModifierGr();
+      b.addEventListener("click", () => basculer(k));
+      div.append(b);
+    });
+    return div;
+  }
+  function filtresDrapeaux(conteneur, actif, nombres, choisir) {
+    conteneur.replaceChildren(...[["", "Toutes"], ...DRAPEAUX.map(([k, nom]) => [k, k === "favori" ? "Favoris" : nom])].map(([k, nom]) => {
+      const b = element("button", "puce-filtre");
+      b.type = "button";
+      b.setAttribute("aria-pressed", String(actif === k));
+      b.append(document.createTextNode(nom), element("span", "nombre", String(nombres[k || "tout"] || 0)));
+      b.addEventListener("click", () => choisir(k));
+      return b;
+    }));
+  }
+
+  // ----- le mannequin -----
+  // Six emplacements sur le corps ; zone = [gauche, haut, largeur, hauteur] en % de la scène 3:4.
+  const EMPLACEMENTS = [
+    { id: "dessus", nom: "Veste, blouson ou manteau", cats: ["vestes", "blousons", "manteaux"], zone: [19.5, 17, 61, 44], ancre: "50% 0%", z: 4 },
+    { id: "pull", nom: "Pull ou sweat", cats: ["pulls", "sweats"], zone: [22, 18, 56, 39], ancre: "50% 0%", z: 3 },
+    { id: "haut", nom: "T-shirt, chemise ou polo", cats: ["t-shirts", "chemises", "polos"], zone: [23, 18.5, 54, 39], ancre: "50% 0%", z: 2 },
+    { id: "bas", nom: "Jean, pantalon ou short", cats: ["jeans", "pantalons", "shorts"], zone: [32, 49.5, 36, 44], ancre: "50% 0%", z: 1 },
+    { id: "pieds", nom: "Chaussures", cats: ["chaussures"], zone: [31, 89.5, 38, 9], ancre: "50% 100%", z: 5 },
+    { id: "accessoire", nom: "Accessoire", cats: ["accessoires"], zone: [74, 46, 22, 17], ancre: "50% 50%", z: 6 },
+  ];
+  const EMPLACEMENT_DE = {};
+  EMPLACEMENTS.forEach(e => e.cats.forEach(c => { EMPLACEMENT_DE[c] = e.id; }));
+  // Mannequin de vitrine sans visage, dessiné sur 300 × 400 (la scène 3:4).
+  const MANNEQUIN = '<svg viewBox="0 0 300 400" aria-hidden="true" focusable="false">'
+    + '<ellipse cx="150" cy="388" rx="72" ry="7" fill="#172033" opacity=".07"/>'
+    + '<g fill="var(--mannequin)">'
+    + '<ellipse cx="150" cy="40" rx="19" ry="23"/><path d="M141 56h18l2 22h-22z"/>'
+    + '<path d="M112 80Q150 70 188 80Q203 84 202 102L194 150Q190 180 189 206H111Q110 180 106 150L98 102Q97 84 112 80Z"/>'
+    + '<path d="M112 204H148L146 236L142 368H124L116 250Z"/><path d="M152 204H188L184 250L176 368H158L154 236Z"/>'
+    + '<ellipse cx="132" cy="376" rx="15" ry="7"/><ellipse cx="168" cy="376" rx="15" ry="7"/>'
+    + '<ellipse cx="94" cy="224" rx="8" ry="12"/><ellipse cx="206" cy="224" rx="8" ry="12"/></g>'
+    + '<g fill="none" stroke="var(--mannequin)" stroke-width="16" stroke-linecap="round"><path d="M108 92Q96 150 95 212"/><path d="M192 92Q204 150 205 212"/></g>'
+    + '</svg>';
+
+  // Détourage : le fond uni de la photo (blanc, gris clair…) devient transparent, puis la pièce est recadrée
+  // au plus près. Une photo déjà détourée est seulement recadrée. Un fond chargé n'est pas touché.
+  const cacheDetours = new Map();
+  function effacerFond(px, w, h) {
+    const n = w * h, bord = [];
+    for (let x = 0; x < w; x++) bord.push(x, (h - 1) * w + x);
+    for (let y = 1; y < h - 1; y++) bord.push(y * w, y * w + w - 1);
+    if (bord.filter(i => px[i * 4 + 3] < 200).length > bord.length * 0.3) return true;   // déjà détourée
+    // Le fond : sa couleur médiane sur le bord, et sa « teinte » (écart entre le canal le plus fort et le plus
+    // faible). Un fond gris ou blanc n'a presque pas de teinte ; un beige, un rose ou un écru en ont un peu :
+    // c'est ce qui les sépare d'un fond clair quand les couleurs sont proches.
+    const valeurs = f => bord.map(f).sort((a, b) => a - b);
+    const mediane = f => { const v = valeurs(f); return v[v.length >> 1]; };
+    const teinteDu = i => Math.max(px[i * 4], px[i * 4 + 1], px[i * 4 + 2]) - Math.min(px[i * 4], px[i * 4 + 1], px[i * 4 + 2]);
+    const fr = mediane(i => px[i * 4]), fg = mediane(i => px[i * 4 + 1]), fb = mediane(i => px[i * 4 + 2]), ft = mediane(teinteDu);
+    const ecart = i => { const r = px[i * 4] - fr, g = px[i * 4 + 1] - fg, b = px[i * 4 + 2] - fb; return r * r + g * g + b * b; };
+    const TOL_FOND = 40 * 40, TOL_PAS = 12 * 12, TOL_TEINTE = 6;
+    const commeLeFond = i => ecart(i) < TOL_FOND && Math.abs(teinteDu(i) - ft) < TOL_TEINTE;
+    if (bord.filter(commeLeFond).length < bord.length * 0.6) return false;   // fond pas uni
+    const fond = new Uint8Array(n), file = new Int32Array(n);
+    let debut = 0, fin = 0;
+    bord.forEach(i => { if (!fond[i] && commeLeFond(i)) { fond[i] = 1; file[fin++] = i; } });
+    const essayer = (i, j) => {
+      if (fond[j]) return;
+      const r = px[j * 4] - px[i * 4], g = px[j * 4 + 1] - px[i * 4 + 1], b = px[j * 4 + 2] - px[i * 4 + 2];
+      if (r * r + g * g + b * b < TOL_PAS && commeLeFond(j)) { fond[j] = 1; file[fin++] = j; }
+    };
+    while (debut < fin) {
+      const i = file[debut++], x = i % w;
+      if (x > 0) essayer(i, i - 1);
+      if (x < w - 1) essayer(i, i + 1);
+      if (i >= w) essayer(i, i - w);
+      if (i < n - w) essayer(i, i + w);
+    }
+    for (let i = 0; i < n; i++) {
+      if (fond[i]) { px[i * 4 + 3] = 0; continue; }
+      const x = i % w;
+      const touche = (x > 0 && fond[i - 1]) || (x < w - 1 && fond[i + 1]) || (i >= w && fond[i - w]) || (i < n - w && fond[i + w]);
+      if (touche) px[i * 4 + 3] = Math.round(255 * Math.min(1, Math.max(Math.sqrt(ecart(i)) / 60, Math.abs(teinteDu(i) - ft) / 14)));   // bord adouci
+    }
+    return true;
+  }
+  function detourer(src) {
+    if (cacheDetours.has(src)) return cacheDetours.get(src);
+    const promesse = new Promise(resolve => {
+      const img = new Image();
+      img.decoding = "async";
+      img.onload = () => {
+        try {
+          const r = Math.min(1, 640 / Math.max(img.naturalWidth, img.naturalHeight));
+          const w = Math.max(1, Math.round(img.naturalWidth * r)), h = Math.max(1, Math.round(img.naturalHeight * r));
+          const cv = document.createElement("canvas");
+          cv.width = w;
+          cv.height = h;
+          const ctx = cv.getContext("2d", { willReadFrequently: true });
+          ctx.drawImage(img, 0, 0, w, h);
+          const donnees = ctx.getImageData(0, 0, w, h);
+          if (!effacerFond(donnees.data, w, h)) { resolve({ url: src, detoure: false }); return; }
+          let x0 = w, y0 = h, x1 = -1, y1 = -1;
+          for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+            if (donnees.data[(y * w + x) * 4 + 3] > 24) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+          }
+          if (x1 < 0) { resolve({ url: src, detoure: false }); return; }
+          const sortie = document.createElement("canvas");
+          sortie.width = x1 - x0 + 1;
+          sortie.height = y1 - y0 + 1;
+          sortie.getContext("2d").putImageData(donnees, -x0, -y0, x0, y0, sortie.width, sortie.height);
+          sortie.toBlob(b => resolve(b ? { url: URL.createObjectURL(b), detoure: true } : { url: src, detoure: false }), "image/png");
+        } catch (_) { resolve({ url: src, detoure: false }); }
+      };
+      img.onerror = () => resolve(null);
+      img.src = src;
+    });
+    cacheDetours.set(src, promesse);
+    return promesse;
+  }
+  // La scène : le mannequin habillé des pièces données (une par emplacement, la dernière l'emporte).
+  function scene(ids, opts = {}) {
+    const el = element("span", "scene" + (opts.petite ? " petite" : ""));
+    el.innerHTML = MANNEQUIN;
+    const par = {};
+    ids.forEach(id => { const x = pieces[id]; if (x) par[EMPLACEMENT_DE[x.categorie]] = x; });
+    EMPLACEMENTS.forEach(e => {
+      const x = par[e.id], src = x && srcPhoto(x.photo);
+      if (!src || (opts.masques && opts.masques[e.id])) return;
+      const img = element("img", "calque");
+      img.alt = "";
+      img.hidden = true;
+      Object.assign(img.style, { left: e.zone[0] + "%", top: e.zone[1] + "%", width: e.zone[2] + "%", height: e.zone[3] + "%", objectPosition: e.ancre, zIndex: e.z });
+      detourer(src).then(r => { if (!r) return; img.src = r.url; img.classList.toggle("brut", !r.detoure); img.hidden = false; });
+      el.append(img);
+    });
+    if (opts.libelle) el.setAttribute("aria-label", opts.libelle);
+    return el;
+  }
+  function vignette(x) {
+    const v = element("span", "emplacement-vignette" + (x ? "" : " vide"));
+    const src = x && srcPhoto(x.photo);
+    if (src) { const img = element("img"); img.alt = ""; img.loading = "lazy"; img.src = src; v.append(img); }
+    return v;
+  }
+  function photoPiece(x) {
+    const cadre = element("span", "piece-photo");
+    const src = srcPhoto(x.photo);
+    const sans = element("span", "sans-photo", NOM_CATEGORIE[x.categorie]);
+    if (src) {
+      const img = element("img");
+      img.alt = "";
+      img.loading = "lazy";
+      img.addEventListener("error", () => img.replaceWith(sans), { once: true });
+      img.src = src;
+      cadre.append(img);
+    } else cadre.append(sans);
+    return cadre;
+  }
+  const totalPrix = xs => { const avec = xs.filter(x => x.prix != null); return { total: Math.round(avec.reduce((t, x) => t + x.prix, 0) * 100) / 100, sansPrix: xs.length - avec.length }; };
+  function texteTotal(xs) {
+    if (!xs.length) return "";
+    const { total, sansPrix } = totalPrix(xs);
+    return `${xs.length} pièce${xs.length > 1 ? "s" : ""} · ` + (total ? formatPrix(total) + (sansPrix ? ` (+ ${sansPrix} sans prix)` : "") : "prix non renseignés");
+  }
+
+  // ----- tenues -----
+  // Un document par tenue dans « tenues » : { nom, pieces: [ids], description, favori, vitrine, reseaux, creeLe, modifieLe }.
+  function lireTenue(id, d) {
+    if (!d || typeof d !== "object" || !Array.isArray(d.pieces)) return null;
+    return {
+      id, nom: texteBorne(d.nom, 80), pieces: d.pieces.filter(x => typeof x === "string" && x.length <= 200).slice(0, 12),
+      description: texteBorne(d.description, 1000), ...lireDrapeaux(d), creeLe: texteBorne(d.creeLe, 40), modifieLe: texteBorne(d.modifieLe, 40),
+    };
+  }
+  const corpsTenue = t => ({ nom: t.nom || null, pieces: t.pieces, description: t.description || null, favori: t.favori, vitrine: t.vitrine, reseaux: t.reseaux, creeLe: t.creeLe, modifieLe: maintenant() });
+  const tenues = creerCollection("tenues", "tableau-de-bord-axel:tenues", lireTenue, () => { rendreTenues(); rendreComparateur(); rendreCarteGardeRobe(); });
+  const piecesDe = t => t.pieces.map(id => pieces[id]).filter(Boolean);
+
+  const nouvelleTenue = () => ({ id: null, nom: "", choix: {}, description: "", favori: false, vitrine: false, reseaux: false, creeLe: "" });
+  let tenueEnCours = nouvelleTenue();
+  let emplacementOuvert = null, filtreTenues = "";
+  const masques = {};
+  const idsEnCours = () => EMPLACEMENTS.map(e => tenueEnCours.choix[e.id]).filter(id => id && pieces[id]);
+  // Ouvre une tenue enregistrée dans l'atelier, ou un brouillon (par exemple depuis une sélection de pièces).
+  function chargerTenueDansAtelier(t, brouillon) {
+    tenueEnCours = brouillon || nouvelleTenue();
+    if (t) {
+      tenueEnCours = { id: t.id, nom: t.nom, choix: {}, description: t.description, favori: t.favori, vitrine: t.vitrine, reseaux: t.reseaux, creeLe: t.creeLe };
+      t.pieces.forEach(id => { const x = pieces[id]; if (x) tenueEnCours.choix[EMPLACEMENT_DE[x.categorie]] = id; });
+    }
+    $("te-nom").value = tenueEnCours.nom;
+    $("te-description").value = tenueEnCours.description;
+    $("te-rediger-etat").textContent = "";
+    $("te-erreur").hidden = true;
+    emplacementOuvert = null;
+    Object.keys(masques).forEach(k => delete masques[k]);
+    desarmer($("te-supprimer"), "Supprimer la tenue");
+    rendreTenues();
+  }
+  const PICTO_OEIL = '<svg class="picto" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const PICTO_OEIL_BARRE = '<svg class="picto" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><path d="M4 20L20 4"/></svg>';
+  const PICTO_CROIX = '<svg class="picto" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+
+  function rendreTenues() {
+    Object.keys(tenueEnCours.choix).forEach(k => { if (!pieces[tenueEnCours.choix[k]]) delete tenueEnCours.choix[k]; });
+    const modifiable = peutModifierGr();
+    const ids = idsEnCours();
+    $("te-scene").replaceChildren(scene(ids, { masques }));
+    $("te-total").textContent = ids.length ? texteTotal(ids.map(id => pieces[id])) : "Choisis les pièces pour habiller le mannequin.";
+
+    const toutes = Object.values(pieces).sort(trierPieces);
+    $("te-emplacements").replaceChildren(...EMPLACEMENTS.map(e => {
+      const id = tenueEnCours.choix[e.id], x = id && pieces[id];
+      const ligne = element("div", "emplacement-ligne");
+      const ouvrir = element("button", "emplacement-texte");
+      ouvrir.type = "button";
+      ouvrir.dataset.emplacement = e.id;
+      ouvrir.setAttribute("aria-expanded", String(emplacementOuvert === e.id));
+      ouvrir.append(element("span", "emplacement-nom", e.nom), element("span", "emplacement-piece" + (x ? "" : " vide"), x ? nomCourt(x) : "Choisir…"));
+      const actions = element("span", "emplacement-actions");
+      if (x) {
+        const oeil = element("button", "icone-bouton");
+        oeil.type = "button";
+        oeil.dataset.masquer = e.id;
+        oeil.setAttribute("aria-label", masques[e.id] ? "Remettre sur le mannequin" : "Enlever du mannequin pour voir dessous");
+        oeil.title = oeil.getAttribute("aria-label");
+        oeil.innerHTML = masques[e.id] ? PICTO_OEIL_BARRE : PICTO_OEIL;
+        const retirer = element("button", "icone-bouton");
+        retirer.type = "button";
+        retirer.dataset.retirer = e.id;
+        retirer.setAttribute("aria-label", `Retirer ${nomCourt(x)} de la tenue`);
+        retirer.innerHTML = PICTO_CROIX;
+        actions.append(oeil, retirer);
+      }
+      ligne.append(vignette(x), ouvrir, actions);
+      if (emplacementOuvert === e.id) {
+        const grille = element("div", "choix-pieces");
+        const candidates = toutes.filter(p => e.cats.includes(p.categorie));
+        if (!candidates.length) grille.append(element("p", "choix-vide", "Aucune pièce de ce type pour l'instant. Ajoute-en dans l'onglet « Pièces »."));
+        candidates.forEach(p => {
+          const b = element("button", "choix-piece");
+          b.type = "button";
+          b.dataset.choisir = p.id;
+          b.dataset.pour = e.id;
+          b.setAttribute("aria-pressed", String(id === p.id));
+          b.setAttribute("aria-label", nomCourt(p));
+          b.append(photoPiece(p), element("span", null, [p.marque, p.couleur].filter(Boolean).join(" · ") || p.modele));
+          grille.append(b);
+        });
+        ligne.append(grille);
+      }
+      return ligne;
+    }));
+    $("te-drapeaux").replaceChildren(boutonsDrapeaux(tenueEnCours, false, k => { tenueEnCours[k] = !tenueEnCours[k]; rendreTenues(); }));
+    $("te-enregistrer").textContent = tenueEnCours.id ? "Enregistrer les modifications" : "Enregistrer la tenue";
+    $("te-enregistrer").hidden = !modifiable;
+    $("te-supprimer").hidden = !(modifiable && tenueEnCours.id);
+    $("te-rediger").hidden = !sampleNs || !modifiable;
+    $("te-rediger").textContent = $("te-description").value.trim() ? "Proposer une autre description" : "Proposer une description";
+    ["te-nom", "te-description"].forEach(f => { $(f).disabled = !modifiable; });
+
+    // Mes tenues
+    const tout = Object.values(tenues.docs);
+    const nombres = { tout: tout.length };
+    DRAPEAUX.forEach(([k]) => { nombres[k] = tout.filter(t => t[k]).length; });
+    filtresDrapeaux($("te-filtres"), filtreTenues, nombres, k => { filtreTenues = k; rendreTenues(); });
+    const liste = tout.filter(t => !filtreTenues || t[filtreTenues]).sort((a, b) => (b.modifieLe || b.creeLe).localeCompare(a.modifieLe || a.creeLe));
+    $("te-liste").replaceChildren(...liste.map(t => {
+      const carte = element("div", "carte-tenue" + (t.id === tenueEnCours.id ? " ouverte" : ""));
+      const ouvrir = element("button", "carte-tenue-ouvrir");
+      ouvrir.type = "button";
+      ouvrir.dataset.tenue = t.id;
+      const xs = piecesDe(t);
+      ouvrir.setAttribute("aria-label", `${t.nom || "Tenue sans nom"} : ${xs.map(nomCourt).join(", ") || "aucune pièce"}`);
+      ouvrir.append(scene(t.pieces, { petite: true }), element("span", "carte-tenue-nom", t.nom || "Tenue sans nom"));
+      const pied = element("div", "carte-tenue-pied");
+      const { total } = totalPrix(xs);
+      pied.append(element("span", null, total ? formatPrix(total) : `${xs.length} pièce${xs.length > 1 ? "s" : ""}`),
+        boutonsDrapeaux(t, true, async k => { try { await tenues.ecrire(t.id, { ...corpsTenue(t), [k]: !t[k] }); } catch (e) { toast(messageEcriture(e), "erreur"); } }));
+      carte.append(ouvrir, pied);
+      return carte;
+    }));
+    $("te-compte").textContent = tout.length ? `${tout.length} tenue${tout.length > 1 ? "s" : ""}` : "";
+    $("te-vide").hidden = liste.length > 0;
+    $("te-vide").textContent = tout.length ? "Aucune tenue avec ce repère." : "Aucune tenue enregistrée. Habille le mannequin, donne un nom à la tenue et enregistre-la.";
+  }
+
+  document.querySelector('[data-vue="tenues"]').addEventListener("click", e => {
+    const t = e.target.closest("[data-emplacement], [data-choisir], [data-masquer], [data-retirer], [data-tenue]");
+    if (!t) return;
+    if (t.dataset.emplacement) emplacementOuvert = emplacementOuvert === t.dataset.emplacement ? null : t.dataset.emplacement;
+    else if (t.dataset.choisir) { tenueEnCours.choix[t.dataset.pour] = t.dataset.choisir; delete masques[t.dataset.pour]; emplacementOuvert = null; }
+    else if (t.dataset.masquer) masques[t.dataset.masquer] = !masques[t.dataset.masquer];
+    else if (t.dataset.retirer) { delete tenueEnCours.choix[t.dataset.retirer]; delete masques[t.dataset.retirer]; }
+    else if (t.dataset.tenue) {
+      chargerTenueDansAtelier(tenues.docs[t.dataset.tenue]);
+      $("te-scene").scrollIntoView({ block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+      return;
+    }
+    rendreTenues();
+  });
+  $("te-nouvelle").addEventListener("click", () => chargerTenueDansAtelier(null));
+  $("te-description").addEventListener("input", () => {
+    $("te-rediger").textContent = $("te-description").value.trim() ? "Proposer une autre description" : "Proposer une description";
+  });
+  $("te-enregistrer").addEventListener("click", async () => {
+    if (!peutModifierGr()) return;
+    $("te-erreur").hidden = true;
+    const ids = idsEnCours();
+    if (!ids.length) { $("te-erreur").textContent = "Choisis au moins une pièce pour la tenue."; $("te-erreur").hidden = false; return; }
+    const nom = $("te-nom").value.trim().slice(0, 80) || `Tenue du ${dateLisible(maintenant())}`;
+    const id = tenueEnCours.id || tenues.nouvelId();
+    const creeLe = tenueEnCours.creeLe || maintenant();
+    const corps = { nom, pieces: ids, description: $("te-description").value.trim().slice(0, 1000) || null,
+      favori: tenueEnCours.favori, vitrine: tenueEnCours.vitrine, reseaux: tenueEnCours.reseaux, creeLe, modifieLe: maintenant() };
+    try {
+      await tenues.ecrire(id, corps);
+      tenueEnCours.id = id;
+      tenueEnCours.creeLe = creeLe;
+      tenueEnCours.nom = nom;
+      $("te-nom").value = nom;
+      toast("Tenue enregistrée.");
+      rendreTenues();
+    } catch (err) { $("te-erreur").textContent = messageEcriture(err); $("te-erreur").hidden = false; }
+  });
+  $("te-supprimer").addEventListener("click", async e => {
+    const b = e.currentTarget, id = tenueEnCours.id;
+    if (!id) return;
+    if (!b.classList.contains("arme")) { armer(b, "Confirmer la suppression", "Supprimer la tenue"); return; }
+    desarmer(b, "Supprimer la tenue");
+    try { await tenues.ecrire(id, null); chargerTenueDansAtelier(null); toast("Tenue supprimée."); }
+    catch (err) { toast(messageEcriture(err), "erreur"); }
+  });
+  // Claude propose une description, selon l'usage choisi (vitrine, réseaux ou client).
+  let redactionEnCours = null;
+  $("te-rediger").addEventListener("click", async () => {
+    const xs = idsEnCours().map(id => pieces[id]);
+    if (!sampleNs) return;
+    if (!xs.length) { $("te-rediger-etat").textContent = "Choisis d'abord les pièces de la tenue."; return; }
+    if (redactionEnCours) { redactionEnCours.abort(); return; }
+    const usage = tenueEnCours.reseaux ? "un post sur les réseaux sociaux du magasin" : tenueEnCours.vitrine ? "la vitrine du magasin" : "présenter la tenue à un client";
+    const lignes = xs.map(x => `- ${NOM_CATEGORIE[x.categorie]} : ${[x.marque, x.modele, x.couleur].filter(Boolean).join(", ")}`
+      + (x.matiere ? `, ${x.matiere}` : "") + (x.coupe ? `, coupe ${x.coupe}` : "") + (x.prix != null ? `, ${formatPrix(x.prix)}` : "")).join("\n");
+    const consigne = `Tu aides un vendeur du magasin de vêtements Blue Box (rayon homme) à présenter une tenue. `
+      + `Écris en français une description courte (2 ou 3 phrases, 60 mots au plus) pour ${usage}. `
+      + `Ton naturel et vendeur, sans exagération et sans emoji.`
+      + (tenueEnCours.reseaux ? " Ajoute à la fin une ligne de 3 à 5 hashtags." : "")
+      + ` Ne parle que des pièces ci-dessous, sans inventer de matière ni de prix.\n\nLa tenue :\n${lignes}\n\nRéponds seulement avec la description.`;
+    const avant = $("te-description").value;
+    redactionEnCours = new AbortController();
+    $("te-rediger").textContent = "Arrêter";
+    $("te-rediger-etat").textContent = "Claude écrit…";
+    try {
+      const { text } = await sampleNs(consigne, { signal: redactionEnCours.signal, cache: false, onText: ({ text }) => { $("te-description").value = text; } });
+      $("te-description").value = text.trim();
+      $("te-rediger-etat").textContent = "Tu peux la modifier avant d'enregistrer.";
+    } catch (e) {
+      const code = e && e.code;
+      if (code === "cancelled") { $("te-description").value = e.text || avant; $("te-rediger-etat").textContent = ""; }
+      else if (["not_granted", "sampling_disabled", "not_declared", "capability_disabled", "capability_removed"].includes(code)) {
+        $("te-description").value = avant;
+        sampleNs = null;
+        $("te-rediger-etat").textContent = "Claude n'est pas disponible ici : écris la description toi-même.";
+      } else {
+        $("te-description").value = e && e.text ? e.text : avant;
+        $("te-rediger-etat").textContent = code === "rate_limited" ? "Trop de demandes pour l'instant. Réessaie dans un moment." : "La description n'a pas pu être écrite. Réessaie.";
+      }
+    } finally {
+      redactionEnCours = null;
+      rendreTenues();
+    }
+  });
+
+  // ----- comparateur -----
+  // Un document par comparaison dans « comparaisons » : { type: "pieces" | "tenues", elements: [ids], nom, favori, vitrine, reseaux, creeLe }.
+  const MAX_COMPARER = { pieces: 4, tenues: 3 };
+  function lireComparaison(id, d) {
+    if (!d || typeof d !== "object" || !Array.isArray(d.elements)) return null;
+    return { id, type: d.type === "tenues" ? "tenues" : "pieces", elements: d.elements.filter(x => typeof x === "string" && x.length <= 200).slice(0, 4),
+      nom: texteBorne(d.nom, 80), ...lireDrapeaux(d), creeLe: texteBorne(d.creeLe, 40) };
+  }
+  const corpsComparaison = c => ({ type: c.type, elements: c.elements, nom: c.nom || null, favori: c.favori, vitrine: c.vitrine, reseaux: c.reseaux, creeLe: c.creeLe });
+  const comparaisons = creerCollection("comparaisons", "tableau-de-bord-axel:comparaisons", lireComparaison, rendreComparateur);
+  const nouvelleComparaison = type => ({ id: null, type, elements: [], nom: "", favori: false, vitrine: false, reseaux: false, creeLe: "" });
+  let compEnCours = nouvelleComparaison("pieces");
+  let rechercheComparer = "", filtreComparaisons = "";
+  const elementDe = (type, id) => (type === "pieces" ? pieces[id] : tenues.docs[id]);
+  const nomElement = (type, x) => (type === "pieces" ? nomCourt(x) : x.nom || "Tenue sans nom");
+  function chargerComparaison(c) {
+    compEnCours = c ? { ...c, elements: [...c.elements] } : nouvelleComparaison(compEnCours.type);
+    $("co-nom").value = compEnCours.nom;
+    $("co-erreur").hidden = true;
+    desarmer($("co-supprimer"), "Supprimer la comparaison");
+    rendreComparateur();
+  }
+  function apercuElement(type, x, petit) {
+    if (type === "pieces") return petit ? vignette(x) : photoPiece(x);
+    const s = scene(x.pieces, { petite: true });
+    if (petit) s.classList.add("mini-scene");
+    return s;
+  }
+
+  // Une ligne du tableau ; « pareil » quand toutes les valeurs sont les mêmes.
+  function ligneTable(titre, cellules, pareil) {
+    const tr = element("tr", pareil ? "pareil" : null);
+    const th = element("th", null, titre);
+    th.scope = "row";
+    if (pareil) th.append(element("span", "pareil-mot", "identique"));
+    tr.append(th, ...cellules.map(c => {
+      const td = element("td");
+      if (c instanceof Node) td.append(c); else td.textContent = c == null || c === "" ? "—" : String(c);
+      return td;
+    }));
+    return tr;
+  }
+  const memes = vals => vals.length > 1 && vals.every(v => v && sansAccents(v) === sansAccents(vals[0]));
+  function cellulePrix(valeurs) {
+    const connus = valeurs.filter(v => v != null);
+    const min = connus.length ? Math.min(...connus) : null;
+    const differents = connus.length >= 2 && connus.some(v => v !== min);
+    return valeurs.map(v => {
+      if (v == null) return "—";
+      const s = element("span", null, formatPrix(v));
+      if (differents && v === min) s.append(element("span", "meilleur", "le moins cher"));
+      else if (differents) { s.append(element("br"), element("span", "ecart", `+ ${formatPrix(Math.round((v - min) * 100) / 100)}`)); }
+      return s;
+    });
+  }
+  function celluleCouleurs(couleurs) {
+    const s = element("span", "piece-ligne");
+    couleurs.filter(Boolean).forEach(c => { const p = element("span", "pastille-couleur"); const t = teinteDe(c); if (t) p.style.setProperty("--teinte", TEINTE[t].css); s.append(p, element("span", null, c)); });
+    return couleurs.filter(Boolean).length ? s : "—";
+  }
+  function lignesPieces(xs) {
+    const l = [];
+    l.push(ligneTable("", xs.map(x => { const d = element("div", "cellule-element"); d.append(photoPiece(x), element("span", "cellule-titre", x.modele || NOM_CATEGORIE[x.categorie])); return d; })));
+    const texte = (titre, f) => { const v = xs.map(f); l.push(ligneTable(titre, v, memes(v))); };
+    texte("Marque", x => x.marque);
+    texte("Catégorie", x => NOM_CATEGORIE[x.categorie]);
+    l.push(ligneTable("Couleur", xs.map(x => celluleCouleurs([x.couleur])), memes(xs.map(x => x.couleur))));
+    texte("Matière", x => x.matiere);
+    texte("Coupe", x => x.coupe);
+    l.push(ligneTable("Prix", cellulePrix(xs.map(x => x.prix)), memes(xs.map(x => (x.prix != null ? String(x.prix) : "")))));
+    texte("Référence", x => x.ref);
+    l.push(ligneTable("Repères", xs.map(x => {
+      const r = REPERES_PIECE.filter(([k]) => x.reperes[k]);
+      if (!r.length) return "—";
+      const s = element("span", "piece-reperes-ligne");
+      r.forEach(([k, nom]) => s.append(element("span", "rep rep-" + k, nom), document.createTextNode(" ")));
+      return s;
+    })));
+    texte("Note", x => x.note);
+    l.push(ligneTable("Fiche produit", xs.map(x => { if (!x.lien) return "—"; const a = element("a", "lien-fiche", "Voir ↗"); a.href = x.lien; a.target = "_blank"; a.rel = "noopener"; return a; })));
+    return l;
+  }
+  function lignesTenues(ts) {
+    const l = [];
+    l.push(ligneTable("", ts.map(t => { const d = element("div", "cellule-element"); d.append(scene(t.pieces, { petite: true }), element("span", "cellule-titre", t.nom || "Tenue sans nom")); return d; })));
+    l.push(ligneTable("Pièces", ts.map(t => { const ul = element("ul", "liste-pieces-tenue"); piecesDe(t).forEach(x => ul.append(element("li", null, `${NOM_CATEGORIE[x.categorie]} : ${nomCourt(x)}`))); return ul; })));
+    const totaux = ts.map(t => totalPrix(piecesDe(t)));
+    l.push(ligneTable("Prix total", cellulePrix(totaux.map(x => x.total || null))));
+    const unique = vals => [...new Set(vals.filter(Boolean))];
+    const texte = (titre, f) => { const v = ts.map(f); l.push(ligneTable(titre, v, memes(v))); };
+    texte("Marques", t => unique(piecesDe(t).map(x => x.marque)).join(", "));
+    l.push(ligneTable("Couleurs", ts.map(t => celluleCouleurs(unique(piecesDe(t).map(x => x.couleur))))));
+    texte("Matières", t => unique(piecesDe(t).map(x => x.matiere)).join(", "));
+    texte("Description", t => t.description);
+    texte("Repères", t => DRAPEAUX.filter(([k]) => t[k]).map(([, nom]) => nom).join(", "));
+    return l;
+  }
+
+  function rendreComparateur() {
+    const type = compEnCours.type, max = MAX_COMPARER[type], modifiable = peutModifierGr();
+    compEnCours.elements = compEnCours.elements.filter(id => elementDe(type, id)).slice(0, max);
+    document.querySelectorAll('input[name="co-type"]').forEach(r => { r.checked = r.value === type; });
+    const choisis = compEnCours.elements.map(id => elementDe(type, id));
+    $("co-choisis").replaceChildren(...compEnCours.elements.map((id, i) => {
+      const chip = element("span", "element-choisi");
+      const retirer = element("button", "icone-bouton");
+      retirer.type = "button";
+      retirer.dataset.enlever = id;
+      retirer.setAttribute("aria-label", `Retirer ${nomElement(type, choisis[i])} de la comparaison`);
+      retirer.innerHTML = PICTO_CROIX;
+      chip.append(apercuElement(type, choisis[i], true), element("span", "element-choisi-nom", nomElement(type, choisis[i])), retirer);
+      return chip;
+    }));
+    // Les candidats : pour des pièces, celles de la même catégorie que la première d'abord.
+    const plein = compEnCours.elements.length >= max;
+    $("co-recherche-ligne").hidden = type !== "pieces" || plein;
+    let candidats = [];
+    if (type === "pieces") {
+      const q = sansAccents(rechercheComparer.trim()), cat = choisis[0] && choisis[0].categorie;
+      candidats = Object.values(pieces).filter(x => !compEnCours.elements.includes(x.id)
+        && (!q || sansAccents([x.marque, x.modele, x.couleur, x.matiere, NOM_CATEGORIE[x.categorie]].join(" ")).includes(q)))
+        .sort((a, b) => ((b.categorie === cat) - (a.categorie === cat)) || trierPieces(a, b));
+    } else candidats = Object.values(tenues.docs).filter(t => !compEnCours.elements.includes(t.id)).sort((a, b) => (b.modifieLe || b.creeLe).localeCompare(a.modifieLe || a.creeLe));
+    $("co-candidats").hidden = plein || !candidats.length;
+    $("co-candidats").replaceChildren(...(plein ? [] : candidats.map(x => {
+      const b = element("button", "choix-piece");
+      b.type = "button";
+      b.dataset.ajouter = x.id;
+      b.setAttribute("aria-label", `Ajouter ${nomElement(type, x)}`);
+      b.append(apercuElement(type, x, false), element("span", null, type === "pieces" ? [x.marque, x.couleur].filter(Boolean).join(" · ") || x.modele : nomElement(type, x)));
+      return b;
+    })));
+    const nomType = type === "pieces" ? "pièces" : "tenues";
+    $("co-aide").textContent = plein ? `${max} ${nomType} au plus : retire-en une pour en ajouter une autre.`
+      : !candidats.length && !compEnCours.elements.length ? (type === "pieces" ? "Ajoute d'abord des pièces dans l'onglet « Pièces »." : "Enregistre d'abord des tenues dans l'onglet « Tenues ».")
+      : compEnCours.elements.length < 2 ? `Choisis de 2 à ${max} ${nomType} à comparer.` : "";
+    $("co-aide").hidden = !$("co-aide").textContent;
+
+    $("co-table-zone").hidden = choisis.length < 2;
+    $("co-infos").hidden = choisis.length < 2;
+    if (choisis.length >= 2) $("co-table").replaceChildren(...(type === "pieces" ? lignesPieces(choisis) : lignesTenues(choisis)));
+    $("co-drapeaux").replaceChildren(boutonsDrapeaux(compEnCours, false, k => { compEnCours[k] = !compEnCours[k]; rendreComparateur(); }));
+    $("co-enregistrer").textContent = compEnCours.id ? "Enregistrer les modifications" : "Enregistrer la comparaison";
+    $("co-enregistrer").hidden = !modifiable;
+    $("co-supprimer").hidden = !(modifiable && compEnCours.id);
+    $("co-nom").disabled = !modifiable;
+
+    // Mes comparaisons
+    const tout = Object.values(comparaisons.docs);
+    const nombres = { tout: tout.length };
+    DRAPEAUX.forEach(([k]) => { nombres[k] = tout.filter(c => c[k]).length; });
+    filtresDrapeaux($("co-filtres"), filtreComparaisons, nombres, k => { filtreComparaisons = k; rendreComparateur(); });
+    const liste = tout.filter(c => !filtreComparaisons || c[filtreComparaisons]).sort((a, b) => b.creeLe.localeCompare(a.creeLe));
+    $("co-liste").replaceChildren(...liste.map(c => {
+      const li = element("li", "ligne-comparaison" + (c.id === compEnCours.id ? " ouverte" : ""));
+      const els = c.elements.map(id => elementDe(c.type, id)).filter(Boolean);
+      const ouvrir = element("button", "ligne-comparaison-ouvrir");
+      ouvrir.type = "button";
+      ouvrir.dataset.comparaison = c.id;
+      const vignettes = element("span", "vignettes");
+      els.forEach(x => vignettes.append(apercuElement(c.type, x, true)));
+      const texte = element("span", "ligne-comparaison-texte");
+      texte.append(element("span", "ligne-comparaison-nom", c.nom || els.map(x => nomElement(c.type, x)).join(" vs ")),
+        element("span", "ligne-comparaison-type", `${els.length} ${c.type === "pieces" ? "pièces" : "tenues"}` + (c.creeLe ? ` · ${dateLisible(c.creeLe)}` : "")));
+      ouvrir.append(vignettes, texte);
+      li.append(ouvrir, boutonsDrapeaux(c, true, async k => { try { await comparaisons.ecrire(c.id, { ...corpsComparaison(c), [k]: !c[k] }); } catch (e) { toast(messageEcriture(e), "erreur"); } }));
+      return li;
+    }));
+    $("co-vide-liste").hidden = liste.length > 0;
+    $("co-vide-liste").textContent = tout.length ? "Aucune comparaison avec ce repère." : "Aucune comparaison enregistrée.";
+  }
+
+  document.querySelector('[data-vue="comparer"]').addEventListener("click", e => {
+    const t = e.target.closest("[data-ajouter], [data-enlever], [data-comparaison]");
+    if (!t) return;
+    if (t.dataset.ajouter && compEnCours.elements.length < MAX_COMPARER[compEnCours.type]) compEnCours.elements.push(t.dataset.ajouter);
+    else if (t.dataset.enlever) compEnCours.elements = compEnCours.elements.filter(id => id !== t.dataset.enlever);
+    else if (t.dataset.comparaison) { chargerComparaison(comparaisons.docs[t.dataset.comparaison]); window.scrollTo(0, 0); return; }
+    rendreComparateur();
+  });
+  document.querySelectorAll('input[name="co-type"]').forEach(r => r.addEventListener("change", () => {
+    if (r.checked && r.value !== compEnCours.type) chargerComparaison({ ...nouvelleComparaison(r.value), elements: [] });
+  }));
+  $("co-recherche").addEventListener("input", e => { rechercheComparer = e.target.value; rendreComparateur(); });
+  $("co-nouvelle").addEventListener("click", () => { chargerComparaison(null); });
+  $("co-enregistrer").addEventListener("click", async () => {
+    if (!peutModifierGr() || compEnCours.elements.length < 2) return;
+    $("co-erreur").hidden = true;
+    const els = compEnCours.elements.map(id => elementDe(compEnCours.type, id));
+    const nom = $("co-nom").value.trim().slice(0, 80) || els.map(x => nomElement(compEnCours.type, x)).join(" vs ").slice(0, 80);
+    const id = compEnCours.id || comparaisons.nouvelId();
+    const corps = { ...corpsComparaison(compEnCours), nom, creeLe: compEnCours.creeLe || maintenant() };
+    try {
+      await comparaisons.ecrire(id, corps);
+      compEnCours = { ...compEnCours, id, nom, creeLe: corps.creeLe };
+      $("co-nom").value = nom;
+      toast("Comparaison enregistrée.");
+      rendreComparateur();
+    } catch (err) { $("co-erreur").textContent = messageEcriture(err); $("co-erreur").hidden = false; }
+  });
+  $("co-supprimer").addEventListener("click", async e => {
+    const b = e.currentTarget, id = compEnCours.id;
+    if (!id) return;
+    if (!b.classList.contains("arme")) { armer(b, "Confirmer la suppression", "Supprimer la comparaison"); return; }
+    desarmer(b, "Supprimer la comparaison");
+    try { await comparaisons.ecrire(id, null); chargerComparaison(null); toast("Comparaison supprimée."); }
+    catch (err) { toast(messageEcriture(err), "erreur"); }
+  });
+
+  // ----- ce qu'il manque : les demandes des clients -----
+  // Un document par demande dans « demandes » : { quoi, categorie, nombre, derniereLe, statut, creeLe }.
+  const RESPONSABLE = "Maxime";   // à qui proposer ce qui manque
+  const STATUTS = [["a-proposer", "À proposer"], ["propose", `Proposé à ${RESPONSABLE}`], ["commande", "Commandé"], ["refuse", "Pas retenu"]];
+  function lireDemande(id, d) {
+    if (!d || typeof d !== "object") return null;
+    const quoi = texteBorne(d.quoi, 200);
+    if (!quoi) return null;
+    return {
+      id, quoi, categorie: typeof d.categorie === "string" && NOM_CATEGORIE[d.categorie] ? d.categorie : null,
+      nombre: Number.isInteger(d.nombre) && d.nombre > 0 && d.nombre < 100000 ? d.nombre : 1,
+      derniereLe: texteBorne(d.derniereLe, 40), statut: STATUTS.some(([k]) => k === d.statut) ? d.statut : "a-proposer", creeLe: texteBorne(d.creeLe, 40),
+    };
+  }
+  const corpsDemande = x => ({ quoi: x.quoi, categorie: x.categorie, nombre: x.nombre, derniereLe: x.derniereLe, statut: x.statut, creeLe: x.creeLe });
+  const demandes = creerCollection("demandes", "tableau-de-bord-axel:demandes", lireDemande, () => { rendreManque(); rendreCarteGardeRobe(); });
+  const cleDemande = q => sansAccents(q).replace(/[^a-z0-9]+/g, " ").trim();
+  $("ma-categorie").replaceChildren(new Option("Catégorie (facultatif)", ""), ...CATEGORIES.map(([id, nom]) => new Option(nom, id)));
+
+  async function compterUneDeplus(x) {
+    try { await demandes.ecrire(x.id, { ...corpsDemande(x), nombre: x.nombre + 1, derniereLe: maintenant() }); toast(`« ${x.quoi} » : ${x.nombre + 1} demandes.`); }
+    catch (e) { toast(messageEcriture(e), "erreur"); }
+  }
+  $("ma-form").addEventListener("submit", async e => {
+    e.preventDefault();
+    if (!peutModifierGr()) return;
+    const quoi = $("ma-quoi").value.trim().slice(0, 200);
+    $("ma-erreur").hidden = true;
+    if (!quoi) { $("ma-erreur").textContent = "Écris ce qu'on t'a demandé."; $("ma-erreur").hidden = false; $("ma-quoi").focus(); return; }
+    const deja = Object.values(demandes.docs).find(x => cleDemande(x.quoi) === cleDemande(quoi));
+    $("ma-quoi").value = "";
+    $("ma-categorie").value = "";
+    if (deja) { await compterUneDeplus(deja); return; }
+    try { await demandes.ecrire(demandes.nouvelId(), { quoi, categorie: $("ma-categorie").value || null, nombre: 1, derniereLe: maintenant(), statut: "a-proposer", creeLe: maintenant() }); }
+    catch (err) { $("ma-erreur").textContent = messageEcriture(err); $("ma-erreur").hidden = false; }
+  });
+
+  function rendreManque() {
+    const modifiable = peutModifierGr();
+    const rang = x => (x.statut === "refuse" ? 2 : x.statut === "commande" ? 1 : 0);
+    const liste = Object.values(demandes.docs).sort((a, b) => (rang(a) - rang(b)) || (b.nombre - a.nombre) || b.derniereLe.localeCompare(a.derniereLe));
+    $("ma-form").hidden = !modifiable;
+    $("ma-liste").replaceChildren(...liste.map(x => {
+      const li = element("li", "demande " + x.statut);
+      const n = element("span", "demande-nombre", `×${x.nombre}`);
+      n.title = `${x.nombre} demande${x.nombre > 1 ? "s" : ""}`;
+      const texte = element("div", "demande-texte");
+      const meta = element("div", "demande-meta");
+      if (x.categorie) meta.append(element("span", "puce", NOM_CATEGORIE[x.categorie]));
+      if (x.derniereLe) meta.append(element("span", null, `${x.nombre > 1 ? "Dernière demande" : "Demandé"} le ${dateLisible(x.derniereLe)}`));
+      texte.append(element("span", "demande-quoi", x.quoi), meta);
+      const actions = element("div", "demande-actions");
+      if (modifiable) {
+        const plus = element("button", "bouton-second bouton-petit", "+1");
+        plus.type = "button";
+        plus.dataset.plus = x.id;
+        plus.setAttribute("aria-label", `Un client de plus a demandé : ${x.quoi}`);
+        plus.title = "Un client de plus l'a demandé";
+        const statut = element("select");
+        statut.dataset.statut = x.id;
+        statut.setAttribute("aria-label", `Où en est la demande : ${x.quoi}`);
+        STATUTS.forEach(([k, nom]) => statut.append(new Option(nom, k)));
+        statut.value = x.statut;
+        const dire = element("button", "bouton-second bouton-petit", `À dire à ${RESPONSABLE}`);
+        dire.type = "button";
+        dire.dataset.dire = x.id;
+        dire.title = "L'ajoute à ta to-do, dans « À dire »";
+        const suppr = element("button", "bouton-danger bouton-petit", "Supprimer");
+        suppr.type = "button";
+        suppr.dataset.supprimer = x.id;
+        actions.append(plus, statut, dire, suppr);
+      } else actions.append(element("span", "puce", STATUTS.find(([k]) => k === x.statut)[1]));
+      li.append(n, texte, actions);
+      return li;
+    }));
+    $("ma-vide").hidden = liste.length > 0;
+    const actives = liste.filter(x => x.statut !== "refuse");
+    $("ma-compte").textContent = actives.length ? `${actives.length} demande${actives.length > 1 ? "s" : ""} · ${actives.reduce((t, x) => t + x.nombre, 0)} clients` : "";
+    // Les catégories où le magasin n'a encore aucune pièce
+    const toutes = Object.values(pieces);
+    const vides = CATEGORIES.filter(([id]) => !toutes.some(x => x.categorie === id));
+    $("ma-rayons").hidden = !toutes.length || !vides.length;
+    $("ma-rayons-liste").replaceChildren(...vides.map(([, nom]) => element("span", "puce", nom)));
+  }
+  document.querySelector('[data-vue="manque"]').addEventListener("click", async e => {
+    const t = e.target.closest("[data-plus], [data-dire], [data-supprimer]");
+    if (!t) return;
+    const x = demandes.docs[t.dataset.plus || t.dataset.dire || t.dataset.supprimer];
+    if (!x) return;
+    if (t.dataset.plus) { await compterUneDeplus(x); return; }
+    if (t.dataset.dire) {
+      const texte = `Des clients demandent : ${x.quoi}` + (x.nombre > 1 ? ` (${x.nombre} demandes)` : "");
+      try {
+        await ecrireTache(nouvelId(), { texte: texte.slice(0, 300), type: "dire", personne: RESPONSABLE, pour: null, urgent: false, fait: false, faitLe: null, creeLe: maintenant() });
+        toast(`Ajouté à ta to-do : à dire à ${RESPONSABLE}.`);
+      } catch (err) { echecEcriture(err); }
+      return;
+    }
+    if (!t.classList.contains("arme")) { armer(t, "Confirmer", "Supprimer"); return; }
+    try { await demandes.ecrire(x.id, null); toast("Demande supprimée."); } catch (err) { toast(messageEcriture(err), "erreur"); }
+  });
+  document.querySelector('[data-vue="manque"]').addEventListener("change", async e => {
+    const sel = e.target.closest("[data-statut]");
+    const x = sel && demandes.docs[sel.dataset.statut];
+    if (!x) return;
+    try { await demandes.ecrire(x.id, { ...corpsDemande(x), statut: sel.value }); } catch (err) { sel.value = x.statut; toast(messageEcriture(err), "erreur"); }
+  });
+
+  // Tout ce qui dépend des pièces se redessine quand elles changent.
+  function rendreAutourDesPieces() {
+    rendreGardeRobe();
+    rendreTenues();
+    rendreComparateur();
+    rendreManque();
+  }
 
   // ---------- message en bas de l'écran ----------
   let minuterieToast = 0;

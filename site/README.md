@@ -43,13 +43,29 @@ Ce que je dois faire au magasin et ce que je dois dire à quelqu'un.
 
 ### Garde-robe Blue Box
 
-Les pièces du magasin, pour penser les vitrines, les tenues et les posts.
+Les pièces du magasin (rayon homme), pour penser les vitrines, les tenues et les posts. Quatre onglets : Pièces, Tenues, Comparer, Ce qu'il manque (`#garde-robe`, `#tenues`, `#comparer`, `#manque`).
 
-- **Les pièces** en photo, rangées par catégorie : marque, modèle, couleur (avec sa pastille), prix et repères.
-- **Les filtres** : recherche (modèle, marque, couleur, référence, note), marque, rayon (Homme, Femme ; une pièce mixte apparaît dans les deux), catégorie, famille de couleur (noir, gris, beige, marine, bordeaux…) et repères.
-- **Les repères** : Nouveauté, Promo, Idée vitrine, À poster.
-- **« Ajouter une pièce »** : photo (réduite à 900 px), marque, catégorie, modèle, couleur, coupe, rayon, prix, référence, lien de la fiche produit, repères et note. Une photo nommée comme les exports Canva (`Marque - Catégorie - Modèle - Couleur.png`) remplit les champs encore vides. Toucher une pièce la rouvre pour la modifier ou la supprimer (second appui pour confirmer).
-- **Au départ** : les 16 pièces de `garde-robe.js`, avec leurs photos de `images/`.
+**Pièces**
+- Les pièces en photo, rangées par catégorie : marque, modèle, couleur (avec sa pastille), prix et repères (Nouveauté, Promo, Idée vitrine, À poster).
+- Filtres : recherche (modèle, marque, couleur, matière, référence, note), marque, catégorie, famille de couleur et repères.
+- « Ajouter une pièce » : photo, marque, catégorie, modèle, couleur, matière, coupe, prix, référence, lien de la fiche produit, repères et note. Une photo nommée comme les exports Canva (`Marque - Catégorie - Modèle - Couleur.png`) remplit les champs. Une photo détourée (PNG transparent) garde sa transparence ; les autres sont enregistrées en JPEG, réduites à 900 px.
+- « Enregistrer et ajouter une autre » rouvre la fenêtre vide avec la même marque et la même catégorie ; le nom de la photo suivante les remplace tant qu'elles n'ont pas été retouchées.
+- « Sélectionner » : toucher les pièces pour les choisir, puis les supprimer d'un coup (second appui pour confirmer), les comparer ou en faire une tenue.
+
+**Tenues**
+- Un mannequin de vitrine dessiné, habillé avec les photos des pièces choisies : veste, pull, t-shirt ou chemise, bas, chaussures, accessoire (une pièce par emplacement). Le fond uni de chaque photo est détouré dans la page (couleur et teinte proches du bord), puis la pièce est posée à sa place. Les photos sur fond uni, ou déjà détourées, donnent le meilleur rendu ; une photo portée par un modèle garde le modèle.
+- L'œil enlève une pièce du mannequin pour voir dessous, la croix la retire de la tenue.
+- Nom, description (« Proposer une description » la fait écrire par Claude, selon que la tenue est pour la vitrine, les réseaux ou un client), étoile (favori), cœur (vitrine), caméra (réseaux sociaux), prix total.
+- « Mes tenues » : toutes les tenues enregistrées, filtrables par repère.
+
+**Comparer**
+- De 2 à 4 pièces, ou de 2 à 3 tenues, côte à côte : marque, catégorie, couleur, matière, coupe, prix (le moins cher est signalé, avec l'écart des autres), référence, repères, note, fiche produit ; pour les tenues, les pièces, le prix total, les marques, les couleurs et les matières. Les lignes identiques sont grisées.
+- Une comparaison s'enregistre avec un nom et les mêmes étoile, cœur et caméra.
+
+**Ce qu'il manque**
+- Les demandes des clients que le magasin ne peut pas satisfaire. Une même demande ajoutée deux fois compte une fois de plus ; « +1 » aussi. Les plus demandées passent en premier.
+- Statut : À proposer, Proposé à Maxime, Commandé, Pas retenu. « À dire à Maxime » l'ajoute à la to-do, dans « À dire ».
+- En dessous, les catégories où le magasin n'a encore aucune pièce.
 
 ## Argent et Sport
 
@@ -57,12 +73,14 @@ Les pièces du magasin, pour penser les vitrines, les tenues et les posts.
 
 ## Données
 
-Sur la page publiée, le planning, la to-do list et la garde-robe sont enregistrés dans la base de la page : ils sont les mêmes sur le téléphone et l'ordinateur, et seul le propriétaire peut les modifier. Un document par semaine : `planning/AAAA-Wss` (semaine ISO, par exemple `planning/2026-W43`), avec `jours.lundi` … `jours.samedi` : `{ repos, matin: { debut, fin }, apresMidi: { debut, fin } }`, les heures au format `HH:MM`.
+Sur la page publiée, le planning, la to-do list et la garde-robe (pièces, tenues, comparaisons, demandes) sont enregistrés dans la base de la page : ils sont les mêmes sur le téléphone et l'ordinateur, et seul le propriétaire peut les modifier. Un document par semaine : `planning/AAAA-Wss` (semaine ISO, par exemple `planning/2026-W43`), avec `jours.lundi` … `jours.samedi` : `{ repos, matin: { debut, fin }, apresMidi: { debut, fin } }`, les heures au format `HH:MM`.
 
 Un document par tâche : `todo/<id>`, avec `texte`, `type` (`faire` ou `dire`), `personne`, `pour` (`AAAA-MM-JJ` ou rien), `urgent`, `fait`, `faitLe` et `creeLe`.
 
-Un document par pièce : `pieces/<id>`, avec `marque`, `categorie` (`pulls`, `jeans`, `pantalons`…), `modele`, `coupe`, `couleur`, `rayon` (`homme`, `femme` ou `mixte`), `prix`, `ref`, `lien`, `photo`, `reperes` (`nouveaute`, `promo`, `vitrine`, `reseaux`), `note` et `creeLe`. La photo est l'identifiant d'un fichier envoyé depuis la page (stockage de la page), ou le chemin d'une image publiée avec elle (`images/…jpg`).
+Un document par pièce : `pieces/<id>`, avec `marque`, `categorie` (`pulls`, `jeans`, `pantalons`…), `modele`, `coupe`, `couleur`, `matiere`, `rayon` (toujours `homme`), `prix`, `ref`, `lien`, `photo`, `reperes` (`nouveaute`, `promo`, `vitrine`, `reseaux`), `note` et `creeLe`. La photo est l'identifiant d'un fichier envoyé depuis la page (stockage de la page), ou le chemin d'une image publiée avec elle (`images/…jpg`).
+
+Garde-robe, suite : `tenues/<id>` (`nom`, `pieces` : liste d'identifiants de pièces, `description`, `favori`, `vitrine`, `reseaux`, `creeLe`, `modifieLe`) ; `comparaisons/<id>` (`type` : `pieces` ou `tenues`, `elements`, `nom`, `favori`, `vitrine`, `reseaux`, `creeLe`) ; `demandes/<id>` (`quoi`, `categorie`, `nombre`, `derniereLe`, `statut` : `a-proposer`, `propose`, `commande` ou `refuse`, `creeLe`).
 
 ## Publier
 
-`outils/version-artefact.sh site/index.html > site-axel.html`, puis publier `site-axel.html` sur la même adresse avec `images/*.jpg`, et les capacités `db` (écriture réservée au propriétaire), `user` et `assets` (envoi des photos).
+`outils/version-artefact.sh site/index.html > site-axel.html`, puis publier `site-axel.html` sur la même adresse, avec les capacités `db` (écriture réservée au propriétaire), `user`, `assets` (envoi des photos) et `sample` (descriptions de tenues écrites par Claude).
