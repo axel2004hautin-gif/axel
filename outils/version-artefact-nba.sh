@@ -1,5 +1,5 @@
 #!/bin/sh
-# Produit la version publiée du Carnet NBA comme artefact claude.ai : nba/index.html sans doctype,
+# Produit la version publiée de la Base de données NBA comme artefact claude.ai : nba/index.html sans doctype,
 # html, head, body ni meta charset/viewport, que le visualiseur ajoute lui-même.
 # Usage : outils/version-artefact-nba.sh > carnet-nba.html
 set -eu

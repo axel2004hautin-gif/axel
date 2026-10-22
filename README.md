@@ -131,10 +131,10 @@ Dans la base de la page : `achats` (pièces ajoutées), `etat/semaine` (semaine 
 - Trois pulls n'ont pas de fiche sur le site de la marque, leur lien mène chez un revendeur : le col rond noir, et les deux cols polo.
 - La correspondance entre les références Levi's et les couleurs suit l'ordre de la liste d'achats et des captures. Le 29507-1417 « Call It Off » est confirmé comme un délavage moyen.
 
-## Carnet NBA 2026-27
+## Base de données NBA 2026-27
 
-Le carnet de stats NBA (joueurs, équipes et totaux, classement, saisie des matchs) est publié sur claude.ai : <https://claude.ai/artifact/6iJEbW2tLmKX8R2jFa2uPx>. Les matchs sont enregistrés dans la base de la page (collection `matchs`) : ils sont les mêmes sur tous tes appareils, et seul le propriétaire peut en ajouter, modifier ou supprimer.
+La base de stats NBA (joueurs, équipes et totaux, classement, saisie des matchs) est publié sur claude.ai : <https://claude.ai/artifact/6iJEbW2tLmKX8R2jFa2uPx>. Les matchs sont enregistrés dans la base de la page (collection `matchs`) : ils sont les mêmes sur tous tes appareils, et seul le propriétaire peut en ajouter, modifier ou supprimer.
 
 Sous « Matchs saisis », « Importer (.json) » ajoute des matchs exportés depuis la version fichier, et « Exporter (.json) » en garde une sauvegarde. Un match du même jour avec les deux mêmes équipes est remplacé.
 
-La source est `nba/index.html`. Ouverte en fichier local, la page garde les matchs dans le navigateur. La version publiée en est tirée par `outils/version-artefact-nba.sh > carnet-nba.html`, avec les capacités `db` (écriture réservée au propriétaire), `user` et `downloads`.
+La source est `nba/index.html`. Ouverte en fichier local, la page garde les matchs dans le navigateur. La version publiée en est tirée par `outils/version-artefact-nba.sh > base-nba.html`, avec les capacités `db` (écriture réservée au propriétaire), `user` et `downloads`.
