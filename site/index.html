@@ -451,7 +451,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 .compte-selection { font-weight: 700; }
 @media (max-width: 599px) { .barre-selection .espace { display: none; } .barre-selection-dedans > button:not(.lien-discret) { flex: 1 1 auto; } }
 
-/* Le mannequin : une scène 3:4 sur fond blanc, les photos détourées posées sur le corps */
+/* Le porteur (le modèle en photo, ou le mannequin dessiné) sur fond blanc, les photos détourées posées sur le corps */
 .scene { position: relative; display: block; width: 100%; max-width: 100%; aspect-ratio: 3 / 4; overflow: hidden; border: 1px solid var(--trait); border-radius: 12px; background: var(--fond); }
 .scene svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 .calque { position: absolute; display: block; object-fit: contain; pointer-events: none; filter: drop-shadow(0 2px 3px rgba(15, 25, 50, .14)); }
@@ -461,8 +461,11 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 .atelier { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; align-items: start; }
 @media (min-width: 900px) { .atelier { grid-template-columns: minmax(280px, 400px) minmax(0, 1fr); gap: 36px; } }
 .atelier-scene { display: grid; gap: 8px; justify-items: center; }
-.atelier-scene .scene { max-width: 400px; }
-@media (max-width: 899px) { .atelier-scene .scene { max-width: 340px; } }
+.scene-zone { display: grid; justify-items: center; width: 100%; }
+.atelier-scene .scene { max-width: 380px; }
+@media (max-width: 899px) { .atelier-scene .scene { max-width: 320px; } }
+.fond-modele { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; }
+.tete-modele { position: absolute; display: block; pointer-events: none; }
 .total-tenue { color: var(--encre); font: 600 .88rem/1.4 var(--f-mono); text-align: center; }
 .atelier-choix { display: grid; gap: 18px; min-width: 0; }
 .emplacements-tenue { display: grid; grid-template-columns: minmax(0, 1fr); overflow: hidden; border: 1.5px solid var(--trait); border-radius: 12px; }
@@ -819,7 +822,11 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
       <nav class="onglets-gr" aria-label="Garde-robe"></nav>
       <div class="atelier">
         <div class="atelier-scene">
-          <div class="scene" id="te-scene"></div>
+          <div class="type-tache" role="radiogroup" aria-label="Porté par">
+            <label><input type="radio" name="te-porteur" value="homme"><span>Le modèle</span></label>
+            <label><input type="radio" name="te-porteur" value="mannequin"><span>Le mannequin</span></label>
+          </div>
+          <div class="scene-zone" id="te-scene"></div>
           <p class="total-tenue" id="te-total"></p>
         </div>
         <div class="atelier-choix">
@@ -2724,15 +2731,15 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     }));
   }
 
-  // ----- le mannequin -----
-  // Six emplacements sur le corps ; zone = [gauche, haut, largeur, hauteur] en % de la scène 3:4.
+  // ----- le porteur : le modèle en photo, ou le mannequin dessiné -----
+  // Six emplacements sur le corps. Chaque porteur donne leur zone : [gauche, haut, largeur, hauteur] en % de sa scène.
   const EMPLACEMENTS = [
-    { id: "dessus", nom: "Veste, blouson ou manteau", cats: ["vestes", "blousons", "manteaux"], zone: [19.5, 17, 61, 44], ancre: "50% 0%", z: 4 },
-    { id: "pull", nom: "Pull ou sweat", cats: ["pulls", "sweats"], zone: [22, 18, 56, 39], ancre: "50% 0%", z: 3 },
-    { id: "haut", nom: "T-shirt, chemise ou polo", cats: ["t-shirts", "chemises", "polos"], zone: [23, 18.5, 54, 39], ancre: "50% 0%", z: 2 },
-    { id: "bas", nom: "Jean, pantalon ou short", cats: ["jeans", "pantalons", "shorts"], zone: [32, 49.5, 36, 44], ancre: "50% 0%", z: 1 },
-    { id: "pieds", nom: "Chaussures", cats: ["chaussures"], zone: [31, 89.5, 38, 9], ancre: "50% 100%", z: 5 },
-    { id: "accessoire", nom: "Accessoire", cats: ["accessoires"], zone: [74, 46, 22, 17], ancre: "50% 50%", z: 6 },
+    { id: "dessus", nom: "Veste, blouson ou manteau", cats: ["vestes", "blousons", "manteaux"], ancre: "50% 0%", z: 4 },
+    { id: "pull", nom: "Pull ou sweat", cats: ["pulls", "sweats"], ancre: "50% 0%", z: 3 },
+    { id: "haut", nom: "T-shirt, chemise ou polo", cats: ["t-shirts", "chemises", "polos"], ancre: "50% 0%", z: 2 },
+    { id: "bas", nom: "Jean, pantalon ou short", cats: ["jeans", "pantalons", "shorts"], ancre: "50% 0%", z: 1 },
+    { id: "pieds", nom: "Chaussures", cats: ["chaussures"], ancre: "50% 100%", z: 5 },
+    { id: "accessoire", nom: "Accessoire", cats: ["accessoires"], ancre: "50% 50%", z: 6 },
   ];
   const EMPLACEMENT_DE = {};
   EMPLACEMENTS.forEach(e => e.cats.forEach(c => { EMPLACEMENT_DE[c] = e.id; }));
@@ -2747,6 +2754,39 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     + '<ellipse cx="94" cy="224" rx="8" ry="12"/><ellipse cx="206" cy="224" rx="8" ry="12"/></g>'
     + '<g fill="none" stroke="var(--mannequin)" stroke-width="16" stroke-linecap="round"><path d="M108 92Q96 150 95 212"/><path d="M192 92Q204 150 205 212"/></g>'
     + '</svg>';
+
+  // Le modèle : sa photo (400 × 600, 2:3, fond blanc) découpée en calques. Ses propres vêtements (buste, jambes,
+  // pieds) s'effacent quand la tenue met une pièce à leur place, et restent quand l'emplacement est vide.
+  // Sa tête et son cou passent par-dessus les vêtements : les cols restent sous le menton.
+  const PORTEURS = {
+    homme: {
+      ratio: "2 / 3",
+      calques: [
+        { src: "modele/homme-jambes.png", remplace: ["bas"], z: 1 },
+        { src: "modele/homme-buste.png", remplace: ["pull", "haut"], z: 2 },
+        { src: "modele/homme-pieds.png", remplace: ["pieds"], z: 5 },
+        { src: "modele/homme-tete.png", zone: [37.5, 5.83, 27.5, 18.5], z: 9 },
+      ],
+      zones: { dessus: [24, 21.2, 52, 34.5], pull: [26, 21.5, 48, 31.5], haut: [26.5, 21.7, 47, 31.5], bas: [34, 49.6, 30, 38.4], pieds: [33, 86.5, 34, 10], accessoire: [76, 48, 21, 15] },
+    },
+    mannequin: {
+      ratio: "3 / 4", dessin: MANNEQUIN,
+      zones: { dessus: [19.5, 17, 61, 44], pull: [22, 18, 56, 39], haut: [23, 18.5, 54, 39], bas: [32, 49.5, 36, 44], pieds: [31, 89.5, 38, 9], accessoire: [74, 46, 22, 17] },
+    },
+  };
+  const CLE_PORTEUR = "tableau-de-bord-axel:porteur";
+  let porteur = "homme";
+  try { if (PORTEURS[localStorage.getItem(CLE_PORTEUR)]) porteur = localStorage.getItem(CLE_PORTEUR); } catch (_) { /* le modèle par défaut */ }
+  document.querySelectorAll('input[name="te-porteur"]').forEach(r => {
+    r.checked = r.value === porteur;
+    r.addEventListener("change", () => {
+      if (!r.checked) return;
+      porteur = r.value;
+      try { localStorage.setItem(CLE_PORTEUR, porteur); } catch (_) { /* gardé pour cette visite */ }
+      rendreTenues();
+      rendreComparateur();
+    });
+  });
 
   // Détourage : le fond uni de la photo (blanc, gris clair…) devient transparent, puis la pièce est recadrée
   // au plus près. Une photo déjà détourée est seulement recadrée. Un fond chargé n'est pas touché.
@@ -2824,19 +2864,32 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     cacheDetours.set(src, promesse);
     return promesse;
   }
-  // La scène : le mannequin habillé des pièces données (une par emplacement, la dernière l'emporte).
+  // La scène : le porteur habillé des pièces données (une par emplacement, la dernière l'emporte).
   function scene(ids, opts = {}) {
+    const p = PORTEURS[porteur];
     const el = element("span", "scene" + (opts.petite ? " petite" : ""));
-    el.innerHTML = MANNEQUIN;
+    el.style.aspectRatio = p.ratio;
+    if (p.dessin) el.innerHTML = p.dessin;
     const par = {};
     ids.forEach(id => { const x = pieces[id]; if (x) par[EMPLACEMENT_DE[x.categorie]] = x; });
+    const porte = id => !!(par[id] && srcPhoto(par[id].photo) && !(opts.masques && opts.masques[id]));
+    (p.calques || []).forEach(c => {
+      if (c.remplace && c.remplace.some(porte)) return;
+      const img = element("img", c.zone ? "tete-modele" : "fond-modele");
+      img.alt = "";
+      img.src = c.src;
+      img.style.zIndex = c.z;
+      if (c.zone) Object.assign(img.style, { left: c.zone[0] + "%", top: c.zone[1] + "%", width: c.zone[2] + "%", height: c.zone[3] + "%" });
+      el.append(img);
+    });
     EMPLACEMENTS.forEach(e => {
       const x = par[e.id], src = x && srcPhoto(x.photo);
       if (!src || (opts.masques && opts.masques[e.id])) return;
       const img = element("img", "calque");
       img.alt = "";
       img.hidden = true;
-      Object.assign(img.style, { left: e.zone[0] + "%", top: e.zone[1] + "%", width: e.zone[2] + "%", height: e.zone[3] + "%", objectPosition: e.ancre, zIndex: e.z });
+      const z = p.zones[e.id];
+      Object.assign(img.style, { left: z[0] + "%", top: z[1] + "%", width: z[2] + "%", height: z[3] + "%", objectPosition: e.ancre, zIndex: e.z });
       detourer(src).then(r => { if (!r) return; img.src = r.url; img.classList.toggle("brut", !r.detoure); img.hidden = false; });
       el.append(img);
     });
@@ -2913,7 +2966,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     const modifiable = peutModifierGr();
     const ids = idsEnCours();
     $("te-scene").replaceChildren(scene(ids, { masques }));
-    $("te-total").textContent = ids.length ? texteTotal(ids.map(id => pieces[id])) : "Choisis les pièces pour habiller le mannequin.";
+    $("te-total").textContent = ids.length ? texteTotal(ids.map(id => pieces[id])) : `Choisis les pièces pour habiller ${porteur === "homme" ? "le modèle" : "le mannequin"}.`;
 
     const toutes = Object.values(pieces).sort(trierPieces);
     $("te-emplacements").replaceChildren(...EMPLACEMENTS.map(e => {
@@ -2929,7 +2982,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
         const oeil = element("button", "icone-bouton");
         oeil.type = "button";
         oeil.dataset.masquer = e.id;
-        oeil.setAttribute("aria-label", masques[e.id] ? "Remettre sur le mannequin" : "Enlever du mannequin pour voir dessous");
+        oeil.setAttribute("aria-label", masques[e.id] ? "Remettre la pièce" : "Enlever la pièce pour voir dessous");
         oeil.title = oeil.getAttribute("aria-label");
         oeil.innerHTML = masques[e.id] ? PICTO_OEIL_BARRE : PICTO_OEIL;
         const retirer = element("button", "icone-bouton");

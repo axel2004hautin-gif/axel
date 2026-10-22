@@ -53,8 +53,10 @@ Les pièces du magasin (rayon homme), pour penser les vitrines, les tenues et le
 - « Sélectionner » : toucher les pièces pour les choisir, puis les supprimer d'un coup (second appui pour confirmer), les comparer ou en faire une tenue.
 
 **Tenues**
-- Un mannequin de vitrine dessiné, habillé avec les photos des pièces choisies : veste, pull, t-shirt ou chemise, bas, chaussures, accessoire (une pièce par emplacement). Le fond uni de chaque photo est détouré dans la page (couleur et teinte proches du bord), puis la pièce est posée à sa place. Les photos sur fond uni, ou déjà détourées, donnent le meilleur rendu ; une photo portée par un modèle garde le modèle.
-- L'œil enlève une pièce du mannequin pour voir dessous, la croix la retire de la tenue.
+- « Porté par » : **le modèle** (un homme en photo, `site/modele/`) ou **le mannequin** de vitrine dessiné. Le choix est gardé dans le navigateur.
+- Le porteur est habillé avec les photos des pièces choisies : veste, pull, t-shirt ou chemise, bas, chaussures, accessoire (une pièce par emplacement). Le fond uni de chaque photo est détouré dans la page (couleur et teinte proches du bord), puis la pièce est posée à sa place. Les photos sur fond uni, ou déjà détourées, donnent le meilleur rendu ; une photo portée par un modèle garde le modèle.
+- Le modèle est sa photo découpée en calques (`outils/decouper-modele.py`) : son buste, ses jambes et ses pieds s'effacent quand la tenue met une pièce à leur place, et restent quand l'emplacement est vide ; sa tête et son cou passent par-dessus les vêtements, pour que les cols restent sous le menton. Sa pose ne change pas (c'est une photo).
+- L'œil enlève une pièce pour voir dessous, la croix la retire de la tenue.
 - Nom, description (« Proposer une description » la fait écrire par Claude, selon que la tenue est pour la vitrine, les réseaux ou un client), étoile (favori), cœur (vitrine), caméra (réseaux sociaux), prix total.
 - « Mes tenues » : toutes les tenues enregistrées, filtrables par repère.
 
@@ -83,4 +85,4 @@ Garde-robe, suite : `tenues/<id>` (`nom`, `pieces` : liste d'identifiants de pi�
 
 ## Publier
 
-`outils/version-artefact.sh site/index.html > site-axel.html`, puis publier `site-axel.html` sur la même adresse, avec les capacités `db` (écriture réservée au propriétaire), `user`, `assets` (envoi des photos) et `sample` (descriptions de tenues écrites par Claude).
+`outils/version-artefact.sh site/index.html > site-axel.html`, puis publier `site-axel.html` sur la même adresse avec les calques du modèle (`site/modele/homme-*.png` publiés sous `modele/`), et les capacités `db` (écriture réservée au propriétaire), `user`, `assets` (envoi des photos) et `sample` (descriptions de tenues écrites par Claude).
