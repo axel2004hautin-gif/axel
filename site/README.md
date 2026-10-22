@@ -56,7 +56,14 @@ Les pièces du magasin (rayon homme), pour penser les vitrines, les tenues et le
 - Six cases côte à côte, sans rien superposer : Blouson ou veste, Pull, T-shirt ou chemise, Pantalon ou jean, Chaussures, Accessoires. Une case vide montre un « + ».
 - Toucher un « + » (ou une photo, pour la changer) ouvre le choix parmi les pièces de la garde-robe de cette catégorie, avec une recherche. « Ajouter une nouvelle pièce » ouvre la fenêtre d'ajout sur la bonne catégorie : la pièce rejoint la garde-robe et prend place dans la case. La croix retire la pièce de la tenue.
 - En dessous : le prix total, le nom, la description (« Proposer une description » la fait écrire par Claude, selon que la tenue est pour la vitrine, les réseaux ou un client), l'étoile (favori), le cœur (vitrine) et la caméra (réseaux sociaux).
-- « Mes tenues » : chaque tenue en petit (ses six cases, trois par ligne), filtrables par repère.
+- « ✓ Valider la tenue » l'enregistre et lui donne une **note sur 100**, avec le détail par critère (chaque point perdu est expliqué) :
+  - **Couleurs (40)** : une couleur forte sur une base neutre (bleus, kaki, noir, blanc, gris, beige, marron) est l'idéal ; deux couleurs fortes −4, trois −12, des couleurs qui se heurtent (rouge et rose, rouge et orange…) −10, deux motifs −8, que des neutres −2 ; haut et bas du même foncé qui se confondent −12, jean sur jean du même bleu −10, haut et bas très clairs −4 ; une couleur non renseignée −4.
+  - **Tenue complète (20)** : un haut (−7 s'il manque), un bas (−7), des chaussures (−6).
+  - **Saison (15)** : une pièce d'hiver (laine, cachemire, manteau…) avec une pièce d'été (short, lin…) −10.
+  - **Superposition (15)** : une veste sur rien −6, une seule pièce −8, deux pièces −3.
+  - **Atout magasin (10)** : aucune pièce mise en avant (nouveauté, promo, vitrine, à poster) −6 ; pièces sans prix jusqu'à −4.
+  - 90 et plus : excellente ; 75 : très bonne ; 60 : bonne ; 40 : correcte ; en dessous : à retravailler. La note suit les changements de pièces.
+- « Mes tenues » : chaque tenue en petit (ses six cases, trois par ligne) avec sa note, filtrables par repère. Le comparateur de tenues montre aussi la note et signale la meilleure.
 
 **Comparer**
 - Des pièces ou des tenues. Deux cases « + » au départ ; quand elles sont remplies, une case « + » de plus apparaît, jusqu'à cinq. Toucher une photo la change, la croix la retire.
