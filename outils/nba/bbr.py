@@ -6,6 +6,9 @@ def _clean(v): return html.unescape(re.sub(r"<[^>]+>", "", v)).strip()
 def parse(path):
     s = open(path, encoding="utf-8").read().replace("<!--", "").replace("-->", "")
     out = {}
+    # Heure de début, heure de New York : « 7:00 PM, October 21, 2026 » → « 7:00 PM October 21, 2026 »
+    st = re.search(r"(\d{1,2}:\d{2} (?:AM|PM)), ([A-Z][a-z]+ \d{1,2}, \d{4})", s)
+    out["start"] = f"{st.group(1)} {st.group(2)}" if st else None
     ls = re.search(r'<table[^>]*id="line_score".*?</table>', s, re.S)
     quarters = {}
     for tr in re.findall(r"<tr[^>]*>(.*?)</tr>", ls.group(0), re.S):
