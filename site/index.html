@@ -416,6 +416,14 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 .photo-apercu { display: grid; place-items: center; width: 100%; max-width: 100%; aspect-ratio: 4 / 5; overflow: hidden; border: 1.5px dashed var(--trait); border-radius: 10px; background: var(--fond); }
 .photo-apercu img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .photo-actions { display: grid; gap: 8px; justify-items: start; }
+.photo-vignettes { display: flex; flex-wrap: wrap; gap: 6px; }
+.photo-vignette { position: relative; display: grid; place-items: center; width: 44px; height: 55px; padding: 0; overflow: hidden; border: 1px solid var(--trait); border-radius: 6px; background: var(--fond); }
+.photo-vignette img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.photo-vignette[aria-current="true"] { border-color: var(--marine); box-shadow: 0 0 0 2px var(--marine); }
+.photo-vignette .numero { position: absolute; left: 2px; bottom: 2px; min-width: 15px; padding: 0 3px; border-radius: 4px; background: var(--marine); color: #fff; font: 700 .6rem/15px var(--f-mono); }
+.photo-legende { color: var(--gris); font: 600 .72rem/1.3 var(--f-mono); letter-spacing: .04em; text-transform: uppercase; }
+.photo-boutons { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.nombre-photos { position: absolute; right: 6px; bottom: 6px; padding: 1px 6px; border-radius: 999px; background: rgba(255, 255, 255, .92); border: 1px solid var(--trait); color: var(--marine); font: 700 .66rem/1.5 var(--f-mono); }
 .bouton-fichier { position: relative; display: inline-flex; align-items: center; cursor: pointer; }
 .aide { color: var(--gris); font-size: .88rem; line-height: 1.35; }
 .champs-grille { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; min-width: 0; }
@@ -858,7 +866,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
             <div class="anneau" id="te-anneau"><div class="anneau-dedans"><div><span class="anneau-chiffre" id="te-note-chiffre"></span><span class="anneau-sur">/ 100</span></div></div></div>
             <div>
               <h2 id="te-note-titre"></h2>
-              <p class="aide">Couleurs, tenue complète, saison, superposition et ce qu'elle apporte au magasin.</p>
+              <p class="aide">Seules les pièces choisies comptent : vont-elles ensemble ? Il peut manquer les chaussures, un accessoire ou une veste.</p>
             </div>
           </div>
           <ul class="note-criteres" id="te-note-criteres"></ul>
@@ -1075,10 +1083,15 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     <div class="photo-zone">
       <div class="photo-apercu"><span class="sans-photo" id="pi-sans-photo">Pas de photo</span><img id="pi-image" alt="" hidden></div>
       <div class="photo-actions">
-        <label class="bouton-second bouton-fichier" id="pi-choisir"><span id="pi-choisir-texte">Choisir une photo</span><input class="invisible" type="file" id="pi-fichier" accept="image/*"></label>
-        <button class="lien-discret" type="button" id="pi-retirer" hidden>Retirer la photo</button>
-        <p class="aide" id="pi-aide">Une photo nommée « Marque - Catégorie - Modèle - Couleur » remplit les champs toute seule.</p>
-        <a class="lien-fiche" id="pi-voir-lien" target="_blank" rel="noopener" hidden>Voir la fiche produit ↗</a>
+        <p class="photo-legende" id="pi-legende" hidden></p>
+        <div class="photo-vignettes" id="pi-vignettes" hidden></div>
+        <label class="bouton-second bouton-fichier" id="pi-choisir"><span id="pi-choisir-texte">Ajouter des photos</span><input class="invisible" type="file" id="pi-fichier" accept="image/*" multiple></label>
+        <div class="photo-boutons">
+          <button class="lien-discret" type="button" id="pi-principale" hidden>Mettre en photo principale</button>
+          <button class="lien-discret" type="button" id="pi-retirer" hidden>Retirer cette photo</button>
+        </div>
+        <p class="aide" id="pi-aide">Jusqu'à 6 photos ; la première est la photo principale. Une photo nommée « Marque - Catégorie - Modèle - Couleur » remplit les champs toute seule.</p>
+        <a class="lien-fiche" id="pi-voir-lien" target="_blank" rel="noopener" hidden>Voir sur le site de la marque ↗</a>
       </div>
     </div>
     <div class="champs-grille">
@@ -1090,7 +1103,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
       <label class="titre-champ">Coupe<input type="text" id="pi-coupe" maxlength="120" placeholder="Ex. : slim, jambe droite"></label>
       <label class="titre-champ">Prix<input type="text" id="pi-prix" inputmode="decimal" maxlength="12" placeholder="Ex. : 79,90"></label>
       <label class="titre-champ">Référence<input type="text" id="pi-ref" maxlength="60"></label>
-      <label class="titre-champ">Lien de la fiche produit<input type="url" id="pi-lien" maxlength="500" placeholder="https://…"></label>
+      <label class="titre-champ large">Lien sur le site de la marque<input type="url" id="pi-lien" maxlength="500" placeholder="Colle l'adresse de la page de l'article, https://…"></label>
       <div class="titre-champ large">Repères<div class="reperes-choix" id="pi-reperes"></div></div>
       <label class="titre-champ large">Note<textarea id="pi-note" maxlength="500" rows="2" placeholder="Ex. : tailles S à XL, se vend bien"></textarea></label>
     </div>
@@ -2111,6 +2124,10 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   const PHOTO_FICHIER_RE = /^images\/[a-z0-9-]+\.jpg$/;
   const PHOTO_LOCALE_RE = /^data:image\/(jpeg|png);base64,[A-Za-z0-9+/=]+$/;
   const srcPhoto = photo => (!photo ? null : PHOTO_ASSET_RE.test(photo) ? "/_blob/" + photo : photo);
+  const MAX_PHOTOS = 6;
+  const photoValide = v => typeof v === "string" && (PHOTO_ASSET_RE.test(v) || PHOTO_FICHIER_RE.test(v) || (mode === "local" && PHOTO_LOCALE_RE.test(v)));
+  // Les fichiers envoyés depuis la page (pas les images publiées avec elle) : à effacer quand la pièce ne s'en sert plus.
+  const photosEnvoyees = x => (x ? x.photos.filter(v => PHOTO_ASSET_RE.test(v)) : []);
   const formatPrix = n => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", minimumFractionDigits: n % 1 ? 2 : 0 }).format(n);
   let pieces = Object.create(null);
   let assets = null;   // envoi des photos (propriétaire de la page publiée)
@@ -2120,7 +2137,8 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     const categorie = typeof d.categorie === "string" && NOM_CATEGORIE[d.categorie] ? d.categorie : null;
     const marque = texteBorne(d.marque, 60), modele = texteBorne(d.modele, 120);
     if (!categorie || !(marque || modele)) return null;
-    const photo = typeof d.photo === "string" && (PHOTO_ASSET_RE.test(d.photo) || PHOTO_FICHIER_RE.test(d.photo) || (mode === "local" && PHOTO_LOCALE_RE.test(d.photo))) ? d.photo : null;
+    // Plusieurs photos (la première est la principale) ; une pièce d'avant n'a que « photo ».
+    const photos = [...new Set((Array.isArray(d.photos) ? d.photos : [d.photo]).filter(photoValide))].slice(0, MAX_PHOTOS);
     const lien = typeof d.lien === "string" && /^https?:\/\/[^\s"<>]+$/i.test(d.lien.trim()) ? d.lien.trim().slice(0, 500) : null;
     const prix = typeof d.prix === "number" && isFinite(d.prix) && d.prix >= 0 && d.prix < 100000 ? Math.round(d.prix * 100) / 100 : null;
     const r = d.reperes && typeof d.reperes === "object" ? d.reperes : {};
@@ -2128,14 +2146,14 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
       id, categorie, marque, modele,
       coupe: texteBorne(d.coupe, 120), couleur: texteBorne(d.couleur, 60), matiere: texteBorne(d.matiere, 120),
       rayon: typeof d.rayon === "string" && RAYONS[d.rayon] ? d.rayon : null,
-      prix, ref: texteBorne(d.ref, 60), lien, photo,
+      prix, ref: texteBorne(d.ref, 60), lien, photos, photo: photos[0] || null,
       reperes: Object.fromEntries(REPERES_PIECE.map(([k]) => [k, r[k] === true])),
       note: texteBorne(d.note, 500), creeLe: texteBorne(d.creeLe, 40),
     };
   }
   const corpsPiece = x => ({
     marque: x.marque || null, categorie: x.categorie, modele: x.modele || null, coupe: x.coupe || null, couleur: x.couleur || null, matiere: x.matiere || null,
-    rayon: x.rayon, prix: x.prix, ref: x.ref || null, lien: x.lien, photo: x.photo, reperes: { ...x.reperes }, note: x.note || null, creeLe: x.creeLe,
+    rayon: x.rayon, prix: x.prix, ref: x.ref || null, lien: x.lien, photos: [...x.photos], photo: x.photos[0] || null, reperes: { ...x.reperes }, note: x.note || null, creeLe: x.creeLe,
   });
 
   function chargerPiecesLocal() {
@@ -2240,6 +2258,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     const reps = REPERES_PIECE.filter(([k]) => x.reperes[k]);
     if (reps.length) { const r = element("span", "piece-reperes"); r.append(...reps.map(([k, nom]) => element("span", "rep rep-" + k, nom))); cadre.append(r); }
     if (modeSelection) { const c = element("span", "coche-piece"); c.setAttribute("aria-hidden", "true"); c.innerHTML = PICTO_COCHE; cadre.append(c); }
+    if (src && x.photos.length > 1) cadre.append(element("span", "nombre-photos", `${x.photos.length} photos`));
     b.append(cadre);
     if (x.marque) b.append(element("span", "piece-marque", x.marque));
     b.append(element("span", "piece-modele", x.modele || NOM_CATEGORIE[x.categorie]));
@@ -2394,9 +2413,9 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     let faites = 0;
     try {
       for (const id of ids) {
-        const photo = pieces[id] && pieces[id].photo;
+        const envoyees = photosEnvoyees(pieces[id]);
         await ecrirePiece(id, null);
-        if (assets && photo && PHOTO_ASSET_RE.test(photo)) assets.delete(photo).catch(() => {});
+        if (assets) envoyees.forEach(v => assets.delete(v).catch(() => {}));
         faites++;
       }
       toast(`${faites} pièce${faites > 1 ? "s" : ""} supprimée${faites > 1 ? "s" : ""}.`);
@@ -2490,7 +2509,8 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   }
   const enDataUrl = blob => new Promise((ok, ko) => { const f = new FileReader(); f.onload = () => ok(f.result); f.onerror = ko; f.readAsDataURL(blob); });
 
-  let pieceEditee = null, photoChoisie = null, retirerPhoto = false, urlApercu = null, enregistrementPiece = false;
+  // Les photos de la fiche ouverte : { stockee } pour une photo déjà enregistrée, { fichier, url } pour une nouvelle.
+  let pieceEditee = null, photosFiche = [], photoVue = 0, enregistrementPiece = false;
   // Marque et catégorie reprises de la pièce précédente (« Enregistrer et ajouter une autre ») : le nom de la
   // photo suivante peut les remplacer, tant qu'elles n'ont pas été retouchées.
   let champsRepris = {};
@@ -2508,13 +2528,35 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     $("pi-pastille").style.setProperty("--teinte", t ? TEINTE[t].css : "transparent");
     REPERES_PIECE.forEach(([k]) => $("pi-rep-" + k).closest(".repere-choix").classList.toggle("coche", $("pi-rep-" + k).checked));
   }
-  function montrerApercu(src) {
+  const srcFiche = f => (f.url || srcPhoto(f.stockee));
+  function rendrePhotosFiche() {
+    photoVue = Math.max(0, Math.min(photoVue, photosFiche.length - 1));
+    const vue = photosFiche[photoVue], src = vue ? srcFiche(vue) : null, modifiable = peutModifierPieces();
     $("pi-image").hidden = !src;
     $("pi-sans-photo").hidden = !!src;
     if (src) $("pi-image").src = src; else $("pi-image").removeAttribute("src");
-    $("pi-choisir-texte").textContent = src ? "Changer la photo" : "Choisir une photo";
-    $("pi-retirer").hidden = !src || !peutModifierPieces();
+    $("pi-legende").hidden = !vue;
+    $("pi-legende").textContent = !vue ? "" : (photoVue === 0 ? "Photo principale" : `Photo ${photoVue + 1}`) + (photosFiche.length > 1 ? ` · ${photoVue + 1} sur ${photosFiche.length}` : "");
+    $("pi-vignettes").hidden = photosFiche.length < 2;
+    $("pi-vignettes").replaceChildren(...(photosFiche.length < 2 ? [] : photosFiche.map((f, i) => {
+      const b = element("button", "photo-vignette");
+      b.type = "button";
+      b.dataset.photo = String(i);
+      b.setAttribute("aria-current", String(i === photoVue));
+      b.setAttribute("aria-label", i === 0 ? "Photo principale" : `Photo ${i + 1}`);
+      const img = element("img");
+      img.alt = "";
+      img.src = srcFiche(f);
+      b.append(img);
+      if (i === 0) b.append(element("span", "numero", "1"));
+      return b;
+    })));
+    $("pi-choisir").hidden = !modifiable || photosFiche.length >= MAX_PHOTOS;
+    $("pi-choisir-texte").textContent = photosFiche.length ? "Ajouter des photos" : "Choisir des photos";
+    $("pi-principale").hidden = !modifiable || photoVue === 0;
+    $("pi-retirer").hidden = !modifiable || !vue;
   }
+  const libererPhotosFiche = () => { photosFiche.forEach(f => { if (f.url) URL.revokeObjectURL(f.url); }); photosFiche = []; photoVue = 0; };
   function effacerErreurPiece() {
     $("pi-erreur").hidden = true;
     $("piece-form").querySelectorAll(".en-erreur").forEach(el => el.classList.remove("en-erreur"));
@@ -2531,8 +2573,8 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     if (!x && !peutModifierPieces()) return;
     pieceEditee = x;
     champsRepris = {};
-    photoChoisie = null;
-    retirerPhoto = false;
+    libererPhotosFiche();
+    photosFiche = x ? x.photos.map(v => ({ stockee: v })) : [];
     const modifiable = peutModifierPieces();
     $("pi-titre").textContent = !x ? "Ajouter une pièce" : modifiable ? "Modifier la pièce" : [x.marque, x.modele].filter(Boolean).join(" · ");
     $("pi-marque").value = x ? x.marque : "";
@@ -2548,9 +2590,8 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     REPERES_PIECE.forEach(([k]) => { $("pi-rep-" + k).checked = !!(x && x.reperes[k]); });
     $("pi-voir-lien").hidden = !(x && x.lien);
     if (x && x.lien) $("pi-voir-lien").href = x.lien;
-    montrerApercu(x ? srcPhoto(x.photo) : null);
     [...$("piece-form").elements].forEach(el => { el.disabled = !modifiable; });
-    $("pi-choisir").hidden = !modifiable;
+    rendrePhotosFiche();   // après : les vignettes restent touchables pour regarder les photos
     $("pi-aide").hidden = !modifiable;
     $("pi-enregistrer").hidden = !modifiable;
     $("pi-encore").hidden = !modifiable || !!x;
@@ -2563,26 +2604,32 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   }
   $("gr-ajouter").addEventListener("click", () => ouvrirPiece(null));
   $("fenetre-piece").addEventListener("close", () => {
-    if (urlApercu) { URL.revokeObjectURL(urlApercu); urlApercu = null; }
-    photoChoisie = null;
+    libererPhotosFiche();
     apresAjoutPiece = null;
   });
   $("piece-form").addEventListener("input", () => { effacerErreurPiece(); majFormulairePiece(); });
   $("piece-form").addEventListener("change", majFormulairePiece);
 
   $("pi-fichier").addEventListener("change", async () => {
-    const fichier = $("pi-fichier").files[0];
+    const fichiers = [...$("pi-fichier").files];
     $("pi-fichier").value = "";
-    if (!fichier) return;
+    if (!fichiers.length) return;
     effacerErreurPiece();
-    try { photoChoisie = await preparerPhoto(fichier); }
-    catch (_) { erreurPiece("Cette photo n'a pas pu être lue. Essaie avec une photo en JPEG ou PNG."); return; }
-    retirerPhoto = false;
-    if (urlApercu) URL.revokeObjectURL(urlApercu);
-    urlApercu = URL.createObjectURL(photoChoisie);
-    montrerApercu(urlApercu);
+    const place = MAX_PHOTOS - photosFiche.length, gardes = fichiers.slice(0, Math.max(0, place));
+    let illisibles = 0, premiere = null;
+    for (const fichier of gardes) {
+      let blob;
+      try { blob = await preparerPhoto(fichier); } catch (_) { illisibles++; continue; }
+      if (!$("fenetre-piece").open) return;   // fenêtre fermée pendant la préparation
+      photosFiche.push({ fichier: blob, url: URL.createObjectURL(blob) });
+      if (premiere == null) premiere = photosFiche.length - 1;
+      rendrePhotosFiche();
+    }
+    if (premiere != null) { photoVue = premiere; rendrePhotosFiche(); }
+    if (illisibles) erreurPiece(illisibles > 1 ? `${illisibles} photos n'ont pas pu être lues. Essaie en JPEG ou PNG.` : "Une photo n'a pas pu être lue. Essaie en JPEG ou PNG.");
+    else if (fichiers.length > gardes.length) erreurPiece(`${MAX_PHOTOS} photos au plus par pièce : ${pluriel(fichiers.length - gardes.length, "photo")} en trop n'${fichiers.length - gardes.length > 1 ? "ont" : "a"} pas été ajoutée${fichiers.length - gardes.length > 1 ? "s" : ""}.`);
     // Une photo nommée comme les exports Canva remplit les champs encore vides.
-    const r = analyserNomFichier(fichier.name);
+    const r = gardes.map(f => analyserNomFichier(f.name)).find(Boolean);
     if (r) {
       const remplir = (id, cle) => {
         const champ = $(id);
@@ -2595,11 +2642,19 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
       majFormulairePiece();
     }
   });
+  $("pi-vignettes").addEventListener("click", e => {
+    const b = e.target.closest("[data-photo]");
+    if (b) { photoVue = Number(b.dataset.photo); rendrePhotosFiche(); }
+  });
+  $("pi-principale").addEventListener("click", () => {
+    photosFiche.unshift(...photosFiche.splice(photoVue, 1));
+    photoVue = 0;
+    rendrePhotosFiche();
+  });
   $("pi-retirer").addEventListener("click", () => {
-    photoChoisie = null;
-    retirerPhoto = true;
-    if (urlApercu) { URL.revokeObjectURL(urlApercu); urlApercu = null; }
-    montrerApercu(null);
+    const [f] = photosFiche.splice(photoVue, 1);
+    if (f && f.url) URL.revokeObjectURL(f.url);
+    rendrePhotosFiche();
   });
 
   // Lit le formulaire : la pièce, ou la première erreur.
@@ -2645,21 +2700,23 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     if (lu.erreur) { erreurPiece(lu.erreur, lu.champ); return; }
     const avant = pieceEditee;
     const id = avant ? avant.id : nouvelIdPiece();
-    const anciennePhoto = avant ? avant.photo : null;
-    let photo = anciennePhoto, envoyee = null;
+    const envoyees = [];
     enregistrementPiece = true;
     const bouton = continuer ? $("pi-encore") : $("pi-enregistrer");
     const texteBouton = bouton.textContent;
     $("pi-enregistrer").disabled = $("pi-encore").disabled = true;
     bouton.textContent = "Enregistrement…";
     try {
-      if (photoChoisie) {
-        if (mode === "base") { envoyee = (await assets.upload(photoChoisie, { type: photoChoisie.type || "image/jpeg" })).id; photo = envoyee; }
-        else photo = await enDataUrl(photoChoisie);
-      } else if (retirerPhoto) photo = null;
-      await ecrirePiece(id, { ...lu.piece, photo, creeLe: avant ? avant.creeLe : new Date().toISOString() });
-      // L'ancienne photo envoyée depuis la page n'est plus utilisée : elle est effacée.
-      if (assets && anciennePhoto && anciennePhoto !== photo && PHOTO_ASSET_RE.test(anciennePhoto)) assets.delete(anciennePhoto).catch(() => {});
+      // Les nouvelles photos sont envoyées une à une, dans l'ordre de la fiche.
+      const photos = [];
+      for (const f of photosFiche) {
+        if (f.stockee) photos.push(f.stockee);
+        else if (mode === "base") { const v = (await assets.upload(f.fichier, { type: f.fichier.type || "image/jpeg" })).id; envoyees.push(v); photos.push(v); }
+        else photos.push(await enDataUrl(f.fichier));
+      }
+      await ecrirePiece(id, { ...lu.piece, photos, photo: photos[0] || null, creeLe: avant ? avant.creeLe : new Date().toISOString() });
+      // Les photos retirées de la fiche ne servent plus : elles sont effacées.
+      if (assets) photosEnvoyees(avant).filter(v => !photos.includes(v)).forEach(v => assets.delete(v).catch(() => {}));
       // Ajoutée depuis une case de tenue ou du comparateur : elle y prend place.
       if (!avant && apresAjoutPiece) { const poser = apresAjoutPiece; apresAjoutPiece = null; poser(id); }
       fermer($("fenetre-piece"));
@@ -2672,7 +2729,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
         toast("Pièce ajoutée. À la suivante !");
       } else toast(avant ? "Pièce enregistrée." : "Pièce ajoutée.");
     } catch (e) {
-      if (envoyee && assets) assets.delete(envoyee).catch(() => {});
+      if (assets) envoyees.forEach(v => assets.delete(v).catch(() => {}));
       erreurPiece(messagePiece(e));
     } finally {
       enregistrementPiece = false;
@@ -2687,7 +2744,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     desarmer(b, "Supprimer");
     try {
       await ecrirePiece(x.id, null);
-      if (assets && x.photo && PHOTO_ASSET_RE.test(x.photo)) assets.delete(x.photo).catch(() => {});
+      if (assets) photosEnvoyees(x).forEach(v => assets.delete(v).catch(() => {}));
       fermer($("fenetre-piece"));
       toast("Pièce supprimée.");
     } catch (err) { erreurPiece(messagePiece(err)); }
@@ -2912,8 +2969,8 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     $("te-drapeaux").replaceChildren(boutonsDrapeaux(tenueEnCours, false, k => { tenueEnCours[k] = !tenueEnCours[k]; rendreTenues(); }));
     $("te-enregistrer").innerHTML = PICTO_VALIDER;
     $("te-enregistrer").append(document.createTextNode(tenueEnCours.id ? "Valider les modifications" : "Valider la tenue"));
-    // La note s'affiche une fois la tenue validée, et suit les changements de pièces.
-    $("te-note").hidden = !tenueEnCours.id || !ids.length;
+    // La note s'affiche une fois la tenue validée, dès deux pièces, et suit les changements de pièces.
+    $("te-note").hidden = !tenueEnCours.id || ids.length < NOTE_DES;
     if (!$("te-note").hidden) rendreNote(ids);
     $("te-enregistrer").hidden = !modifiable;
     $("te-supprimer").hidden = !(modifiable && tenueEnCours.id);
@@ -2938,7 +2995,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
       const pied = element("div", "carte-tenue-pied");
       const { total } = totalPrix(xs);
       const resume = element("span", "piece-ligne");
-      if (xs.length) resume.append(badgeNote(noteTenue(t.pieces).total));
+      if (xs.length >= NOTE_DES) resume.append(badgeNote(noteTenue(t.pieces).total));
       resume.append(element("span", null, total ? formatPrix(total) : pluriel(xs.length, "pièce")));
       pied.append(resume,
         boutonsDrapeaux(t, true, async k => { try { await tenues.ecrire(t.id, { ...corpsTenue(t), [k]: !t[k] }); } catch (e) { toast(messageEcriture(e), "erreur"); } }));
@@ -2979,6 +3036,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
       tenueEnCours.nom = nom;
       $("te-nom").value = nom;
       rendreTenues();
+      if (ids.length < NOTE_DES) { toast("Tenue validée. Ajoute une deuxième pièce pour avoir sa note."); return; }
       toast(`Tenue validée : ${noteTenue(ids).total}/100.`);
       $("te-note").scrollIntoView({ block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
     } catch (err) { $("te-erreur").textContent = messageEcriture(err); $("te-erreur").hidden = false; }
@@ -3108,7 +3166,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
       return s;
     })));
     texte("Note", x => x.note);
-    l.push(ligneTable("Fiche produit", xs.map(x => { if (!x.lien) return "—"; const a = element("a", "lien-fiche", "Voir ↗"); a.href = x.lien; a.target = "_blank"; a.rel = "noopener"; return a; })));
+    l.push(ligneTable("Site de la marque", xs.map(x => { if (!x.lien) return "—"; const a = element("a", "lien-fiche", "Voir ↗"); a.href = x.lien; a.target = "_blank"; a.rel = "noopener"; return a; })));
     return l;
   }
   function lignesTenues(ts) {
@@ -3117,13 +3175,14 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     l.push(ligneTable("Pièces", ts.map(t => { const ul = element("ul", "liste-pieces-tenue"); piecesDe(t).forEach(x => ul.append(element("li", null, `${NOM_CATEGORIE[x.categorie]} : ${nomCourt(x)}`))); return ul; })));
     const totaux = ts.map(t => totalPrix(piecesDe(t)));
     l.push(ligneTable("Prix total", cellulePrix(totaux.map(x => x.total || null))));
-    const notes = ts.map(t => noteTenue(t.pieces).total), meilleure = Math.max(...notes);
+    const notes = ts.map(t => noteSi(t.pieces)), notees = notes.filter(n => n != null), meilleure = Math.max(...notees);
     l.push(ligneTable("Note", notes.map(n => {
+      if (n == null) return "—";
       const s = element("span", "piece-ligne");
       s.append(badgeNote(n));
-      if (notes.some(v => v !== meilleure) && n === meilleure) s.append(element("span", "meilleur", "la meilleure"));
+      if (notees.length > 1 && notees.some(v => v !== meilleure) && n === meilleure) s.append(element("span", "meilleur", "la meilleure"));
       return s;
-    }), memes(notes.map(String))));
+    }), memes(notes.map(n => (n == null ? "" : String(n))))));
     const unique = vals => [...new Set(vals.filter(Boolean))];
     const texte = (titre, f) => { const v = ts.map(f); l.push(ligneTable(titre, v, memes(v))); };
     texte("Marques", t => unique(piecesDe(t).map(x => x.marque)).join(", "));
@@ -3227,9 +3286,9 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   });
 
   // ----- la note d'une tenue, sur 100 -----
-  // Couleurs (40), tenue complète (20), saison (15), superposition (15), atout pour le magasin (10). Chaque point
-  // perdu est expliqué. Le bleu (marine, jean, ciel), le kaki et les neutres font la base ; les autres couleurs
-  // sont des couleurs fortes.
+  // Seules les pièces choisies sont notées : vont-elles ensemble ? Couleurs (50), haut et bas (30), saison (20).
+  // Une tenue sans chaussures, sans accessoire ou sans veste n'est pas pénalisée. Chaque point perdu est expliqué.
+  // Le bleu (marine, jean, ciel), le kaki et les neutres font la base ; les autres couleurs sont des couleurs fortes.
   const COULEURS_FORTES = new Set(["bordeaux", "rouge", "rose", "vert", "jaune", "orange", "violet"]);
   const SE_HEURTENT = [["rouge", "rose"], ["rouge", "orange"], ["rose", "orange"], ["rouge", "vert"], ["violet", "jaune"], ["violet", "orange"], ["bordeaux", "rouge"], ["bordeaux", "rose"], ["rose", "jaune"]];
   const HIVER = /laine|cachemire|merinos|polaire|doudoune|parka|moumoute|velours|fourr/;
@@ -3253,72 +3312,66 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   const estDenim = x => x.categorie === "jeans" || /\b(jean|denim)\b/.test(sansAccents(`${x.modele} ${x.matiere}`));
   const pluriel = (n, mot) => `${n} ${mot}${n > 1 ? "s" : ""}`;
   const listeNoms = l => listeFr(l.map(nomFamille));
+  const leNom = x => (["chemises", "vestes"].includes(x.categorie) ? "la " : "le ") + NOM_CATEGORIE[x.categorie].replace(/s$/, "").toLowerCase();
 
+  const NOTE_DES = 2;   // la note s'affiche à partir de deux pièces
   function noteTenue(ids) {
     const par = parEmplacement(ids);
     const xs = EMPLACEMENTS.map(e => par[e.id]).filter(Boolean);
-    const haut = par.dessus || par.pull || par.haut;   // le haut qu'on voit
+    const hauts = [par.dessus, par.pull, par.haut].filter(Boolean);   // du dessus vers le dessous
+    const haut = hauts[0];   // le haut qu'on voit
     const criteres = [];
     const critere = (nom, max) => { const c = { nom, max, points: max, remarques: [] }; criteres.push(c); return c; };
     const moins = (c, n, texte) => { c.points -= n; c.remarques.push({ texte, ecart: -n }); };
     const bien = (c, texte) => c.remarques.push({ texte, ecart: 0 });
 
-    const couleurs = critere("Couleurs", 40);
+    const couleurs = critere("Couleurs", 50);
     const sansCouleur = xs.filter(x => !teinteDe(x.couleur));
-    if (sansCouleur.length) moins(couleurs, Math.min(10, 4 * sansCouleur.length), `${pluriel(sansCouleur.length, "pièce")} sans couleur reconnue : renseigne-la pour une note juste.`);
+    if (sansCouleur.length) moins(couleurs, Math.min(15, 5 * sansCouleur.length), `${pluriel(sansCouleur.length, "pièce")} sans couleur reconnue : renseigne-la pour une note juste.`);
     const familles = xs.map(familleNote).filter(Boolean);
     const fortes = [...new Set(familles.filter(f => COULEURS_FORTES.has(f)))];
     const motifs = familles.filter(f => f === "motif").length;
-    if (motifs > 1) moins(couleurs, 8, "Deux motifs dans la même tenue : garde-en un seul.");
+    if (motifs > 1) moins(couleurs, 15, "Deux motifs dans la même tenue : garde-en un seul.");
     const heurts = SE_HEURTENT.filter(([a, b]) => fortes.includes(a) && fortes.includes(b));
-    heurts.slice(0, 2).forEach(([a, b]) => moins(couleurs, 10, `Le ${nomFamille(a)} et le ${nomFamille(b)} se heurtent.`));
+    heurts.slice(0, 2).forEach(([a, b]) => moins(couleurs, 30, `Le ${nomFamille(a)} et le ${nomFamille(b)} se heurtent.`));
     if (!heurts.length) {
-      if (fortes.length >= 3) moins(couleurs, 12, `Trois couleurs fortes (${listeNoms(fortes)}) : c'est trop chargé.`);
-      else if (fortes.length === 2) moins(couleurs, 4, `Deux couleurs fortes (${listeNoms(fortes)}) : ça passe, mais une seule ressortirait mieux.`);
+      if (fortes.length >= 3) moins(couleurs, 22, `Trois couleurs fortes (${listeNoms(fortes)}) : c'est trop chargé.`);
+      else if (fortes.length === 2) moins(couleurs, 8, `Deux couleurs fortes (${listeNoms(fortes)}) : ça passe, mais une seule ressortirait mieux.`);
       else if (fortes.length === 1) bien(couleurs, `Une couleur forte (${nomFamille(fortes[0])}) sur une base neutre : l'équilibre idéal.`);
-      else if (familles.length && !motifs) moins(couleurs, 2, "Que des couleurs neutres : classique ; une touche de couleur la réveillerait.");
+      else if (familles.length && motifs === 1) bien(couleurs, "Un motif sur des couleurs neutres : il ressort bien.");
+      else if (familles.length) bien(couleurs, "Que des couleurs neutres : sobre, ça va toujours ensemble.");
     }
-    if (haut && par.bas) {
-      const fh = familleNote(haut), fb = familleNote(par.bas), lh = clarte(haut), lb = clarte(par.bas);
-      const ecartClarte = lh != null && lb != null ? Math.abs(lh - lb) : null;
+
+    const contraste = critere("Haut et bas", 30);
+    if (!haut || !par.bas) bien(contraste, !par.bas ? "Pas de bas dans la tenue : rien à comparer." : "Pas de haut dans la tenue : rien à comparer.");
+    else {
+      const fb = familleNote(par.bas), lb = clarte(par.bas);
+      const confondu = x => { const f = familleNote(x), l = clarte(x); return !!f && f === fb && l != null && lb != null && l < 0.2 && lb < 0.2; };
+      const lh = clarte(haut), ecartClarte = lh != null && lb != null ? Math.abs(lh - lb) : null;
+      const autre = hauts.slice(1).find(x => !confondu(x) && clarte(x) != null && Math.abs(clarte(x) - lb) >= 0.2);
       if (estDenim(haut) && estDenim(par.bas)) {
-        if (fh === fb && ecartClarte != null && ecartClarte < 0.1) moins(couleurs, 10, "Jean sur jean du même bleu : choisis deux bleus bien différents.");
-        else moins(couleurs, 2, "Jean sur jean : ça marche, avec deux bleus bien différents.");
-      } else if (fh && fh === fb && lh != null && lh < 0.2) moins(couleurs, 12, `Haut et bas du même ${nomFamille(fh)} foncé : ils se confondent.`);
-      else if (lh != null && lb != null && lh > 0.55 && lb > 0.55) moins(couleurs, 4, "Haut et bas tous les deux très clairs : un peu de contraste aiderait.");
-      else if (ecartClarte != null && ecartClarte >= 0.2) bien(couleurs, "Bon contraste entre le haut et le bas.");
+        if (familleNote(haut) === fb && ecartClarte != null && ecartClarte < 0.1) moins(contraste, 20, "Jean sur jean du même bleu : choisis deux bleus bien différents.");
+        else moins(contraste, 4, "Jean sur jean : ça marche, avec deux bleus bien différents.");
+      } else if (confondu(haut)) {
+        if (autre) moins(contraste, 8, `${majuscule(leNom(haut))} et ${leNom(par.bas)} du même ${nomFamille(fb)} foncé : ${leNom(autre)} dessous casse l'effet, mais deux tons différents seraient mieux.`);
+        else moins(contraste, 27, `Haut et bas du même ${nomFamille(fb)} foncé : ils se confondent.`);
+      } else if (lh != null && lb != null && lh > 0.55 && lb > 0.55) moins(contraste, 8, "Haut et bas tous les deux très clairs : un peu de contraste aiderait.");
+      else if (ecartClarte != null && ecartClarte >= 0.2) bien(contraste, "Bon contraste entre le haut et le bas.");
+      else bien(contraste, "Le haut et le bas vont bien ensemble.");
     }
 
-    const complete = critere("Tenue complète", 20);
-    if (!haut) moins(complete, 7, "Pas de haut : ajoute un pull, un t-shirt ou une chemise.");
-    if (!par.bas) moins(complete, 7, "Pas de bas : ajoute un pantalon ou un jean.");
-    if (!par.pieds) moins(complete, 6, "Pas de chaussures : ce sont elles qui terminent la tenue.");
-    if (complete.points === complete.max) bien(complete, "Un haut, un bas et des chaussures : rien ne manque.");
-
-    const saison = critere("Saison", 15);
+    const saison = critere("Saison", 20);
     const texteDe = x => sansAccents([x.modele, x.matiere, x.coupe, NOM_CATEGORIE[x.categorie]].join(" "));
     const hiver = xs.filter(x => x.categorie === "manteaux" || HIVER.test(texteDe(x)));
     const ete = xs.filter(x => x.categorie === "shorts" || ETE.test(texteDe(x)));
-    if (hiver.length && ete.length) moins(saison, 10, `Une pièce d'hiver (${nomCourt(hiver[0])}) avec une pièce d'été (${nomCourt(ete[0])}).`);
+    if (hiver.length && ete.length) moins(saison, 15, `Une pièce d'hiver (${nomCourt(hiver[0])}) avec une pièce d'été (${nomCourt(ete[0])}).`);
     else bien(saison, hiver.length ? "Une tenue d'hiver cohérente." : ete.length ? "Une tenue d'été cohérente." : "Aucune pièce ne jure avec la saison.");
-
-    const couches = critere("Superposition", 15);
-    if (par.dessus && !par.pull && !par.haut) moins(couches, 6, "Une veste portée sur rien : ajoute un pull ou un t-shirt dessous.");
-    if (xs.length === 1) moins(couches, 8, "Une seule pièce : ce n'est pas encore une tenue.");
-    else if (xs.length === 2) moins(couches, 3, "Deux pièces seulement : la tenue reste simple.");
-    if (par.pull && par.haut) bien(couches, `${NOM_CATEGORIE[par.haut.categorie].replace(/s$/, "")} sous le pull : la superposition donne du relief.`);
-    else if (couches.points === couches.max) bien(couches, "Les couches vont bien ensemble.");
-
-    const atout = critere("Atout magasin", 10);
-    const enAvant = xs.filter(x => REPERES_PIECE.some(([k]) => x.reperes[k]));
-    if (enAvant.length) bien(atout, `${pluriel(enAvant.length, "pièce")} à mettre en avant (nouveauté, promo, vitrine ou à poster).`);
-    else moins(atout, 6, "Aucune pièce mise en avant : une nouveauté ou une promo donne une raison de s'arrêter.");
-    const sansPrix = xs.filter(x => x.prix == null).length;
-    if (sansPrix && xs.length) moins(atout, Math.min(4, Math.ceil((4 * sansPrix) / xs.length)), `${pluriel(sansPrix, "pièce")} sans prix : utile pour l'étiquette en vitrine.`);
 
     criteres.forEach(c => { c.points = Math.max(0, c.points); });
     return { total: Math.max(0, Math.min(100, criteres.reduce((t, c) => t + c.points, 0))), criteres };
   }
+  // La note d'une liste de pièces, ou null s'il y en a moins de deux.
+  const noteSi = ids => (ids.filter(id => pieces[id]).length >= NOTE_DES ? noteTenue(ids).total : null);
   const niveauNote = n => (n >= 90 ? ["Excellente tenue", "top"] : n >= 75 ? ["Très bonne tenue", "bien"] : n >= 60 ? ["Bonne tenue", "moyen"] : n >= 40 ? ["Tenue correcte", "juste"] : ["Tenue à retravailler", "faible"]);
   const PICTO_VALIDER = '<svg class="picto" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
   function badgeNote(n) {

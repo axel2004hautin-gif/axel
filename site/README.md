@@ -48,7 +48,9 @@ Les pièces du magasin (rayon homme), pour penser les vitrines, les tenues et le
 **Pièces**
 - Les pièces en photo, rangées par catégorie : marque, modèle, couleur (avec sa pastille), prix et repères (Nouveauté, Promo, Idée vitrine, À poster).
 - Filtres : recherche (modèle, marque, couleur, matière, référence, note), marque, catégorie, famille de couleur et repères.
-- « Ajouter une pièce » : photo, marque, catégorie, modèle, couleur, matière, coupe, prix, référence, lien de la fiche produit, repères et note. Une photo nommée comme les exports Canva (`Marque - Catégorie - Modèle - Couleur.png`) remplit les champs. Une photo détourée (PNG transparent) garde sa transparence ; les autres sont enregistrées en JPEG, réduites à 900 px.
+- « Ajouter une pièce » : photos, marque, catégorie, modèle, couleur, matière, coupe, prix, référence, lien sur le site de la marque, repères et note. Une photo nommée comme les exports Canva (`Marque - Catégorie - Modèle - Couleur.png`) remplit les champs. Une photo détourée (PNG transparent) garde sa transparence ; les autres sont enregistrées en JPEG, réduites à 900 px.
+- **Photos** : jusqu'à 6 par pièce, choisies d'un coup ou une à une. La première est la photo principale (celle du catalogue, des tenues et du comparateur). Les vignettes sous la photo permettent de les regarder ; « Mettre en photo principale » et « Retirer cette photo » s'appliquent à celle qu'on regarde. Une carte avec plusieurs photos l'indique (« 3 photos »).
+- **Site de la marque** : coller l'adresse de la page de l'article ; la fiche affiche alors « Voir sur le site de la marque ↗ ». La page ne va pas chercher elle-même les infos sur le site de la marque : pour remplir des pièces à partir de liens, il suffit de me les envoyer dans la conversation.
 - « Enregistrer et ajouter une autre » rouvre la fenêtre vide avec la même marque et la même catégorie ; le nom de la photo suivante les remplace tant qu'elles n'ont pas été retouchées.
 - « Sélectionner » : toucher les pièces pour les choisir, puis les supprimer d'un coup (second appui pour confirmer), les comparer ou en faire une tenue.
 
@@ -56,18 +58,16 @@ Les pièces du magasin (rayon homme), pour penser les vitrines, les tenues et le
 - Six cases côte à côte, sans rien superposer : Blouson ou veste, Pull, T-shirt ou chemise, Pantalon ou jean, Chaussures, Accessoires. Une case vide montre un « + ».
 - Toucher un « + » (ou une photo, pour la changer) ouvre le choix parmi les pièces de la garde-robe de cette catégorie, avec une recherche. « Ajouter une nouvelle pièce » ouvre la fenêtre d'ajout sur la bonne catégorie : la pièce rejoint la garde-robe et prend place dans la case. La croix retire la pièce de la tenue.
 - En dessous : le prix total, le nom, la description (« Proposer une description » la fait écrire par Claude, selon que la tenue est pour la vitrine, les réseaux ou un client), l'étoile (favori), le cœur (vitrine) et la caméra (réseaux sociaux).
-- « ✓ Valider la tenue » l'enregistre et lui donne une **note sur 100**, avec le détail par critère (chaque point perdu est expliqué) :
-  - **Couleurs (40)** : une couleur forte sur une base neutre (bleus, kaki, noir, blanc, gris, beige, marron) est l'idéal ; deux couleurs fortes −4, trois −12, des couleurs qui se heurtent (rouge et rose, rouge et orange…) −10, deux motifs −8, que des neutres −2 ; haut et bas du même foncé qui se confondent −12, jean sur jean du même bleu −10, haut et bas très clairs −4 ; une couleur non renseignée −4.
-  - **Tenue complète (20)** : un haut (−7 s'il manque), un bas (−7), des chaussures (−6).
-  - **Saison (15)** : une pièce d'hiver (laine, cachemire, manteau…) avec une pièce d'été (short, lin…) −10.
-  - **Superposition (15)** : une veste sur rien −6, une seule pièce −8, deux pièces −3.
-  - **Atout magasin (10)** : aucune pièce mise en avant (nouveauté, promo, vitrine, à poster) −6 ; pièces sans prix jusqu'à −4.
+- « ✓ Valider la tenue » l'enregistre et, dès deux pièces, lui donne une **note sur 100**, avec le détail par critère (chaque point perdu est expliqué). Seules les pièces choisies sont notées, sur une question : vont-elles ensemble ? Une tenue sans chaussures, sans accessoire ou sans veste n'est pas pénalisée : « veste + pantalon » ou « chemise + pantalon » peut avoir 100.
+  - **Couleurs (50)** : une couleur forte sur une base neutre (bleus, kaki, noir, blanc, gris, beige, marron) ou que des neutres, c'est bien ; deux couleurs fortes −8, trois −22, des couleurs qui se heurtent (rouge et rose, rouge et orange…) −30, deux motifs −15 ; une couleur non renseignée −5.
+  - **Haut et bas (30)** : haut et bas du même foncé qui se confondent −27 (−8 si une pièce plus claire dessous casse l'effet, comme une chemise blanche sous une veste marine), jean sur jean du même bleu −20 (−4 avec deux bleus différents), haut et bas très clairs −8. Sans haut ou sans bas, rien à comparer : pas de pénalité.
+  - **Saison (20)** : une pièce d'hiver (laine, cachemire, manteau…) avec une pièce d'été (short, lin…) −15.
   - 90 et plus : excellente ; 75 : très bonne ; 60 : bonne ; 40 : correcte ; en dessous : à retravailler. La note suit les changements de pièces.
-- « Mes tenues » : chaque tenue en petit (ses six cases, trois par ligne) avec sa note, filtrables par repère. Le comparateur de tenues montre aussi la note et signale la meilleure.
+- « Mes tenues » : chaque tenue en petit (ses six cases, trois par ligne) avec sa note (à partir de deux pièces), filtrables par repère. Le comparateur de tenues montre aussi la note et signale la meilleure.
 
 **Comparer**
 - Des pièces ou des tenues. Deux cases « + » au départ ; quand elles sont remplies, une case « + » de plus apparaît, jusqu'à cinq. Toucher une photo la change, la croix la retire.
-- Côte à côte : marque, catégorie, couleur, matière, coupe, prix (le moins cher est signalé, avec l'écart des autres), référence, repères, note, fiche produit ; pour les tenues, les pièces, le prix total, les marques, les couleurs et les matières. Les lignes identiques sont grisées.
+- Côte à côte : marque, catégorie, couleur, matière, coupe, prix (le moins cher est signalé, avec l'écart des autres), référence, repères, note, site de la marque ; pour les tenues, les pièces, le prix total, les marques, les couleurs et les matières. Les lignes identiques sont grisées.
 - Une comparaison s'enregistre avec un nom et les mêmes étoile, cœur et caméra.
 
 **Ce qu'il manque**
@@ -85,7 +85,7 @@ Sur la page publiée, le planning, la to-do list et la garde-robe (pièces, tenu
 
 Un document par tâche : `todo/<id>`, avec `texte`, `type` (`faire` ou `dire`), `personne`, `pour` (`AAAA-MM-JJ` ou rien), `urgent`, `fait`, `faitLe` et `creeLe`.
 
-Un document par pièce : `pieces/<id>`, avec `marque`, `categorie` (`pulls`, `jeans`, `pantalons`…), `modele`, `coupe`, `couleur`, `matiere`, `rayon` (toujours `homme`), `prix`, `ref`, `lien`, `photo`, `reperes` (`nouveaute`, `promo`, `vitrine`, `reseaux`), `note` et `creeLe`. La photo est l'identifiant d'un fichier envoyé depuis la page (stockage de la page), ou le chemin d'une image publiée avec elle (`images/…jpg`).
+Un document par pièce : `pieces/<id>`, avec `marque`, `categorie` (`pulls`, `jeans`, `pantalons`…), `modele`, `coupe`, `couleur`, `matiere`, `rayon` (toujours `homme`), `prix`, `ref`, `lien` (la page de l'article sur le site de la marque), `photos`, `photo`, `reperes` (`nouveaute`, `promo`, `vitrine`, `reseaux`), `note` et `creeLe`. `photos` est la liste des photos (6 au plus, la principale en premier) ; `photo` reprend la principale, et une pièce qui n'a que `photo` est lue comme une pièce à une photo. Une photo est l'identifiant d'un fichier envoyé depuis la page (stockage de la page), ou le chemin d'une image publiée avec elle (`images/…jpg`). Les fichiers qu'une pièce n'utilise plus (photo retirée, pièce supprimée) sont effacés du stockage.
 
 Garde-robe, suite : `tenues/<id>` (`nom`, `pieces` : liste d'identifiants de pièces, `description`, `favori`, `vitrine`, `reseaux`, `creeLe`, `modifieLe`) ; `comparaisons/<id>` (`type` : `pieces` ou `tenues`, `elements`, `nom`, `favori`, `vitrine`, `reseaux`, `creeLe`) ; `demandes/<id>` (`quoi`, `categorie`, `nombre`, `derniereLe`, `statut` : `a-proposer`, `propose`, `commande` ou `refuse`, `creeLe`).
 
