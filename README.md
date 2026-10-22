@@ -130,3 +130,9 @@ Dans la base de la page : `achats` (pièces ajoutées), `etat/semaine` (semaine 
 - Les liens ont été nettoyés des paramètres de suivi publicitaire (`gclid`, `utm_*`, etc.).
 - Trois pulls n'ont pas de fiche sur le site de la marque, leur lien mène chez un revendeur : le col rond noir, et les deux cols polo.
 - La correspondance entre les références Levi's et les couleurs suit l'ordre de la liste d'achats et des captures. Le 29507-1417 « Call It Off » est confirmé comme un délavage moyen.
+
+## Carnet NBA 2026-27
+
+Le carnet de stats NBA (joueurs, équipes et totaux, classement, saisie des matchs) est dans `nba/` : ouvre `nba/index.html` dans un navigateur, ou en ligne : <https://raw.githack.com/axel2004hautin-gif/axel/claude/charming-thompson-f4toa2/nba/index.html>.
+
+Hors de Claude, les matchs sont enregistrés dans le navigateur. « Exporter (.json) » et « Importer », sous « Matchs saisis », les font passer d'un appareil à l'autre. À la première ouverture, la page reprend les matchs saisis sur la page claude.ai, copiés dans `nba/matchs-initiaux.js`. Publiée sur claude.ai avec la capacité `db`, la même page utilise la base de la page (collection `matchs`).

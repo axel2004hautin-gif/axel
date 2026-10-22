@@ -1,0 +1,292 @@
+// Matchs déjà saisis dans la page publiée sur claude.ai, chargés à la première ouverture
+// de la page hors de Claude (tant que ce navigateur n'a encore rien enregistré).
+window.MATCHS_INITIAUX = [
+ {
+  "id": "2026-10-20_BOS-DET",
+  "date": "2026-10-20",
+  "dom": "DET",
+  "ext": "BOS",
+  "joueurs": [
+   {
+    "ast": 11,
+    "blk": 0,
+    "equipe": "BOS",
+    "min": 37.8,
+    "nom": "Jyason Tatum",
+    "pts": 13,
+    "reb": 4,
+    "stl": 0,
+    "tov": 2,
+    "tp": 0
+   },
+   {
+    "ast": 3,
+    "blk": 0,
+    "equipe": "BOS",
+    "min": 30.6,
+    "nom": "Paul George",
+    "pts": 38,
+    "reb": 5,
+    "stl": 5,
+    "tov": 3,
+    "tp": 7
+   },
+   {
+    "ast": 1,
+    "blk": 2,
+    "equipe": "BOS",
+    "min": 18.1,
+    "nom": "Mitchell Robinson",
+    "pts": 4,
+    "reb": 3,
+    "stl": 1,
+    "tov": 2,
+    "tp": 0
+   },
+   {
+    "ast": 8,
+    "blk": 0,
+    "equipe": "BOS",
+    "min": 35.9,
+    "nom": "Derrick White",
+    "pts": 17,
+    "reb": 1,
+    "stl": 1,
+    "tov": 4,
+    "tp": 3
+   },
+   {
+    "ast": 1,
+    "blk": 1,
+    "equipe": "BOS",
+    "min": 13.5,
+    "nom": "Jordan Walsh",
+    "pts": 0,
+    "reb": 6,
+    "stl": 1,
+    "tov": 0,
+    "tp": 0
+   },
+   {
+    "ast": 2,
+    "blk": 2,
+    "equipe": "BOS",
+    "min": 22.1,
+    "nom": "Neemias Queta",
+    "pts": 3,
+    "reb": 4,
+    "stl": 1,
+    "tov": 1,
+    "tp": 0
+   },
+   {
+    "ast": 1,
+    "blk": 0,
+    "equipe": "BOS",
+    "min": 18.2,
+    "nom": "Sam Hauser",
+    "pts": 11,
+    "reb": 4,
+    "stl": 0,
+    "tov": 0,
+    "tp": 3
+   },
+   {
+    "ast": 1,
+    "blk": 0,
+    "equipe": "BOS",
+    "min": 27.5,
+    "nom": "Payton Pritchard",
+    "pts": 17,
+    "reb": 4,
+    "stl": 0,
+    "tov": 0,
+    "tp": 2
+   },
+   {
+    "ast": 0,
+    "blk": 0,
+    "equipe": "BOS",
+    "min": 18.2,
+    "nom": "Baylor Scheierman",
+    "pts": 8,
+    "reb": 3,
+    "stl": 1,
+    "tov": 1,
+    "tp": 2
+   },
+   {
+    "ast": 0,
+    "blk": 0,
+    "equipe": "BOS",
+    "min": 9.7,
+    "nom": "Hugo Gonzalez",
+    "pts": 0,
+    "reb": 3,
+    "stl": 0,
+    "tov": 0,
+    "tp": 0
+   },
+   {
+    "ast": 0,
+    "blk": 0,
+    "equipe": "BOS",
+    "min": 8.4,
+    "nom": "Luka Garza",
+    "pts": 2,
+    "reb": 2,
+    "stl": 0,
+    "tov": 1,
+    "tp": 0
+   },
+   {
+    "ast": 5,
+    "blk": 0,
+    "equipe": "DET",
+    "min": 35.3,
+    "nom": "Ausar Thompson",
+    "pts": 11,
+    "reb": 11,
+    "stl": 1,
+    "tov": 3,
+    "tp": 0
+   },
+   {
+    "ast": 1,
+    "blk": 1,
+    "equipe": "DET",
+    "min": 25.5,
+    "nom": "John Collins",
+    "pts": 6,
+    "reb": 5,
+    "stl": 1,
+    "tov": 0,
+    "tp": 0
+   },
+   {
+    "ast": 1,
+    "blk": 1,
+    "equipe": "DET",
+    "min": 28,
+    "nom": "Jalen Duren",
+    "pts": 22,
+    "reb": 9,
+    "stl": 1,
+    "tov": 1,
+    "tp": 0
+   },
+   {
+    "ast": 2,
+    "blk": 0,
+    "equipe": "DET",
+    "min": 27.8,
+    "nom": "Duncan Robinson",
+    "pts": 21,
+    "reb": 2,
+    "stl": 1,
+    "tov": 3,
+    "tp": 5
+   },
+   {
+    "ast": 8,
+    "blk": 1,
+    "equipe": "DET",
+    "min": 35.3,
+    "nom": "Cade Cunningham",
+    "pts": 22,
+    "reb": 4,
+    "stl": 1,
+    "tov": 5,
+    "tp": 1
+   },
+   {
+    "ast": 2,
+    "blk": 1,
+    "equipe": "DET",
+    "min": 19.3,
+    "nom": "Isaiah Joe",
+    "pts": 8,
+    "reb": 2,
+    "stl": 1,
+    "tov": 1,
+    "tp": 2
+   },
+   {
+    "ast": 2,
+    "blk": 0,
+    "equipe": "DET",
+    "min": 16.7,
+    "nom": "Paul Reed",
+    "pts": 6,
+    "reb": 6,
+    "stl": 1,
+    "tov": 2,
+    "tp": 0
+   },
+   {
+    "ast": 1,
+    "blk": 1,
+    "equipe": "DET",
+    "min": 2.8,
+    "nom": "Ron Holland",
+    "pts": 0,
+    "reb": 1,
+    "stl": 0,
+    "tov": 1,
+    "tp": 0
+   },
+   {
+    "ast": 3,
+    "blk": 0,
+    "equipe": "DET",
+    "min": 15.3,
+    "nom": "Daniss Jenkins",
+    "pts": 3,
+    "reb": 2,
+    "stl": 0,
+    "tov": 1,
+    "tp": 1
+   },
+   {
+    "ast": 2,
+    "blk": 0,
+    "equipe": "DET",
+    "min": 18.3,
+    "nom": "Kevin Huerter",
+    "pts": 3,
+    "reb": 3,
+    "stl": 0,
+    "tov": 0,
+    "tp": 1
+   },
+   {
+    "ast": 0,
+    "blk": 0,
+    "equipe": "DET",
+    "min": 17.8,
+    "nom": "Javonte Green",
+    "pts": 19,
+    "reb": 4,
+    "stl": 0,
+    "tov": 0,
+    "tp": 5
+   }
+  ],
+  "maj": "2026-10-22T10:01:25.014Z",
+  "otDom": 0,
+  "otExt": 0,
+  "qtDom": [
+   27,
+   18,
+   37,
+   39
+  ],
+  "qtExt": [
+   28,
+   30,
+   30,
+   25
+  ],
+  "saison": "2026-27"
+ }
+];
