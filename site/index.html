@@ -10,7 +10,8 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:wght@400;600;700&display=swap">
 <style>
 /* Layout : fond blanc, titre marine, bandeau marine des rubriques. La rubrique Travail tient dans
-   l'écran : semaine, planning (il prend toute la place qui reste), bilan. Un seul thème, clair. */
+   l'écran : semaine, planning en frise (une colonne par jour, une ligne par demi-heure, il prend
+   toute la place qui reste), bilan. Un seul thème, clair. */
 :root {
   color-scheme: light;
   --fond: #ffffff;
@@ -20,6 +21,8 @@
   --encre: #172033;
   --gris: #5b6478;
   --trait: #dce1ea;
+  --trait-doux: #eef1f6;
+  --bleu: #2b4c9b;
   --sur-marine: #ffffff;
   --sur-marine-2: #c9d2e6;
   --repos: #94560a;
@@ -112,25 +115,33 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 .semaine-plus .picto { stroke-width: 1.8; color: var(--gris); }
 .puce-actuelle { padding: 5px 8px; border-radius: 999px; background: var(--marine-doux); color: var(--marine); font: 600 .7rem/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; }
 
-.planning { flex: 1 1 auto; display: grid; gap: 6px; --taille-heure: clamp(1.15rem, min(2.3vw, 4.2vh), 2.4rem); }
-.planning.large { grid-template-columns: auto repeat(6, minmax(0, 1fr)); grid-template-rows: auto minmax(84px, 1fr) minmax(84px, 1fr); }
-.planning.etroit { grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto repeat(6, minmax(42px, 1fr)); --taille-heure: clamp(.95rem, min(4.2vw, 3.1vh), 1.5rem); gap: 5px; }
-.periode { display: flex; align-items: center; justify-content: center; padding: 4px 8px; font: 600 .75rem/1.2 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--gris); }
-.large .periode { justify-content: flex-start; padding-left: 0; }
-.jour { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 8px 6px; border-radius: 8px; text-align: center; }
-.jour-nom { font-family: var(--f-display); font-weight: 750; font-size: clamp(1rem, min(1.6vw, 2.6vh), 1.4rem); line-height: 1.1; color: var(--marine); }
-.jour-date, .jour-total { font: 500 .78rem/1.25 var(--f-mono); color: var(--gris); font-variant-numeric: tabular-nums; }
+.planning { flex: 1 1 auto; display: grid; grid-template-columns: auto repeat(6, minmax(0, 1fr)); grid-template-rows: auto minmax(calc(var(--creneaux, 18) * 14px), 1fr); gap: 6px clamp(4px, .8vw, 8px); }
+.jour { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 6px 4px; border-radius: 8px; text-align: center; }
+.jour-nom { font-family: var(--f-display); font-weight: 750; font-size: clamp(.95rem, min(1.5vw, 2.4vh), 1.3rem); line-height: 1.1; color: var(--marine); white-space: nowrap; }
+.jour-date, .jour-total, .jour-repos { font: 500 .75rem/1.25 var(--f-mono); color: var(--gris); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .jour-total { font-weight: 600; color: var(--encre); }
-.etroit .jour { min-width: 60px; padding: 4px; }
-.etroit .jour-nom { font-size: clamp(.95rem, 4.2vw, 1.1rem); white-space: nowrap; }
-.etroit .periode { padding-block: 0; }
+.jour-repos { font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--repos); }
 .jour.aujourdhui { background: var(--marine); }
 .jour.aujourdhui .jour-nom, .jour.aujourdhui .jour-date, .jour.aujourdhui .jour-total { color: var(--sur-marine); }
-.case { display: flex; flex-wrap: wrap; align-items: center; align-content: center; justify-content: center; gap: 0 .3em; min-width: 0; padding: 6px; border: 1.5px solid transparent; border-radius: 8px; background: var(--marine-doux); color: var(--encre); font-family: var(--f-display); font-weight: 700; font-size: var(--taille-heure); line-height: 1.15; font-variant-numeric: tabular-nums; text-align: center; }
-.case .tiret { color: var(--gris); font-weight: 500; }
-.case.vide { border-style: dashed; border-color: var(--trait); background: var(--fond); color: var(--gris); font-weight: 500; }
-.case.repos { background: repeating-linear-gradient(135deg, var(--repos-doux) 0 10px, var(--repos-raie) 10px 20px); color: var(--repos); font-size: calc(var(--taille-heure) * .72); letter-spacing: .06em; text-transform: uppercase; }
-.case.aujourdhui { border-color: var(--marine); }
+.jour.aujourdhui .jour-repos { color: var(--repos-raie); }
+/* L'axe et les colonnes ont la même hauteur : une heure à i/n de l'axe tombe sur la ligne i des colonnes */
+.axe { position: relative; width: clamp(40px, 4vw, 52px); border: 1px solid transparent; }
+.axe-heure { position: absolute; right: 6px; font: 500 .68rem/1 var(--f-mono); color: var(--gris); white-space: nowrap; font-variant-numeric: tabular-nums; transform: translateY(-50%); }
+.axe-heure.pleine { font-weight: 600; font-size: .74rem; color: var(--encre); }
+.colonne { position: relative; display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--trait); border-radius: 6px; overflow: hidden; background: var(--fond); }
+.colonne.aujourdhui { border-color: var(--marine); box-shadow: 0 0 0 1px var(--marine); }
+.creneau { flex: 1 1 0; min-height: 0; box-shadow: inset 0 1px 0 var(--trait-doux); }
+.creneau.heure { box-shadow: inset 0 1px 0 var(--trait); }
+.creneau:first-child { box-shadow: none; }
+.creneau.bleu { background: var(--bleu); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16); }
+.creneau.bleu.heure { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .34); }
+.creneau.bleu-haut { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16); }
+.creneau.bleu-haut.heure { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .34); }
+.creneau.partiel { background: linear-gradient(to bottom, transparent var(--de), var(--bleu) var(--de), var(--bleu) var(--a), transparent var(--a)); }
+.horaire { position: absolute; left: 0; right: 0; padding-inline: 2px; overflow: hidden; color: var(--sur-marine); font: 700 clamp(.68rem, min(1.1vw, 1.9vh), .85rem)/1 var(--f-body); text-align: center; white-space: nowrap; pointer-events: none; }
+.horaire.haut { margin-top: 4px; }
+.horaire.bas { margin-bottom: 4px; }
+.mot-repos { position: absolute; inset: 0; display: grid; place-items: center; color: var(--repos); font: 600 .72rem/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; pointer-events: none; }
 
 .bilan { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; align-items: center; gap: 12px 24px; padding: clamp(10px, 1.8vh, 18px) clamp(14px, 2vw, 24px); border: 1.5px solid var(--trait); border-radius: 12px; }
 .chiffre { display: grid; gap: 2px; min-width: 0; }
@@ -162,7 +173,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   .titre-ligne { padding-block: 8px 6px; }
   .titre-site { font-size: 1.4rem; }
   .bande a { padding-block: 9px; }
-  .planning.etroit { grid-template-rows: auto repeat(6, minmax(36px, 1fr)); --taille-heure: 1rem; }
+  .planning { grid-template-rows: auto minmax(calc(var(--creneaux, 18) * 12px), 1fr); }
   .bilan .valeur { font-size: 1.2rem; }
   .bilan .bouton-principal { min-height: 40px; }
 }
@@ -316,7 +327,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
         </button>
       </div>
 
-      <div class="planning large" id="planning" aria-label="Planning de la semaine"></div>
+      <div class="planning" id="planning" aria-label="Planning de la semaine, demi-heure par demi-heure"></div>
 
       <div class="bilan">
         <div class="chiffre" id="bilan-heures-bloc">
@@ -572,32 +583,77 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     const jour = sem.jours[JOURS[i]];
     const el = element("div", "jour" + (i === iAujourdhui ? " aujourdhui" : ""));
     if (etroit.matches) {
-      el.append(element("span", "jour-nom", `${JOURS_COURTS[i]} ${date.getUTCDate()}`));
+      el.append(element("span", "jour-nom", JOURS_COURTS[i]));
+      el.append(element("span", "jour-date", String(date.getUTCDate())));
     } else {
       el.append(element("span", "jour-nom", majuscule(JOURS[i])));
       el.append(element("span", "jour-date", `${quantieme(date.getUTCDate())} ${MOIS_COURTS[date.getUTCMonth()]}`));
     }
     const duree = dureeJour(jour);
-    if (duree) el.append(element("span", "jour-total", formatDuree(duree)));
+    if (jour.repos) el.append(element("span", "jour-repos", "Repos"));
+    else if (duree) el.append(element("span", "jour-total", formatDuree(duree)));
     return el;
   }
-  function casePeriode(i, periode, sem, iAujourdhui) {
-    const jour = sem.jours[JOURS[i]];
-    const p = jour[periode.cle];
-    const el = element("div", "case" + (i === iAujourdhui ? " aujourdhui" : ""));
-    el.append(element("span", "invisible", `${majuscule(JOURS[i])} ${periode.nom.toLowerCase()} : `));
-    if (jour.repos) {
-      el.classList.add("repos");
-      el.append(document.createTextNode("Repos"));
-    } else if (!p) {
-      el.classList.add("vide");
-      el.append(element("span", null, "—"));
-      el.lastChild.setAttribute("aria-label", "rien de prévu");
-    } else {
-      el.append(element("span", null, p.debut ? formatHeure(p.debut) : "?"));
-      el.append(element("span", "tiret", "–"));
-      el.append(element("span", null, p.fin ? formatHeure(p.fin) : "?"));
+
+  // La frise va de 10h à 19h, et s'allonge à la demi-heure quand une semaine commence plus tôt ou finit plus tard.
+  const FRISE_DEBUT = 10 * 60, FRISE_FIN = 19 * 60, CRENEAU = 30;
+  const periodesTravaillees = jour => (jour.repos ? [] : PERIODES.map(p => jour[p.cle])
+    .filter(x => x && x.debut && x.fin && minutes(x.fin) > minutes(x.debut))
+    .map(x => ({ de: minutes(x.debut), a: minutes(x.fin), debut: x.debut, fin: x.fin })));
+  function bornesFrise(sem) {
+    let de = FRISE_DEBUT, a = FRISE_FIN;
+    JOURS.forEach(j => periodesTravaillees(sem.jours[j]).forEach(x => {
+      de = Math.min(de, Math.floor(x.de / CRENEAU) * CRENEAU);
+      a = Math.max(a, Math.ceil(x.a / CRENEAU) * CRENEAU);
+    }));
+    return { de, a, n: (a - de) / CRENEAU };
+  }
+  const position = (t, b) => (t - b.de) / (b.a - b.de) * 100;
+  const enHeure = t => formatHeure(`${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`);
+
+  function axeFrise(b) {
+    const el = element("div", "axe");
+    el.setAttribute("aria-hidden", "true");
+    for (let t = b.de; t <= b.a; t += CRENEAU) {
+      const h = element("span", "axe-heure" + (t % 60 === 0 ? " pleine" : ""), enHeure(t));
+      h.style.top = `${position(t, b)}%`;
+      el.append(h);
     }
+    return el;
+  }
+
+  function colonneJour(i, sem, b, iAujourdhui) {
+    const jour = sem.jours[JOURS[i]];
+    const travail = periodesTravaillees(jour);
+    const el = element("div", "colonne" + (i === iAujourdhui ? " aujourdhui" : ""));
+    el.setAttribute("role", "img");
+    el.setAttribute("aria-label", `${majuscule(JOURS[i])} : ` + (jour.repos ? "repos"
+      : travail.length ? travail.map(x => `${formatHeure(x.debut)} à ${formatHeure(x.fin)}`).join(", puis ") : "rien de prévu"));
+    for (let t = b.de; t < b.a; t += CRENEAU) {
+      const c = element("div", "creneau" + (t % 60 === 0 ? " heure" : ""));
+      // La part travaillée de la demi-heure : toute la case en bleu, ou seulement le morceau concerné.
+      const morceaux = travail.map(x => [Math.max(x.de, t), Math.min(x.a, t + CRENEAU)]).filter(([de, a]) => a > de);
+      if (morceaux.length) {
+        const de = Math.min(...morceaux.map(m => m[0])) - t, a = Math.max(...morceaux.map(m => m[1])) - t;
+        if (de === 0 && a === CRENEAU) c.classList.add("bleu");
+        else {
+          c.classList.add("partiel");
+          if (de === 0) c.classList.add("bleu-haut");   // le bleu touche le haut : la ligne de la demi-heure reste discrète
+          c.style.setProperty("--de", `${de / CRENEAU * 100}%`);
+          c.style.setProperty("--a", `${a / CRENEAU * 100}%`);
+        }
+      }
+      el.append(c);
+    }
+    // L'heure d'arrivée en haut du bloc bleu, l'heure de départ en bas, quand le bloc est assez haut.
+    travail.filter(x => x.a - x.de >= 90).forEach(x => {
+      const haut = element("span", "horaire haut", formatHeure(x.debut));
+      haut.style.top = `${position(x.de, b)}%`;
+      const bas = element("span", "horaire bas", formatHeure(x.fin));
+      bas.style.bottom = `${100 - position(x.a, b)}%`;
+      el.append(haut, bas);
+    });
+    if (jour.repos) el.append(element("span", "mot-repos", "Repos"));
     return el;
   }
 
@@ -613,16 +669,13 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     $("puce-actuelle").hidden = lundiAffiche !== lundiActuel;
 
     const grille = $("planning");
-    grille.className = "planning " + (etroit.matches ? "etroit" : "large");
+    const b = bornesFrise(sem);
+    grille.style.setProperty("--creneaux", String(b.n));
     const f = document.createDocumentFragment();
     f.append(element("div", "coin"));
-    if (etroit.matches) {
-      PERIODES.forEach(p => f.append(element("div", "periode", p.nom)));
-      JOURS.forEach((_, i) => { f.append(enteteJour(i, sem, iAujourdhui)); PERIODES.forEach(p => f.append(casePeriode(i, p, sem, iAujourdhui))); });
-    } else {
-      JOURS.forEach((_, i) => f.append(enteteJour(i, sem, iAujourdhui)));
-      PERIODES.forEach(p => { f.append(element("div", "periode", p.nom)); JOURS.forEach((_, i) => f.append(casePeriode(i, p, sem, iAujourdhui))); });
-    }
+    JOURS.forEach((_, i) => f.append(enteteJour(i, sem, iAujourdhui)));
+    f.append(axeFrise(b));
+    JOURS.forEach((_, i) => f.append(colonneJour(i, sem, b, iAujourdhui)));
     grille.replaceChildren(f);
 
     const vide = estVide(s);
