@@ -48,7 +48,7 @@ COULEURS = {
     "ivory": "Ivoire", "cream": "Crème", "ecru": "Écru", "grey": "Gris", "gray": "Gris", "light grey": "Gris clair",
     "dark grey": "Anthracite", "heather grey": "Gris chiné", "grey melange": "Gris chiné", "charcoal": "Gris charbon",
     "navy": "Bleu marine", "navy blue": "Bleu marine", "dark navy": "Bleu nuit", "blue": "Bleu", "light blue": "Bleu clair",
-    "sky blue": "Bleu ciel", "royal blue": "Bleu roi", "dark blue": "Bleu marine", "raw": "Bleu brut", "stone": "Bleu stone",
+    "sky blue": "Bleu ciel", "royal blue": "Bleu roi", "dark blue": "Bleu marine", "us navy": "Bleu marine", "bleu us navy": "Bleu marine", "raw": "Bleu brut", "stone": "Bleu stone",
     "green": "Vert", "dark green": "Vert sapin", "bottle green": "Vert bouteille", "khaki": "Kaki", "olive": "Vert olive",
     "sage": "Vert sauge", "mint": "Vert menthe", "red": "Rouge", "burgundy": "Bordeaux", "wine": "Lie de vin", "pink": "Rose",
     "yellow": "Jaune", "mustard": "Moutarde", "rust": "Rouille", "brown": "Marron", "dark brown": "Chocolat",
@@ -145,6 +145,11 @@ def main():
         champs = lire_description(d.get("description"))
         coupe = champs.get("coupe", "").strip()
         matiere = re.sub(r"(\d)\s*%", r"\1 %", champs.get("matiere", "")).strip()
+        matiere = matiere[:1].upper() + matiere[1:].lower()   # « 100 % Coton » → « 100 % coton »
+        # En promo sur le site : le prix normal, et la promo dans la note.
+        prix, barre = d.get("price"), d.get("compare_at_price")
+        promo = isinstance(barre, int) and isinstance(prix, int) and barre > prix
+        euros = lambda c: f"{c / 100:.2f}".replace(".", ",") + " €"
         ref = next((t for t in d.get("tags", []) if re.fullmatch(r"\d{6,}[A-Z]?", t)), "")
         piece = {
             "marque": (d.get("vendor") or "")[:60] or None,
@@ -154,11 +159,11 @@ def main():
             "couleur": couleur_de(champs.get("couleur", ""))[:60] or None,
             "matiere": matiere[:120] or None,
             "rayon": "homme",
-            "prix": round(d["price"] / 100, 2) if isinstance(d.get("price"), int) else None,
+            "prix": round((barre if promo else prix) / 100, 2) if isinstance(prix, int) else None,
             "ref": ref or None,
             "lien": adresse,
             "reperes": {"nouveaute": False, "promo": False, "vitrine": False, "reseaux": False},
-            "note": None,
+            "note": f"En promo sur le site : {euros(prix)} au lieu de {euros(barre)}." if promo else None,
             "creeLe": datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
         }
         images = []
