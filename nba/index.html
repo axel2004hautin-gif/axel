@@ -184,6 +184,7 @@ h2.sec{font-family:var(--f-display);font-weight:700;font-size:1.35rem;letter-spa
       <label class="f"><span>Matchs</span><select id="j-n"></select></label>
       <label class="f"><span>Repos</span><select id="j-repos"></select></label>
       <label class="f"><span>Minutes min.</span><input type="number" id="j-min" min="0" max="60" step="1" placeholder="0"></label>
+      <label class="f"><span>Rôle</span><select id="j-role"></select></label>
     </div>
     <div id="j-out" class="stack"></div>
   </section>
@@ -282,7 +283,10 @@ h2.sec{font-family:var(--f-display);font-weight:700;font-size:1.35rem;letter-spa
 "use strict";
 const TEAMS=[["ATL","Atlanta Hawks"],["BOS","Boston Celtics"],["BKN","Brooklyn Nets"],["CHA","Charlotte Hornets"],["CHI","Chicago Bulls"],["CLE","Cleveland Cavaliers"],["DAL","Dallas Mavericks"],["DEN","Denver Nuggets"],["DET","Detroit Pistons"],["GSW","Golden State Warriors"],["HOU","Houston Rockets"],["IND","Indiana Pacers"],["LAC","LA Clippers"],["LAL","Los Angeles Lakers"],["MEM","Memphis Grizzlies"],["MIA","Miami Heat"],["MIL","Milwaukee Bucks"],["MIN","Minnesota Timberwolves"],["NOP","New Orleans Pelicans"],["NYK","New York Knicks"],["OKC","Oklahoma City Thunder"],["ORL","Orlando Magic"],["PHI","Philadelphia 76ers"],["PHX","Phoenix Suns"],["POR","Portland Trail Blazers"],["SAC","Sacramento Kings"],["SAS","San Antonio Spurs"],["TOR","Toronto Raptors"],["UTA","Utah Jazz"],["WAS","Washington Wizards"]];
 const TEAM_NAME=Object.fromEntries(TEAMS);
-const STATS=[["pts","Points"],["reb","Rebonds"],["ast","Passes décisives"],["tp","3 pts réussis"],["pra","Pts + Reb + Pas"],["pr","Pts + Reb"],["pa","Pts + Pas"],["ra","Reb + Pas"],["stl","Interceptions"],["blk","Contres"],["sb","Int. + Contres"],["tov","Balles perdues"],["min","Minutes"]];
+const STATS=[["pts","Points"],["reb","Rebonds"],["ast","Passes décisives"],["tp","3 pts réussis"],["pra","Pts + Reb + Pas"],["pr","Pts + Reb"],["pa","Pts + Pas"],["ra","Reb + Pas"],["stl","Interceptions"],["blk","Contres"],["sb","Int. + Contres"],["tov","Balles perdues"],["fgm","Tirs réussis"],["fga","Tirs tentés"],["tpa","3 pts tentés"],["ftm","Lancers francs réussis"],["fta","Lancers francs tentés"],["oreb","Rebonds offensifs"],["dreb","Rebonds défensifs"],["pf","Fautes"],["pm","+/-"],["dd","Double-double (1 = oui)"],["td","Triple-double (1 = oui)"],["min","Minutes"]];
+// Stats que seuls les matchs remplis automatiquement ont : un match saisi à la main sans elles est écarté du calcul
+const STAT_EXT=new Set(["fgm","fga","tpa","ftm","fta","oreb","dreb","pf","pm"]);
+const ROLES=[["all","Tous"],["tit","Titulaire"],["rem","Remplaçant"]];
 const STAT_NAME=Object.fromEntries(STATS);
 const PERIODS=[["full","Match complet"],["h1","1re mi-temps"],["h2","2e mi-temps"],["q1","1er quart-temps"],["q2","2e quart-temps"],["q3","3e quart-temps"],["q4","4e quart-temps"]];
 const PER_NAME=Object.fromEntries(PERIODS);
@@ -348,14 +352,16 @@ function sidePts(m,side,per){
 }
 function statVal(p,k){
   const g=x=>Number(p[x])||0;
-  switch(k){case"pra":return g("pts")+g("reb")+g("ast");case"pr":return g("pts")+g("reb");case"pa":return g("pts")+g("ast");case"ra":return g("reb")+g("ast");case"sb":return g("stl")+g("blk");default:return g(k)}
+  if(STAT_EXT.has(k))return p[k]===undefined||p[k]===null||p[k]===""?NaN:Number(p[k]);
+  const dbl=()=>["pts","reb","ast","stl","blk"].filter(x=>g(x)>=10).length;
+  switch(k){case"dd":return dbl()>=2?1:0;case"td":return dbl()>=3?1:0;case"pra":return g("pts")+g("reb")+g("ast");case"pr":return g("pts")+g("reb");case"pa":return g("pts")+g("ast");case"ra":return g("reb")+g("ast");case"sb":return g("stl")+g("blk");default:return g(k)}
 }
 function passRest(r,f){if(f==="all")return true;if(r===null)return false;return f==="b2b"?r===0:r>=1}
 
 function teamGames(team,mes,per,f){
   let rows=getM().filter(m=>m.dom===team||m.ext===team).map(m=>{
     const home=m.dom===team;const fo=sidePts(m,home?"dom":"ext",per),ag=sidePts(m,home?"ext":"dom",per);
-    return{date:m.date,debut:m.debut,home,opp:home?m.ext:m.dom,fo,ag,val:mes==="pour"?fo:mes==="contre"?ag:fo+ag,rest:restDays(team,m.date)};
+    return{date:m.date,debut:m.debut,cotes:m.cotes,home,opp:home?m.ext:m.dom,fo,ag,val:mes==="pour"?fo:mes==="contre"?ag:fo+ag,rest:restDays(team,m.date)};
   }).sort((a,b)=>b.date.localeCompare(a.date));
   rows=rows.filter(r=>(f.lieu==="all"||(f.lieu==="dom")===r.home)&&(!f.adv||f.adv==="all"||r.opp===f.adv)&&passRest(r.rest,f.repos||"all"));
   if(f.n&&f.n!=="all")rows=rows.slice(0,Number(f.n));
@@ -364,9 +370,10 @@ function teamGames(team,mes,per,f){
 function playerGames(name,stat,f){
   let rows=[];
   for(const m of getM()){for(const p of (m.joueurs||[])){if(p.nom!==name)continue;
-    const home=m.dom===p.equipe;rows.push({date:m.date,debut:m.debut,team:p.equipe,home,opp:home?m.ext:m.dom,min:Number(p.min)||0,val:statVal(p,stat),rest:restDays(p.equipe,m.date)});}}
+    const home=m.dom===p.equipe;rows.push({date:m.date,debut:m.debut,team:p.equipe,home,opp:home?m.ext:m.dom,min:Number(p.min)||0,starter:p.titulaire,val:statVal(p,stat),rest:restDays(p.equipe,m.date)});}}
   rows.sort((a,b)=>b.date.localeCompare(a.date));
-  rows=rows.filter(r=>(f.lieu==="all"||(f.lieu==="dom")===r.home)&&(!f.adv||f.adv==="all"||r.opp===f.adv)&&passRest(r.rest,f.repos||"all")&&(!(f.minMin>0)||r.min>=f.minMin));
+  rows=rows.filter(r=>(f.lieu==="all"||(f.lieu==="dom")===r.home)&&(!f.adv||f.adv==="all"||r.opp===f.adv)&&passRest(r.rest,f.repos||"all")&&(!(f.minMin>0)||r.min>=f.minMin)
+    &&Number.isFinite(r.val)&&(f.role==="tit"?r.starter===true:f.role==="rem"?r.starter===false:true));
   if(f.n&&f.n!=="all")rows=rows.slice(0,Number(f.n));
   return rows;
 }
@@ -395,19 +402,20 @@ function verdictHTML(sm,line,unit){
 function chartHTML(rows,line){
   const pts=[...rows].reverse();const n=pts.length;if(!n)return"";
   const W=640,H=210,padL=34,padR=10,padT=14,padB=n<=20?34:14;
-  const maxV=Math.max(...pts.map(r=>r.val),Number.isFinite(line)?line:0,1);
-  const step=niceStep(maxV/4);const top=Math.ceil(maxV/step)*step||1;
-  const y=v=>padT+(H-padT-padB)*(1-v/top);
+  const L=Number.isFinite(line)?line:0;
+  const maxV=Math.max(...pts.map(r=>r.val),L,1),minV=Math.min(...pts.map(r=>r.val),L,0);
+  const step=niceStep((maxV-minV)/4);const top=Math.ceil(maxV/step)*step||1,bot=Math.floor(minV/step)*step;
+  const y=v=>padT+(H-padT-padB)*(top-v)/(top-bot);
   const bw=(W-padL-padR)/n;const gap=Math.min(6,bw*.22);
   let g="";
-  for(let t=0;t<=top+1e-9;t+=step){g+=`<line class="grid" x1="${padL}" x2="${W-padR}" y1="${y(t)}" y2="${y(t)}"/><text x="${padL-6}" y="${y(t)+4}" text-anchor="end">${fmt(t,0)}</text>`}
+  for(let t=bot;t<=top+1e-9;t+=step){g+=`<line class="grid" x1="${padL}" x2="${W-padR}" y1="${y(t)}" y2="${y(t)}"/><text x="${padL-6}" y="${y(t)+4}" text-anchor="end">${fmt(t,0)}</text>`}
   pts.forEach((r,i)=>{
-    const x=padL+i*bw+gap/2,w=Math.max(1.5,bw-gap),yy=y(r.val),h=y(0)-yy;
+    const x=padL+i*bw+gap/2,w=Math.max(1.5,bw-gap),yv=y(r.val),yy=Math.min(yv,y(0)),h=Math.abs(y(0)-yv);
     const cls=Number.isFinite(line)?(r.val>line?"bar-over":r.val<line?"bar-under":"bar-push"):"bar-n";
     g+=`<rect class="${cls}" x="${x.toFixed(1)}" y="${yy.toFixed(1)}" width="${w.toFixed(1)}" height="${Math.max(0,h).toFixed(1)}" rx="2"><title>${frWhen(r)} ${r.home?"vs":"@"} ${r.opp} : ${fmt(r.val)}</title></rect>`;
-    if(n<=20){g+=`<text class="val" x="${(x+w/2).toFixed(1)}" y="${(yy-4).toFixed(1)}" text-anchor="middle">${fmt(r.val)}</text><text x="${(x+w/2).toFixed(1)}" y="${H-padB+14}" text-anchor="middle">${r.home?"":"@"}${r.opp}</text><text x="${(x+w/2).toFixed(1)}" y="${H-padB+27}" text-anchor="middle">${frDay(r)}</text>`}
+    if(n<=20){g+=`<text class="val" x="${(x+w/2).toFixed(1)}" y="${(r.val<0?yv+12:yv-4).toFixed(1)}" text-anchor="middle">${fmt(r.val)}</text><text x="${(x+w/2).toFixed(1)}" y="${H-padB+14}" text-anchor="middle">${r.home?"":"@"}${r.opp}</text><text x="${(x+w/2).toFixed(1)}" y="${H-padB+27}" text-anchor="middle">${frDay(r)}</text>`}
   });
-  if(Number.isFinite(line)&&line<=top){g+=`<line class="lineref" x1="${padL}" x2="${W-padR}" y1="${y(line)}" y2="${y(line)}"/><text class="lbl-line" x="${W-padR}" y="${y(line)-5}" text-anchor="end">${fmt(line)}</text>`}
+  if(Number.isFinite(line)&&line<=top&&line>=bot){g+=`<line class="lineref" x1="${padL}" x2="${W-padR}" y1="${y(line)}" y2="${y(line)}"/><text class="lbl-line" x="${W-padR}" y="${y(line)-5}" text-anchor="end">${fmt(line)}</text>`}
   return `<div class="panel"><svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Valeur par match, du plus ancien au plus récent">${g}</svg><p class="note" style="margin:6px 0 0">Du plus ancien (gauche) au plus récent (droite). @ = match à l'extérieur.</p></div>`;
 }
 function niceStep(raw){if(raw<=0)return 1;const p=Math.pow(10,Math.floor(Math.log10(raw)));const f=raw/p;return (f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*p}
@@ -424,14 +432,14 @@ function renderJ(){
     const names=Object.keys(ix.players).sort((a,b)=>a.localeCompare(b,"fr"));
     out.innerHTML=emptyHTML(name?"Joueur introuvable":"Choisis un joueur",(name?`Aucun joueur nommé « ${esc(name)} » dans la base. `:"")+`${names.length} joueurs saisis. Commence à taper un nom, la liste se complète toute seule.`,false);return}
   const stat=$("#j-stat").value,line=num($("#j-ligne").value);
-  const f={lieu:$("#j-lieu").dataset.val,adv:$("#j-adv").value,n:$("#j-n").value,repos:$("#j-repos").value,minMin:num($("#j-min").value)};
+  const f={lieu:$("#j-lieu").dataset.val,adv:$("#j-adv").value,n:$("#j-n").value,repos:$("#j-repos").value,minMin:num($("#j-min").value),role:$("#j-role").value};
   const rows=playerGames(name,stat,f);const team=ix.players[name].team;
   const head=`<div class="row"><h2 class="sec">${esc(name)}</h2><span class="note">${esc(TEAM_NAME[team]||team)} · ${esc(STAT_NAME[stat])}</span></div>`;
-  if(!rows.length){out.innerHTML=head+emptyHTML("Aucun match avec ces filtres","Élargis un filtre (lieu, adversaire, repos, minutes) pour retrouver des matchs.",false);return}
+  if(!rows.length){out.innerHTML=head+emptyHTML("Aucun match avec ces filtres",STAT_EXT.has(stat)?"Cette stat n'existe que pour les matchs remplis automatiquement. Élargis un filtre ou choisis une autre stat.":"Élargis un filtre (lieu, adversaire, repos, minutes, rôle) pour retrouver des matchs.",false);return}
   const sm=summary(rows.map(r=>r.val),line);
-  const tb=rows.map(r=>`<tr><td>${frWhen(r)}</td><td class="l">${r.home?"vs":"@"} ${r.opp}</td><td>${r.rest===null?"—":r.rest===0?'<span class="chip warn">B2B</span>':r.rest+" j"}</td><td>${fmt(r.min)}</td><td class="big">${fmt(r.val)}</td><td>${res(r.val,line)}</td></tr>`).join("");
+  const tb=rows.map(r=>`<tr><td>${frWhen(r)}</td><td class="l">${r.home?"vs":"@"} ${r.opp}</td><td>${r.rest===null?"—":r.rest===0?'<span class="chip warn">B2B</span>':r.rest+" j"}</td><td>${r.starter===true?"Tit.":r.starter===false?"Rem.":"—"}</td><td>${fmt(r.min)}</td><td class="big">${fmt(r.val)}</td><td>${res(r.val,line)}</td></tr>`).join("");
   out.innerHTML=head+verdictHTML(sm,line,STAT_NAME[stat].toLowerCase()+" par match")+chartHTML(rows,line)+
-    `<div class="tbl-wrap"><table><thead><tr><th>Date</th><th class="l">Adversaire</th><th>Repos</th><th>Min</th><th>${esc(STAT_NAME[stat])}</th><th>Résultat</th></tr></thead><tbody>${tb}</tbody></table></div>`;
+    `<div class="tbl-wrap"><table><thead><tr><th>Date</th><th class="l">Adversaire</th><th>Repos</th><th>Rôle</th><th>Min</th><th>${esc(STAT_NAME[stat])}</th><th>Résultat</th></tr></thead><tbody>${tb}</tbody></table></div>`;
 }
 
 /* ---------- EQUIPES ---------- */
@@ -444,9 +452,13 @@ function renderE(){
   const head=`<div class="row"><h2 class="sec">${esc(TEAM_NAME[team])}</h2><span class="note">${esc(MES_NAME[mes])} · ${esc(PER_NAME[per])}</span></div>`;
   if(!rows.length){out.innerHTML=head+emptyHTML("Aucun match avec ces filtres",index().sched[team]?"Élargis un filtre pour retrouver des matchs.":"Cette équipe n'a encore aucun match saisi.",false);return}
   const sm=summary(rows.map(r=>r.val),line);
-  const tb=rows.map(r=>`<tr><td>${frWhen(r)}</td><td class="l">${r.home?"vs":"@"} ${r.opp}</td><td>${r.rest===null?"—":r.rest===0?'<span class="chip warn">B2B</span>':r.rest+" j"}</td><td>${r.fo} – ${r.ag}</td><td class="big">${r.val}</td><td>${res(r.val,line)}</td></tr>`).join("");
+  // Total du match : la ligne DraftKings d'avant-match, quand ESPN la donne
+  const dk=mes==="total"&&per==="full",withDk=dk?rows.filter(r=>r.cotes&&Number.isFinite(r.cotes.total)):[];
+  const dkOver=withDk.filter(r=>r.val>r.cotes.total).length;
+  const tb=rows.map(r=>`<tr><td>${frWhen(r)}</td><td class="l">${r.home?"vs":"@"} ${r.opp}</td><td>${r.rest===null?"—":r.rest===0?'<span class="chip warn">B2B</span>':r.rest+" j"}</td><td>${r.fo} – ${r.ag}</td><td class="big">${r.val}</td><td>${res(r.val,line)}</td>${dk?`<td>${r.cotes&&Number.isFinite(r.cotes.total)?fmt(r.cotes.total)+" "+res(r.val,r.cotes.total):"—"}</td>`:""}</tr>`).join("");
   out.innerHTML=head+verdictHTML(sm,line,"points par match")+chartHTML(rows,line)+
-    `<div class="tbl-wrap"><table><thead><tr><th>Date</th><th class="l">Adversaire</th><th>Repos</th><th>Score (${esc(PER_NAME[per]).toLowerCase()})</th><th>Valeur</th><th>Résultat</th></tr></thead><tbody>${tb}</tbody></table></div>`;
+    (withDk.length?`<p class="note">Ligne DraftKings d'avant-match : over ${dkOver} fois sur ${withDk.length} (${fmt(dkOver/withDk.length*100,0)} %).</p>`:"")+
+    `<div class="tbl-wrap"><table><thead><tr><th>Date</th><th class="l">Adversaire</th><th>Repos</th><th>Score (${esc(PER_NAME[per]).toLowerCase()})</th><th>Valeur</th><th>Résultat</th>${dk?"<th>Ligne DraftKings</th>":""}</tr></thead><tbody>${tb}</tbody></table></div>`;
 }
 
 /* ---------- CLASSEMENT ---------- */
@@ -487,6 +499,8 @@ let rowSeq=0;
 function addRow(side,p){
   const tb=$(`tbody[data-rows="${side}"]`);const id="r"+(++rowSeq);
   const tr=document.createElement("tr");
+  // Stats du joueur que le formulaire n'affiche pas (tirs, fautes, titulaire…) : gardées telles quelles à l'enregistrement
+  tr._extra=p?(p._extra||Object.fromEntries(Object.entries(p).filter(([k])=>!PCOLS.includes(k)&&!["nom","equipe","_extra"].includes(k)))):null;
   tr.innerHTML=`<td><input type="text" class="nm" id="${id}-nom" list="dl-${side}" autocomplete="off" value="${esc(p?.nom||"")}" placeholder="Nom"></td>`+
     PCOLS.map(c=>`<td><input type="text" inputmode="decimal" class="n" id="${id}-${c}" data-c="${c}" value="${p&&p[c]!==undefined&&p[c]!==""?esc(c==="min"?minStr(p[c]):p[c]):""}"></td>`).join("")+
     `<td><button class="btn small danger" data-act="delRow" aria-label="Supprimer la ligne">✕</button></td>`;
@@ -497,7 +511,7 @@ function parseMin(s){s=String(s||"").trim();if(!s)return 0;if(s.includes(":")){c
 function readRows(side,team){
   return $$(`tbody[data-rows="${side}"] tr`).map(tr=>{
     const nom=tr.querySelector(".nm").value.trim();if(!nom)return null;
-    const p={nom,equipe:team};
+    const p=Object.assign({},tr._extra||{},{nom,equipe:team});
     tr.querySelectorAll("input.n").forEach(i=>{const c=i.dataset.c;p[c]=c==="min"?parseMin(i.value):(Number.isFinite(num(i.value))?num(i.value):0)});
     return p;
   }).filter(Boolean);
@@ -558,7 +572,7 @@ function formState(){
     qtDom:qVals("dom"),qtExt:qVals("ext"),otDom:num($("#q-dom-ot").value)||0,otExt:num($("#q-ext-ot").value)||0,
     rawRows:{dom:rawRows("dom"),ext:rawRows("ext")},edit:S.edit};
 }
-function rawRows(side){return $$(`tbody[data-rows="${side}"] tr`).map(tr=>{const o={nom:tr.querySelector(".nm").value};tr.querySelectorAll("input.n").forEach(i=>o[i.dataset.c]=i.value);return o})}
+function rawRows(side){return $$(`tbody[data-rows="${side}"] tr`).map(tr=>{const o={nom:tr.querySelector(".nm").value,_extra:tr._extra||null};tr.querySelectorAll("input.n").forEach(i=>o[i.dataset.c]=i.value);return o})}
 let draftT=null;
 function saveDraft(){clearTimeout(draftT);draftT=setTimeout(()=>{try{localStorage.setItem("carnet-nba-draft",JSON.stringify(formState()))}catch(e){}},400)}
 function restoreDraft(){
@@ -584,13 +598,15 @@ async function saveMatch(){
   const t0=parisToDate(dateFr,heure),date=ymdIn(TZ_US,t0);
   const m={date,debut:t0.toISOString(),saison:"2026-27",dom,ext,qtDom:qD,qtExt:qE,otDom:num($("#q-dom-ot").value)||0,otExt:num($("#q-ext-ot").value)||0,
     joueurs:[...readRows("ext",ext),...readRows("dom",dom)],maj:new Date().toISOString()};
+  const orig=S.edit&&S.matches.find(x=>x.id===S.edit);
+  if(orig)for(const[k,v]of Object.entries(orig))if(!(k in m)&&k!=="id")m[k]=v;   // cotes, source, schema…
   const id=`${date}_${ext}-${dom}`;
   if(!S.edit&&S.matches.some(x=>x.id===id)&&!S.confirmReplace){
     S.confirmReplace=true;msg.textContent=`${ext} @ ${dom} du ${frWhen(m)} existe déjà. Clique encore pour le remplacer.`;$("#saveBtn").textContent="Remplacer le match existant";return}
   const btn=$("#saveBtn");btn.disabled=true;
   try{
     await putMatch(id,m);
-    if(S.edit&&S.edit!==id)await removeMatch(S.edit);
+    if(S.edit&&S.edit!==id){await moveDetails(S.edit,id,m);await removeMatch(S.edit)}
     clearDraft();toast(`${ext} @ ${dom} enregistré`);resetForm(true);
   }catch(e){
     msg.textContent=e&&e.code==="local"?"Ce navigateur refuse l'enregistrement (stockage plein ou navigation privée).":e&&e.code==="quota_exceeded"?"La base est pleine : supprime d'anciens matchs pour en ajouter.":e&&e.code==="invalid_argument"?"Enregistrement refusé : tu n'as pas les droits d'écriture sur cette page.":"Enregistrement impossible pour le moment. Réessaie dans quelques secondes.";
@@ -682,7 +698,7 @@ function makeDemo(){
 }
 
 function init(){
-  fillSel($("#j-stat"),STATS,"pts");fillSel($("#j-adv"),teamOpts(["all","Toutes"]),"all");fillSel($("#j-n"),NS,"all");fillSel($("#j-repos"),REPOS,"all");
+  fillSel($("#j-stat"),STATS,"pts");fillSel($("#j-adv"),teamOpts(["all","Toutes"]),"all");fillSel($("#j-n"),NS,"all");fillSel($("#j-repos"),REPOS,"all");fillSel($("#j-role"),ROLES,"all");
   fillSel($("#e-team"),teamOpts(),"BOS");fillSel($("#e-mes"),MESURES,"total");fillSel($("#e-per"),PERIODS,"full");fillSel($("#e-adv"),teamOpts(["all","Toutes"]),"all");fillSel($("#e-n"),NS,"all");fillSel($("#e-repos"),REPOS,"all");
   fillSel($("#c-mes"),MESURES,"pour");fillSel($("#c-per"),PERIODS,"full");fillSel($("#c-lieu"),LIEUX,"all");fillSel($("#c-n"),NS,"all");
   fillSel($("#c-stat"),STATS,"pts");fillSel($("#c-jlieu"),LIEUX,"all");fillSel($("#c-jn"),NS,"all");
@@ -751,16 +767,17 @@ const CLAUDE_TOOLS=[
    inputSchema:{type:"object",properties:{texte:{type:"string",description:"Nom ou partie du nom"},equipe:{type:"string",description:"Sigle de l'équipe (PHI, NYK…)"}}},
    execute(i){const team=i.equipe?findTeam(i.equipe):null;if(i.equipe&&!team)throw new Error(`Équipe inconnue : ${i.equipe}`);
      chatStatus("Claude cherche des joueurs dans la base…");const r=findPlayers(i.texte||"",team);return{nombre:r.length,joueurs:r.slice(0,80)}}},
-  {name:"stats_joueur",description:"Matchs d'un joueur dans la base, du plus ancien au plus récent : nuit NBA, heure de Paris, adversaire, domicile ou extérieur, jours de repos, score, minutes, points, rebonds, passes, 3 pts réussis (tp3), interceptions, contres, balles perdues, et ses moyennes.",
+  {name:"stats_joueur",description:"Matchs d'un joueur dans la base, du plus ancien au plus récent : nuit NBA, heure de Paris, adversaire, lieu, jours de repos, score, titulaire, min, pts, reb, ast, stl, blk, tp (3 pts réussis), tov, et pour les matchs remplis automatiquement fgm/fga (tirs), tpa (3 pts tentés), ftm/fta (lancers francs), oreb/dreb, pf (fautes), pm (+/-). Avec ses moyennes.",
    inputSchema:{type:"object",properties:{nom:{type:"string",description:"Nom du joueur"}},required:["nom"]},
    execute(i){const q=String(i.nom||"").trim(),ix=index();let nom=ix.players[q]?q:null;
      if(!nom){const c=findPlayers(q);if(c.length===1)nom=c[0].nom;else if(c.length>1)return{ambigu:true,candidats:c.slice(0,15)};else throw new Error(`Aucun joueur « ${q} » dans la base.`)}
      chatStatus(`Claude consulte les stats de ${nom}…`);
      const rows=[];for(const m of getM())for(const p of m.joueurs||[]){if(p.nom!==nom)continue;const home=m.dom===p.equipe;
-       rows.push({nuit_nba:m.date,heure_paris:frWhen(m),equipe:p.equipe,adversaire:home?m.ext:m.dom,lieu:home?"domicile":"extérieur",repos_jours:restDays(p.equipe,m.date),score:scoreLine(m),min:p.min,pts:p.pts,reb:p.reb,ast:p.ast,tp3:p.tp,stl:p.stl,blk:p.blk,tov:p.tov})}
+       const{nom:_n,equipe:_e,...st}=p;
+       rows.push({nuit_nba:m.date,heure_paris:frWhen(m),equipe:p.equipe,adversaire:home?m.ext:m.dom,lieu:home?"domicile":"extérieur",repos_jours:restDays(p.equipe,m.date),score:scoreLine(m),...st})}
      rows.sort((a,b)=>a.nuit_nba.localeCompare(b.nuit_nba));
-     const avg=k=>r1(rows.reduce((s,r)=>s+(Number(r[k])||0),0)/rows.length);
-     return{nom,equipe:ix.players[nom].team,matchs_joues:rows.length,moyennes:Object.fromEntries(["min","pts","reb","ast","tp3","stl","blk","tov"].map(k=>[k,avg(k)])),matchs:rows.slice(-40)}}},
+     const avg=k=>{const v=rows.map(r=>r[k]).filter(x=>typeof x==="number");return v.length?r1(v.reduce((s,x)=>s+x,0)/v.length):null};
+     return{nom,equipe:ix.players[nom].team,matchs_joues:rows.length,moyennes:Object.fromEntries(["min","pts","reb","ast","tp","stl","blk","tov",...STAT_EXT].map(k=>[k,avg(k)])),matchs:rows.slice(-40)}}},
   {name:"stats_equipe",description:"Matchs d'une équipe dans la base : nuit NBA, heure de Paris, adversaire, lieu, repos, points marqués et encaissés par quart-temps et en prolongation, et ses moyennes (marqués, encaissés, total du match, 1re mi-temps).",
    inputSchema:{type:"object",properties:{equipe:{type:"string",description:"Sigle (PHI, NYK, ORL…)"}},required:["equipe"]},
    execute(i){const t=findTeam(i.equipe);if(!t)throw new Error(`Équipe inconnue : ${i.equipe}. Utilise un sigle comme PHI ou NYK.`);
@@ -787,8 +804,39 @@ const CLAUDE_TOOLS=[
    inputSchema:{type:"object",properties:{equipe:{type:"string",description:"Sigle (PHI, NYK…)"}}},
    execute(i){const t=i.equipe?findTeam(i.equipe):null;if(i.equipe&&!t)throw new Error(`Équipe inconnue : ${i.equipe}`);chatStatus("Claude parcourt les matchs…");
      const all=getM().filter(m=>!t||m.dom===t||m.ext===t).sort((a,b)=>(b.debut||b.date).localeCompare(a.debut||a.date));
-     return{nombre_total:all.length,matchs:all.slice(0,100).map(m=>({nuit_nba:m.date,heure_paris:frWhen(m),exterieur:m.ext,domicile:m.dom,quarts_exterieur:m.qtExt,quarts_domicile:m.qtDom,prolongation:(m.otDom||m.otExt)?{exterieur:m.otExt||0,domicile:m.otDom||0}:null,score:scoreLine(m)}))}}}
+     return{nombre_total:all.length,matchs:all.slice(0,100).map(m=>({nuit_nba:m.date,heure_paris:frWhen(m),exterieur:m.ext,domicile:m.dom,quarts_exterieur:m.qtExt,quarts_domicile:m.qtDom,prolongation:(m.otDom||m.otExt)?{exterieur:m.otExt||0,domicile:m.otDom||0}:null,score:scoreLine(m),cotes_draftkings:m.cotes||null}))}}},
+  {name:"details_match",description:"Détails d'un match, lus à la demande. partie : deroule (premiers points et premier panier du match et de chaque quart-temps, course aux X points, plus gros écart, plus longue série, changements de leader, temps en tête), joueurs_quarts (ligne de chaque joueur par quart-temps), avance (usage, TS%, ratings… des joueurs), equipes (totaux et par quart-temps, rythme, four factors, raquette, contre-attaque, points sur balles perdues), absents (absents, inactifs, blessures ESPN), cotes (DraftKings d'avant-match), infos (salle, affluence, durée, arbitres). Sans nuit : le dernier match de l'équipe.",
+   inputSchema:{type:"object",properties:{equipe:{type:"string",description:"Sigle (PHI, NYK…)"},nuit:{type:"string",description:"Nuit NBA AAAA-MM-JJ (facultatif)"},partie:{type:"string",enum:["deroule","joueurs_quarts","avance","equipes","absents","cotes","infos"]}},required:["equipe","partie"]},
+   async execute(i){const t=findTeam(i.equipe);if(!t)throw new Error(`Équipe inconnue : ${i.equipe}`);
+     const m=getM().filter(x=>(x.dom===t||x.ext===t)&&(!i.nuit||x.date===String(i.nuit))).sort((a,b)=>b.date.localeCompare(a.date))[0];
+     if(!m)throw new Error(`Aucun match de ${t}${i.nuit?" la nuit du "+i.nuit:""} dans la base.`);
+     chatStatus(`Claude lit les détails de ${m.ext} @ ${m.dom}…`);
+     const d=await readDetails(m.id);if(!d)throw new Error("Pas de détails pour ce match (match saisi à la main, ou détails pas encore récupérés).");
+     const head={match:m.id,score:scoreLine(m),heure_paris:frWhen(m)};
+     switch(i.partie){
+       case"deroule":return{...head,deroule:d.deroule||null};
+       case"joueurs_quarts":return{...head,colonnes:d.colonnes,joueurs:(d.joueurs||[]).map(j=>({nom:j.nom,equipe:j.equipe,periodes:j.periodes}))};
+       case"avance":return{...head,joueurs:(d.joueurs||[]).map(j=>({nom:j.nom,equipe:j.equipe,gmsc:j.gmsc,...j.avance}))};
+       case"equipes":return{...head,equipes:d.equipes};
+       case"absents":return{...head,absents:d.absents,blessures_espn:d.blessures_espn||[]};
+       case"cotes":return{...head,cotes:d.cotes||m.cotes||null};
+       default:return{...head,infos:d.infos}}}},
+  {name:"quarts_joueur",description:"Lignes d'un joueur quart-temps par quart-temps sur ses derniers matchs remplis automatiquement (colonnes dans « colonnes » : min, pts, reb, ast, stl, blk, tp, tov, fgm, fga, tpa, ftm, fta, oreb, dreb, pf, pm), avec ses stats avancées de chaque match. Utile pour les paris sur un quart-temps ou une mi-temps.",
+   inputSchema:{type:"object",properties:{nom:{type:"string"},derniers:{type:"number",description:"Nombre de matchs, 10 par défaut, 20 au plus"}},required:["nom"]},
+   async execute(i){const q=String(i.nom||"").trim(),ix=index();let nom=ix.players[q]?q:null;
+     if(!nom){const c=findPlayers(q);if(c.length===1)nom=c[0].nom;else if(c.length>1)return{ambigu:true,candidats:c.slice(0,15)};else throw new Error(`Aucun joueur « ${q} » dans la base.`)}
+     const n=Math.min(20,Math.max(1,Number(i.derniers)||10));
+     const ms=getM().filter(m=>(m.joueurs||[]).some(p=>p.nom===nom)).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,n);
+     chatStatus(`Claude lit les quarts-temps de ${nom}…`);
+     const ds=await Promise.all(ms.map(m=>readDetails(m.id)));let colonnes=null;
+     const out=ms.map((m,k)=>{const d=ds[k];const j=d&&(d.joueurs||[]).find(x=>x.nom===nom);if(d)colonnes=d.colonnes;const home=m.dom===(j?j.equipe:ix.players[nom].team);
+       return{nuit_nba:m.date,adversaire:home?m.ext:m.dom,lieu:home?"domicile":"extérieur",periodes:j?j.periodes:null,avance:j?j.avance:null}});
+     return{nom,colonnes,matchs:out}}}
 ];
+async function readDetails(id){
+  if(!S.db)throw new Error("Les détails ne sont lisibles que sur la page publiée sur claude.ai.");
+  const d=await S.db.collection("details").doc(id).get();return d.exists?d.data():null;
+}
 function claudeRules(){
   const ms=getM(),nuits=ms.map(m=>m.date).sort();
   const now=new Intl.DateTimeFormat("fr-FR",{timeZone:TZ_FR,weekday:"long",day:"numeric",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit"}).format(new Date());
@@ -797,6 +845,7 @@ function claudeRules(){
     `Nous sommes le ${now} (heure de Paris). L'utilisateur raisonne en heure de Paris : « cette nuit » ou « ce soir » désigne les matchs joués la nuit en France.`,
     ms.length?`La base contient ${ms.length} match${ms.length>1?"s":""}, des nuits NBA du ${dshort(nuits[0])} au ${dshort(nuits[nuits.length-1])}${S.demo?" (ATTENTION : la page est en mode exemple, ces données sont fictives)":""}. La nuit NBA est la date du match à New York ; c'est elle qui compte pour le repos et les back-to-back.`:"La base ne contient encore aucun match.",
     "Pour toute question sur des joueurs, des équipes ou des matchs, consulte la base avec tes outils et cite ses chiffres ; n'invente jamais un chiffre de la base. Pour l'équipe d'un joueur cette saison, la base fait foi sur tes connaissances.",
+    "Les matchs remplis automatiquement (Basketball-Reference, vérifié avec ESPN) ont en plus : tirs, lancers, rebonds offensifs et défensifs, fautes, +/-, titulaire, et la ligne DraftKings d'avant-match (ecartDom = handicap de l'équipe à domicile, total, cotes décimales). details_match et quarts_joueur lisent le reste : stats par quart-temps, stats avancées, déroulé (premier panier, course aux points, séries), absents, arbitres. Va chercher ces détails quand la question porte sur un quart-temps, une mi-temps, un premier panier, une série ou un absent.",
     "Tu n'as pas accès à internet ni à l'actualité : tu ignores les blessures, les absences, les transferts récents et le programme de ce soir, sauf ce que l'utilisateur te donne. Quand la question en dépend, dis-le en une phrase, donne ce que tu sais en précisant que c'est peut-être dépassé, et propose de coller le rapport officiel de blessures de la NBA dans la question.",
     "Pour une prévision (points d'un joueur, total d'un match…), appuie-toi sur la base : moyenne, médiane, derniers matchs, domicile ou extérieur, adversaire, repos, minutes. Donne une fourchette et une valeur centrale ; si l'utilisateur donne une ligne, indique combien de matchs de la base sont au-dessus et en dessous. Signale un échantillon petit. Jamais de certitude.",
     `Sigles des équipes : ${TEAMS.map(([a,n])=>a+" = "+n).join(", ")}.`,
@@ -864,10 +913,14 @@ async function putMatch(id,m){
   onData();
 }
 async function removeMatch(id){
-  if(S.db){await S.db.collection("matchs").doc(id).delete();return}
+  if(S.db){await S.db.collection("matchs").doc(id).delete();S.db.collection("details").doc(id).delete().catch(()=>{});return}
   const prev=S.matches;S.matches=prev.filter(x=>x.id!==id);
   if(!saveLocal()){S.matches=prev;throw{code:"local"}}
   onData();
+}
+async function moveDetails(from,to,m){
+  if(!S.db)return;
+  try{const d=await S.db.collection("details").doc(from).get();if(d.exists)await S.db.collection("details").doc(to).set(Object.assign({},d.data(),{date:m.date,dom:m.dom,ext:m.ext}))}catch(e){}
 }
 function validMatch(m){return m&&typeof m==="object"&&/^\d{4}-\d{2}-\d{2}$/.test(m.date||"")&&TEAM_NAME[m.dom]&&TEAM_NAME[m.ext]&&Array.isArray(m.qtDom)&&Array.isArray(m.qtExt)}
 async function exportMatches(){
