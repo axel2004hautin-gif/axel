@@ -3,163 +3,276 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Le site d'Axel</title>
+<title>Tableau de bord Axel</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:wght@400;600;700&display=swap">
 <style>
-/* Layout : un site d'une page. Barre collante (nom, trois rubriques) ; l'accueil présente les rubriques
-   en trois grands blocs numérotés dans l'ordre choisi ; chaque rubrique a sa couleur, reprise partout. */
+/* Layout : fond blanc, titre marine, bandeau marine des rubriques. La rubrique Travail tient dans
+   l'écran : semaine, planning (il prend toute la place qui reste), bilan. Un seul thème, clair. */
 :root {
-  --bg: #f2f4f7;
-  --surface: #ffffff;
-  --ink: #121826;
-  --muted: #586074;
-  --line: #d6dbe4;
-  --on-color: #ffffff;
-  --travail: #2b4c9b;
-  --travail-soft: #e3e9f7;
+  color-scheme: light;
+  --fond: #ffffff;
+  --marine: #172a55;
+  --marine-2: #253d73;
+  --marine-doux: #edf0f7;
+  --encre: #172033;
+  --gris: #5b6478;
+  --trait: #dce1ea;
+  --sur-marine: #ffffff;
+  --sur-marine-2: #c9d2e6;
+  --repos: #94560a;
+  --repos-doux: #fcf1dc;
+  --repos-raie: #f6e2bb;
+  --erreur: #b3261e;
+  --erreur-doux: #fbe6e4;
   --argent: #1d6b52;
-  --argent-soft: #dcefe6;
+  --argent-doux: #dcefe6;
   --sport: #b5421a;
-  --sport-soft: #f8e3d8;
-  --c: var(--ink);
-  --c-soft: var(--surface);
+  --sport-doux: #f8e3d8;
+  --c: var(--marine);
+  --c-doux: var(--marine-doux);
   --f-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
   --f-body: "Source Sans 3", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-  --radius: 12px;
-  --max: 1120px;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #0f131b; --surface: #171c27; --ink: #e8ebf2; --muted: #9aa3b6; --line: #2a3243; --on-color: #0f131b;
-    --travail: #93abef; --travail-soft: #1d2744; --argent: #6fcfa6; --argent-soft: #132b22; --sport: #f0905f; --sport-soft: #351f15;
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #0f131b; --surface: #171c27; --ink: #e8ebf2; --muted: #9aa3b6; --line: #2a3243; --on-color: #0f131b;
-  --travail: #93abef; --travail-soft: #1d2744; --argent: #6fcfa6; --argent-soft: #132b22; --sport: #f0905f; --sport-soft: #351f15;
-  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-body { margin: 0; background: var(--bg); color: var(--ink); font: 400 1.0625rem/1.55 var(--f-body); -webkit-font-smoothing: antialiased; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--fond); color: var(--encre); font: 400 1.0625rem/1.5 var(--f-body); -webkit-font-smoothing: antialiased; }
 h1, h2, h3 { margin: 0; text-wrap: balance; }
 p { margin: 0; }
 a { color: inherit; }
-:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; border-radius: 4px; }
+button, select, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--marine); outline-offset: 2px; }
 h1:focus { outline: none; }
+.invisible { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
-.r-travail { --c: var(--travail); --c-soft: var(--travail-soft); }
-.r-argent { --c: var(--argent); --c-soft: var(--argent-soft); }
-.r-sport { --c: var(--sport); --c-soft: var(--sport-soft); }
+.r-travail { --c: var(--marine); --c-doux: var(--marine-doux); }
+.r-argent { --c: var(--argent); --c-doux: var(--argent-doux); }
+.r-sport { --c: var(--sport); --c-doux: var(--sport-doux); }
 
-.cadre { width: 100%; max-width: var(--max); margin-inline: auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.cadre { width: 100%; max-width: 1320px; margin-inline: auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 @media (min-width: 720px) { .cadre { padding-left: max(32px, env(safe-area-inset-left, 0px)); padding-right: max(32px, env(safe-area-inset-right, 0px)); } }
 
-.eyebrow { font: 500 .75rem/1.3 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.eyebrow { font: 500 .75rem/1.3 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--gris); }
 
-/* Barre du haut : le nom ramène à l'accueil, puis les trois rubriques */
-body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--bg); }
-.entete { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); }
-.entete .cadre { display: flex; align-items: stretch; justify-content: space-between; gap: 16px; min-height: 60px; }
-.nom { align-self: center; font-family: var(--f-display); font-weight: 800; font-stretch: 120%; font-size: 1.35rem; line-height: 1; letter-spacing: -.01em; text-decoration: none; }
-.nav { display: flex; gap: 2px; }
-.nav a { position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; color: var(--muted); text-decoration: none; font: 600 1rem/1 var(--f-body); }
-.nav a:hover, .nav a[aria-current="page"] { color: var(--ink); }
-.nav a[aria-current="page"]::after { content: ""; position: absolute; left: 8px; right: 8px; bottom: -1px; height: 3px; border-radius: 3px 3px 0 0; background: var(--c); }
-.pastille { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
-@media (max-width: 440px) { .nav a { padding: 0 8px; } .pastille { display: none; } }
+/* Cadre de page : tout l'écran, la vue ouverte prend la hauteur qui reste */
+.app { display: flex; flex-direction: column; min-height: 100%; }
+main { flex: 1 0 auto; display: flex; flex-direction: column; }
+[data-vue] { flex: 1 0 auto; }
+
+/* En-tête : le titre, puis le bandeau marine des rubriques */
+.titre-ligne { padding-block: clamp(12px, 2.4vh, 22px) clamp(10px, 1.8vh, 16px); }
+.titre-site { display: inline-block; font-family: var(--f-display); font-weight: 800; font-stretch: 112%; font-size: clamp(1.55rem, min(4.2vw, 5.2vh), 2.75rem); line-height: 1.05; letter-spacing: -.015em; color: var(--marine); text-decoration: none; }
+.bande { background: var(--marine); }
+.bande-dedans { display: flex; gap: 4px; }
+.bande a { position: relative; padding: clamp(11px, 1.8vh, 15px) 24px; color: var(--sur-marine-2); font: 600 1.05rem/1 var(--f-body); text-decoration: none; }
+.bande a:hover { color: var(--sur-marine); }
+.bande a[aria-current="page"] { background: var(--marine-2); color: var(--sur-marine); }
+.bande a[aria-current="page"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: var(--sur-marine); }
+.bande a:focus-visible { outline-color: var(--sur-marine); outline-offset: -4px; }
+@media (max-width: 599px) { .bande-dedans { gap: 0; } .bande a { flex: 1; padding-inline: 8px; text-align: center; } }
 
 /* Accueil */
-.une { display: grid; gap: 14px; padding-block: 48px 36px; }
-.geant { font-family: var(--f-display); font-weight: 850; font-stretch: 125%; font-size: clamp(3.75rem, 15vw, 8rem); line-height: .88; letter-spacing: -.035em; }
-.chapo { max-width: 34em; font-size: 1.2rem; line-height: 1.45; color: var(--muted); }
-.chapo b { color: var(--c); font-weight: 700; }
-
-.rubriques { list-style: none; margin: 0; padding: 0 0 56px; display: grid; gap: 16px; }
+.accueil { display: grid; gap: 20px; padding-block: 28px 56px; }
+.accueil-tete { display: grid; gap: 6px; }
+.accueil-tete h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(1.5rem, 3.4vw, 2rem); line-height: 1.1; }
+.rubriques { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
 @media (min-width: 820px) { .rubriques { grid-template-columns: repeat(3, 1fr); } }
-.carte-rubrique { display: flex; flex-direction: column; gap: 10px; height: 100%; padding: 22px 22px 18px; border: 1.5px solid transparent; border-radius: var(--radius); background: var(--c-soft); text-decoration: none; transition: border-color .15s ease; }
+.carte-rubrique { display: flex; flex-direction: column; gap: 10px; height: 100%; padding: 22px 22px 18px; border: 1.5px solid transparent; border-radius: 12px; background: var(--c-doux); text-decoration: none; transition: border-color .15s ease; }
 .carte-rubrique:hover { border-color: var(--c); }
 .numero { font-family: var(--f-display); font-weight: 800; font-stretch: 62%; font-size: 3.5rem; line-height: .85; color: var(--c); font-variant-numeric: tabular-nums; }
 .carte-titre { font-family: var(--f-display); font-weight: 800; font-stretch: 112%; font-size: 2rem; line-height: 1; letter-spacing: -.01em; }
-.carte-texte { color: var(--muted); }
-.carte-pied { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: auto; padding-top: 14px; border-top: 1px solid var(--line); border-top-color: color-mix(in srgb, var(--c) 28%, transparent); font: 500 .8rem/1.3 var(--f-mono); color: var(--muted); }
+.carte-texte { color: var(--gris); }
+.carte-pied { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: auto; padding-top: 14px; border-top: 1px solid var(--trait); border-top-color: color-mix(in srgb, var(--c) 28%, transparent); font: 500 .8rem/1.3 var(--f-mono); color: var(--gris); }
 .fleche { color: var(--c); font-weight: 600; white-space: nowrap; }
-@media (min-width: 820px) { .carte-rubrique { min-height: 260px; padding: 26px 26px 20px; } .numero { font-size: 4.5rem; } }
+@media (min-width: 820px) { .carte-rubrique { min-height: 240px; padding: 26px 26px 20px; } .numero { font-size: 4.5rem; } }
 @media (prefers-reduced-motion: no-preference) {
   .fleche { display: inline-block; transition: transform .15s ease; }
   .carte-rubrique:hover .fleche { transform: translateX(3px); }
 }
 
-/* Une rubrique : bandeau à sa couleur, puis ce qu'elle contiendra */
-.bandeau { background: var(--c-soft); border-bottom: 1px solid var(--line); }
-.bandeau .cadre { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 0 24px; padding-block: 40px 32px; }
-.bandeau-texte { display: grid; gap: 10px; min-width: 0; }
-.bandeau h1 { font-family: var(--f-display); font-weight: 850; font-stretch: 125%; font-size: clamp(2.75rem, 11vw, 5.5rem); line-height: .9; letter-spacing: -.03em; color: var(--c); }
-.bandeau .chapo { color: var(--ink); }
-.numero-fond { font-family: var(--f-display); font-weight: 800; font-stretch: 62%; font-size: clamp(5rem, 20vw, 10rem); line-height: .78; color: var(--c); opacity: .22; font-variant-numeric: tabular-nums; }
+/* Travail : semaine, planning, bilan, sans faire défiler */
+.vue-travail { display: flex; flex-direction: column; }
+.travail { flex: 1 1 auto; display: flex; flex-direction: column; gap: clamp(8px, 1.8vh, 18px); padding-block: clamp(8px, 2vh, 22px); }
 
-.contenu { display: grid; gap: 24px; padding-block: 40px 56px; }
+.semaine-nav { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+.fleche-semaine { display: grid; place-items: center; width: clamp(44px, 6.4vh, 58px); height: clamp(44px, 6.4vh, 58px); padding: 0; border: 1.5px solid var(--trait); border-radius: 50%; background: var(--fond); color: var(--marine); }
+.fleche-semaine:hover { border-color: var(--marine); background: var(--marine-doux); }
+.picto { fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.semaine-titre { justify-self: center; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 0 14px; max-width: 100%; padding: 6px 14px; border: 0; border-radius: 10px; background: none; text-align: center; }
+.semaine-titre:hover { background: var(--marine-doux); }
+.semaine-num { font-family: var(--f-display); font-weight: 800; font-stretch: 108%; font-size: clamp(1.45rem, min(3.2vw, 4.8vh), 2.5rem); line-height: 1.1; color: var(--marine); }
+.semaine-dates { font-weight: 600; font-size: clamp(1.05rem, min(2.1vw, 3.2vh), 1.65rem); line-height: 1.25; color: var(--encre); }
+.semaine-plus { display: inline-flex; align-items: center; gap: 8px; align-self: center; }
+.semaine-plus .picto { stroke-width: 1.8; color: var(--gris); }
+.puce-actuelle { padding: 5px 8px; border-radius: 999px; background: var(--marine-doux); color: var(--marine); font: 600 .7rem/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; }
+
+.planning { flex: 1 1 auto; display: grid; gap: 6px; --taille-heure: clamp(1.15rem, min(2.3vw, 4.2vh), 2.4rem); }
+.planning.large { grid-template-columns: auto repeat(6, minmax(0, 1fr)); grid-template-rows: auto minmax(84px, 1fr) minmax(84px, 1fr); }
+.planning.etroit { grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto repeat(6, minmax(42px, 1fr)); --taille-heure: clamp(.95rem, min(4.2vw, 3.1vh), 1.5rem); gap: 5px; }
+.periode { display: flex; align-items: center; justify-content: center; padding: 4px 8px; font: 600 .75rem/1.2 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--gris); }
+.large .periode { justify-content: flex-start; padding-left: 0; }
+.jour { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 8px 6px; border-radius: 8px; text-align: center; }
+.jour-nom { font-family: var(--f-display); font-weight: 750; font-size: clamp(1rem, min(1.6vw, 2.6vh), 1.4rem); line-height: 1.1; color: var(--marine); }
+.jour-date, .jour-total { font: 500 .78rem/1.25 var(--f-mono); color: var(--gris); font-variant-numeric: tabular-nums; }
+.jour-total { font-weight: 600; color: var(--encre); }
+.etroit .jour { min-width: 60px; padding: 4px; }
+.etroit .jour-nom { font-size: clamp(.95rem, 4.2vw, 1.1rem); white-space: nowrap; }
+.etroit .periode { padding-block: 0; }
+.jour.aujourdhui { background: var(--marine); }
+.jour.aujourdhui .jour-nom, .jour.aujourdhui .jour-date, .jour.aujourdhui .jour-total { color: var(--sur-marine); }
+.case { display: flex; flex-wrap: wrap; align-items: center; align-content: center; justify-content: center; gap: 0 .3em; min-width: 0; padding: 6px; border: 1.5px solid transparent; border-radius: 8px; background: var(--marine-doux); color: var(--encre); font-family: var(--f-display); font-weight: 700; font-size: var(--taille-heure); line-height: 1.15; font-variant-numeric: tabular-nums; text-align: center; }
+.case .tiret { color: var(--gris); font-weight: 500; }
+.case.vide { border-style: dashed; border-color: var(--trait); background: var(--fond); color: var(--gris); font-weight: 500; }
+.case.repos { background: repeating-linear-gradient(135deg, var(--repos-doux) 0 10px, var(--repos-raie) 10px 20px); color: var(--repos); font-size: calc(var(--taille-heure) * .72); letter-spacing: .06em; text-transform: uppercase; }
+.case.aujourdhui { border-color: var(--marine); }
+
+.bilan { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; align-items: center; gap: 12px 24px; padding: clamp(10px, 1.8vh, 18px) clamp(14px, 2vw, 24px); border: 1.5px solid var(--trait); border-radius: 12px; }
+.chiffre { display: grid; gap: 2px; min-width: 0; }
+.etiquette { font: 600 .74rem/1.2 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--gris); }
+.valeur { font-family: var(--f-display); font-weight: 800; font-size: clamp(1.35rem, min(3vw, 4.6vh), 2.5rem); line-height: 1.05; color: var(--marine); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.valeur.repos { color: var(--repos); }
+.bilan-vide { grid-column: 1 / 3; color: var(--gris); font-size: 1.1rem; }
+.note-lecture { grid-column: 1 / -1; color: var(--gris); font-size: .95rem; }
+.bouton-principal { min-height: 48px; padding: 12px 22px; border: 0; border-radius: 10px; background: var(--marine); color: var(--sur-marine); font-weight: 700; font-size: 1.05rem; line-height: 1.1; }
+.bouton-principal:hover { background: var(--marine-2); }
+.bouton-principal:disabled { opacity: .5; cursor: default; }
+.bouton-second { min-height: 44px; padding: 10px 18px; border: 1.5px solid var(--trait); border-radius: 10px; background: var(--fond); color: var(--encre); font-weight: 600; }
+.bouton-second:hover { border-color: var(--marine); }
+@media (max-width: 599px) {
+  .bilan { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px 16px; padding: 10px 14px 12px; }
+  .bilan .valeur { font-size: 1.4rem; }
+  .bilan .bouton-principal { grid-column: 1 / -1; min-height: 44px; }
+  .bilan-vide { grid-column: 1 / -1; }
+}
+/* Téléphone : « Semaine 43 » et le choix sur une ligne, les dates en dessous */
+@media (max-width: 699px) {
+  .semaine-titre { padding: 4px 6px; }
+  .semaine-plus { order: 1; }
+  .puce-actuelle { display: none; }
+  .semaine-dates { order: 2; flex-basis: 100%; }
+}
+/* Petit écran : l'en-tête se resserre pour laisser la place au planning */
+@media (max-width: 699px) and (max-height: 660px) {
+  .titre-ligne { padding-block: 8px 6px; }
+  .titre-site { font-size: 1.4rem; }
+  .bande a { padding-block: 9px; }
+  .planning.etroit { grid-template-rows: auto repeat(6, minmax(36px, 1fr)); --taille-heure: 1rem; }
+  .bilan .valeur { font-size: 1.2rem; }
+  .bilan .bouton-principal { min-height: 40px; }
+}
+
+/* Fenêtres : modifier le planning, choisir une semaine */
+.fenetre { width: min(660px, calc(100vw - 24px)); max-width: none; max-height: min(90vh, 900px); padding: 0; border: 0; border-radius: 14px; background: var(--fond); color: var(--encre); box-shadow: 0 24px 64px rgba(15, 25, 50, .32); }
+.fenetre[open] { display: flex; flex-direction: column; }
+.fenetre::backdrop { background: rgba(15, 25, 50, .45); }
+.fenetre-petite { width: min(560px, calc(100vw - 24px)); }
+.fenetre-tete { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 18px 20px 12px; border-bottom: 1px solid var(--trait); }
+.fenetre-tete h2 { font-family: var(--f-display); font-weight: 800; font-size: 1.35rem; line-height: 1.15; color: var(--marine); }
+.fenetre-sous { margin-top: 2px; color: var(--gris); }
+.fermer { display: grid; place-items: center; flex: none; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--gris); font-size: 1.6rem; line-height: 1; }
+.fermer:hover { background: var(--marine-doux); color: var(--encre); }
+.fenetre-corps { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 0 20px 16px; }
+.fenetre-pied { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 10px; padding: 12px 20px 16px; border-top: 1px solid var(--trait); }
+.fenetre-erreur { flex: 1 1 100%; padding: 8px 12px; border-radius: 8px; background: var(--erreur-doux); color: var(--erreur); font-weight: 600; }
+
+.saisie { width: 100%; border-collapse: collapse; }
+.saisie thead th { position: sticky; top: 0; z-index: 1; padding: 12px 6px 6px; background: var(--fond); font: 600 .72rem/1.2 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--gris); text-align: left; }
+.saisie .tete-jour { padding: 16px 0 6px; }
+.jour-tete { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--trait); }
+.jour-titre { font-family: var(--f-display); font-weight: 750; font-size: 1.1rem; line-height: 1.2; color: var(--marine); }
+.saisie th[scope="row"] { width: 1%; padding: 6px 10px 6px 0; font-weight: 600; font-size: .95rem; text-align: left; white-space: nowrap; vertical-align: top; line-height: 42px; }
+.saisie td { padding: 6px; vertical-align: top; }
+.champ { display: grid; gap: 6px; }
+.champ select, .champ input { width: 100%; min-height: 42px; padding: 8px 10px; border: 1.5px solid var(--trait); border-radius: 8px; background: var(--fond); color: var(--encre); font-weight: 600; font-size: 1rem; }
+.champ select:hover, .champ input:hover { border-color: var(--gris); }
+.champ .en-erreur { border-color: var(--erreur); background: var(--erreur-doux); }
+.repos-texte { display: none; }
+.en-repos .champ { display: none; }
+.en-repos .repos-texte { display: flex; align-items: center; justify-content: center; min-height: 42px; border-radius: 8px; background: repeating-linear-gradient(135deg, var(--repos-doux) 0 8px, var(--repos-raie) 8px 16px); color: var(--repos); font: 600 .8rem/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; }
+.repos-choix { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 10px; border: 1.5px solid var(--trait); border-radius: 999px; color: var(--gris); font-weight: 600; font-size: .95rem; cursor: pointer; }
+.repos-choix input { width: 18px; height: 18px; margin: 0; accent-color: var(--repos); }
+.en-repos .repos-choix { border-color: var(--repos); background: var(--repos-doux); color: var(--repos); }
+@media (max-width: 479px) {
+  .fenetre-tete, .fenetre-pied { padding-inline: 14px; }
+  .fenetre-corps { padding-inline: 14px; }
+  .saisie td { padding: 5px 3px; }
+  .champ select, .champ input { padding-inline: 6px; font-size: .95rem; }
+}
+
+.annee-nav { display: flex; justify-content: center; align-items: center; gap: 16px; padding: 14px 0 12px; }
+.annee-nav button { display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 1.5px solid var(--trait); border-radius: 50%; background: var(--fond); color: var(--marine); }
+.annee-nav button:hover { border-color: var(--marine); }
+.annee { min-width: 4ch; font-family: var(--f-display); font-weight: 800; font-size: 1.4rem; color: var(--marine); text-align: center; font-variant-numeric: tabular-nums; }
+.grille-semaines { display: grid; grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); gap: 6px; }
+.sem { position: relative; display: grid; justify-items: center; gap: 3px; padding: 8px 2px 7px; border: 1.5px solid var(--trait); border-radius: 8px; background: var(--fond); color: var(--encre); }
+.sem:hover { border-color: var(--marine); background: var(--marine-doux); }
+.sem-num { font-family: var(--f-display); font-weight: 750; font-size: 1.15rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.sem-date { font: 500 .68rem/1 var(--f-mono); color: var(--gris); }
+.sem.actuelle { border-color: var(--marine); border-width: 2px; }
+.sem.remplie::after { content: ""; position: absolute; top: 5px; right: 5px; width: 6px; height: 6px; border-radius: 50%; background: var(--marine); }
+.sem[aria-current="true"] { border-color: var(--marine); background: var(--marine); color: var(--sur-marine); }
+.sem[aria-current="true"] .sem-date { color: var(--sur-marine-2); }
+.sem[aria-current="true"].remplie::after { background: var(--sur-marine); }
+.legende { display: flex; flex-wrap: wrap; gap: 4px 16px; padding-top: 12px; color: var(--gris); font-size: .9rem; }
+.legende .point { display: inline-block; width: 6px; height: 6px; margin-right: 6px; border-radius: 50%; background: var(--marine); vertical-align: middle; }
+.legende .cadre-actuel { display: inline-block; width: 12px; height: 12px; margin-right: 6px; border: 2px solid var(--marine); border-radius: 3px; vertical-align: -1px; }
+
+/* Argent et Sport : rubriques encore à construire */
+.rubrique { display: grid; gap: 24px; padding-block: 32px 56px; }
+.rubrique-tete { display: grid; gap: 8px; }
+.rubrique-tete h1 { font-family: var(--f-display); font-weight: 850; font-stretch: 120%; font-size: clamp(2.25rem, 7vw, 3.75rem); line-height: .95; letter-spacing: -.02em; color: var(--c); }
+.chapo { max-width: 34em; font-size: 1.15rem; line-height: 1.45; color: var(--gris); }
 .section-tete { display: grid; gap: 4px; }
-.section-tete h2 { font-family: var(--f-display); font-weight: 750; font-stretch: 105%; font-size: 1.5rem; line-height: 1.15; }
-.section-tete p { color: var(--muted); }
-
+.section-tete h2 { font-family: var(--f-display); font-weight: 750; font-size: 1.4rem; line-height: 1.15; }
+.section-tete p { color: var(--gris); }
 .emplacements { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
 @media (min-width: 560px) { .emplacements { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (min-width: 1000px) { .emplacements { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-.emplacement { display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 20px; border: 1.5px dashed var(--line); border-radius: 8px; }
+.emplacement { display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 20px; border: 1.5px dashed var(--trait); border-radius: 8px; }
 .emplacement h3 { font-family: var(--f-display); font-weight: 700; font-size: 1.2rem; line-height: 1.2; }
-.emplacement p { color: var(--muted); font-size: 1rem; }
+.emplacement p { color: var(--gris); font-size: 1rem; }
 .statut { align-self: flex-start; padding: 4px 8px; border: 1px dashed var(--c); border-radius: 999px; font: 600 .7rem/1.2 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--c); }
-.emplacement.pret { border-style: solid; border-color: var(--c); background: var(--surface); }
-.pret .statut { border-style: solid; background: var(--c); color: var(--on-color); }
-.a-relier { margin-top: auto; padding-top: 6px; font: 500 .8rem/1.3 var(--f-mono); color: var(--muted); }
 
-.suite { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
-.suite a { display: grid; gap: 2px; align-content: start; padding-block: 8px; text-decoration: none; }
-.suite a + a { text-align: right; }
-.suite strong { font-family: var(--f-display); font-weight: 750; font-stretch: 110%; font-size: 1.25rem; line-height: 1.2; color: var(--c); }
-.suite a:hover strong { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 2px; }
-
-.pied { border-top: 1px solid var(--line); }
-.pied .cadre { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 24px; padding-block: 20px 28px; color: var(--muted); font-size: .95rem; }
-.pied .mono { font: 500 .8rem/1.5 var(--f-mono); }
-.insecable { white-space: nowrap; }
+.toast { position: fixed; left: 50%; top: calc(12px + env(safe-area-inset-top, 0px)); z-index: 50; max-width: calc(100% - 32px); padding: 12px 18px; border-radius: 10px; background: var(--encre); color: var(--sur-marine); font-weight: 600; box-shadow: 0 10px 30px rgba(15, 25, 50, .25); transform: translateX(-50%); }
+.toast.erreur { background: var(--erreur); }
 </style>
 </head>
 <body>
+<div class="app">
 
-<header class="entete">
-  <div class="cadre">
-    <a class="nom" href="#accueil" data-aller="accueil">Axel</a>
-    <nav class="nav" aria-label="Rubriques">
-      <a class="r-travail" href="#travail" data-aller="travail"><span class="pastille" aria-hidden="true"></span>Travail</a>
-      <a class="r-argent" href="#argent" data-aller="argent"><span class="pastille" aria-hidden="true"></span>Argent</a>
-      <a class="r-sport" href="#sport" data-aller="sport"><span class="pastille" aria-hidden="true"></span>Sport</a>
-    </nav>
+<header>
+  <div class="cadre titre-ligne">
+    <a class="titre-site" href="#accueil" data-aller="accueil">Tableau de bord Axel</a>
   </div>
+  <nav class="bande" aria-label="Rubriques">
+    <div class="cadre bande-dedans">
+      <a href="#travail" data-aller="travail">Travail</a>
+      <a href="#argent" data-aller="argent">Argent</a>
+      <a href="#sport" data-aller="sport">Sport</a>
+    </div>
+  </nav>
 </header>
 
 <main>
   <section data-vue="accueil" aria-labelledby="titre-accueil">
-    <div class="cadre">
-      <div class="une">
+    <div class="cadre accueil">
+      <div class="accueil-tete">
         <p class="eyebrow" id="aujourdhui">Aujourd'hui</p>
-        <h1 class="geant" id="titre-accueil" tabindex="-1">Axel</h1>
-        <p class="chapo">Mon site perso. Pour l'instant, trois rubriques : le <b class="r-travail">travail</b>, l'<b class="r-argent">argent</b> et le <b class="r-sport">sport</b>.</p>
+        <h1 id="titre-accueil" tabindex="-1">Mes rubriques</h1>
       </div>
       <ol class="rubriques">
         <li class="r-travail">
           <a class="carte-rubrique" href="#travail">
             <span class="numero" aria-hidden="true">1</span>
             <span class="carte-titre">Travail</span>
-            <span class="carte-texte">Mon boulot chez Blue Box, et la <span class="insecable">garde-robe</span> qui va avec.</span>
-            <span class="carte-pied"><span>1 outil prêt · 3 idées</span><span class="fleche">Ouvrir →</span></span>
+            <span class="carte-texte">Mon planning de la semaine, mes heures et mon jour de repos.</span>
+            <span class="carte-pied"><span id="resume-travail">Planning de la semaine</span><span class="fleche">Ouvrir →</span></span>
           </a>
         </li>
         <li class="r-argent">
@@ -182,155 +295,137 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     </div>
   </section>
 
-  <section class="r-travail" data-vue="travail" aria-labelledby="titre-travail" hidden>
-    <div class="bandeau">
-      <div class="cadre">
-        <div class="bandeau-texte">
-          <p class="eyebrow">Rubrique 1 sur 3</p>
-          <h1 id="titre-travail" tabindex="-1">Travail</h1>
-          <p class="chapo">Tout ce qui touche à mon boulot chez Blue Box.</p>
+  <section class="vue-travail r-travail" data-vue="travail" aria-labelledby="titre-travail" hidden>
+    <h1 class="invisible" id="titre-travail" tabindex="-1">Travail : mon planning</h1>
+    <div class="cadre travail">
+      <div class="semaine-nav">
+        <button class="fleche-semaine" id="semaine-prec" type="button" aria-label="Semaine précédente">
+          <svg class="picto" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6l-6 6 6 6M18 6l-6 6 6 6"/></svg>
+        </button>
+        <button class="semaine-titre" id="ouvrir-semaines" type="button" aria-haspopup="dialog">
+          <span class="invisible">Choisir une semaine. Affichée :</span>
+          <span class="semaine-num" id="semaine-num">Semaine</span>
+          <span class="semaine-dates" id="semaine-dates"></span>
+          <span class="semaine-plus">
+            <span class="puce-actuelle" id="puce-actuelle" hidden>Cette semaine</span>
+            <svg class="picto" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>
+          </span>
+        </button>
+        <button class="fleche-semaine" id="semaine-suiv" type="button" aria-label="Semaine suivante">
+          <svg class="picto" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6l6 6-6 6M6 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+
+      <div class="planning large" id="planning" aria-label="Planning de la semaine"></div>
+
+      <div class="bilan">
+        <div class="chiffre" id="bilan-heures-bloc">
+          <span class="etiquette">Heures travaillées</span>
+          <span class="valeur" id="bilan-heures">—</span>
         </div>
-        <span class="numero-fond" aria-hidden="true">1</span>
+        <div class="chiffre" id="bilan-repos-bloc">
+          <span class="etiquette">Jour de repos</span>
+          <span class="valeur repos" id="bilan-repos">—</span>
+        </div>
+        <p class="bilan-vide" id="bilan-vide" hidden>Pas encore de planning pour cette semaine.</p>
+        <button class="bouton-principal" id="ouvrir-modif" type="button" disabled>Modifier le planning</button>
+        <p class="note-lecture" id="note-lecture" hidden>Seul le propriétaire du tableau peut modifier le planning.</p>
       </div>
-    </div>
-    <div class="cadre contenu">
-      <div class="section-tete">
-        <h2>À construire</h2>
-        <p>Des pistes pour démarrer. Rien n'est décidé : on garde, on change ou on enlève.</p>
-      </div>
-      <ul class="emplacements">
-        <li class="emplacement pret">
-          <span class="statut">Déjà prête</span>
-          <h3>Ma <span class="insecable">garde-robe</span> Blue Box</h3>
-          <p>Mes 16 pièces du magasin, la tenue du jour et celles de la semaine.</p>
-          <span class="a-relier">Lien à ajouter</span>
-        </li>
-        <li class="emplacement">
-          <span class="statut">Idée</span>
-          <h3>Mon planning</h3>
-          <p>Mes jours et mes horaires de service, semaine par semaine.</p>
-        </li>
-        <li class="emplacement">
-          <span class="statut">Idée</span>
-          <h3>Mes objectifs</h3>
-          <p>Ce que je vise au magasin : ventes, primes, ce que je veux apprendre.</p>
-        </li>
-        <li class="emplacement">
-          <span class="statut">Idée</span>
-          <h3>Mes notes du magasin</h3>
-          <p>Ce qui s'est passé pendant le service et les idées à proposer.</p>
-        </li>
-      </ul>
-      <nav class="suite" aria-label="Autres pages">
-        <a href="#accueil"><span class="eyebrow">Retour</span><strong>← Accueil</strong></a>
-        <a class="r-argent" href="#argent"><span class="eyebrow">Rubrique suivante</span><strong>Argent →</strong></a>
-      </nav>
     </div>
   </section>
 
   <section class="r-argent" data-vue="argent" aria-labelledby="titre-argent" hidden>
-    <div class="bandeau">
-      <div class="cadre">
-        <div class="bandeau-texte">
-          <p class="eyebrow">Rubrique 2 sur 3</p>
-          <h1 id="titre-argent" tabindex="-1">Argent</h1>
-          <p class="chapo">Mon budget, mes dépenses et mon épargne, au même endroit.</p>
-        </div>
-        <span class="numero-fond" aria-hidden="true">2</span>
+    <div class="cadre rubrique">
+      <div class="rubrique-tete">
+        <p class="eyebrow">Rubrique 2 sur 3</p>
+        <h1 id="titre-argent" tabindex="-1">Argent</h1>
+        <p class="chapo">Mon budget, mes dépenses et mon épargne, au même endroit.</p>
       </div>
-    </div>
-    <div class="cadre contenu">
       <div class="section-tete">
         <h2>À construire</h2>
         <p>Des pistes pour démarrer. Rien n'est décidé : on garde, on change ou on enlève.</p>
       </div>
       <ul class="emplacements">
-        <li class="emplacement">
-          <span class="statut">Idée</span>
-          <h3>Mon budget du mois</h3>
-          <p>Le salaire qui rentre, les charges qui sortent et ce qu'il reste à dépenser.</p>
-        </li>
-        <li class="emplacement">
-          <span class="statut">Idée</span>
-          <h3>Mes dépenses</h3>
-          <p>Notées au fil de l'eau et rangées par catégorie.</p>
-        </li>
-        <li class="emplacement">
-          <span class="statut">Idée</span>
-          <h3>Mon épargne</h3>
-          <p>Mes objectifs d'épargne et où j'en suis pour chacun.</p>
-        </li>
-        <li class="emplacement">
-          <span class="statut">Idée</span>
-          <h3>Mes achats prévus</h3>
-          <p>Ce que je veux m'offrir, avec son prix et la date visée.</p>
-        </li>
+        <li class="emplacement"><span class="statut">Idée</span><h3>Mon budget du mois</h3><p>Le salaire qui rentre, les charges qui sortent et ce qu'il reste à dépenser.</p></li>
+        <li class="emplacement"><span class="statut">Idée</span><h3>Mes dépenses</h3><p>Notées au fil de l'eau et rangées par catégorie.</p></li>
+        <li class="emplacement"><span class="statut">Idée</span><h3>Mon épargne</h3><p>Mes objectifs d'épargne et où j'en suis pour chacun.</p></li>
+        <li class="emplacement"><span class="statut">Idée</span><h3>Mes achats prévus</h3><p>Ce que je veux m'offrir, avec son prix et la date visée.</p></li>
       </ul>
-      <nav class="suite" aria-label="Autres pages">
-        <a class="r-travail" href="#travail"><span class="eyebrow">Rubrique précédente</span><strong>← Travail</strong></a>
-        <a class="r-sport" href="#sport"><span class="eyebrow">Rubrique suivante</span><strong>Sport →</strong></a>
-      </nav>
     </div>
   </section>
 
   <section class="r-sport" data-vue="sport" aria-labelledby="titre-sport" hidden>
-    <div class="bandeau">
-      <div class="cadre">
-        <div class="bandeau-texte">
-          <p class="eyebrow">Rubrique 3 sur 3</p>
-          <h1 id="titre-sport" tabindex="-1">Sport</h1>
-          <p class="chapo">Mes entraînements, du programme aux résultats.</p>
-        </div>
-        <span class="numero-fond" aria-hidden="true">3</span>
+    <div class="cadre rubrique">
+      <div class="rubrique-tete">
+        <p class="eyebrow">Rubrique 3 sur 3</p>
+        <h1 id="titre-sport" tabindex="-1">Sport</h1>
+        <p class="chapo">Mes entraînements, du programme aux résultats.</p>
       </div>
-    </div>
-    <div class="cadre contenu">
       <div class="section-tete">
         <h2>À construire</h2>
         <p>Des pistes pour démarrer. Rien n'est décidé : on garde, on change ou on enlève.</p>
       </div>
       <ul class="emplacements">
-        <li class="emplacement">
-          <span class="statut">Idée</span>
-          <h3>Mes séances</h3>
-          <p>Ce que j'ai fait, quand et combien de temps.</p>
-        </li>
-        <li class="emplacement">
-          <span class="statut">Idée</span>
-          <h3>Mon programme</h3>
-          <p>Les séances prévues dans la semaine.</p>
-        </li>
-        <li class="emplacement">
-          <span class="statut">Idée</span>
-          <h3>Mes progrès</h3>
-          <p>Mes charges, mes temps et mes distances, pour voir l'évolution.</p>
-        </li>
-        <li class="emplacement">
-          <span class="statut">Idée</span>
-          <h3>Ma forme</h3>
-          <p>Poids, sommeil et énergie, d'une semaine à l'autre.</p>
-        </li>
+        <li class="emplacement"><span class="statut">Idée</span><h3>Mes séances</h3><p>Ce que j'ai fait, quand et combien de temps.</p></li>
+        <li class="emplacement"><span class="statut">Idée</span><h3>Mon programme</h3><p>Les séances prévues dans la semaine.</p></li>
+        <li class="emplacement"><span class="statut">Idée</span><h3>Mes progrès</h3><p>Mes charges, mes temps et mes distances, pour voir l'évolution.</p></li>
+        <li class="emplacement"><span class="statut">Idée</span><h3>Ma forme</h3><p>Poids, sommeil et énergie, d'une semaine à l'autre.</p></li>
       </ul>
-      <nav class="suite" aria-label="Autres pages">
-        <a class="r-argent" href="#argent"><span class="eyebrow">Rubrique précédente</span><strong>← Argent</strong></a>
-        <a href="#accueil"><span class="eyebrow">Retour</span><strong>Accueil →</strong></a>
-      </nav>
     </div>
   </section>
 </main>
 
-<footer class="pied">
-  <div class="cadre">
-    <span>Le site d'Axel</span>
-    <span class="mono">Commencé le 22 octobre 2026</span>
+</div>
+
+<dialog class="fenetre" id="fenetre-planning" aria-labelledby="fp-titre">
+  <div class="fenetre-tete">
+    <div>
+      <h2 id="fp-titre">Modifier le planning</h2>
+      <p class="fenetre-sous" id="fp-semaine"></p>
+    </div>
+    <button class="fermer" type="button" data-fermer aria-label="Fermer sans enregistrer">×</button>
   </div>
-</footer>
+  <div class="fenetre-corps">
+    <table class="saisie" id="fp-table">
+      <thead><tr><th scope="col"><span class="invisible">Période</span></th><th scope="col">Début</th><th scope="col">Fin</th></tr></thead>
+    </table>
+  </div>
+  <div class="fenetre-pied">
+    <p class="fenetre-erreur" id="fp-erreur" role="alert" hidden></p>
+    <button class="bouton-second" type="button" data-fermer>Annuler</button>
+    <button class="bouton-principal" type="button" id="fp-enregistrer">Enregistrer</button>
+  </div>
+</dialog>
+
+<dialog class="fenetre fenetre-petite" id="fenetre-semaine" aria-labelledby="fs-titre">
+  <div class="fenetre-tete">
+    <h2 id="fs-titre">Choisir une semaine</h2>
+    <button class="fermer" type="button" data-fermer aria-label="Fermer">×</button>
+  </div>
+  <div class="fenetre-corps">
+    <div class="annee-nav">
+      <button type="button" id="fs-annee-prec" aria-label="Année précédente"><svg class="picto" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <span class="annee" id="fs-annee" aria-live="polite"></span>
+      <button type="button" id="fs-annee-suiv" aria-label="Année suivante"><svg class="picto" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+    </div>
+    <div class="grille-semaines" id="fs-grille"></div>
+    <p class="legende"><span><span class="cadre-actuel" aria-hidden="true"></span>cette semaine</span><span><span class="point" aria-hidden="true"></span>planning rempli</span></p>
+  </div>
+  <div class="fenetre-pied">
+    <button class="bouton-second" type="button" id="fs-cette-semaine">Revenir à cette semaine</button>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 <script>
 (() => {
-  // Une seule page : chaque rubrique est une vue. La page ne modifie jamais son adresse
-  // (dans le cadre de claude.ai, une adresse réécrite rend la page introuvable) ;
-  // un lien direct (#travail, #argent, #sport) ouvre sa rubrique.
+  "use strict";
+  const $ = id => document.getElementById(id);
+
+  // ---------- vues : une rubrique à la fois ----------
+  // La page ne modifie jamais son adresse (dans le cadre de claude.ai, une adresse réécrite
+  // rend la page introuvable) ; un lien direct (#travail, #argent, #sport) ouvre sa rubrique.
   const VUES = ["accueil", "travail", "argent", "sport"];
   let vueActive = "accueil";
 
@@ -338,7 +433,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (!VUES.includes(nom)) return false;
     vueActive = nom;
     document.querySelectorAll("[data-vue]").forEach(v => { v.hidden = v.dataset.vue !== nom; });
-    document.querySelectorAll("[data-aller]").forEach(a => {
+    document.querySelectorAll(".bande [data-aller]").forEach(a => {
       if (a.dataset.aller === nom) a.setAttribute("aria-current", "page");
       else a.removeAttribute("aria-current");
     });
@@ -349,7 +444,6 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     }
     return true;
   }
-
   document.addEventListener("click", e => {
     const a = e.target.closest('a[href^="#"]');
     if (a && montrer(a.getAttribute("href").slice(1), { focus: true })) e.preventDefault();
@@ -357,21 +451,464 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   const cibleAdresse = () => { try { return decodeURIComponent(location.hash.slice(1)); } catch (_) { return ""; } };
   window.addEventListener("hashchange", () => { if (cibleAdresse()) montrer(cibleAdresse()); });
 
-  // La date du jour et la semaine (numérotation ISO, celle des plannings).
-  const semaineISO = d => {
-    const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-    t.setUTCDate(t.getUTCDate() + 4 - (t.getUTCDay() || 7));
-    return Math.ceil(((t - Date.UTC(t.getUTCFullYear(), 0, 1)) / 86400000 + 1) / 7);
-  };
-  try {
-    const d = new Date();
-    const jour = new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(d);
-    document.getElementById("aujourdhui").textContent = `${jour.charAt(0).toUpperCase()}${jour.slice(1)} · semaine ${semaineISO(d)}`;
-  } catch (_) { /* « Aujourd'hui » reste affiché */ }
+  // ---------- dates : jours à minuit UTC, semaines ISO (lundi → dimanche) ----------
+  const JOUR_MS = 86400000;
+  const MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+  const MOIS_COURTS = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
+  const aujourdhui = () => { const d = new Date(); return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()); };
+  const lundiDe = t => t - ((new Date(t).getUTCDay() || 7) - 1) * JOUR_MS;
+  function infoSemaine(lundi) {
+    const jeudi = lundi + 3 * JOUR_MS;
+    const annee = new Date(jeudi).getUTCFullYear();
+    const num = Math.floor((jeudi - Date.UTC(annee, 0, 1)) / JOUR_MS / 7) + 1;
+    return { annee, num, cle: `${annee}-W${String(num).padStart(2, "0")}` };
+  }
+  const lundiDeSemaine = (annee, num) => lundiDe(Date.UTC(annee, 0, 4)) + (num - 1) * 7 * JOUR_MS;
+  const semainesDansAnnee = annee => infoSemaine(lundiDe(Date.UTC(annee, 11, 28))).num;
+  const quantieme = n => (n === 1 ? "1er" : String(n));
+  function libelleDates(lundi) {
+    const a = new Date(lundi), b = new Date(lundi + 6 * JOUR_MS);
+    const anneeEnCours = new Date(aujourdhui()).getUTCFullYear();
+    const [ja, ma, aa] = [a.getUTCDate(), a.getUTCMonth(), a.getUTCFullYear()];
+    const [jb, mb, ab] = [b.getUTCDate(), b.getUTCMonth(), b.getUTCFullYear()];
+    if (aa !== ab) return `du ${quantieme(ja)} ${MOIS[ma]} ${aa} au ${quantieme(jb)} ${MOIS[mb]} ${ab}`;
+    const annee = aa !== anneeEnCours ? ` ${aa}` : "";
+    if (ma === mb) return `du ${quantieme(ja)} au ${quantieme(jb)} ${MOIS[mb]}${annee}`;
+    return `du ${quantieme(ja)} ${MOIS[ma]} au ${quantieme(jb)} ${MOIS[mb]}${annee}`;
+  }
 
-  // Quand la page publiée est mise à jour, elle reste sur la rubrique ouverte.
-  window.claude?.hot?.snapshot?.(() => ({ vue: vueActive }));
-  const demarrer = data => montrer((data && data.vue) || cibleAdresse() || "accueil", { garderDefilement: true });
+  // ---------- planning ----------
+  const JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+  const JOURS_COURTS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
+  const PERIODES = [{ cle: "matin", nom: "Matin" }, { cle: "apresMidi", nom: "Après-midi" }];
+  const BORDS = [{ cle: "debut", nom: "Début" }, { cle: "fin", nom: "Fin" }];
+  const CHOIX = {
+    matin: { debut: ["10:00", "10:30", "11:00"], fin: ["12:00", "12:30", "13:00", "13:30"] },
+    apresMidi: { debut: ["14:00", "14:30"], fin: ["18:00", "19:00"] },
+  };
+  const HEURE_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+  const CLE_RE = /^\d{4}-W\d{2}$/;
+  const majuscule = s => s.charAt(0).toUpperCase() + s.slice(1);
+  const minutes = h => Number(h.slice(0, 2)) * 60 + Number(h.slice(3));
+  const formatHeure = h => { const [hh, mm] = h.split(":"); return `${Number(hh)}h${mm === "00" ? "" : mm}`; };
+  const formatDuree = m => `${Math.floor(m / 60)}h${m % 60 ? String(m % 60).padStart(2, "0") : ""}`;
+  const listeFr = l => (l.length < 2 ? l.join("") : `${l.slice(0, -1).join(", ")} et ${l[l.length - 1]}`);
+
+  // Tout ce qui vient de la base est vérifié avant usage.
+  function lirePeriode(p) {
+    if (!p || typeof p !== "object") return null;
+    const debut = typeof p.debut === "string" && HEURE_RE.test(p.debut) ? p.debut : null;
+    const fin = typeof p.fin === "string" && HEURE_RE.test(p.fin) ? p.fin : null;
+    return debut || fin ? { debut, fin } : null;
+  }
+  function lireSemaine(d) {
+    if (!d || typeof d !== "object" || !d.jours || typeof d.jours !== "object") return null;
+    const jours = {};
+    for (const j of JOURS) {
+      const x = d.jours[j] && typeof d.jours[j] === "object" ? d.jours[j] : {};
+      jours[j] = x.repos === true
+        ? { repos: true, matin: null, apresMidi: null }
+        : { repos: false, matin: lirePeriode(x.matin), apresMidi: lirePeriode(x.apresMidi) };
+    }
+    return { jours };
+  }
+  const semaineVide = () => ({ jours: Object.fromEntries(JOURS.map(j => [j, { repos: false, matin: null, apresMidi: null }])) });
+  const estVide = s => !s || JOURS.every(j => !s.jours[j].repos && !s.jours[j].matin && !s.jours[j].apresMidi);
+  const dureePeriode = p => (p && p.debut && p.fin && minutes(p.fin) > minutes(p.debut) ? minutes(p.fin) - minutes(p.debut) : 0);
+  const dureeJour = j => (j.repos ? 0 : dureePeriode(j.matin) + dureePeriode(j.apresMidi));
+  const dureeSemaine = s => JOURS.reduce((t, j) => t + dureeJour(s.jours[j]), 0);
+  const joursDeRepos = s => JOURS.filter(j => s.jours[j].repos);
+
+  // ---------- données : la base de la page (seul le propriétaire écrit), sinon ce navigateur ----------
+  // "attente" : la base n'a pas encore répondu ; "base" : propriétaire ; "lecture" : quelqu'un
+  // d'autre regarde ; "local" : fichier ouvert hors de claude.ai.
+  const CLE_LOCALE = "tableau-de-bord-axel:planning";
+  let mode = window.claude && typeof window.claude.use === "function" ? "attente" : "local";
+  let db = null;
+  let semaines = Object.create(null);
+
+  function chargerLocal() {
+    semaines = Object.create(null);
+    try {
+      const brut = JSON.parse(localStorage.getItem(CLE_LOCALE) || "{}");
+      for (const [cle, d] of Object.entries(brut)) { const s = CLE_RE.test(cle) && lireSemaine(d); if (s) semaines[cle] = s; }
+    } catch (_) { /* rien de gardé dans ce navigateur */ }
+  }
+  function sauverLocal() {
+    try { localStorage.setItem(CLE_LOCALE, JSON.stringify(semaines)); return true; } catch (_) { return false; }
+  }
+
+  async function brancher() {
+    const c = window.claude;
+    if (!c || typeof c.use !== "function") { chargerLocal(); rendreTout(); return; }
+    let base = null, user = null;
+    try { [base, user] = await Promise.all([c.use("db"), c.use("user")]); } catch (_) { /* vue sans capacités */ }
+    if (!base) { mode = "local"; chargerLocal(); rendreTout(); return; }
+    db = base;
+    let proprio = false;
+    try { proprio = user ? await user.isOwner() : false; } catch (_) { /* inconnu : lecture seule */ }
+    mode = proprio ? "base" : "lecture";
+    db.collection("planning").onSnapshot(snap => {
+      const m = Object.create(null);
+      snap.docs.forEach(doc => { const s = doc.exists && CLE_RE.test(doc.id) && lireSemaine(doc.data()); if (s) m[doc.id] = s; });
+      semaines = m;
+      rendreTout();
+    }, () => toast("Le planning n'a pas pu être chargé. Recharge la page.", "erreur"));
+    rendreTout();
+  }
+
+  // ---------- affichage du planning ----------
+  let lundiAffiche = lundiDe(aujourdhui());
+  const etroit = window.matchMedia("(max-width: 699px)");
+
+  function element(tag, classe, texte) {
+    const el = document.createElement(tag);
+    if (classe) el.className = classe;
+    if (texte != null) el.textContent = texte;
+    return el;
+  }
+  function enteteJour(i, sem, iAujourdhui) {
+    const date = new Date(lundiAffiche + i * JOUR_MS);
+    const jour = sem.jours[JOURS[i]];
+    const el = element("div", "jour" + (i === iAujourdhui ? " aujourdhui" : ""));
+    if (etroit.matches) {
+      el.append(element("span", "jour-nom", `${JOURS_COURTS[i]} ${date.getUTCDate()}`));
+    } else {
+      el.append(element("span", "jour-nom", majuscule(JOURS[i])));
+      el.append(element("span", "jour-date", `${quantieme(date.getUTCDate())} ${MOIS_COURTS[date.getUTCMonth()]}`));
+    }
+    const duree = dureeJour(jour);
+    if (duree) el.append(element("span", "jour-total", formatDuree(duree)));
+    return el;
+  }
+  function casePeriode(i, periode, sem, iAujourdhui) {
+    const jour = sem.jours[JOURS[i]];
+    const p = jour[periode.cle];
+    const el = element("div", "case" + (i === iAujourdhui ? " aujourdhui" : ""));
+    el.append(element("span", "invisible", `${majuscule(JOURS[i])} ${periode.nom.toLowerCase()} : `));
+    if (jour.repos) {
+      el.classList.add("repos");
+      el.append(document.createTextNode("Repos"));
+    } else if (!p) {
+      el.classList.add("vide");
+      el.append(element("span", null, "—"));
+      el.lastChild.setAttribute("aria-label", "rien de prévu");
+    } else {
+      el.append(element("span", null, p.debut ? formatHeure(p.debut) : "?"));
+      el.append(element("span", "tiret", "–"));
+      el.append(element("span", null, p.fin ? formatHeure(p.fin) : "?"));
+    }
+    return el;
+  }
+
+  function rendrePlanning() {
+    const info = infoSemaine(lundiAffiche);
+    const s = semaines[info.cle] || null;
+    const sem = s || semaineVide();
+    const lundiActuel = lundiDe(aujourdhui());
+    const iAujourdhui = lundiAffiche === lundiActuel ? (new Date(aujourdhui()).getUTCDay() || 7) - 1 : -1;
+
+    $("semaine-num").textContent = `Semaine ${info.num}`;
+    $("semaine-dates").textContent = libelleDates(lundiAffiche);
+    $("puce-actuelle").hidden = lundiAffiche !== lundiActuel;
+
+    const grille = $("planning");
+    grille.className = "planning " + (etroit.matches ? "etroit" : "large");
+    const f = document.createDocumentFragment();
+    f.append(element("div", "coin"));
+    if (etroit.matches) {
+      PERIODES.forEach(p => f.append(element("div", "periode", p.nom)));
+      JOURS.forEach((_, i) => { f.append(enteteJour(i, sem, iAujourdhui)); PERIODES.forEach(p => f.append(casePeriode(i, p, sem, iAujourdhui))); });
+    } else {
+      JOURS.forEach((_, i) => f.append(enteteJour(i, sem, iAujourdhui)));
+      PERIODES.forEach(p => { f.append(element("div", "periode", p.nom)); JOURS.forEach((_, i) => f.append(casePeriode(i, p, sem, iAujourdhui))); });
+    }
+    grille.replaceChildren(f);
+
+    const vide = estVide(s);
+    $("bilan-vide").hidden = !vide;
+    $("bilan-heures-bloc").hidden = vide;
+    $("bilan-repos-bloc").hidden = vide;
+    if (!vide) {
+      $("bilan-heures").textContent = formatDuree(dureeSemaine(sem));
+      const repos = joursDeRepos(sem);
+      $("bilan-repos").textContent = repos.length ? majuscule(listeFr(repos)) : "Aucun";
+    }
+    const bouton = $("ouvrir-modif");
+    bouton.hidden = mode === "lecture";
+    bouton.disabled = mode === "attente";
+    $("note-lecture").hidden = mode !== "lecture";
+  }
+
+  function rendreResume() {
+    const s = semaines[infoSemaine(lundiDe(aujourdhui())).cle];
+    if (estVide(s)) { $("resume-travail").textContent = "Planning de la semaine à remplir"; return; }
+    const repos = joursDeRepos(s);
+    $("resume-travail").textContent = `Cette semaine : ${formatDuree(dureeSemaine(s))}` + (repos.length ? ` · repos ${listeFr(repos)}` : "");
+  }
+
+  function rendreDate() {
+    try {
+      const d = new Date();
+      const jour = new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(d);
+      $("aujourdhui").textContent = `${majuscule(jour)} · semaine ${infoSemaine(lundiDe(aujourdhui())).num}`;
+    } catch (_) { /* « Aujourd'hui » reste affiché */ }
+  }
+
+  function rendreTout() {
+    rendrePlanning();
+    rendreResume();
+    if ($("fenetre-semaine").open) rendreGrilleSemaines();
+  }
+
+  const changerSemaine = delta => { lundiAffiche += delta * 7 * JOUR_MS; rendrePlanning(); };
+  $("semaine-prec").addEventListener("click", () => changerSemaine(-1));
+  $("semaine-suiv").addEventListener("click", () => changerSemaine(1));
+  etroit.addEventListener("change", rendrePlanning);
+
+  // ---------- fenêtres ----------
+  function ouvrir(d) { if (typeof d.showModal === "function") d.showModal(); else d.setAttribute("open", ""); }
+  function fermer(d) { if (typeof d.close === "function") d.close(); else d.removeAttribute("open"); }
+  document.querySelectorAll("dialog").forEach(d => {
+    d.addEventListener("click", e => { if (e.target.closest("[data-fermer]")) fermer(d); });
+  });
+  // Un clic à côté ferme le choix de la semaine (rien à perdre) ; jamais la saisie du planning.
+  $("fenetre-semaine").addEventListener("click", e => { if (e.target === e.currentTarget) fermer(e.currentTarget); });
+
+  // ---------- choisir une semaine ----------
+  let anneeGrille = infoSemaine(lundiAffiche).annee;
+  function rendreGrilleSemaines() {
+    $("fs-annee").textContent = anneeGrille;
+    const actuelle = lundiDe(aujourdhui());
+    const f = document.createDocumentFragment();
+    for (let num = 1, n = semainesDansAnnee(anneeGrille); num <= n; num++) {
+      const lundi = lundiDeSemaine(anneeGrille, num);
+      const d = new Date(lundi);
+      const b = element("button", "sem");
+      b.type = "button";
+      b.dataset.lundi = String(lundi);
+      b.append(element("span", "sem-num", String(num)));
+      b.append(element("span", "sem-date", `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}`));
+      const remplie = !estVide(semaines[infoSemaine(lundi).cle]);
+      if (lundi === actuelle) b.classList.add("actuelle");
+      if (remplie) b.classList.add("remplie");
+      if (lundi === lundiAffiche) b.setAttribute("aria-current", "true");
+      b.setAttribute("aria-label", `Semaine ${num}, ${libelleDates(lundi)}` + (lundi === actuelle ? ", cette semaine" : "") + (remplie ? ", planning rempli" : ""));
+      f.append(b);
+    }
+    $("fs-grille").replaceChildren(f);
+  }
+  $("ouvrir-semaines").addEventListener("click", () => {
+    anneeGrille = infoSemaine(lundiAffiche).annee;
+    rendreGrilleSemaines();
+    ouvrir($("fenetre-semaine"));
+    const courante = $("fs-grille").querySelector('[aria-current="true"]');
+    if (courante) { courante.focus(); courante.scrollIntoView({ block: "nearest" }); }
+  });
+  $("fs-annee-prec").addEventListener("click", () => { anneeGrille--; rendreGrilleSemaines(); });
+  $("fs-annee-suiv").addEventListener("click", () => { anneeGrille++; rendreGrilleSemaines(); });
+  $("fs-grille").addEventListener("click", e => {
+    const b = e.target.closest(".sem");
+    if (!b) return;
+    lundiAffiche = Number(b.dataset.lundi);
+    fermer($("fenetre-semaine"));
+    rendrePlanning();
+  });
+  $("fs-cette-semaine").addEventListener("click", () => {
+    lundiAffiche = lundiDe(aujourdhui());
+    fermer($("fenetre-semaine"));
+    rendrePlanning();
+  });
+
+  // ---------- modifier le planning ----------
+  const idChamp = (i, p, b) => `fp-${i}-${p}-${b}`;
+  function construireSaisie() {
+    const table = $("fp-table");
+    JOURS.forEach((jour, i) => {
+      const tb = element("tbody");
+      tb.dataset.jour = String(i);
+      const tete = element("tr");
+      const th = element("th", "tete-jour");
+      th.colSpan = 3;
+      th.scope = "rowgroup";
+      const ligne = element("div", "jour-tete");
+      ligne.append(element("span", "jour-titre"));
+      const choix = element("label", "repos-choix");
+      const repos = element("input");
+      repos.type = "checkbox";
+      repos.id = `fp-${i}-repos`;
+      repos.addEventListener("change", () => { tb.classList.toggle("en-repos", repos.checked); effacerErreur(); });
+      choix.append(repos, element("span", null, "Repos"));
+      ligne.append(choix);
+      th.append(ligne);
+      tete.append(th);
+      tb.append(tete);
+      PERIODES.forEach(p => {
+        const tr = element("tr");
+        const nom = element("th", null, p.nom);
+        nom.scope = "row";
+        tr.append(nom);
+        BORDS.forEach(b => {
+          const td = element("td");
+          const champ = element("div", "champ");
+          const sel = element("select");
+          sel.id = idChamp(i, p.cle, b.cle);
+          sel.setAttribute("aria-label", `${b.nom} ${jour} ${p.nom.toLowerCase()}`);
+          sel.append(new Option("—", ""));
+          CHOIX[p.cle][b.cle].forEach(h => sel.append(new Option(formatHeure(h), h)));
+          sel.append(new Option("Autre…", "autre"));
+          const autre = element("input");
+          autre.type = "time";
+          autre.id = sel.id + "-autre";
+          autre.hidden = true;
+          autre.setAttribute("aria-label", `${b.nom} ${jour} ${p.nom.toLowerCase()} : autre heure`);
+          sel.addEventListener("change", () => {
+            autre.hidden = sel.value !== "autre";
+            if (!autre.hidden) autre.focus();
+            effacerErreur();
+          });
+          autre.addEventListener("input", effacerErreur);
+          champ.append(sel, autre);
+          td.append(champ, element("span", "repos-texte", "Repos"));
+          tr.append(td);
+        });
+        tb.append(tr);
+      });
+      table.append(tb);
+    });
+  }
+
+  let lundiEdite = null;
+  function remplirSaisie() {
+    const sem = semaines[infoSemaine(lundiEdite).cle] || semaineVide();
+    JOURS.forEach((jour, i) => {
+      const date = new Date(lundiEdite + i * JOUR_MS);
+      const tb = $("fp-table").querySelector(`tbody[data-jour="${i}"]`);
+      tb.querySelector(".jour-titre").textContent = `${majuscule(jour)} ${quantieme(date.getUTCDate())} ${MOIS[date.getUTCMonth()]}`;
+      const j = sem.jours[jour];
+      $(`fp-${i}-repos`).checked = j.repos;
+      tb.classList.toggle("en-repos", j.repos);
+      PERIODES.forEach(p => BORDS.forEach(b => {
+        const sel = $(idChamp(i, p.cle, b.cle));
+        const autre = $(sel.id + "-autre");
+        const v = j[p.cle] ? j[p.cle][b.cle] : null;
+        const prevu = v && CHOIX[p.cle][b.cle].includes(v);
+        sel.value = !v ? "" : prevu ? v : "autre";
+        autre.value = v && !prevu ? v : "";
+        autre.hidden = sel.value !== "autre";
+      }));
+    });
+  }
+
+  function effacerErreur() {
+    $("fp-erreur").hidden = true;
+    $("fp-table").querySelectorAll(".en-erreur").forEach(el => el.classList.remove("en-erreur"));
+  }
+  function montrerErreur(message, champ) {
+    $("fp-erreur").textContent = message;
+    $("fp-erreur").hidden = false;
+    if (champ) { champ.classList.add("en-erreur"); champ.focus(); }
+  }
+
+  // Lit la fenêtre : la semaine, ou la première erreur et le champ à corriger.
+  function lireSaisie() {
+    const sem = semaineVide();
+    for (let i = 0; i < JOURS.length; i++) {
+      const jour = JOURS[i];
+      if ($(`fp-${i}-repos`).checked) { sem.jours[jour] = { repos: true, matin: null, apresMidi: null }; continue; }
+      for (const p of PERIODES) {
+        const lieu = `${majuscule(jour)} ${p.nom.toLowerCase()}`;
+        const valeurs = {};
+        for (const b of BORDS) {
+          const sel = $(idChamp(i, p.cle, b.cle));
+          if (sel.value !== "autre") { valeurs[b.cle] = sel.value || null; continue; }
+          const autre = $(sel.id + "-autre");
+          const v = autre.value.slice(0, 5);
+          if (!HEURE_RE.test(v)) return { erreur: `${lieu} : tape l'heure de ${b.cle === "debut" ? "début" : "fin"}.`, champ: autre };
+          valeurs[b.cle] = v;
+        }
+        const champDe = b => { const sel = $(idChamp(i, p.cle, b)); return sel.value === "autre" ? $(sel.id + "-autre") : sel; };
+        if (valeurs.debut && !valeurs.fin) return { erreur: `${lieu} : choisis aussi l'heure de fin.`, champ: champDe("fin") };
+        if (!valeurs.debut && valeurs.fin) return { erreur: `${lieu} : choisis aussi l'heure de début.`, champ: champDe("debut") };
+        if (valeurs.debut && minutes(valeurs.fin) <= minutes(valeurs.debut)) return { erreur: `${lieu} : la fin doit être après le début.`, champ: champDe("fin") };
+        sem.jours[jour][p.cle] = valeurs.debut ? { debut: valeurs.debut, fin: valeurs.fin } : null;
+      }
+    }
+    return { semaine: sem };
+  }
+
+  $("ouvrir-modif").addEventListener("click", () => {
+    if (mode === "attente" || mode === "lecture") return;
+    lundiEdite = lundiAffiche;
+    const info = infoSemaine(lundiEdite);
+    $("fp-semaine").textContent = `Semaine ${info.num} · ${libelleDates(lundiEdite)}`;
+    effacerErreur();
+    remplirSaisie();
+    ouvrir($("fenetre-planning"));
+    $("fenetre-planning").querySelector(".fenetre-corps").scrollTop = 0;
+    $("fp-0-repos").focus();
+  });
+
+  let enregistrement = false;
+  $("fp-enregistrer").addEventListener("click", async () => {
+    if (enregistrement) return;
+    effacerErreur();
+    const lu = lireSaisie();
+    if (lu.erreur) { montrerErreur(lu.erreur, lu.champ); return; }
+    const info = infoSemaine(lundiEdite);
+    enregistrement = true;
+    $("fp-enregistrer").disabled = true;
+    try {
+      if (mode === "base") {
+        const d = new Date(lundiEdite);
+        await db.doc("planning/" + info.cle).set({
+          semaine: info.num,
+          annee: info.annee,
+          lundi: d.toISOString().slice(0, 10),
+          jours: lu.semaine.jours,
+          modifieLe: new Date().toISOString(),
+        });
+        semaines[info.cle] = lu.semaine;
+      } else {
+        semaines[info.cle] = lu.semaine;
+        if (!sauverLocal()) toast("Ce navigateur ne garde rien : le planning sera perdu en fermant la page.", "erreur");
+      }
+      fermer($("fenetre-planning"));
+      rendreTout();
+      toast(`Planning de la semaine ${info.num} enregistré.`);
+    } catch (e) {
+      const code = e && e.code;
+      montrerErreur(code === "quota_exceeded"
+        ? "La page est pleine : le planning n'a pas été enregistré."
+        : "Le planning n'a pas été enregistré. Vérifie ta connexion et réessaie.");
+    } finally {
+      enregistrement = false;
+      $("fp-enregistrer").disabled = false;
+    }
+  });
+
+  // ---------- message en bas de l'écran ----------
+  let minuterieToast = 0;
+  function toast(message, type) {
+    const t = $("toast");
+    t.textContent = message;
+    t.classList.toggle("erreur", type === "erreur");
+    t.hidden = false;
+    clearTimeout(minuterieToast);
+    minuterieToast = setTimeout(() => { t.hidden = true; }, type === "erreur" ? 6000 : 3000);
+  }
+
+  // ---------- démarrage ----------
+  construireSaisie();
+  rendreDate();
+  // Quand la page publiée est mise à jour, elle reste sur la rubrique et la semaine ouvertes.
+  window.claude?.hot?.snapshot?.(() => ({ vue: vueActive, lundi: lundiAffiche }));
+  const demarrer = data => {
+    if (data && Number.isFinite(data.lundi)) lundiAffiche = lundiDe(data.lundi);
+    rendreTout();
+    montrer((data && data.vue) || cibleAdresse() || "accueil", { garderDefilement: true });
+    brancher();
+  };
   window.claude?.hot?.ready ? window.claude.hot.ready(demarrer) : demarrer(window.claude?.hot?.data ?? {});
 })();
 </script>
