@@ -149,6 +149,22 @@ h2.sec{font-family:var(--f-display);font-weight:700;font-size:1.35rem;letter-spa
 .chip-q{border:1px solid var(--line);background:var(--surface-2);border-radius:999px;padding:6px 12px;cursor:pointer;font-size:.88rem;text-align:left}
 .chip-q:hover{border-color:var(--accent);color:var(--accent)}
 #askInput{min-height:4.2rem;resize:vertical}
+/* Value et Mes paris */
+.btn.go{background:var(--over);border-color:var(--over);color:var(--bg)}
+.btn.stop{background:var(--under);border-color:var(--under);color:var(--bg)}
+.btn.go:hover,.btn.stop:hover{filter:brightness(1.08)}
+.pick{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.pick h3{margin:0;font-family:var(--f-display);font-weight:700;font-size:1.45rem;line-height:1.15;letter-spacing:.01em;text-wrap:balance}
+.pick .odds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.pick .odds .tile{background:var(--surface-2)}
+@media (max-width:520px){.pick .odds{gap:6px}.pick .odds .tile{padding:8px 9px}.pick .odds .tile .v{font-size:1.45rem}.pick .odds .tile .k{font-size:.66rem;letter-spacing:.04em}.pick .odds .tile .s{font-size:.75rem}}
+.pick .acts{display:flex;gap:10px;flex-wrap:wrap}
+.pick .acts .btn{flex:1;min-width:9rem;padding:10px 14px;font-size:1rem}
+.soir{display:flex;flex-direction:column;gap:8px}
+.soir .g{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.soir .g b{font-family:var(--f-display);font-size:1.05rem;letter-spacing:.03em;margin-right:4px}
+#pronoInput{min-height:3.4rem;resize:vertical}
+.val-ok{color:var(--over);font-weight:600}.val-ko{color:var(--under);font-weight:600}
 @media (prefers-reduced-motion:no-preference){nav.tabs button{transition:color .15s,border-color .15s}}
 </style>
 </head>
@@ -164,6 +180,8 @@ h2.sec{font-family:var(--f-display);font-weight:700;font-size:1.35rem;letter-spa
     <button role="tab" data-tab="joueurs" aria-selected="false">Joueurs</button>
     <button role="tab" data-tab="equipes" aria-selected="false">Équipes &amp; totaux</button>
     <button role="tab" data-tab="classement" aria-selected="false">Classement</button>
+    <button role="tab" data-tab="value" aria-selected="false">Value</button>
+    <button role="tab" data-tab="paris" aria-selected="false">Mes paris</button>
     <button role="tab" data-tab="claude" aria-selected="false">Demander à Claude</button>
     <button role="tab" data-tab="saisie" aria-selected="true">Saisie</button>
   </nav>
@@ -222,6 +240,38 @@ h2.sec{font-family:var(--f-display);font-weight:700;font-size:1.35rem;letter-spa
       </div>
     </div>
     <div id="c-out" class="stack"></div>
+  </section>
+
+  <!-- VALUE -->
+  <section id="v-value" class="stack" hidden>
+    <div class="panel row" id="bkBar"></div>
+    <div class="panel stack">
+      <h2 class="sec">Nouveau pronostic</h2>
+      <form class="stack" id="pronoForm">
+        <label class="f"><span>Ton pronostic</span><textarea id="pronoInput" rows="2" placeholder="Ex. : Paolo Banchero plus de 27,5 points contre Atlanta"></textarea></label>
+        <div class="row"><button class="btn primary" id="pronoBtn" type="submit">Évaluer avec Claude</button><button class="btn" id="pronoStop" type="button" hidden>Arrêter</button><span class="note" id="pronoMsg" aria-live="polite"></span></div>
+      </form>
+      <div class="soir" id="soirChips"></div>
+    </div>
+    <div class="stack" id="pronoList"></div>
+    <div class="stack" id="pronoPast"></div>
+  </section>
+
+  <!-- MES PARIS -->
+  <section id="v-paris" class="stack" hidden>
+    <div class="verdict" id="bkTiles"></div>
+    <div class="panel stack" id="betPanel" hidden>
+      <h2 class="sec" id="betTitle">Nouveau pari</h2>
+      <div class="filters">
+        <label class="f wide"><span>Pari</span><input type="text" id="b-titre" autocomplete="off"></label>
+        <label class="f"><span>Mise</span><select id="b-pct"></select></label>
+        <label class="f"><span>Cote Winamax</span><input type="text" id="b-cote" class="line-input" inputmode="decimal" placeholder="ex. 1,85" autocomplete="off"></label>
+      </div>
+      <p class="note" id="b-info"></p>
+      <div class="row"><button class="btn primary" id="b-save">Enregistrer le pari</button><button class="btn" id="b-cancel">Annuler</button><span class="msg-err" id="b-msg"></span></div>
+    </div>
+    <div class="row"><h2 class="sec">Historique</h2><span class="spacer"></span><button class="btn small" id="b-new">Ajouter un pari</button></div>
+    <div id="betList"></div>
   </section>
 
   <!-- DEMANDER À CLAUDE -->
@@ -320,7 +370,7 @@ function parisToDate(ymd,hm){
 const frWhen=r=>{if(!r.debut)return dshort(r.date);const d=new Date(r.debut);return dshort(ymdIn(TZ_FR,d))+" · "+hmIn(TZ_FR,d).replace(":","h")};
 const frDay=r=>r.debut?dshort(ymdIn(TZ_FR,new Date(r.debut))):dshort(r.date);
 
-const TABS=["joueurs","equipes","classement","claude","saisie"];
+const TABS=["joueurs","equipes","classement","value","paris","claude","saisie"];
 const S={matches:[],demo:false,db:null,canWrite:true,tab:"saisie",userTab:false,edit:null,loaded:false,confirmReplace:false};
 let DEMO=null;
 const getM=()=>S.demo?(DEMO||(DEMO=makeDemo())):S.matches;
@@ -665,7 +715,7 @@ function setTab(t,user){
 }
 function renderCurrent(){
   $("#demoBanner").hidden=!S.demo;
-  if(S.tab==="joueurs")renderJ();else if(S.tab==="equipes")renderE();else if(S.tab==="classement")renderC();else if(S.tab==="claude")renderChat();else renderList();
+  if(S.tab==="joueurs")renderJ();else if(S.tab==="equipes")renderE();else if(S.tab==="classement")renderC();else if(S.tab==="claude")renderChat();else if(S.tab==="value")renderValue();else if(S.tab==="paris")renderParis();else renderList();
 }
 function refreshPlayersDL(){const ix=index();$("#dl-players").innerHTML=Object.keys(ix.players).sort((a,b)=>a.localeCompare(b,"fr")).map(n=>`<option value="${esc(n)}">${esc(ix.players[n].team)}</option>`).join("")}
 function onData(){
@@ -719,6 +769,13 @@ function init(){
     if(a==="demoOn"){S.demo=true;IDX={ref:null};refreshPlayersDL();if(S.tab==="joueurs"&&!$("#j-nom").value)$("#j-nom").value="Exemple M (BOS)";renderCurrent()}
     else if(a==="goSaisie")setTab("saisie",true);
     else if(a==="askSugg"){const i=$("#askInput");i.value=b.dataset.q;i.focus()}
+    else if(a==="pronoFill"){const i=$("#pronoInput");i.value=b.dataset.q;i.focus()}
+    else if(a==="joue")startBet(b.dataset.id);
+    else if(a==="goParis")setTab("paris",true);
+    else if(a==="passe")passProno(b.dataset.id);
+    else if(a==="betDelAsk"){S.pendingBetDel=b.dataset.id;renderParis()}
+    else if(a==="betDelNo"){S.pendingBetDel=null;renderParis()}
+    else if(a==="betDelYes")deleteBet(b.dataset.id);
     else if(a==="addRow"){addRow(side);saveDraft()}
     else if(a==="delRow"){b.closest("tr").remove();updateTotals();saveDraft()}
     else if(a==="pasteToggle"){const p=$(`[data-paste="${side}"]`);p.hidden=!p.hidden}
@@ -738,6 +795,13 @@ function init(){
   $("#askInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey&&!e.isComposing){e.preventDefault();ask(e.target.value)}});
   $("#stopBtn").addEventListener("click",()=>{if(CHAT.ctl)CHAT.ctl.abort()});
   $("#newChat").addEventListener("click",()=>{CHAT.turns=[];renderChat()});
+  $("#pronoForm").addEventListener("submit",e=>{e.preventDefault();evaluerProno($("#pronoInput").value)});
+  $("#pronoInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey&&!e.isComposing){e.preventDefault();evaluerProno(e.target.value)}});
+  $("#pronoStop").addEventListener("click",()=>{if(VAL.ctl)VAL.ctl.abort()});
+  $("#b-new").addEventListener("click",()=>openBetForm(null));
+  $("#b-cancel").addEventListener("click",()=>{S.betDraft=null;$("#betPanel").hidden=true});
+  $("#b-save").addEventListener("click",saveBet);
+  ["#b-cote","#b-pct"].forEach(k=>$(k).addEventListener("input",updateBetInfo));
   $("#exportBtn").addEventListener("click",exportMatches);
   $("#importBtn").addEventListener("click",()=>$("#importFile").click());
   $("#importFile").addEventListener("change",e=>{const f=e.target.files[0];e.target.value="";if(f)importMatches(f)});
@@ -761,7 +825,7 @@ function findPlayers(q,team){const toks=norm(q).split(" ").filter(Boolean),ix=in
 function findTeam(q){const s=String(q??"").trim().toUpperCase();if(TEAM_NAME[s])return s;const n=norm(q);if(!n)return null;
   const hit=TEAMS.find(([,name])=>norm(name).includes(n)||n.includes(norm(name).split(" ").pop()));return hit?hit[0]:null}
 const scoreLine=m=>`${m.ext} ${sidePts(m,"ext","full")} – ${sidePts(m,"dom","full")} ${m.dom}${(m.otDom||m.otExt)?" (prol.)":""}`;
-function chatStatus(t){CHAT.status=t;renderChat()}
+function chatStatus(t){if(VAL.busy){VAL.status=t;renderValue()}else{CHAT.status=t;renderChat()}}
 const CLAUDE_TOOLS=[
   {name:"chercher_joueurs",description:"Cherche des joueurs dans la base par nom (partiel, accents ignorés) et/ou par équipe. Renvoie leur nom exact tel qu'enregistré et leur équipe dans la base. Sans texte ni équipe : tous les joueurs.",
    inputSchema:{type:"object",properties:{texte:{type:"string",description:"Nom ou partie du nom"},equipe:{type:"string",description:"Sigle de l'équipe (PHI, NYK…)"}}},
@@ -837,6 +901,188 @@ async function readDetails(id){
   if(!S.db)throw new Error("Les détails ne sont lisibles que sur la page publiée sur claude.ai.");
   const d=await S.db.collection("details").doc(id).get();return d.exists?d.data():null;
 }
+/* ---------- VALUE ET MES PARIS ---------- */
+const BK={depart:1000,pas:250,mises:[0.5,1,1.5,2,2.5,3]};
+const VAL={busy:false,ctl:null,status:"",msg:""};
+const COND_TYPES=["stat_joueur","victoire","handicap","total_match","total_equipe","premier_panier","premiers_points","autre"];
+const COND_STATS=["pts","reb","ast","stl","blk","tp","tpa","tov","fgm","fga","ftm","fta","oreb","dreb","pf","pm","min","pra","pr","pa","ra","sb","dd","td"];
+const PERIODES=["match","q1","q2","q3","q4","h1","h2"];
+const RESULT_CHIP={gagne:'<span class="chip ok">Gagné</span>',perdu:'<span class="chip under">Perdu</span>',rembourse:'<span class="chip push">Remboursé</span>'};
+const round2=v=>Math.round(v*100)/100;
+const eur=v=>(Number(v)||0).toLocaleString("fr-FR",{minimumFractionDigits:Number.isInteger(round2(v))?0:2,maximumFractionDigits:2})+" €";
+const pct=v=>(Number(v)||0).toLocaleString("fr-FR",{maximumFractionDigits:1})+" %";
+const odds=v=>Number.isFinite(v)?v.toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2}):"—";
+function bankroll(){return round2(BK.depart+(S.paris||[]).filter(b=>RESULT_CHIP[b.statut]).reduce((s,b)=>s+(Number(b.gain)||0),0))}
+// Paliers de 25 % de la bankroll de départ : 1 000 € jusqu'à 1 249 €, puis 1 250 €, 1 500 €… (et 750 €, 500 € en dessous)
+const palier=b=>Math.max(BK.pas,Math.floor(b/BK.pas)*BK.pas);
+const miseEur=p=>round2(p/100*palier(bankroll()));
+const newId=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const clean=o=>JSON.parse(JSON.stringify(o));
+
+// Loi normale, pour passer d'une ligne DraftKings à une autre ligne
+const erf=x=>{const t=1/(1+0.3275911*Math.abs(x));const y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x);return x>=0?y:-y};
+const Phi=z=>0.5*(1+erf(z/Math.SQRT2));
+function PhiInv(p){
+  const a=[-39.69683028665376,220.9460984245205,-275.9285104469687,138.357751867269,-30.66479806614716,2.506628277459239],b=[-54.47609879822406,161.5858368580409,-155.6989798598866,66.80131188771972,-13.28068155288572],
+    c=[-0.007784894002430293,-0.3223964580411365,-2.400758277161838,-2.549732539343734,4.374664141464968,2.938163982698783],d=[0.007784695709041462,0.3224671290700398,2.445134137142996,3.754408661907416];
+  if(p<0.02425){const q=Math.sqrt(-2*Math.log(p));return(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1)}
+  if(p>1-0.02425){const q=Math.sqrt(-2*Math.log(1-p));return-(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1)}
+  const q=p-0.5,r=q*q;return(((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
+}
+/* Probabilité du marché (DraftKings, marge retirée) pour une victoire, un handicap ou un total du match entier.
+   Sur une autre ligne que celle de DraftKings : écart final ~ normale d'écart-type 12,5, total ~ normale d'écart-type 18. */
+function marketProba(pm,type,equipe,ligne,sens){
+  const c=pm&&pm.cotes,p=pm&&pm.proba;if(!c||!p)return null;
+  const home=equipe===pm.dom;if(type!=="total_match"&&!home&&equipe!==pm.ext)return null;
+  if(type==="victoire"){const v=home?p.victoireDom:p.victoireExt;return v==null?null:{p:v,exact:true,methode:"cote de victoire DraftKings, marge retirée"}}
+  const L=Number(ligne);if(!Number.isFinite(L))return null;
+  if(type==="handicap"){
+    if(c.ecartDom==null||p.couvreDom==null)return null;
+    const s=c.ecartDom,sig=12.5,mu=sig*PhiInv(p.couvreDom)-s,exact=home?L===s:L===-s;
+    return{p:exact?(home?p.couvreDom:p.couvreExt):(home?Phi((mu+L)/sig):Phi((L-mu)/sig)),exact,methode:exact?"handicap DraftKings, marge retirée":`ajusté depuis le handicap DraftKings (${pm.dom} ${s>0?"+":""}${String(s).replace(".",",")})`};
+  }
+  if(type==="total_match"){
+    if(c.total==null||p.over==null)return null;
+    const T=c.total,sig=18,mu=T-sig*PhiInv(1-p.over),exact=L===T,over=exact?p.over:1-Phi((L-mu)/sig);
+    return{p:sens==="moins"?(exact?p.under:1-over):over,exact,methode:exact?"total DraftKings, marge retirée":`ajusté depuis le total DraftKings (${String(T).replace(".",",")})`};
+  }
+  return null;
+}
+function progMatch(equipe){const t=findTeam(equipe);return t&&S.programme?(S.programme.matchs||[]).find(m=>m.dom===t||m.ext===t):null}
+CLAUDE_TOOLS.push(
+  {name:"programme_soir",description:"Matchs de la prochaine nuit NBA : heure de Paris, équipes, cotes DraftKings (bookmaker américain) du vainqueur, du handicap et du total avec les probabilités sans marge, et la liste des blessés avec leur statut (Out, Day-To-Day…).",
+   execute(){chatStatus("Claude lit le programme de ce soir…");const pg=S.programme;if(!pg)throw new Error("Pas encore de programme pour ce soir dans la base.");
+     return{nuit_nba:pg.nuit,mis_a_jour:pg.maj,matchs:(pg.matchs||[]).map(m=>({match:m.id,heure_paris:frWhen(m),exterieur:m.ext,domicile:m.dom,cotes_draftkings:m.cotes,probabilites_sans_marge:m.proba,blesses:(m.blessures||[]).map(b=>`${b.equipe} ${b.nom} : ${b.statut}${b.blessure?" ("+b.blessure+")":""}`)}))}}},
+  {name:"proba_marche",description:"Probabilité donnée par le marché (DraftKings, marge retirée) pour un pari sur le match entier de ce soir : type victoire (equipe), handicap (equipe, ligne ajoutée à son score, ex. -3.5) ou total_match (sens plus ou moins, ligne). Sur une autre ligne que DraftKings, la probabilité est ajustée (approximation).",
+   inputSchema:{type:"object",properties:{type:{type:"string",enum:["victoire","handicap","total_match"]},equipe:{type:"string"},ligne:{type:"number"},sens:{type:"string",enum:["plus","moins"]}},required:["type"]},
+   execute(i){chatStatus("Claude calcule la probabilité du marché…");const pm=progMatch(i.equipe||"");
+     if(!pm)throw new Error("Match introuvable dans le programme de ce soir : donne une équipe qui joue ce soir.");
+     const r=marketProba(pm,i.type,findTeam(i.equipe||""),i.ligne,i.sens);if(!r)throw new Error("Pas de cote DraftKings pour ce pari.");
+     return{match:pm.id,probabilite:Math.round(r.p*1000)/1000,methode:r.methode,ligne_draftkings:{handicap_domicile:pm.cotes.ecartDom,total:pm.cotes.total}}}});
+const EVAL_TOOLS=["programme_soir","proba_marche","chercher_joueurs","stats_joueur","quarts_joueur","stats_equipe","details_match"];
+function toolsFor(names){const list=names?CLAUDE_TOOLS.filter(t=>names.includes(t.name)):CLAUDE_TOOLS;return list.slice(0,S.toolMax||list.length)}
+function evalPrompt(q){
+  const now=new Intl.DateTimeFormat("fr-FR",{timeZone:TZ_FR,weekday:"long",day:"numeric",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit"}).format(new Date());
+  return[
+    "Tu évalues un pronostic de paris sportifs NBA pour l'onglet Value de « Base de données NBA 2026-27 ». L'utilisateur parie sur Winamax et raisonne en heure de Paris.",
+    `Nous sommes le ${now} (heure de Paris). Prochaine nuit NBA dans la base : ${S.programme?S.programme.nuit:"inconnue"}.`,
+    `Pronostic de l'utilisateur : « ${q} »`,
+    "1. Trouve le match concerné avec programme_soir. Si le pronostic ne porte sur aucun match du programme, ou s'il est trop vague pour être corrigé, réponds {\"erreur\": \"explication courte en français\"}.",
+    "2. Victoire, handicap ou total du match entier : appelle proba_marche et reprends sa probabilité telle quelle (fiabilite « marché »).",
+    "3. Autre pronostic (stats d'un joueur ou d'une équipe, quart-temps, mi-temps, premier panier…) : estime la probabilité avec la base (stats_joueur, quarts_joueur, stats_equipe, details_match) en tenant compte des minutes, du lieu, de l'adversaire, du repos et des blessés de ce soir (programme_soir). Une ligne de bookmaker est en général proche de 50 % : avec peu de matchs, ne t'en éloigne pas beaucoup. fiabilite : « faible » sous 5 matchs utiles, « moyenne » de 5 à 14, « bonne » à partir de 15.",
+    "4. Mise en % de la bankroll, une valeur parmi 0.5, 1, 1.5, 2, 2.5, 3 : fiabilité faible → 0.5 ; moyenne → 1 (1.5 si probabilité ≥ 65 %) ; bonne ou marché → 1.5 ou 2 selon la probabilité ; 2.5 ou 3 seulement si probabilité ≥ 70 % et fiabilité bonne ou marché ; probabilité sous 40 % → 0.5 au plus.",
+    "5. Condition pour la correction automatique, un de ces types : stat_joueur {joueur (nom exact de la base), stat (pts, reb, ast, stl, blk, tp = 3 pts réussis, tpa, tov, fgm, fga, ftm, fta, oreb, dreb, pf, pm, min, pra, pr, pa, ra, sb, dd = double-double, td = triple-double), sens (plus|moins), ligne, periode} ; victoire {equipe} ; handicap {equipe, ligne} ; total_match {sens, ligne, periode} ; total_equipe {equipe, sens, ligne, periode} ; premier_panier {joueur} ; premiers_points {equipe} ; autre {description}. periode : match, q1, q2, q3, q4, h1 ou h2. Prolongations comprises pour match et h2. Pour un double-double : stat dd, sens plus, ligne 0.5.",
+    "Réponds UNIQUEMENT avec un objet JSON : {\"intitule\": \"pronostic court en français avec la ligne et l'adversaire\", \"nuit\": \"AAAA-MM-JJ\", \"ext\": \"SIGLE\", \"dom\": \"SIGLE\", \"condition\": {…}, \"probabilite\": 0.57, \"fiabilite\": \"marché|bonne|moyenne|faible\", \"mise_pct\": 1.5, \"raison\": \"une ou deux phrases en français\"}",
+    `Sigles des équipes : ${TEAMS.map(([a,n])=>a+" = "+n).join(", ")}.`
+  ].join("\n\n");
+}
+function checkCard(r,q){
+  if(!r||typeof r!=="object")return{erreur:"Claude n'a pas rendu de pronostic lisible. Réessaie."};
+  if(r.erreur)return{erreur:String(r.erreur)};
+  const ext=findTeam(r.ext),dom=findTeam(r.dom);
+  if(!ext||!dom||!/^\d{4}-\d{2}-\d{2}$/.test(String(r.nuit||"")))return{erreur:"Claude n'a pas trouvé le match de ce pronostic dans le programme de ce soir."};
+  let c=r.condition&&typeof r.condition==="object"?Object.assign({},r.condition):{};
+  if(!COND_TYPES.includes(c.type)||(c.type==="stat_joueur"&&!COND_STATS.includes(c.stat)))c={type:"autre",description:String(r.intitule||q)};
+  if(c.periode&&!PERIODES.includes(c.periode))c.periode="match";
+  if(c.equipe)c.equipe=findTeam(c.equipe)||c.equipe;
+  let p=Math.min(0.99,Math.max(0.01,Number(r.probabilite)||0.5)),fiab=["marché","bonne","moyenne","faible"].includes(r.fiabilite)?r.fiabilite:"faible",methode=null;
+  const pm=(S.programme&&S.programme.matchs||[]).find(m=>m.ext===ext&&m.dom===dom);
+  // Victoire, handicap, total du match entier : la probabilité du marché, calculée ici
+  if(pm&&["victoire","handicap","total_match"].includes(c.type)&&(c.periode||"match")==="match"){const mk=marketProba(pm,c.type,c.equipe,c.ligne,c.sens);if(mk){p=mk.p;fiab="marché";methode=mk.methode}}
+  const mise=BK.mises.reduce((a,v)=>Math.abs(v-r.mise_pct)<Math.abs(a-r.mise_pct)?v:a,1);
+  return{cree:new Date().toISOString(),nuit:r.nuit,match:`${r.nuit}_${ext}-${dom}`,ext,dom,debut:pm?pm.debut:null,intitule:String(r.intitule||q).slice(0,200),demande:q.slice(0,300),
+    condition:c,probabilite:Math.round(p*1000)/1000,cote_juste:Math.round(100/p)/100,fiabilite:fiab,mise_pct:mise,raison:String(r.raison||"").slice(0,400),methode,decision:null,resultat:null};
+}
+async function evaluerProno(q){
+  q=String(q||"").trim();if(!q||VAL.busy||!S.sample||!S.db)return;
+  if(!S.sampleTools){VAL.msg="Claude ne peut pas lire la base sur cet affichage.";renderValue();return}
+  VAL.busy=true;VAL.msg="";VAL.status="Claude analyse le pronostic…";const ctl=VAL.ctl=new AbortController();renderValue();
+  try{
+    const r=await S.sample.json(evalPrompt(q),{signal:ctl.signal,tools:toolsFor(EVAL_TOOLS),modelTier:"default"});
+    const card=checkCard(r,q);
+    if(card.erreur)VAL.msg=card.erreur;
+    else{await S.db.collection("pronostics").doc("p"+newId()).set(clean(card));$("#pronoInput").value=""}
+  }catch(e){const c=e&&e.code;VAL.msg=c==="cancelled"?"":c==="invalid_json"?"Claude n'a pas rendu de pronostic lisible. Réessaie.":errCopy(c);if(BLOCKING.includes(c))S.sampleBlocked=errCopy(c)}
+  finally{VAL.busy=false;VAL.status="";VAL.ctl=null;renderValue()}
+}
+async function passProno(id){try{await S.db.collection("pronostics").doc(id).update({decision:"passe"})}catch(e){toast("Impossible pour le moment, réessaie")}}
+function startBet(id){const pr=(S.pronos||[]).find(x=>x.id===id);if(!pr)return;openBetForm(pr);setTab("paris",true)}
+function openBetForm(pr){
+  S.betDraft=pr||null;$("#betPanel").hidden=false;$("#b-msg").textContent="";$("#b-cote").value="";
+  $("#betTitle").textContent=pr?"Nouveau pari":"Nouveau pari (hors pronostic)";
+  $("#b-titre").value=pr?pr.intitule:"";
+  fillSel($("#b-pct"),BK.mises.map(m=>[String(m),`${pct(m)} · ${eur(miseEur(m))}`]),String(pr?pr.mise_pct:1));
+  updateBetInfo();$("#betPanel").scrollIntoView({behavior:"smooth",block:"start"});setTimeout(()=>$(pr?"#b-cote":"#b-titre").focus(),300);
+}
+function updateBetInfo(){
+  const pr=S.betDraft,m=Number($("#b-pct").value)||1,c=num($("#b-cote").value),el=$("#b-info");
+  let t=`Mise : <b>${eur(miseEur(m))}</b> (${pct(m)} du palier de ${eur(palier(bankroll()))}${pr&&Number(pr.mise_pct)===m?", mise choisie par Claude":""}).`;
+  if(pr){t+=` Probabilité ${pct(pr.probabilite*100)}, cote juste ${odds(pr.cote_juste)}.`;
+    if(Number.isFinite(c)&&c>1){const v=pr.probabilite*c-1;t+=v>0?` <span class="val-ok">Value : +${pct(v*100)}. La cote Winamax dépasse la cote juste.</span>`:` <span class="val-ko">Pas de value : ${pct(v*100)}. À cette cote, Claude te conseille de ne pas jouer.</span>`}}
+  el.innerHTML=t;
+}
+async function saveBet(){
+  const msg=$("#b-msg");msg.textContent="";if(!S.db){msg.textContent="Enregistrement possible seulement sur la page claude.ai.";return}
+  const titre=$("#b-titre").value.trim(),m=Number($("#b-pct").value),c=num($("#b-cote").value),pr=S.betDraft;
+  if(!titre){msg.textContent="Indique le pari.";return}
+  if(!(Number.isFinite(c)&&c>1)){msg.textContent="Indique la cote Winamax (par exemple 1,85).";return}
+  const id="b"+newId(),bk=bankroll();
+  const bet={cree:new Date().toISOString(),intitule:titre,mise_pct:m,mise_eur:miseEur(m),palier:palier(bk),bankroll_avant:bk,cote:c,statut:"en_attente",gain:null,
+    ...(pr?{pronostic:pr.id,nuit:pr.nuit,match:pr.match,ext:pr.ext,dom:pr.dom,debut:pr.debut,condition:pr.condition,probabilite:pr.probabilite,cote_juste:pr.cote_juste}:{condition:{type:"autre",description:titre}})};
+  const btn=$("#b-save");btn.disabled=true;
+  try{await S.db.collection("paris").doc(id).set(clean(bet));if(pr)await S.db.collection("pronostics").doc(pr.id).update({decision:"joue",pari:id});
+    S.betDraft=null;$("#betPanel").hidden=true;toast(`Pari enregistré : ${eur(bet.mise_eur)} à ${odds(c)}`)}
+  catch(e){msg.textContent=e&&e.code==="invalid_argument"?"Enregistrement refusé : seul le propriétaire peut ajouter des paris.":"Enregistrement impossible pour le moment. Réessaie."}
+  finally{btn.disabled=false}
+}
+async function deleteBet(id){S.pendingBetDel=null;try{await S.db.collection("paris").doc(id).delete();toast("Pari supprimé")}catch(e){toast("Suppression impossible pour le moment")}}
+function pickCard(p){
+  const when=p.debut?frWhen(p):dshort(p.nuit);
+  const fiab={["marché"]:'<span class="chip ok">Probabilité du marché</span>',bonne:'<span class="chip ok">Fiabilité bonne</span>',moyenne:'<span class="chip warn">Fiabilité moyenne</span>',faible:'<span class="chip under">Fiabilité faible</span>'}[p.fiabilite]||"";
+  return`<article class="pick"><div class="row"><span class="note">${esc(p.ext)} @ ${esc(p.dom)} · ${esc(when)}</span><span class="spacer"></span>${fiab}</div>
+    <h3>${esc(p.intitule)}</h3>
+    <div class="odds"><div class="tile"><span class="k">Probabilité</span><span class="v">${pct(p.probabilite*100)}</span><span class="s">que le pronostic passe</span></div>
+      <div class="tile"><span class="k">Cote juste</span><span class="v">${odds(p.cote_juste)}</span><span class="s">value si Winamax paie plus</span></div>
+      <div class="tile"><span class="k">Mise de Claude</span><span class="v">${pct(p.mise_pct)}</span><span class="s">${eur(miseEur(p.mise_pct))}</span></div></div>
+    ${p.raison||p.methode?`<p class="note" style="margin:0">${esc(p.raison||"")}${p.methode?` <i>(${esc(p.methode)})</i>`:""}</p>`:""}
+    <div class="acts"><button class="btn go" data-act="joue" data-id="${esc(p.id)}">Je joue</button><button class="btn stop" data-act="passe" data-id="${esc(p.id)}">Je ne joue pas</button></div></article>`;
+}
+function renderValue(){
+  if(S.tab!=="value")return;
+  const bk=bankroll();
+  $("#bkBar").innerHTML=`<span><b>Bankroll ${eur(bk)}</b></span><span class="note">Palier ${eur(palier(bk))} · 1 % = ${eur(miseEur(1))}</span><span class="spacer"></span><button class="btn small" data-act="goParis">Mes paris</button>`;
+  const off=!S.db?"Ouvre la page publiée sur claude.ai : les pronostics et les paris sont enregistrés dans sa base.":S.sampleBlocked||(!S.sample&&!S.sampleChecking?"Claude n'est pas joignable sur cet affichage. Ouvre la page dans claude.ai, en étant connecté.":"");
+  $("#pronoForm").hidden=!!off;
+  $("#pronoBtn").disabled=VAL.busy;$("#pronoStop").hidden=!VAL.busy;
+  $("#pronoMsg").textContent=off||VAL.status||VAL.msg;
+  const pg=S.programme;
+  $("#soirChips").innerHTML=off?"":!pg?'<p class="note">Le programme de ce soir arrive avec le remplissage du matin.</p>':
+    `<p class="note" style="margin:0">Ce soir (nuit NBA du ${dshort(pg.nuit)}) : touche un pari pour le préparer, puis « Évaluer avec Claude ».</p>`+
+    (pg.matchs||[]).map(m=>{const c=m.cotes||{},L=x=>String(x).replace(".",","),ch=q=>`<button type="button" class="chip-q" data-act="pronoFill" data-q="${esc(q)}">${esc(q)}</button>`;
+      return`<div class="g"><b>${m.ext} @ ${m.dom}</b><span class="note">${esc(frWhen(m))}</span>${ch(`${m.dom} gagne contre ${m.ext}`)}${ch(`${m.ext} gagne contre ${m.dom}`)}${c.total!=null?ch(`Plus de ${L(c.total)} points dans ${m.ext}-${m.dom}`)+ch(`Moins de ${L(c.total)} points dans ${m.ext}-${m.dom}`):""}${c.ecartDom!=null?ch(`${m.dom} ${c.ecartDom>0?"+":""}${L(c.ecartDom)} contre ${m.ext}`):""}</div>`}).join("");
+  const pr=(S.pronos||[]).slice().sort((a,b)=>String(b.cree).localeCompare(String(a.cree)));
+  const open=pr.filter(p=>!p.decision&&!p.resultat);
+  $("#pronoList").innerHTML=open.length?`<h2 class="sec">À décider</h2>`+open.map(pickCard).join(""):(off?"":emptyHTML("Aucun pronostic en attente","Écris un pronostic ci-dessus, ou touche un pari de ce soir : Claude donne sa probabilité, la cote juste et la mise.",false));
+  const past=pr.filter(p=>p.decision||p.resultat).slice(0,40),res=pr.filter(p=>RESULT_CHIP[p.resultat]&&p.resultat!=="rembourse");
+  const won=res.filter(p=>p.resultat==="gagne").length,avgP=res.length?res.reduce((s,p)=>s+p.probabilite,0)/res.length:0;
+  $("#pronoPast").innerHTML=past.length?`<div class="row"><h2 class="sec">Pronostics passés</h2><span class="note">${res.length?`Claude : ${won} gagnés sur ${res.length} (${pct(won/res.length*100)}), pour ${pct(avgP*100)} annoncés en moyenne`:"Les résultats arrivent avec le récap du matin."}</span></div>
+    <div class="tbl-wrap"><table><thead><tr><th class="l">Pronostic</th><th>Proba.</th><th>Cote juste</th><th>Décision</th><th>Résultat</th></tr></thead><tbody>${past.map(p=>`<tr><td class="l">${esc(p.intitule)}</td><td>${pct(p.probabilite*100)}</td><td>${odds(p.cote_juste)}</td><td>${p.decision==="joue"?'<span class="chip ok">Joué</span>':p.decision==="passe"?'<span class="chip push">Pas joué</span>':"—"}</td><td>${RESULT_CHIP[p.resultat]||'<span class="note">en attente</span>'}</td></tr>`).join("")}</tbody></table></div>`:"";
+}
+function renderParis(){
+  if(S.tab!=="paris")return;
+  const bk=bankroll(),bets=(S.paris||[]).slice().sort((a,b)=>String(b.cree).localeCompare(String(a.cree)));
+  const done=bets.filter(b=>RESULT_CHIP[b.statut]),wait=bets.filter(b=>!RESULT_CHIP[b.statut]);
+  const staked=done.filter(b=>b.statut!=="rembourse").reduce((s,b)=>s+(b.mise_eur||0),0),gain=round2(bk-BK.depart);
+  $("#bkTiles").innerHTML=`<div class="tile ${gain>0?"hit":gain<0?"miss":""}"><span class="k">Bankroll</span><span class="v">${eur(bk)}</span><span class="s">départ ${eur(BK.depart)} · ${gain>=0?"+":""}${eur(gain)}</span></div>
+    <div class="tile"><span class="k">1 % de mise</span><span class="v">${eur(miseEur(1))}</span><span class="s">palier ${eur(palier(bk))}</span></div>
+    <div class="tile"><span class="k">Bilan</span><span class="v">${done.filter(b=>b.statut==="gagne").length} – ${done.filter(b=>b.statut==="perdu").length}</span><span class="s">gagnés – perdus · rendement ${staked?pct(gain/staked*100):"—"}</span></div>
+    <div class="tile"><span class="k">En attente</span><span class="v">${wait.length}</span><span class="s">${eur(wait.reduce((s,b)=>s+(b.mise_eur||0),0))} misés</span></div>`;
+  $("#b-new").hidden=!S.db;
+  if(!S.db){$("#betList").innerHTML=emptyHTML("Disponible sur la page claude.ai","Ouverte en fichier, la page ne peut pas enregistrer tes paris.",false);return}
+  $("#betList").innerHTML=bets.length?`<div class="tbl-wrap"><table class="list-match"><thead><tr><th>Date</th><th class="l">Pari</th><th>Mise</th><th>Cote</th><th>Résultat</th><th>Gain</th><th></th></tr></thead><tbody>${bets.map(b=>`<tr><td>${b.debut?frWhen(b):dshort(String(b.cree).slice(0,10))}</td><td class="l">${esc(b.intitule)}${b.note?`<br><span class="note">${esc(b.note)}</span>`:""}</td><td>${eur(b.mise_eur)} <span class="note">(${pct(b.mise_pct)})</span></td><td>${odds(b.cote)}</td><td>${RESULT_CHIP[b.statut]||'<span class="chip warn">En attente</span>'}</td><td class="big">${b.gain==null?"—":(b.gain>0?"+":"")+eur(b.gain)}</td><td>${RESULT_CHIP[b.statut]?"":S.pendingBetDel===b.id?`<div class="row"><button class="btn small danger" data-act="betDelYes" data-id="${esc(b.id)}">Confirmer</button><button class="btn small" data-act="betDelNo">Annuler</button></div>`:`<button class="btn small danger" data-act="betDelAsk" data-id="${esc(b.id)}">Supprimer</button>`}</td></tr>`).join("")}</tbody></table></div>`:
+    emptyHTML("Aucun pari","Choisis un pronostic dans l'onglet Value et touche « Je joue », ou ajoute un pari à la main.",false);
+}
+
 function claudeRules(){
   const ms=getM(),nuits=ms.map(m=>m.date).sort();
   const now=new Intl.DateTimeFormat("fr-FR",{timeZone:TZ_FR,weekday:"long",day:"numeric",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit"}).format(new Date());
@@ -845,6 +1091,7 @@ function claudeRules(){
     `Nous sommes le ${now} (heure de Paris). L'utilisateur raisonne en heure de Paris : « cette nuit » ou « ce soir » désigne les matchs joués la nuit en France.`,
     ms.length?`La base contient ${ms.length} match${ms.length>1?"s":""}, des nuits NBA du ${dshort(nuits[0])} au ${dshort(nuits[nuits.length-1])}${S.demo?" (ATTENTION : la page est en mode exemple, ces données sont fictives)":""}. La nuit NBA est la date du match à New York ; c'est elle qui compte pour le repos et les back-to-back.`:"La base ne contient encore aucun match.",
     "Pour toute question sur des joueurs, des équipes ou des matchs, consulte la base avec tes outils et cite ses chiffres ; n'invente jamais un chiffre de la base. Pour l'équipe d'un joueur cette saison, la base fait foi sur tes connaissances.",
+    "programme_soir donne les matchs de la prochaine nuit avec les cotes DraftKings (bookmaker américain) et les blessés du jour ; proba_marche donne la probabilité du marché pour une victoire, un handicap ou un total. Pour juger si une cote Winamax est « value », compare-la à la cote juste (1 / probabilité).",
     "Les matchs remplis automatiquement (Basketball-Reference, vérifié avec ESPN) ont en plus : tirs, lancers, rebonds offensifs et défensifs, fautes, +/-, titulaire, et la ligne DraftKings d'avant-match (ecartDom = handicap de l'équipe à domicile, total, cotes décimales). details_match et quarts_joueur lisent le reste : stats par quart-temps, stats avancées, déroulé (premier panier, course aux points, séries), absents, arbitres. Va chercher ces détails quand la question porte sur un quart-temps, une mi-temps, un premier panier, une série ou un absent.",
     "Tu n'as pas accès à internet ni à l'actualité : tu ignores les blessures, les absences, les transferts récents et le programme de ce soir, sauf ce que l'utilisateur te donne. Quand la question en dépend, dis-le en une phrase, donne ce que tu sais en précisant que c'est peut-être dépassé, et propose de coller le rapport officiel de blessures de la NBA dans la question.",
     "Pour une prévision (points d'un joueur, total d'un match…), appuie-toi sur la base : moyenne, médiane, derniers matchs, domicile ou extérieur, adversaire, repos, minutes. Donne une fourchette et une valeur centrale ; si l'utilisateur donne une ligne, indique combien de matchs de la base sont au-dessus et en dessous. Signale un échantillon petit. Jamais de certitude.",
@@ -879,7 +1126,7 @@ async function ask(q){
   CHAT.busy=true;CHAT.status="Claude réfléchit…";const ctl=CHAT.ctl=new AbortController();$("#askInput").value="";renderChat();
   const input=[{role:"user",content:claudeRules()+(S.sampleTools?"":"\n\n"+baseResume())},...hist,{role:"user",content:q}];
   const opts={signal:ctl.signal,onText:({text})=>{bot.content=text;CHAT.status="";renderChat()}};
-  if(S.sampleTools)opts.tools=CLAUDE_TOOLS;else opts.cache=false;
+  if(S.sampleTools)opts.tools=toolsFor(null);else opts.cache=false;
   try{const r=await S.sample(input,opts);bot.content=r.text;if(r.truncated)bot.note="Réponse coupée : pose une question plus précise."}
   catch(e){const c=e&&e.code;bot.content=(e&&e.text)||"";
     if(c==="cancelled")bot.note="Arrêté.";else{bot.error=!bot.content;bot.note=errCopy(c);if(BLOCKING.includes(c))S.sampleBlocked=errCopy(c)}}
@@ -899,8 +1146,8 @@ function renderChat(){
 async function initClaude(){
   S.sampleChecking=true;
   try{S.sample=await window.claude.use("sample")}catch(e){S.sample=null}
-  if(S.sample){try{const l=await S.sample.limits();S.sampleTools=!!(l&&l.tools&&l.tools.maxCount>=CLAUDE_TOOLS.length)}catch(e){S.sampleTools=false}}
-  S.sampleChecking=false;renderChat();
+  if(S.sample){try{const l=await S.sample.limits();S.toolMax=l&&l.tools?l.tools.maxCount:0;S.sampleTools=S.toolMax>=EVAL_TOOLS.length}catch(e){S.sampleTools=false}}
+  S.sampleChecking=false;renderChat();renderValue();
 }
 
 /* Hors de Claude (fichier ouvert directement ou lien dans un onglet), les matchs vivent dans ce navigateur. */
@@ -964,6 +1211,10 @@ async function connect(){
   try{const user=await window.claude.use("user");if(user&&user.can){const c=await user.can("data.write");if(c===false){S.canWrite=false;$("#saveBtn").disabled=true;$("#formMsg").textContent="Lecture seule : seul le propriétaire peut saisir des matchs."}}}catch(e){}
   try{S.downloads=await window.claude.use("downloads")}catch(e){S.downloads=null}
   $("#exportBtn").hidden=!S.downloads;$("#importBtn").hidden=!S.canWrite;$("#dataTools").hidden=!S.downloads&&!S.canWrite;
+  db.collection("paris").onSnapshot(snap=>{S.paris=snap.docs.map(d=>Object.assign({id:d.id},d.data()));if(["value","paris"].includes(S.tab))renderCurrent()},()=>{});
+  db.collection("pronostics").onSnapshot(snap=>{S.pronos=snap.docs.map(d=>Object.assign({id:d.id},d.data()));if(S.tab==="value")renderValue()},()=>{});
+  db.collection("programme").orderBy("nuit","desc").limit(1).onSnapshot(snap=>{S.programme=snap.docs.length?snap.docs[0].data():null;if(S.tab==="value")renderValue()},()=>{});
+  db.doc("reglages/bankroll").onSnapshot(d=>{if(d.exists)Object.assign(BK,d.data());if(["value","paris"].includes(S.tab))renderCurrent()},()=>{});
   db.collection("matchs").onSnapshot(snap=>{
     S.matches=snap.docs.map(d=>Object.assign({id:d.id},d.data()));S.loaded=true;
     setSync(snap.metadata.fromCache?"":"ok",snap.metadata.fromCache?"Synchronisation…":"Base synchronisée");onData();
