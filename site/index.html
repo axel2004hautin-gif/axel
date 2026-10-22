@@ -433,6 +433,19 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 .champ-couleur { position: relative; display: block; }
 .champ-couleur .pastille-couleur { position: absolute; top: 50%; left: 12px; transform: translateY(-50%); }
 .champ-couleur input { padding-left: 32px !important; }
+.bouton-nuancier { justify-self: start; font-size: .88rem; }
+.piece-form .champs-grille > * { align-self: start; }
+.nuancier { display: grid; gap: 12px; padding: 14px; border: 1px solid var(--trait); border-radius: 12px; background: var(--trait-doux); }
+.nuancier-groupes { display: flex; flex-wrap: wrap; gap: 6px; }
+.nuancier-groupe { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid var(--trait); border-radius: 999px; background: #fff; color: var(--encre); font-weight: 600; font-size: .85rem; }
+.nuancier-groupe[aria-pressed="true"] { border-color: var(--marine); background: var(--marine); color: #fff; }
+.nuancier-nuances { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 6px; }
+.nuance { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 6px 8px; border: 1px solid var(--trait); border-radius: 8px; background: #fff; color: var(--encre); font-size: .86rem; text-align: left; }
+.nuance:hover { border-color: var(--marine); }
+.nuance[aria-pressed="true"] { border-color: var(--marine); box-shadow: 0 0 0 2px var(--marine); font-weight: 700; }
+.nuance .pastille-couleur, .nuancier-groupe .pastille-couleur { width: 18px; height: 18px; }
+.nuance span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 599px) { .nuancier { padding: 10px; } .nuancier-nuances { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .reperes-choix { display: flex; flex-wrap: wrap; gap: 8px; }
 .repere-choix { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 12px; border: 1.5px solid var(--trait); border-radius: 999px; background: var(--fond); color: var(--gris); font-weight: 600; cursor: pointer; }
 .repere-choix input { width: 18px; height: 18px; margin: 0; accent-color: var(--marine); }
@@ -1098,8 +1111,14 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
       <label class="titre-champ">Marque<input type="text" id="pi-marque" maxlength="60" list="marques"></label>
       <label class="titre-champ">Catégorie<select id="pi-categorie"></select></label>
       <label class="titre-champ large">Modèle<input type="text" id="pi-modele" maxlength="120" placeholder="Ex. : Jean 502 Taper"></label>
-      <label class="titre-champ">Couleur<span class="champ-couleur"><span class="pastille-couleur" id="pi-pastille"></span><input type="text" id="pi-couleur" maxlength="60" list="couleurs"></span></label>
+      <div class="titre-champ"><label for="pi-couleur">Couleur</label><span class="champ-couleur"><span class="pastille-couleur" id="pi-pastille"></span><input type="text" id="pi-couleur" maxlength="60" list="couleurs" placeholder="Ex. : Bleu marine"></span>
+        <button class="lien-discret bouton-nuancier" type="button" id="pi-nuancier-bouton" aria-expanded="false" aria-controls="pi-nuancier">Choisir dans le nuancier</button></div>
       <label class="titre-champ">Matière<input type="text" id="pi-matiere" maxlength="120" list="matieres" placeholder="Ex. : 100 % coton"></label>
+      <div class="nuancier large" id="pi-nuancier" hidden>
+        <div class="nuancier-groupes" id="pi-groupes" role="group" aria-label="Familles de couleurs"></div>
+        <div class="nuancier-nuances" id="pi-nuances" role="group" aria-label="Nuances"></div>
+        <p class="aide">Une nuance qui n'y est pas : tape-la dans le champ Couleur.</p>
+      </div>
       <label class="titre-champ">Coupe<input type="text" id="pi-coupe" maxlength="120" placeholder="Ex. : slim, jambe droite"></label>
       <label class="titre-champ">Prix<input type="text" id="pi-prix" inputmode="decimal" maxlength="12" placeholder="Ex. : 79,90"></label>
       <label class="titre-champ">Référence<input type="text" id="pi-ref" maxlength="60"></label>
@@ -2098,28 +2117,85 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   ];
   const TEINTE = Object.fromEntries(TEINTES.map(([id, nom, css]) => [id, { nom, css }]));
   const REGLES_TEINTE = [
-    ["motif", "carreaux|raye|rayee|rayures|motif|imprime|vichy|tartan|ecossais|camouflage|fleuri|multicolore"],
-    ["ecru", "blanc casse|ecru|creme|ivoire|off white"],
+    ["motif", "carreaux|raye|rayee|rayures|mariniere|motif|imprime|vichy|tartan|ecossais|pied de poule|pied-de-poule|chevrons?|a pois|camouflage|fleuri|multicolore"],
+    ["ecru", "blanc casse|ecru|creme|ivoire|coquille d.oeuf|off white"],
     ["marine", "marine|navy|bleu nuit|bleu fonce|indigo|brut|rinse"],
-    ["bleu-clair", "bleu clair|bleu ciel|ciel|bleu pale|delave|bleach"],
-    ["bleu", "bleu|denim|stone|jean"],
-    ["gris", "gris|grise|anthracite|charbon|chine|perle|grey|gray"],
+    ["bleu-clair", "bleu clair|bleu ciel|ciel|bleu pale|bleu glacier|delave|bleach"],
+    ["bleu", "bleu|denim|stone|jean|petrole|canard|cobalt|azur|turquoise"],
+    ["gris", "gris|grise|anthracite|charbon|chine|perle|ardoise|souris|argent|argente|grey|gray"],
     ["noir", "noir|noire|black"],
     ["blanc", "blanc|blanche|white"],
     ["bordeaux", "bordeaux|lie de vin|prune|burgundy|grenat"],
-    ["rose", "rose|pink|fuchsia"],
-    ["rouge", "rouge|red"],
-    ["vert", "vert|verte|kaki|olive|sapin|green"],
-    ["marron", "marron|chocolat|brun|cognac|tabac|brown"],
-    ["beige", "beige|camel|sable|taupe|mastic"],
-    ["jaune", "jaune|moutarde|yellow"],
-    ["orange", "orange|rouille|brique"],
-    ["violet", "violet|violette|mauve|lilas|lavande|purple"],
+    ["rose", "rose|pink|fuchsia|framboise|saumon|poudre"],
+    ["rouge", "rouge|red|cerise|carmin"],
+    ["vert", "vert|verte|kaki|olive|sapin|bouteille|emeraude|menthe|sauge|militaire|green"],
+    ["marron", "marron|chocolat|brun|cognac|tabac|caramel|noisette|moka|chataigne|cafe|brown"],
+    ["beige", "beige|camel|sable|taupe|mastic|grege|greige"],
+    ["jaune", "jaune|moutarde|citron|ocre|paille|dore|yellow"],
+    ["orange", "orange|rouille|brique|terracotta|corail|abricot|peche"],
+    ["violet", "violet|violette|mauve|lilas|lavande|parme|aubergine|purple"],
   ].map(([id, mots]) => [id, new RegExp("\\b(" + mots + ")s?\\b")]);
   const MATIERES_PROPOSEES = ["100 % coton", "Coton bio", "Coton et élasthanne", "Denim", "Laine", "Laine mérinos", "Cachemire", "Lin", "Polyester", "Viscose", "Velours côtelé", "Cuir", "Daim", "Nylon"];
-  const COULEURS_PROPOSEES = ["Noir", "Blanc", "Écru", "Gris clair", "Gris moyen", "Anthracite", "Beige", "Camel", "Marron", "Bleu marine", "Bleu", "Bleu clair", "Kaki", "Vert", "Bordeaux", "Rouge", "Rose", "Jaune", "Orange"];
+  // Le nuancier : chaque nuance avec sa vraie couleur et sa famille. Rangé par groupe, du clair au foncé.
+  const MOTIF = (fond, trait) => `repeating-linear-gradient(90deg, ${trait} 0 2px, ${fond} 2px 4px)`;
+  const NUANCES = [
+    ["Blanc", "#ffffff", "blanc"], ["Blanc cassé", "#f4f1e8", "ecru"], ["Ivoire", "#f6f0dc", "ecru"], ["Crème", "#f3e9d2", "ecru"], ["Écru", "#efe6d2", "ecru"], ["Coquille d'œuf", "#ece4d4", "ecru"],
+    ["Gris perle", "#d8d9db", "gris"], ["Gris clair", "#c8cbcf", "gris"], ["Argent", "#bfc1c2", "gris"], ["Gris chiné", "#a9abae", "gris"], ["Gris moyen", "#9ca3ad", "gris"], ["Gris souris", "#8a8d91", "gris"],
+    ["Gris ardoise", "#5d6670", "gris"], ["Anthracite", "#3b3f45", "gris"], ["Gris charbon", "#2f3135", "gris"],
+    ["Noir délavé", "#3a3a3d", "noir"], ["Noir", "#1c1c1f", "noir"],
+    ["Beige clair", "#e2d3b8", "beige"], ["Sable", "#d8c3a0", "beige"], ["Beige", "#cbb08a", "beige"], ["Mastic", "#c4b59a", "beige"], ["Grège", "#b8ad9a", "beige"], ["Camel", "#c19a6b", "beige"], ["Taupe", "#8b7d6b", "beige"],
+    ["Caramel", "#a86b32", "marron"], ["Noisette", "#9c6b3f", "marron"], ["Cognac", "#9a5a2e", "marron"], ["Tabac", "#7b5534", "marron"], ["Marron", "#7a4b2a", "marron"],
+    ["Moka", "#6b4a3a", "marron"], ["Châtaigne", "#5e3a26", "marron"], ["Chocolat", "#4e2e1e", "marron"], ["Café", "#4a3326", "marron"],
+    ["Bleu glacier", "#cfe0ee", "bleu-clair"], ["Bleu ciel", "#9dc1e6", "bleu-clair"], ["Bleu clair", "#a9c6e3", "bleu-clair"], ["Bleu délavé", "#a3b9d1", "bleu-clair"],
+    ["Bleu stone", "#6f8db3", "bleu"], ["Bleu acier", "#5b7a99", "bleu"], ["Bleu jean", "#4a6e9e", "bleu"], ["Bleu azur", "#4c9be0", "bleu"], ["Turquoise", "#3bb3b0", "bleu"], ["Bleu", "#3d6db3", "bleu"],
+    ["Bleu électrique", "#2d5be3", "bleu"], ["Bleu roi", "#2948a8", "bleu"], ["Bleu cobalt", "#2a4fa0", "bleu"], ["Bleu pétrole", "#1f5662", "bleu"], ["Bleu canard", "#0e5e6f", "bleu"],
+    ["Indigo", "#2b2f5e", "marine"], ["Bleu marine", "#1f2d50", "marine"], ["Bleu brut", "#1e2a44", "marine"], ["Bleu nuit", "#18223d", "marine"],
+    ["Vert d'eau", "#b9dccf", "vert"], ["Vert menthe", "#a8d8c0", "vert"], ["Vert amande", "#b5cc95", "vert"], ["Vert sauge", "#9aae8e", "vert"], ["Vert pomme", "#7dbe4a", "vert"], ["Vert", "#5f7d45", "vert"],
+    ["Kaki", "#78744b", "vert"], ["Vert olive", "#6b6a2e", "vert"], ["Vert militaire", "#4f5634", "vert"], ["Vert émeraude", "#1f8a5c", "vert"], ["Vert anglais", "#1f4d3a", "vert"], ["Vert sapin", "#1f4a36", "vert"], ["Vert bouteille", "#1e3d2f", "vert"],
+    ["Rouge vif", "#d62828", "rouge"], ["Rouge", "#c0392b", "rouge"], ["Cerise", "#b0153a", "rouge"], ["Rouge brique", "#a5402d", "rouge"], ["Carmin", "#960018", "rouge"],
+    ["Grenat", "#6e1423", "bordeaux"], ["Bordeaux", "#6e1f2e", "bordeaux"], ["Lie de vin", "#5e1f2b", "bordeaux"], ["Prune", "#5b2141", "bordeaux"],
+    ["Rose pâle", "#f4ccd6", "rose"], ["Rose poudré", "#e8c4c4", "rose"], ["Rose", "#e9a6ba", "rose"], ["Saumon", "#f09a80", "rose"], ["Vieux rose", "#c08081", "rose"], ["Framboise", "#c72c5b", "rose"], ["Fuchsia", "#d1307a", "rose"],
+    ["Jaune pâle", "#f4e5a1", "jaune"], ["Paille", "#e6d49a", "jaune"], ["Jaune citron", "#f2dc3a", "jaune"], ["Jaune", "#e4bd3c", "jaune"], ["Doré", "#c9a44c", "jaune"], ["Moutarde", "#c9a227", "jaune"], ["Ocre", "#c68e2b", "jaune"],
+    ["Pêche", "#f5b79a", "orange"], ["Abricot", "#f2a65a", "orange"], ["Corail", "#f0775a", "orange"], ["Orange", "#e07a35", "orange"], ["Orange brûlé", "#cc5500", "orange"], ["Terracotta", "#c0603f", "orange"], ["Rouille", "#a5492a", "orange"],
+    ["Lilas", "#c3a6d6", "violet"], ["Lavande", "#b4a7d6", "violet"], ["Parme", "#b79fc7", "violet"], ["Mauve", "#b784a7", "violet"], ["Violet", "#7c5aa6", "violet"], ["Aubergine", "#3d1f3a", "violet"],
+    ["Rayé", MOTIF("#ffffff", "#1f2d50"), "motif"], ["Marinière", "repeating-linear-gradient(0deg, #1f2d50 0 2px, #ffffff 2px 4px)", "motif"],
+    ["Carreaux", "repeating-linear-gradient(90deg, rgba(192, 57, 43, .55) 0 2px, transparent 2px 5px), repeating-linear-gradient(0deg, rgba(31, 45, 80, .55) 0 2px, #fff 2px 5px)", "motif"],
+    ["Vichy", "repeating-conic-gradient(#1f2d50 0 25%, #ffffff 0 50%) 0 0 / 5px 5px", "motif"],
+    ["Tartan", "repeating-linear-gradient(90deg, rgba(110, 31, 46, .7) 0 2px, transparent 2px 5px), repeating-linear-gradient(0deg, rgba(95, 125, 69, .7) 0 2px, #1f2d50 2px 5px)", "motif"],
+    ["Pied-de-poule", "repeating-conic-gradient(#1c1c1f 0 25%, #efe6d2 0 50%) 0 0 / 4px 4px", "motif"],
+    ["Chevrons", "repeating-linear-gradient(45deg, #5d6670 0 2px, #c8cbcf 2px 4px)", "motif"],
+    ["À pois", "radial-gradient(#1f2d50 1.4px, #ffffff 1.6px) 0 0 / 5px 5px", "motif"],
+    ["Imprimé", TEINTE.motif.css, "motif"], ["Fleuri", "radial-gradient(#e9a6ba 1.6px, transparent 1.8px) 0 0 / 6px 6px, radial-gradient(#e4bd3c 1.4px, #5f7d45 1.6px) 3px 3px / 6px 6px", "motif"],
+    ["Camouflage", "radial-gradient(circle at 30% 30%, #4f5634 0 28%, transparent 30%), radial-gradient(circle at 70% 65%, #7b5534 0 30%, transparent 32%), #78744b", "motif"],
+    ["Multicolore", TEINTE.motif.css, "motif"],
+  ];
+  // Les groupes du nuancier (le bleu marine, le bleu et le bleu clair vont ensemble ; le bordeaux avec les rouges).
+  const GROUPES_NUANCES = [
+    ["blancs", "Blancs", ["blanc", "ecru"], "ecru"], ["gris", "Gris", ["gris"], "gris"], ["noirs", "Noirs", ["noir"], "noir"], ["beiges", "Beiges", ["beige"], "beige"],
+    ["marrons", "Marrons", ["marron"], "marron"], ["bleus", "Bleus", ["bleu-clair", "bleu", "marine"], "bleu"], ["verts", "Verts", ["vert"], "vert"],
+    ["rouges", "Rouges", ["rouge", "bordeaux"], "rouge"], ["roses", "Roses", ["rose"], "rose"], ["jaunes", "Jaunes", ["jaune"], "jaune"],
+    ["oranges", "Oranges", ["orange"], "orange"], ["violets", "Violets", ["violet"], "violet"], ["motifs", "Motifs", ["motif"], "motif"],
+  ];
   const sansAccents = v => String(v || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-  const teinteDe = couleur => { const c = sansAccents(couleur); for (const [id, re] of REGLES_TEINTE) if (re.test(c)) return id; return ""; };
+  const NUANCE = new Map(NUANCES.map(([nom, css, famille]) => [sansAccents(nom), { nom, css, famille }]));
+  const NOMS_NUANCES = [...NUANCE.keys()].sort((a, b) => b.length - a.length);   // le plus long d'abord
+  // La nuance d'une couleur : son nom exact, ou le nom par lequel elle commence (« Bleu marine chiné »).
+  const nuanceDe = couleur => {
+    const c = sansAccents(couleur).trim().replace(/\s+/g, " ");
+    if (!c) return null;
+    if (NUANCE.has(c)) return NUANCE.get(c);
+    const debut = NOMS_NUANCES.find(n => c.startsWith(n + " "));
+    return debut ? NUANCE.get(debut) : null;
+  };
+  const teinteDe = couleur => {
+    const n = nuanceDe(couleur);
+    if (n) return n.famille;
+    const c = sansAccents(couleur);
+    for (const [id, re] of REGLES_TEINTE) if (re.test(c)) return id;
+    return "";
+  };
+  // La couleur d'une pastille : la nuance exacte si on la connaît, sinon celle de la famille.
+  const cssCouleur = couleur => { const n = nuanceDe(couleur), t = teinteDe(couleur); return n ? n.css : t ? TEINTE[t].css : ""; };
   const PHOTO_ASSET_RE = /^[0-9a-f]{32}$/i;
   const PHOTO_FICHIER_RE = /^images\/[a-z0-9-]+\.jpg$/;
   const PHOTO_LOCALE_RE = /^data:image\/(jpeg|png);base64,[A-Za-z0-9+/=]+$/;
@@ -2264,9 +2340,8 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     b.append(element("span", "piece-modele", x.modele || NOM_CATEGORIE[x.categorie]));
     const ligne = element("span", "piece-ligne");
     if (x.couleur) {
-      const t = teinteDe(x.couleur);
       const p = element("span", "pastille-couleur");
-      if (t) p.style.setProperty("--teinte", TEINTE[t].css);
+      if (cssCouleur(x.couleur)) p.style.setProperty("--teinte", cssCouleur(x.couleur));
       ligne.append(p, element("span", null, x.couleur));
     }
     if (x.prix != null) ligne.append(element("span", null, (x.couleur ? "· " : "") + formatPrix(x.prix)));
@@ -2320,7 +2395,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 
     // Propositions dans le formulaire
     $("marques").replaceChildren(...[...marques].sort((a, b) => a.localeCompare(b, "fr")).map(m => new Option(m)));
-    const couleurs = new Map(COULEURS_PROPOSEES.map(c => [sansAccents(c), c]));
+    const couleurs = new Map(NUANCES.map(([c]) => [sansAccents(c), c]));
     toutes.forEach(x => { if (x.couleur && !couleurs.has(sansAccents(x.couleur))) couleurs.set(sansAccents(x.couleur), x.couleur); });
     $("couleurs").replaceChildren(...[...couleurs.values()].sort((a, b) => a.localeCompare(b, "fr")).map(c => new Option(c)));
     const matieres = new Map(MATIERES_PROPOSEES.map(m => [sansAccents(m), m]));
@@ -2524,8 +2599,8 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     return l;
   }));
   function majFormulairePiece() {
-    const t = teinteDe($("pi-couleur").value);
-    $("pi-pastille").style.setProperty("--teinte", t ? TEINTE[t].css : "transparent");
+    $("pi-pastille").style.setProperty("--teinte", cssCouleur($("pi-couleur").value) || "transparent");
+    if (!$("pi-nuancier").hidden) marquerNuance();
     REPERES_PIECE.forEach(([k]) => $("pi-rep-" + k).closest(".repere-choix").classList.toggle("coche", $("pi-rep-" + k).checked));
   }
   const srcFiche = f => (f.url || srcPhoto(f.stockee));
@@ -2557,6 +2632,54 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     $("pi-retirer").hidden = !modifiable || !vue;
   }
   const libererPhotosFiche = () => { photosFiche.forEach(f => { if (f.url) URL.revokeObjectURL(f.url); }); photosFiche = []; photoVue = 0; };
+  // ----- le nuancier -----
+  let groupeNuancier = GROUPES_NUANCES[0][0];
+  const groupeDe = couleur => { const t = teinteDe(couleur); const g = GROUPES_NUANCES.find(([, , familles]) => familles.includes(t)); return g ? g[0] : null; };
+  const pastille = css => { const p = element("span", "pastille-couleur"); p.style.setProperty("--teinte", css); return p; };
+  function rendreNuancier() {
+    $("pi-groupes").replaceChildren(...GROUPES_NUANCES.map(([id, nom, , famille]) => {
+      const b = element("button", "nuancier-groupe");
+      b.type = "button";
+      b.dataset.groupe = id;
+      b.setAttribute("aria-pressed", String(id === groupeNuancier));
+      b.append(pastille(TEINTE[famille].css), element("span", null, nom));
+      return b;
+    }));
+    const familles = GROUPES_NUANCES.find(g => g[0] === groupeNuancier)[2];
+    $("pi-nuances").replaceChildren(...NUANCES.filter(n => familles.includes(n[2])).map(([nom, css]) => {
+      const b = element("button", "nuance");
+      b.type = "button";
+      b.dataset.nuance = nom;
+      b.append(pastille(css), element("span", null, nom));
+      return b;
+    }));
+    marquerNuance();
+  }
+  function marquerNuance() {
+    const n = nuanceDe($("pi-couleur").value);
+    $("pi-nuances").querySelectorAll("[data-nuance]").forEach(b => b.setAttribute("aria-pressed", String(!!n && b.dataset.nuance === n.nom)));
+  }
+  function montrerNuancier(ouvert) {
+    $("pi-nuancier").hidden = !ouvert;
+    $("pi-nuancier-bouton").setAttribute("aria-expanded", String(ouvert));
+    $("pi-nuancier-bouton").textContent = ouvert ? "Fermer le nuancier" : "Choisir dans le nuancier";
+    if (ouvert) { groupeNuancier = groupeDe($("pi-couleur").value) || groupeNuancier; rendreNuancier(); }
+  }
+  $("pi-nuancier-bouton").addEventListener("click", () => montrerNuancier($("pi-nuancier").hidden));
+  $("pi-groupes").addEventListener("click", e => {
+    const b = e.target.closest("[data-groupe]");
+    if (b) { groupeNuancier = b.dataset.groupe; rendreNuancier(); }
+  });
+  $("pi-nuances").addEventListener("click", e => {
+    const b = e.target.closest("[data-nuance]");
+    if (!b) return;
+    $("pi-couleur").value = b.dataset.nuance;
+    effacerErreurPiece();
+    majFormulairePiece();
+    montrerNuancier(false);
+    $("pi-couleur").focus();
+  });
+
   function effacerErreurPiece() {
     $("pi-erreur").hidden = true;
     $("piece-form").querySelectorAll(".en-erreur").forEach(el => el.classList.remove("en-erreur"));
@@ -2588,6 +2711,8 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     $("pi-lien").value = x && x.lien ? x.lien : "";
     $("pi-note").value = x ? x.note : "";
     REPERES_PIECE.forEach(([k]) => { $("pi-rep-" + k).checked = !!(x && x.reperes[k]); });
+    montrerNuancier(false);
+    $("pi-nuancier-bouton").hidden = !modifiable;
     $("pi-voir-lien").hidden = !(x && x.lien);
     if (x && x.lien) $("pi-voir-lien").href = x.lien;
     [...$("piece-form").elements].forEach(el => { el.disabled = !modifiable; });
@@ -3144,7 +3269,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   }
   function celluleCouleurs(couleurs) {
     const s = element("span", "piece-ligne");
-    couleurs.filter(Boolean).forEach(c => { const p = element("span", "pastille-couleur"); const t = teinteDe(c); if (t) p.style.setProperty("--teinte", TEINTE[t].css); s.append(p, element("span", null, c)); });
+    couleurs.filter(Boolean).forEach(c => { const p = element("span", "pastille-couleur"); if (cssCouleur(c)) p.style.setProperty("--teinte", cssCouleur(c)); s.append(p, element("span", null, c)); });
     return couleurs.filter(Boolean).length ? s : "—";
   }
   function lignesPieces(xs) {
@@ -3298,11 +3423,13 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2];
   }
   // La famille de couleur d'une pièce pour la note (le vert kaki ou olive compte comme un neutre).
-  const familleNote = x => { const t = teinteDe(x.couleur); return t === "vert" && /kaki|olive/.test(sansAccents(x.couleur)) ? "kaki" : t; };
+  const familleNote = x => { const t = teinteDe(x.couleur); return t === "vert" && /kaki|olive|militaire|sauge/.test(sansAccents(x.couleur)) ? "kaki" : t; };
   const nomFamille = f => (f === "kaki" ? "kaki" : TEINTE[f].nom.toLowerCase());
   function clarte(x) {
     const t = teinteDe(x.couleur);
     if (!t || t === "motif") return null;
+    const n = nuanceDe(x.couleur);
+    if (n && n.css.startsWith("#")) return luminance(n.css);   // la nuance exacte
     const c = sansAccents(x.couleur);
     let l = luminance(TEINTE[t].css);
     if (/clair|pale|ciel/.test(c)) l += 0.2;
