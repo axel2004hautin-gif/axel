@@ -97,23 +97,23 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 .bande a:focus-visible { outline-color: var(--sur-marine); outline-offset: -4px; }
 @media (max-width: 599px) { .bande-dedans { gap: 0; } .rubrique-menu { flex: 1; } .bande a { flex: 1; padding-inline: 8px; text-align: center; } }
 /* Sous-rubriques : un bandeau clair sous le bandeau marine, au survol (ou au clavier) de la rubrique */
-.sous-bande { position: absolute; left: 0; right: 0; top: 100%; display: none; background: var(--marine-doux); border-bottom: 1px solid var(--trait); box-shadow: 0 10px 24px rgba(15, 25, 50, .14); }
+.sous-bande { position: absolute; left: 0; right: 0; top: 100%; display: none; background: var(--c-doux); border-bottom: 1px solid var(--trait); box-shadow: 0 10px 24px rgba(15, 25, 50, .14); }
 @media (hover: hover) { .rubrique-menu:hover .sous-bande { display: block; } }
 .rubrique-menu:has(:focus-visible) .sous-bande { display: block; }
 .rubrique-menu.replie .sous-bande { display: none; }
 .sous-bande-dedans { display: flex; flex-wrap: wrap; gap: 4px; }
-.bande .sous-bande a { flex: 0 0 auto; padding: 13px 20px; color: var(--marine); font-size: 1rem; text-align: left; }
+.bande .sous-bande a { flex: 0 0 auto; padding: 13px 20px; color: var(--c); font-size: 1rem; text-align: left; }
 .bande .sous-bande a:hover, .bande .sous-bande a[aria-current="page"] { background: var(--fond); color: var(--marine); }
 .bande .sous-bande a[aria-current="page"]::after { height: 3px; background: var(--marine); }
 .bande .sous-bande a:focus-visible { outline-color: var(--marine); }
 /* Sur une page de Travail, ses sous-rubriques restent affichées sous le bandeau (le menu au survol se
    tait alors) ; sur téléphone, elles défilent au doigt. */
-.sous-nav { background: var(--marine-doux); border-bottom: 1px solid var(--trait); }
+.sous-nav { background: var(--c-doux); border-bottom: 1px solid var(--trait); }
 .sous-nav-dedans { position: relative; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
 .sous-nav-dedans::-webkit-scrollbar { display: none; }
-.sous-nav a { position: relative; flex: none; padding: clamp(10px, 1.6vh, 13px) 18px; color: var(--marine); font: 600 1rem/1 var(--f-body); text-decoration: none; white-space: nowrap; }
+.sous-nav a { position: relative; flex: none; padding: clamp(10px, 1.6vh, 13px) 18px; color: var(--c); font: 600 1rem/1 var(--f-body); text-decoration: none; white-space: nowrap; }
 .sous-nav a:hover, .sous-nav a[aria-current="page"] { background: var(--fond); }
-.sous-nav a[aria-current="page"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--marine); }
+.sous-nav a[aria-current="page"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--c); }
 .sous-nav a:focus-visible { outline-offset: -3px; }
 .sous-nav .nom-court { display: none; }
 .avec-sous-nav .sous-bande { display: none !important; }
@@ -561,6 +561,141 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 .suppr-ca.arme { background: var(--erreur); color: var(--sur-marine); font-size: .85rem; }
 @media (max-width: 559px) { .table-ca th, .table-ca td { padding-inline: 4px; font-size: .88rem; } }
 
+/* Argent : vert, très visuel. Road to 50k en tête (barre, répartition, courbe), puis l'épargne et le mois.
+   Une seule teinte quand la longueur dit le montant ; trois couleurs validées (et toujours leur nom et leur
+   montant à côté) quand des parts se partagent un tout. */
+:root { --seg-1: #2a78d6; --seg-2: #eb6834; --seg-3: #1baf7a; --seg-reste: #e3e6ec; --argent-clair: #9cc9b6; }
+.r-argent .page-tete h1 { color: var(--c); }
+.argent { gap: 20px; }
+.road { display: grid; gap: 14px; padding: 20px; border: 1.5px solid var(--argent); border-radius: 14px; background: linear-gradient(180deg, var(--argent-doux), var(--fond) 70%); }
+.road-tete { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 10px 20px; }
+.road-tete .eyebrow { color: var(--argent); font-weight: 700; }
+.road-total { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin-top: 4px; }
+.road-total > span:first-child, .carte-argent-chiffre > span:first-child { font-family: var(--f-display); font-weight: 850; font-size: clamp(2.2rem, 7vw, 3.4rem); line-height: 1; color: var(--argent); font-variant-numeric: tabular-nums; }
+.carte-argent-chiffre { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.carte-argent-chiffre > span:first-child { font-size: clamp(1.7rem, 5vw, 2.3rem); }
+.carte-argent-chiffre .negatif, .budget-reste.negatif { color: var(--erreur) !important; }
+.road-sur { color: var(--gris); font-weight: 600; }
+.road-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.road-pourcent { font-family: var(--f-display); font-weight: 850; font-size: 1.6rem; color: var(--argent); font-variant-numeric: tabular-nums; }
+.road-detail { font-weight: 600; }
+.progression { position: relative; height: 14px; overflow: hidden; border-radius: 999px; background: var(--trait-doux); box-shadow: inset 0 0 0 1px var(--trait); }
+.progression.grande { height: 26px; }
+.progression-valeur { position: absolute; top: 0; bottom: 0; left: 0; min-width: 4px; border-radius: 999px; background: var(--argent); }
+@media (prefers-reduced-motion: no-preference) { .progression-valeur { transition: width .5s ease; } }
+.repartition { display: grid; gap: 8px; }
+.segments { display: flex; gap: 2px; height: 14px; overflow: hidden; border-radius: 999px; background: var(--fond); }
+.segments.grande { height: 22px; }
+.segment { flex: 0 0 auto; flex-basis: 0; min-width: 3px; }
+.segment.seg-1, .pastille-seg.seg-1 { background: var(--seg-1); }
+.segment.seg-2, .pastille-seg.seg-2 { background: var(--seg-2); }
+.segment.seg-3, .pastille-seg.seg-3 { background: var(--seg-3); }
+.segment.seg-reste, .pastille-seg.seg-reste { background: var(--seg-reste); }
+.segment.seg-autre, .pastille-seg.seg-autre { background: var(--gris); }
+.segment.vide { min-width: 0; background: var(--trait-doux); }
+.legende-segments { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0; padding: 0; list-style: none; }
+.legende-segments li { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: .92rem; }
+.pastille-seg { width: 12px; height: 12px; border-radius: 3px; }
+.legende-nom { font-weight: 600; }
+.legende-val { font-variant-numeric: tabular-nums; }
+.legende-detail { color: var(--gris); font-size: .85rem; }
+.graphe-zone .trajectoire { stroke: var(--gris); stroke-width: 1.5; stroke-dasharray: 6 5; }
+.graphe-zone .etiquette-trajectoire { font: 600 11px var(--f-mono); fill: var(--gris); }
+.graphe-zone .etiquette-serie { font: 700 12px var(--f-body); fill: var(--argent); }
+.r-argent .graphe-zone .trace { stroke: var(--argent); }
+.r-argent .graphe-zone .point { fill: var(--argent); }
+.argent-duo { display: grid; gap: 16px; }
+@media (min-width: 760px) { .argent-duo { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.carte-argent { display: grid; align-content: start; gap: 10px; min-width: 0; padding: 18px 20px; border: 1.5px solid var(--trait); border-radius: 14px; background: var(--fond); color: var(--encre); }
+.carte-argent .eyebrow { color: var(--argent); font-weight: 700; }
+.carte-lien { text-decoration: none; transition: border-color .15s ease; }
+.carte-lien:hover { border-color: var(--argent); }
+.page-argent { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; padding-block: 28px 56px; }
+.mois-nav { display: inline-flex; align-items: center; gap: 6px; }
+.mois-nav button { display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 1.5px solid var(--trait); border-radius: 50%; background: var(--fond); color: var(--argent); font-size: 1.4rem; line-height: 1; }
+.mois-nav button:hover { border-color: var(--argent); }
+.mois-nav span { min-width: 9.5em; font-family: var(--f-display); font-weight: 750; font-size: 1.1rem; text-align: center; }
+.budget-reste { font-family: var(--f-display); font-weight: 850; font-size: clamp(2rem, 6vw, 2.8rem); line-height: 1.05; color: var(--argent); font-variant-numeric: tabular-nums; }
+.lignes-argent { display: grid; margin: 0; padding: 0; list-style: none; }
+.ligne-argent { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 4px 12px; padding: 10px 2px; border-bottom: 1px solid var(--trait); }
+.ligne-argent-corps { display: grid; gap: 2px; min-width: 0; }
+.ligne-argent-titre { font-weight: 600; }
+a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
+.ligne-argent-detail { color: var(--gris); font-size: .9rem; }
+.ligne-argent-montant { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ligne-argent.total { border-bottom: 0; }
+.ligne-argent.total .ligne-argent-titre, .ligne-argent.total .ligne-argent-montant { font-size: 1.08rem; }
+.ligne-argent.payee .ligne-argent-detail { color: var(--conge); }
+.ligne-reglage { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; margin-top: 10px; }
+.ligne-reglage .titre-champ { flex: 1 1 260px; }
+.ligne-reglage input { width: 100%; }
+.depenses-actions { display: grid; gap: 12px; padding: 14px; border: 1.5px solid var(--trait); border-radius: 12px; background: var(--argent-doux); }
+.depenses-actions .bouton-fichier { justify-self: start; }
+.saisie-depense { display: grid; gap: 10px; }
+.saisie-depense-ligne { display: grid; grid-template-columns: minmax(0, 8em) minmax(0, 1fr) minmax(0, 11em) auto; gap: 10px; }
+.saisie-depense-ligne input { width: 100%; min-width: 0; }
+@media (max-width: 599px) { .saisie-depense-ligne { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .saisie-depense-ligne #de-libelle { grid-column: 1 / -1; grid-row: 2; } }
+.puces-choix { display: flex; flex-wrap: wrap; gap: 6px; }
+.puce-choix { position: relative; }
+.puce-choix input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.puce-choix span { display: inline-block; padding: 7px 12px; border: 1.5px solid var(--trait); border-radius: 999px; background: var(--fond); font-weight: 600; font-size: .9rem; }
+.puce-choix input:checked + span { border-color: var(--argent); background: var(--argent); color: var(--sur-marine); }
+.puce-choix input:focus-visible + span { outline: 2px solid var(--argent); outline-offset: 2px; }
+@media (max-width: 599px) { .puces-choix { flex-wrap: nowrap; overflow-x: auto; margin-inline: -14px; padding-inline: 14px; scrollbar-width: none; } .puces-choix::-webkit-scrollbar { display: none; } .puce-choix { flex: none; } }
+.barres-h { display: grid; gap: 6px; }
+.barre-h { display: grid; grid-template-columns: minmax(7em, 11em) minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 5px 6px; border: 0; border-radius: 8px; background: none; color: var(--encre); text-align: left; }
+.barre-h:hover, .barre-h.active { background: var(--argent-doux); }
+.barre-h-nom { font-weight: 600; font-size: .95rem; }
+.barre-h-piste { height: 14px; border-radius: 0 4px 4px 0; background: var(--trait-doux); }
+.barre-h-valeur { display: block; height: 100%; min-width: 3px; border-radius: 0 4px 4px 0; background: var(--argent); }
+.barre-h-montant { font-variant-numeric: tabular-nums; font-size: .9rem; white-space: nowrap; }
+@media (max-width: 479px) { .barre-h { grid-template-columns: minmax(0, 1fr) auto; } .barre-h-piste { grid-column: 1 / -1; grid-row: 2; } }
+.barres-v { display: flex; align-items: stretch; gap: 8px; height: 190px; padding-top: 6px; }
+.barre-v { display: flex; flex: 1 1 0; flex-direction: column; gap: 6px; min-width: 0; padding: 0; border: 0; background: none; color: var(--encre); }
+.barre-v-zone { display: flex; flex: 1 1 auto; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; border-bottom: 1px solid var(--trait); }
+.barre-v-valeur { width: min(100%, 46px); min-height: 2px; border-radius: 4px 4px 0 0; background: var(--argent-clair); }
+.barre-v.active .barre-v-valeur, .barre-v:hover .barre-v-valeur { background: var(--argent); }
+.barre-v.estimee .barre-v-valeur { background: repeating-linear-gradient(135deg, var(--argent-doux) 0 5px, var(--argent-clair) 5px 10px); box-shadow: inset 0 0 0 1.5px var(--argent-clair); }
+.barre-v.estimee.active .barre-v-valeur { box-shadow: inset 0 0 0 2px var(--argent); }
+.barre-v-montant { font: 600 .72rem/1 var(--f-mono); color: var(--gris); white-space: nowrap; }
+.barre-v.active .barre-v-montant { color: var(--encre); }
+.barre-v-nom { font: 600 .74rem/1 var(--f-mono); text-transform: uppercase; color: var(--gris); text-align: center; }
+.barre-v.active .barre-v-nom { color: var(--argent); }
+.filtre-actif { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.ops { display: grid; margin: 0; padding: 0; list-style: none; }
+.ops-jour { padding: 14px 2px 4px; font: 600 .74rem/1.2 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--gris); }
+.op { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 4px 10px; padding: 8px 2px; border-bottom: 1px solid var(--trait); }
+.op-corps { display: grid; gap: 4px; min-width: 0; }
+.op-libelle { overflow: hidden; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; }
+.op select.op-categorie { justify-self: start; max-width: 100%; min-height: 32px; padding: 2px 8px; border: 1.5px solid var(--trait); border-radius: 999px; background: var(--fond); color: var(--gris); font-size: .85rem; }
+.op span.op-categorie { color: var(--gris); font-size: .85rem; }
+.op-montant { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.op-montant.plus { color: var(--conge); }
+.op.hors .op-libelle, .op.hors .op-montant { color: var(--gris); }
+.projets { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+@media (min-width: 760px) { .projets { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.projet-tete { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.projet-nom { flex: 1 1 auto; font-family: var(--f-display); font-weight: 800; font-size: 1.2rem; color: var(--argent); }
+.projet-chiffres { font-weight: 700; font-variant-numeric: tabular-nums; }
+.projet-tete .tache-modifier { margin-left: auto; }
+.formulaire-paie { gap: 14px; }
+.formulaire-paie .bouton-principal { justify-self: start; }
+.legende-courbe { display: flex; flex-wrap: wrap; gap: 4px 18px; margin: 0; padding: 0; list-style: none; color: var(--gris); font-size: .88rem; }
+.legende-courbe li::before { content: ""; display: inline-block; width: 18px; margin-right: 6px; vertical-align: middle; border-top: 2px solid var(--argent); }
+.legende-courbe .l-trajectoire::before { border-top: 1.5px dashed var(--gris); }
+.legende-segments.petite { display: flex; flex-wrap: wrap; gap: 4px 14px; color: var(--gris); font-size: .82rem; }
+.legende-segments.petite > span { display: inline-flex; align-items: center; gap: 6px; }
+.argent .sous-rubriques { grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr)); }
+.r-argent .section-tete-ligne { border-bottom-color: var(--c); }
+.r-argent .section-tete-ligne h2 { color: var(--c); }
+.r-argent .bouton-principal { background: var(--c); }
+.r-argent .bouton-principal:hover { background: #17573f; }
+.barre-v { max-width: 120px; }
+@media (min-width: 700px) { .op-corps { grid-template-columns: minmax(0, 1fr) minmax(0, 15em); align-items: center; gap: 12px; } }
+.co-groupe { display: grid; gap: 10px; margin: 6px 0 0; padding: 12px 14px; border: 1px solid var(--trait); border-radius: 10px; }
+.co-groupe legend { padding: 0 6px; font-weight: 700; color: var(--argent); }
+.co-groupe input { width: 100%; }
+
 /* Garde-robe Blue Box */
 .catalogue { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; padding-block: 28px 56px; }
 .page-tete-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
@@ -891,17 +1026,35 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
           </div>
         </div>
       </div>
-      <a href="#argent" data-aller="argent">Argent</a>
+      <div class="rubrique-menu">
+        <a href="#argent" data-aller="argent">Argent</a>
+        <div class="sous-bande r-argent" role="group" aria-label="Sous-rubriques d'Argent">
+          <div class="cadre sous-bande-dedans">
+            <a href="#budget" data-aller="budget">Budget du mois</a>
+            <a href="#depenses" data-aller="depenses">Dépenses</a>
+            <a href="#epargne" data-aller="epargne">Épargne et projets</a>
+            <a href="#paie" data-aller="paie">Ma paie</a>
+          </div>
+        </div>
+      </div>
       <a href="#sport" data-aller="sport">Sport</a>
     </div>
   </nav>
-  <nav class="sous-nav" id="sous-nav-travail" aria-label="Sous-rubriques de Travail" hidden>
+  <nav class="sous-nav r-travail" id="sous-nav-travail" data-rubrique="travail" aria-label="Sous-rubriques de Travail" hidden>
     <div class="cadre sous-nav-dedans">
       <a href="#planning" data-aller="planning"><span class="nom-long">Mon planning</span><span class="nom-court">Planning</span></a>
       <a href="#todo" data-aller="todo"><span class="nom-long">To-do list</span><span class="nom-court">To-do</span></a>
       <a href="#garde-robe" data-aller="garde-robe"><span class="nom-long">Garde-robe Blue Box</span><span class="nom-court">Garde-robe</span></a>
       <a href="#calendrier" data-aller="calendrier"><span class="nom-long">Calendrier commercial</span><span class="nom-court">Calendrier</span></a>
       <a href="#objectifs" data-aller="objectifs">Objectifs</a>
+    </div>
+  </nav>
+  <nav class="sous-nav r-argent" id="sous-nav-argent" data-rubrique="argent" aria-label="Sous-rubriques d'Argent" hidden>
+    <div class="cadre sous-nav-dedans">
+      <a href="#budget" data-aller="budget"><span class="nom-long">Budget du mois</span><span class="nom-court">Budget</span></a>
+      <a href="#depenses" data-aller="depenses">Dépenses</a>
+      <a href="#epargne" data-aller="epargne"><span class="nom-long">Épargne et projets</span><span class="nom-court">Épargne</span></a>
+      <a href="#paie" data-aller="paie">Ma paie</a>
     </div>
   </nav>
 </header>
@@ -928,8 +1081,8 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
           <a class="carte-rubrique" href="#argent">
             <span class="numero" aria-hidden="true">2</span>
             <span class="carte-titre">Argent</span>
-            <span class="carte-texte">Ce qui rentre, ce qui sort et ce que je mets de côté.</span>
-            <span class="carte-pied"><span>4 idées</span><span class="fleche">Ouvrir →</span></span>
+            <span class="carte-texte">Mon budget, mes dépenses, ma paie et Road to 50k.</span>
+            <span class="carte-pied"><span id="resume-argent">Budget, dépenses, épargne</span><span class="fleche">Ouvrir →</span></span>
           </a>
         </li>
         <li class="r-sport">
@@ -1332,22 +1485,232 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   </section>
 
   <section class="r-argent" data-vue="argent" aria-labelledby="titre-argent" hidden>
-    <div class="cadre rubrique">
+    <div class="cadre rubrique argent">
       <div class="rubrique-tete">
         <p class="eyebrow">Rubrique 2 sur 3</p>
         <h1 id="titre-argent" tabindex="-1">Argent</h1>
-        <p class="chapo">Mon budget, mes dépenses et mon épargne, au même endroit.</p>
+        <p class="chapo">Mon budget, mes dépenses, ma paie et mon épargne, au même endroit.</p>
       </div>
-      <div class="section-tete">
-        <h2>À construire</h2>
-        <p>Des pistes pour démarrer. Rien n'est décidé : on garde, on change ou on enlève.</p>
+      <section class="road" id="ar-road" aria-labelledby="ar-road-titre" hidden>
+        <div class="road-tete">
+          <div>
+            <p class="eyebrow" id="ar-road-titre">Road to 50k</p>
+            <p class="road-total"><span id="ar-road-total">0 €</span> <span class="road-sur" id="ar-road-sur"></span></p>
+          </div>
+          <div class="road-actions">
+            <span class="road-pourcent" id="ar-road-pourcent"></span>
+            <button class="bouton-second" type="button" data-maj-comptes>Mettre à jour mes comptes</button>
+          </div>
+        </div>
+        <div class="progression grande" id="ar-road-barre"></div>
+        <p class="road-detail" id="ar-road-detail"></p>
+        <div class="repartition" id="ar-road-repartition" hidden>
+          <div class="segments" id="ar-road-segments"></div>
+          <ul class="legende-segments" id="ar-road-legende"></ul>
+        </div>
+        <ul class="legende-courbe" id="ar-road-legende-courbe" aria-hidden="true"><li class="l-total">Mon total</li><li class="l-trajectoire">Trajectoire jusqu'à l'objectif</li></ul>
+        <div class="graphe-zone" id="ar-road-graphe" hidden></div>
+        <p class="aide" id="ar-road-vide" hidden>La courbe apparaît dès le premier mois enregistré.</p>
+      </section>
+      <div class="argent-duo">
+        <section class="carte-argent" id="ar-epargne" aria-labelledby="ar-ep-titre" hidden>
+          <p class="eyebrow" id="ar-ep-titre">Épargne</p>
+          <p class="carte-argent-chiffre"><span id="ar-ep-total"></span> <span class="road-sur" id="ar-ep-sur"></span></p>
+          <div class="progression" id="ar-ep-barre"></div>
+          <p class="aide" id="ar-ep-detail"></p>
+        </section>
+        <a class="carte-argent carte-lien" href="#budget">
+          <span class="eyebrow" id="ar-mois-titre">Ce mois-ci</span>
+          <span class="carte-argent-chiffre"><span id="ar-mois-reste"></span> <span class="road-sur">à dépenser</span></span>
+          <span class="segments" id="ar-mois-barre"></span>
+          <span class="legende-segments petite"><span><span class="pastille-seg seg-1"></span>Charges fixes</span><span><span class="pastille-seg seg-2"></span>Dépenses</span><span><span class="pastille-seg seg-3"></span>Épargne</span></span>
+          <span class="aide" id="ar-mois-detail"></span>
+        </a>
       </div>
-      <ul class="emplacements">
-        <li class="emplacement"><span class="statut">Idée</span><h3>Mon budget du mois</h3><p>Le salaire qui rentre, les charges qui sortent et ce qu'il reste à dépenser.</p></li>
-        <li class="emplacement"><span class="statut">Idée</span><h3>Mes dépenses</h3><p>Notées au fil de l'eau et rangées par catégorie.</p></li>
-        <li class="emplacement"><span class="statut">Idée</span><h3>Mon épargne</h3><p>Mes objectifs d'épargne et où j'en suis pour chacun.</p></li>
-        <li class="emplacement"><span class="statut">Idée</span><h3>Mes achats prévus</h3><p>Ce que je veux m'offrir, avec son prix et la date visée.</p></li>
+      <ul class="sous-rubriques">
+        <li>
+          <a class="carte-sous" href="#budget">
+            <span class="carte-sous-titre">Budget du mois</span>
+            <span class="carte-sous-texte">Ce qui rentre, les charges fixes, l'épargne et ce qu'il reste à dépenser.</span>
+            <span class="carte-sous-ligne" id="carte-budget-ligne"></span>
+            <span class="carte-sous-pied"><span>Mois par mois</span><span class="fleche">Ouvrir →</span></span>
+          </a>
+        </li>
+        <li>
+          <a class="carte-sous" href="#depenses">
+            <span class="carte-sous-titre">Dépenses</span>
+            <span class="carte-sous-texte">Le relevé de la Caisse d'Épargne importé et rangé par catégorie, et ce que je note à la main.</span>
+            <span class="carte-sous-ligne" id="carte-depenses-ligne"></span>
+            <span class="carte-sous-pied"><span>Par catégorie</span><span class="fleche">Ouvrir →</span></span>
+          </a>
+        </li>
+        <li>
+          <a class="carte-sous" href="#epargne">
+            <span class="carte-sous-titre">Épargne et projets</span>
+            <span class="carte-sous-texte">Mes comptes Trade Republic et mes livrets, mes objectifs et mes achats prévus.</span>
+            <span class="carte-sous-ligne" id="carte-epargne-ligne"></span>
+            <span class="carte-sous-pied"><span>Mes objectifs</span><span class="fleche">Ouvrir →</span></span>
+          </a>
+        </li>
+        <li>
+          <a class="carte-sous" href="#paie">
+            <span class="carte-sous-titre">Ma paie</span>
+            <span class="carte-sous-texte">La paie attendue d'après mon compteur d'heures, et mes fiches de paie.</span>
+            <span class="carte-sous-ligne" id="carte-paie-ligne"></span>
+            <span class="carte-sous-pied"><span>Calcul et historique</span><span class="fleche">Ouvrir →</span></span>
+          </a>
+        </li>
       </ul>
+    </div>
+  </section>
+
+  <section class="r-argent" data-vue="budget" aria-labelledby="titre-budget" hidden>
+    <div class="cadre page-argent">
+      <div class="page-tete">
+        <div>
+          <p class="eyebrow">Argent</p>
+          <h1 id="titre-budget" tabindex="-1">Budget du mois</h1>
+        </div>
+        <div class="mois-nav"><button type="button" data-mois-argent="-1" aria-label="Mois précédent">‹</button><span id="bu-mois"></span><button type="button" data-mois-argent="1" aria-label="Mois suivant">›</button></div>
+      </div>
+      <section class="carte-argent budget-tete" aria-labelledby="bu-reste-titre">
+        <p class="eyebrow" id="bu-reste-titre">Reste à dépenser</p>
+        <p class="budget-reste" id="bu-reste"></p>
+        <p class="aide" id="bu-par-jour"></p>
+        <div class="segments grande" id="bu-barre"></div>
+        <ul class="legende-segments" id="bu-legende"></ul>
+      </section>
+      <section aria-labelledby="bu-rev-titre">
+        <div class="section-tete-ligne"><h2 id="bu-rev-titre">Ce qui rentre</h2></div>
+        <ul class="lignes-argent" id="bu-revenus"></ul>
+        <p class="aide">La paie arrive à la fin du mois : celle d'un mois sert au budget du mois suivant.</p>
+      </section>
+      <section aria-labelledby="bu-ch-titre">
+        <div class="section-tete-ligne"><h2 id="bu-ch-titre">Charges fixes</h2><button class="bouton-second" type="button" id="bu-ajouter-charge">Ajouter une charge</button></div>
+        <ul class="lignes-argent" id="bu-charges"></ul>
+        <p class="aide" id="bu-charges-aide"></p>
+      </section>
+      <section aria-labelledby="bu-ep-titre">
+        <div class="section-tete-ligne"><h2 id="bu-ep-titre">Épargne du mois</h2></div>
+        <p id="bu-epargne"></p>
+        <form class="ligne-reglage champs-tache" id="bu-versement-form" novalidate>
+          <label class="titre-champ">Versement prévu chaque mois (Trade Republic et livrets)<input type="text" inputmode="decimal" id="bu-versement" placeholder="Ex. : 500"></label>
+          <button class="bouton-second" type="submit">Enregistrer</button>
+        </form>
+      </section>
+    </div>
+  </section>
+
+  <section class="r-argent" data-vue="depenses" aria-labelledby="titre-depenses" hidden>
+    <div class="cadre page-argent">
+      <div class="page-tete">
+        <div>
+          <p class="eyebrow">Argent</p>
+          <h1 id="titre-depenses" tabindex="-1">Dépenses</h1>
+        </div>
+        <div class="mois-nav"><button type="button" data-mois-argent="-1" aria-label="Mois précédent">‹</button><span id="de-mois"></span><button type="button" data-mois-argent="1" aria-label="Mois suivant">›</button></div>
+      </div>
+      <div class="depenses-actions" id="de-actions">
+        <form class="saisie-depense champs-tache" id="de-form" autocomplete="off" novalidate>
+          <div class="saisie-depense-ligne">
+            <input type="text" inputmode="decimal" id="de-montant" placeholder="Montant €" aria-label="Montant en euros">
+            <input type="text" id="de-libelle" maxlength="120" placeholder="Quoi ? (facultatif)" aria-label="Quoi ?">
+            <input type="date" id="de-date" aria-label="Date">
+            <button class="bouton-principal" type="submit">Noter</button>
+          </div>
+          <div class="puces-choix" id="de-cats" role="radiogroup" aria-label="Catégorie"></div>
+        </form>
+        <label class="bouton-second bouton-fichier"><span>Importer un relevé (CSV)</span><input class="invisible" type="file" id="de-fichier" accept=".csv,text/csv,text/plain"></label>
+      </div>
+      <p class="remplissage" id="de-import-etat" hidden><span class="remplissage-texte" id="de-import-texte"></span></p>
+      <section class="carte-argent" aria-labelledby="de-total-titre">
+        <p class="eyebrow" id="de-total-titre">Dépensé ce mois-ci</p>
+        <p class="budget-reste" id="de-total"></p>
+        <p class="aide" id="de-compare"></p>
+        <div class="barres-h" id="de-categories"></div>
+      </section>
+      <section aria-labelledby="de-mois-titre">
+        <div class="section-tete-ligne"><h2 id="de-mois-titre">Mois par mois</h2></div>
+        <div class="barres-v" id="de-mois-barres"></div>
+      </section>
+      <section aria-labelledby="de-ops-titre">
+        <div class="section-tete-ligne"><h2 id="de-ops-titre">Opérations</h2><p class="filtre-actif" id="de-filtre" hidden><span id="de-filtre-nom"></span> <button class="lien-discret" type="button" id="de-filtre-tout">Tout afficher</button></p></div>
+        <ol class="ops" id="de-ops"></ol>
+      </section>
+    </div>
+  </section>
+
+  <section class="r-argent" data-vue="epargne" aria-labelledby="titre-epargne" hidden>
+    <div class="cadre page-argent">
+      <div class="page-tete">
+        <div>
+          <p class="eyebrow">Argent</p>
+          <h1 id="titre-epargne" tabindex="-1">Épargne et projets</h1>
+        </div>
+        <button class="bouton-principal" type="button" data-maj-comptes>Mettre à jour mes comptes</button>
+      </div>
+      <section aria-labelledby="ep-comptes-titre">
+        <div class="section-tete-ligne"><h2 id="ep-comptes-titre">Mes comptes</h2></div>
+        <ul class="lignes-argent" id="ep-comptes"></ul>
+        <p class="aide" id="ep-maj"></p>
+      </section>
+      <section aria-labelledby="ep-obj-titre">
+        <div class="section-tete-ligne"><h2 id="ep-obj-titre">Mes objectifs</h2></div>
+        <ul class="projets" id="ep-objectifs"></ul>
+      </section>
+      <section aria-labelledby="ep-achats-titre">
+        <div class="section-tete-ligne"><h2 id="ep-achats-titre">Achats prévus</h2><button class="bouton-second" type="button" id="ep-ajouter">Ajouter un achat</button></div>
+        <ul class="projets" id="ep-achats"></ul>
+      </section>
+      <section aria-labelledby="ep-hist-titre">
+        <div class="section-tete-ligne"><h2 id="ep-hist-titre">Mois par mois</h2></div>
+        <div class="table-defile"><table class="table-compteur" id="ep-historique"></table></div>
+      </section>
+    </div>
+  </section>
+
+  <section class="r-argent" data-vue="paie" aria-labelledby="titre-paie" hidden>
+    <div class="cadre page-argent">
+      <div class="page-tete">
+        <div>
+          <p class="eyebrow">Argent</p>
+          <h1 id="titre-paie" tabindex="-1">Ma paie</h1>
+        </div>
+        <div class="mois-nav"><button type="button" data-mois-paie="-1" aria-label="Mois précédent">‹</button><span id="pa-mois"></span><button type="button" data-mois-paie="1" aria-label="Mois suivant">›</button></div>
+      </div>
+      <section class="carte-argent" aria-labelledby="pa-titre">
+        <p class="eyebrow" id="pa-titre">Paie du mois</p>
+        <p class="budget-reste" id="pa-net"></p>
+        <p class="aide" id="pa-statut"></p>
+        <table class="table-compteur" id="pa-detail"></table>
+        <p class="aide" id="pa-aide"></p>
+      </section>
+      <section aria-labelledby="pa-hist-titre">
+        <div class="section-tete-ligne"><h2 id="pa-hist-titre">Paie nette, mois par mois</h2></div>
+        <div class="barres-v" id="pa-historique"></div>
+        <p class="aide">Hachurée : la paie attendue, pas encore reçue.</p>
+      </section>
+      <form class="carte-argent formulaire-paie champs-tache" id="pa-form" autocomplete="off" novalidate>
+        <h2 class="compteur-titre" id="pa-form-titre">Ma fiche de paie</h2>
+        <div class="champs-grille">
+          <label class="titre-champ">Net payé (€)<input type="text" inputmode="decimal" id="pa-recu" placeholder="Ex. : 1 531,68"></label>
+          <label class="titre-champ">Payée le<input type="date" id="pa-le"></label>
+          <label class="titre-champ">Salaire brut (€)<input type="text" inputmode="decimal" id="pa-brut" placeholder="Ex. : 1 974,77"></label>
+          <label class="titre-champ">Heures sup payées<input type="text" inputmode="decimal" id="pa-hs" placeholder="Ex. : 7"></label>
+        </div>
+        <button class="bouton-principal" type="submit">Enregistrer la fiche</button>
+      </form>
+      <details class="reglages-contrat" id="pa-reglages">
+        <summary>Réglages du calcul</summary>
+        <form class="champs-tache" id="pa-reglages-form" novalidate>
+          <div class="champs-grille">
+            <label class="titre-champ">Taux horaire brut (€)<input type="text" inputmode="decimal" id="pa-taux" placeholder="Ex. : 12,31"></label>
+            <label class="titre-champ">Heures par mois<input type="text" inputmode="decimal" id="pa-heures" placeholder="151,67"></label>
+          </div>
+          <p class="aide">Les heures sup sont majorées de 25 %. Les cotisations suivent ta fiche de septembre 2026.</p>
+          <button class="bouton-second" type="submit">Enregistrer</button>
+        </form>
+      </details>
     </div>
   </section>
 
@@ -1516,6 +1879,78 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   </div>
 </dialog>
 
+<dialog class="fenetre fenetre-petite" id="fenetre-comptes" aria-labelledby="sol-titre">
+  <div class="fenetre-tete">
+    <div>
+      <h2 id="sol-titre">Mettre à jour mes comptes</h2>
+      <p class="fenetre-sous">Les soldes du jour, tels que tes applis les affichent. Un relevé par mois suffit.</p>
+    </div>
+    <button class="fermer" type="button" data-fermer aria-label="Fermer sans enregistrer">×</button>
+  </div>
+  <form class="fenetre-corps champs-tache edition" id="sol-form" autocomplete="off" novalidate>
+    <label class="titre-champ">Date<input type="date" id="sol-date"></label>
+    <div id="sol-champs"></div>
+  </form>
+  <div class="fenetre-pied">
+    <p class="fenetre-erreur" id="sol-erreur" role="alert" hidden></p>
+    <button class="bouton-second" type="button" data-fermer>Annuler</button>
+    <button class="bouton-principal" type="button" id="sol-enregistrer">Enregistrer</button>
+  </div>
+</dialog>
+
+<dialog class="fenetre fenetre-petite" id="fenetre-charge" aria-labelledby="ch-titre">
+  <div class="fenetre-tete">
+    <h2 id="ch-titre">Ajouter une charge</h2>
+    <button class="fermer" type="button" data-fermer aria-label="Fermer sans enregistrer">×</button>
+  </div>
+  <form class="fenetre-corps champs-tache edition" id="ch-form" autocomplete="off" novalidate>
+    <label class="titre-champ">Nom<input class="champ-texte" type="text" id="ch-nom" maxlength="60" placeholder="Ex. : Spotify"></label>
+    <div class="ligne-champs">
+      <label class="titre-champ">Montant (€)<input type="text" inputmode="decimal" id="ch-montant" placeholder="Ex. : 11,12"></label>
+      <div class="titre-champ">Tous les
+        <div class="type-tache" role="radiogroup" aria-label="Fréquence">
+          <label><input type="radio" name="ch-frequence" value="mois" checked><span>mois</span></label>
+          <label><input type="radio" name="ch-frequence" value="an"><span>ans</span></label>
+        </div>
+      </div>
+    </div>
+    <label class="titre-champ" id="ch-mois-bloc">Prélevée en<select id="ch-mois"></select></label>
+    <label class="titre-champ">Catégorie<select id="ch-categorie"></select></label>
+    <label class="titre-champ">Mot dans le relevé<input type="text" id="ch-mot" maxlength="80" placeholder="Ex. : spotify (plusieurs : nba|anthropic)"></label>
+    <label class="urgent-choix repete-choix"><input type="checkbox" id="ch-variable"><span>Montant qui varie (un budget, comme l'essence)</span></label>
+    <p class="aide">Une charge est cochée « payée » quand une opération du mois porte ce mot ou ce montant exact.</p>
+  </form>
+  <div class="fenetre-pied">
+    <p class="fenetre-erreur" id="ch-erreur" role="alert" hidden></p>
+    <button class="bouton-danger" type="button" id="ch-supprimer">Supprimer</button>
+    <button class="bouton-second" type="button" data-fermer>Annuler</button>
+    <button class="bouton-principal" type="button" id="ch-enregistrer">Enregistrer</button>
+  </div>
+</dialog>
+
+<dialog class="fenetre fenetre-petite" id="fenetre-projet" aria-labelledby="pr-titre">
+  <div class="fenetre-tete">
+    <h2 id="pr-titre">Ajouter un achat prévu</h2>
+    <button class="fermer" type="button" data-fermer aria-label="Fermer sans enregistrer">×</button>
+  </div>
+  <form class="fenetre-corps champs-tache edition" id="pr-form" autocomplete="off" novalidate>
+    <label class="titre-champ">Nom<input class="champ-texte" type="text" id="pr-nom" maxlength="60" placeholder="Ex. : Une montre"></label>
+    <div class="ligne-champs">
+      <label class="titre-champ">Montant visé (€)<input type="text" inputmode="decimal" id="pr-cible" placeholder="Ex. : 350"></label>
+      <label class="titre-champ">Pour le<input type="date" id="pr-date"></label>
+    </div>
+    <label class="titre-champ" id="pr-mis-bloc">Déjà mis de côté (€)<input type="text" inputmode="decimal" id="pr-mis" placeholder="0"></label>
+    <label class="titre-champ" id="pr-lien-bloc">Lien (facultatif)<input type="url" id="pr-lien" placeholder="https://…"></label>
+    <p class="aide" id="pr-aide"></p>
+  </form>
+  <div class="fenetre-pied">
+    <p class="fenetre-erreur" id="pr-erreur" role="alert" hidden></p>
+    <button class="bouton-danger" type="button" id="pr-supprimer">Supprimer</button>
+    <button class="bouton-second" type="button" data-fermer>Annuler</button>
+    <button class="bouton-principal" type="button" id="pr-enregistrer">Enregistrer</button>
+  </div>
+</dialog>
+
 <datalist id="personnes"></datalist>
 
 <dialog class="fenetre fenetre-piece" id="fenetre-piece" aria-labelledby="pi-titre">
@@ -1630,8 +2065,8 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   // rend la page introuvable) ; un lien direct ouvre sa page : une rubrique (#travail, #argent,
   // #sport), une sous-rubrique (#planning, #todo, #garde-robe) ou un onglet de la garde-robe (#tenues,
   // #comparer, #manque).
-  const VUES = ["accueil", "travail", "planning", "todo", "garde-robe", "tenues", "comparer", "manque", "calendrier", "objectifs", "argent", "sport"];
-  const RUBRIQUE_DE = { planning: "travail", todo: "travail", "garde-robe": "travail", tenues: "travail", comparer: "travail", manque: "travail", calendrier: "travail", objectifs: "travail" };
+  const VUES = ["accueil", "travail", "planning", "todo", "garde-robe", "tenues", "comparer", "manque", "calendrier", "objectifs", "argent", "budget", "depenses", "epargne", "paie", "sport"];
+  const RUBRIQUE_DE = { planning: "travail", todo: "travail", "garde-robe": "travail", tenues: "travail", comparer: "travail", manque: "travail", calendrier: "travail", objectifs: "travail", budget: "argent", depenses: "argent", epargne: "argent", paie: "argent" };
   // Les onglets de la garde-robe restent sous la sous-rubrique « Garde-robe Blue Box ».
   const SOUS_RUBRIQUE_DE = { tenues: "garde-robe", comparer: "garde-robe", manque: "garde-robe" };
   let vueActive = "accueil";
@@ -1642,9 +2077,9 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     vueActive = nom;
     document.querySelectorAll("[data-vue]").forEach(v => { v.hidden = v.dataset.vue !== nom; });
     // Dans le bandeau, la rubrique reste marquée quand une de ses sous-rubriques est ouverte.
-    const sousNav = $("sous-nav-travail");
-    sousNav.hidden = RUBRIQUE_DE[nom] !== "travail";
-    document.body.classList.toggle("avec-sous-nav", !sousNav.hidden);
+    let sousNav = null;
+    document.querySelectorAll(".sous-nav").forEach(n => { n.hidden = n.dataset.rubrique !== RUBRIQUE_DE[nom]; if (!n.hidden) sousNav = n; });
+    document.body.classList.toggle("avec-sous-nav", !!sousNav);
     document.querySelectorAll(".bande [data-aller], .sous-nav [data-aller]").forEach(a => {
       const cible = a.closest(".sous-bande, .sous-nav") ? SOUS_RUBRIQUE_DE[nom] || nom : RUBRIQUE_DE[nom] || nom;
       if (a.dataset.aller === cible) a.setAttribute("aria-current", "page");
@@ -1654,10 +2089,11 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
       if (a.dataset.onglet === nom) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
     // Sur téléphone, la sous-rubrique ouverte se place au milieu de sa barre.
-    const courante = sousNav.querySelector('[aria-current="page"]'), barre = sousNav.firstElementChild;
+    const courante = sousNav && sousNav.querySelector('[aria-current="page"]'), barre = sousNav && sousNav.firstElementChild;
     if (courante) barre.scrollLeft = courante.offsetLeft - (barre.clientWidth - courante.offsetWidth) / 2;
     if (nom === "objectifs") requestAnimationFrame(rendreGraphe);   // la courbe et la frise ont besoin de leur largeur
     if (nom === "calendrier") requestAnimationFrame(rendreFrise);
+    if (nom === "argent") requestAnimationFrame(rendreHubArgent);
     if (!opts.garderDefilement) window.scrollTo(0, 0);
     if (opts.focus) {
       const titre = document.querySelector(`[data-vue="${nom}"] h1`);
@@ -1870,6 +2306,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     tenues.chargerLocal();
     comparaisons.chargerLocal();
     demandes.chargerLocal();
+    [comptesArgent, soldes, projets, charges, operations, paies].forEach(c => c.chargerLocal());
   }
   function sauverLocal() {
     try { localStorage.setItem(CLE_LOCALE, JSON.stringify(semaines)); return true; } catch (_) { return false; }
@@ -1911,6 +2348,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     tenues.abonner();
     comparaisons.abonner();
     demandes.abonner();
+    [comptesArgent, soldes, projets, charges, operations, paies].forEach(c => c.abonner());
     // Claude, pour proposer une description de tenue : seulement pour qui peut modifier.
     if (proprio) c.use("sample").then(ns => { sampleNs = ns; rendreTenues(); }, () => {});
     rendreTout();
@@ -2145,6 +2583,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     rendreObjectifs();
     if ($("fenetre-semaine").open) rendreGrilleSemaines();
     rendreJournee();
+    rendreArgent();
   }
 
   const changerSemaine = delta => { lundiAffiche += delta * 7 * JOUR_MS; rendrePlanning(); };
@@ -5744,6 +6183,867 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     clearTimeout(minuterieToast);
     minuterieToast = setTimeout(() => { t.hidden = true; }, type === "erreur" ? 6000 : 3000);
   }
+
+  // ---------- Argent ----------
+  // Comptes (investissement, épargne) et leurs soldes mois par mois ; projets (Road to 50k, l'épargne, les
+  // achats prévus) ; charges fixes ; opérations du mois (relevé importé ou saisies), un document par mois ;
+  // paies reçues. La paie attendue se calcule avec le taux horaire et les heures payées du compteur.
+  const FMT2 = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
+  const FMT0 = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
+  const eur = (n, dec) => (dec === 0 ? FMT0 : FMT2).format(n || 0);
+  const kEur = n => (Math.abs(n) >= 1000 ? `${nombreFr(Math.round(n / 100) / 10)} k€` : eur(n, 0));
+  const arrondi2 = n => Math.round(n * 100) / 100;
+  const MOIS_RE = /^\d{4}-\d{2}$/;
+  const cleMois = t => versIso(t).slice(0, 7);
+  const moisDecale = (cle, d) => { const [a, m] = cle.split("-").map(Number); const x = new Date(Date.UTC(a, m - 1 + d, 1)); return `${x.getUTCFullYear()}-${String(x.getUTCMonth() + 1).padStart(2, "0")}`; };
+  const ecartMois = (a, b) => { const [ya, ma] = a.split("-").map(Number), [yb, mb] = b.split("-").map(Number); return (yb - ya) * 12 + mb - ma; };
+  const moisMin = cle => MOIS[Number(cle.slice(5)) - 1];   // « octobre »
+  const deMois = cle => (/^[aeiou]/.test(moisMin(cle)) ? `d'${moisMin(cle)}` : `de ${moisMin(cle)}`);   // « d'octobre », « de septembre »
+  const dateLongue = iso => { const d = new Date(depuisIso(iso)); return `${quantieme(d.getUTCDate())} ${MOIS[d.getUTCMonth()]} ${d.getUTCFullYear()}`; };
+  const JOUR_PAIE = 30;   // la paie est versée le 30 (le dernier jour en février)
+  const joursDuMois = cle => new Date(Date.UTC(Number(cle.slice(0, 4)), Number(cle.slice(5)), 0)).getUTCDate();
+  const texteArgent = (v, max) => (typeof v === "string" ? v.trim().slice(0, max) : "");
+  const nombreValide = v => typeof v === "number" && Number.isFinite(v);
+  const peutModifierArgent = () => mode === "base" || mode === "local";
+
+  const CATS = [
+    ["courses", "Courses"], ["restos", "Restos et sorties"], ["transport", "Essence et transport"], ["voiture", "Voiture"],
+    ["abonnements", "Abonnements"], ["shopping", "Shopping"], ["loisirs", "Loisirs et jeux"], ["sante", "Santé"],
+    ["cadeaux", "Cadeaux"], ["autres", "Autres dépenses"],
+    ["epargne", "Épargne et investissement"], ["salaire", "Salaire"], ["revenus", "Autres rentrées"], ["interne", "Entre mes comptes"],
+  ];
+  const NOM_CAT = Object.fromEntries(CATS);
+  const HORS_DEPENSES = new Set(["epargne", "salaire", "revenus", "interne"]);
+  const CATS_DEPENSES = CATS.filter(([c]) => !HORS_DEPENSES.has(c));
+  // Le libellé du relevé range l'opération ; une catégorie corrigée à la main sert ensuite de règle.
+  const MOTS_CATEGORIES = [
+    ["epargne", /trade ?republic|livret|\blep\b|\bldds?\b|epargne/],
+    ["salaire", /salaire|\bjmc\b/],
+    ["courses", /carrefour|leclerc|intermarche|auchan|lidl|aldi|super ?u\b|hyper ?u\b|u express|casino|monoprix|franprix|netto|picard|grand frais|biocoop|\bspar\b|proxi/],
+    ["restos", /mc ?do|mcdonald|burger king|\bkfc\b|\bquick\b|restau|brasserie|pizz|sushi|kebab|uber ?eats|deliveroo|starbucks|tacos|boulang|\bbar\b|\bcafe\b/],
+    ["transport", /\btotal|esso|\bbp\b|shell|\bavia\b|station|carbur|autoroute|peage|sanef|aprr|vinci|sncf|ouigo|blablacar|parking|\buber\b/],
+    ["voiture", /\bpret\b|credit auto|norauto|feu vert|midas|speedy|controle tech|carglass|garage/],
+    ["abonnements", /spotify|netflix|disney|playstation|\bsony\b|\bnba\b|anthropic|claude\.ai|apple\.com|itunes|google|prime video|amazon prime|deezer|canal ?\+|youtube|free mobile|bouygues|\bsfr\b|\borange\b/],
+    ["shopping", /zara|h ?& ?m\b|celio|jules|nike|adidas|decathlon|amazon|zalando|fnac|darty|boulanger|kiabi|primark|uniqlo|asos|shein|vinted|sephora/],
+    ["loisirs", /steam|epic games|cinema|\bcgr\b|pathe|\bugc\b|bowling|basic fit|fitness|ticketmaster|instant gaming/],
+    ["sante", /pharma|medecin|docteur|dentist|optic|\bkine|laborat|hopital|clinique/],
+  ];
+  const CATS_BANQUE = [[/aliment|supermarch|course/, "courses"], [/restau|sortie|\bbar/, "restos"], [/carbur|transport|peage|parking/, "transport"],
+    [/vehicule|automobile/, "voiture"], [/abonnement|telecom|telephon|internet|multimedia/, "abonnements"], [/shopping|habill|vetement/, "shopping"],
+    [/loisir|culture|sport|voyage/, "loisirs"], [/sante|pharma|medical/, "sante"], [/cadeau|\bdon/, "cadeaux"], [/epargne|placement/, "epargne"],
+    [/salaire|remuneration/, "salaire"], [/virement interne|transfert/, "interne"]];
+  // La clé d'une règle : les premiers mots du libellé, sans « CB », « PRLV SEPA », les dates ni les numéros.
+  const cleRegle = texte => sansAccents(texte).replace(/\b(cb|carte|prlv|prelevement|sepa|vir|virement|inst|instantane|facture|paiement|achat|retrait|dab|du|le)\b/g, " ")
+    .replace(/[^a-z\s]/g, " ").split(/\s+/).filter(m => m.length > 1).slice(0, 3).join(" ");
+  function categorieAuto(texte, banque, montant) {
+    const t = sansAccents(texte), cle = cleRegle(texte), regles = reglagesArgent().regles;
+    if (cle && NOM_CAT[regles[cle]]) return regles[cle];
+    // Une vente Vinted, un remboursement, la CAF : une rentrée, pas un remboursement d'achat.
+    if (montant > 0 && /vinted|leboncoin|rembours|\bcaf\b|prime d.?activite|tresor public|impots/.test(t)) return "revenus";
+    for (const [c, re] of MOTS_CATEGORIES) if (re.test(t) && !(c === "salaire" && montant < 0)) return c;
+    const b = sansAccents(banque || "");
+    const x = b && CATS_BANQUE.find(([re]) => re.test(b));
+    if (x) return x[1];
+    return montant > 0 ? "revenus" : "autres";
+  }
+
+  // ----- lecture des documents -----
+  const lireCompte = (id, d) => (d && texteArgent(d.nom, 40) ? { id, nom: texteArgent(d.nom, 40), groupe: d.groupe === "epargne" ? "epargne" : "investissement", ordre: nombreValide(d.ordre) ? d.ordre : 99 } : null);
+  const lireSolde = (id, d) => (MOIS_RE.test(id) && d && d.valeurs && typeof d.valeurs === "object"
+    ? { id, le: ISO_RE.test(d.le) ? d.le : id + "-01", valeurs: Object.fromEntries(Object.entries(d.valeurs).filter(([, v]) => nombreValide(v))) } : null);
+  function lireProjet(id, d) {
+    if (!d || !texteArgent(d.nom, 60) || !(nombreValide(d.cible) && d.cible > 0)) return null;
+    return {
+      id, nom: texteArgent(d.nom, 60), type: d.type === "comptes" ? "comptes" : "achat", groupe: d.groupe === "epargne" ? "epargne" : "investissement",
+      cible: arrondi2(d.cible), date: ISO_RE.test(d.date) ? d.date : null, misDeCote: nombreValide(d.misDeCote) && d.misDeCote > 0 ? arrondi2(d.misDeCote) : 0,
+      lien: typeof d.lien === "string" && /^https?:\/\/\S+$/i.test(d.lien) ? d.lien.slice(0, 500) : null, note: texteArgent(d.note, 300),
+      ordre: nombreValide(d.ordre) ? d.ordre : 99, creeLe: texteArgent(d.creeLe, 40),
+    };
+  }
+  function lireCharge(id, d) {
+    if (!d || !texteArgent(d.nom, 60) || !(nombreValide(d.montant) && d.montant > 0)) return null;
+    const an = d.frequence === "an";
+    return {
+      id, nom: texteArgent(d.nom, 60), montant: arrondi2(d.montant), frequence: an ? "an" : "mois",
+      mois: an && Number.isInteger(d.mois) && d.mois >= 1 && d.mois <= 12 ? d.mois : null,
+      categorie: NOM_CAT[d.categorie] && !HORS_DEPENSES.has(d.categorie) ? d.categorie : "autres",
+      motCle: texteArgent(d.motCle, 80), variable: d.variable === true, ordre: nombreValide(d.ordre) ? d.ordre : 99,
+    };
+  }
+  const lireOp = o => (o && typeof o === "object" && ISO_RE.test(o.d) && nombreValide(o.m)
+    ? { d: o.d, l: texteArgent(o.l, 120) || "Opération", k: texteArgent(o.k, 300), m: arrondi2(o.m), c: NOM_CAT[o.c] ? o.c : "autres", s: o.s === "saisie" ? "saisie" : "import", cm: o.cm === true } : null);
+  const lireMoisOps = (id, d) => (MOIS_RE.test(id) && d && d.ops && typeof d.ops === "object"
+    ? { id, ops: Object.fromEntries(Object.entries(d.ops).map(([k, o]) => [k, lireOp(o)]).filter(([k, o]) => o && /^[\w-]{1,40}$/.test(k))) } : null);
+  const lirePaie = (id, d) => (MOIS_RE.test(id) && d && nombreValide(d.net) && d.net > 0
+    ? { id, net: arrondi2(d.net), brut: nombreValide(d.brut) && d.brut > 0 ? arrondi2(d.brut) : null, heuresSup: nombreValide(d.heuresSup) && d.heuresSup >= 0 ? d.heuresSup : null, payeLe: ISO_RE.test(d.payeLe) ? d.payeLe : null } : null);
+
+  const comptesArgent = creerCollection("comptes", "tableau-de-bord-axel:comptes", lireCompte, () => rendreArgent());
+  const soldes = creerCollection("soldes", "tableau-de-bord-axel:soldes", lireSolde, () => rendreArgent());
+  const projets = creerCollection("projets", "tableau-de-bord-axel:projets", lireProjet, () => rendreArgent());
+  const charges = creerCollection("charges", "tableau-de-bord-axel:charges", lireCharge, () => rendreArgent());
+  const operations = creerCollection("depenses", "tableau-de-bord-axel:depenses", lireMoisOps, () => rendreArgent());
+  const paies = creerCollection("paies", "tableau-de-bord-axel:paies", lirePaie, () => rendreArgent());
+  const echecArgent = e => toast(e && (e.code === "quota_exceeded" || e.code === "stockage_local") ? "Plus de place pour enregistrer." : "Ce n'a pas été enregistré. Vérifie ta connexion et réessaie.", "erreur");
+
+  function reglagesArgent() {
+    const d = reglagesCollection.docs.argent || {};
+    return {
+      taux: nombreValide(d.tauxHoraire) && d.tauxHoraire > 0 ? d.tauxHoraire : null,
+      heures: nombreValide(d.heuresMois) && d.heuresMois > 0 ? d.heuresMois : 151.67,
+      versement: nombreValide(d.versementMensuel) && d.versementMensuel >= 0 ? d.versementMensuel : null,
+      regles: d.regles && typeof d.regles === "object" ? d.regles : {},
+    };
+  }
+  function ecrireReglagesArgent(patch) {
+    const { id: _, ...avant } = reglagesCollection.docs.argent || {};
+    return reglagesCollection.ecrire("argent", { ...avant, ...patch, modifieLe: new Date().toISOString() });
+  }
+
+  // ----- comptes et projets -----
+  const comptesDu = groupe => Object.values(comptesArgent.docs).filter(c => c.groupe === groupe).sort((a, b) => a.ordre - b.ordre || a.nom.localeCompare(b.nom));
+  const soldesTries = () => Object.values(soldes.docs).sort((a, b) => a.id.localeCompare(b.id));
+  // Le total d'un groupe de comptes, mois par mois (les mois où au moins un de ses comptes a un solde).
+  function totauxDu(groupe) {
+    const ids = comptesDu(groupe).map(c => c.id);
+    return soldesTries().filter(s => ids.some(id => id in s.valeurs)).map(s => ({ cle: s.id, le: s.le, total: arrondi2(ids.reduce((t, id) => t + (s.valeurs[id] || 0), 0)), valeurs: s.valeurs }));
+  }
+  const dernierSolde = id => { const s = soldesTries().reverse().find(x => id in x.valeurs); return s ? s.valeurs[id] : null; };
+  const projetsTries = () => Object.values(projets.docs).sort((a, b) => (a.type === b.type ? 0 : a.type === "comptes" ? -1 : 1) || a.ordre - b.ordre || (a.date || "9").localeCompare(b.date || "9"));
+  // Où en est un projet : le total, ce qu'il reste, les mois jusqu'à la date, ce qu'il faut mettre par mois, et
+  // à quel mois on y arrive au rythme des trois derniers mois.
+  function avancee(p) {
+    const pts = p.type === "comptes" ? totauxDu(p.groupe) : [];
+    const total = p.type === "comptes" ? (pts.length ? pts[pts.length - 1].total : 0) : p.misDeCote;
+    const reste = Math.max(0, arrondi2(p.cible - total)), maintenant = cleMois(aujourdhui());
+    const moisRestants = p.date ? Math.max(0, ecartMois(maintenant, cleMois(depuisIso(p.date) - JOUR_MS))) : null;
+    const parMois = reste && moisRestants != null ? reste / Math.max(1, moisRestants) : null;
+    let rythme = null, arrivee = null;
+    if (pts.length >= 2) {
+      const a = pts[Math.max(0, pts.length - 4)], b = pts[pts.length - 1], n = ecartMois(a.cle, b.cle);
+      if (n > 0) rythme = (b.total - a.total) / n;
+      if (rythme > 0 && reste) arrivee = moisDecale(b.cle, Math.ceil(reste / rythme));
+    }
+    return { pts, total, reste, part: Math.min(1, total / p.cible), moisRestants, parMois, rythme, arrivee };
+  }
+  const projetRoad = () => projetsTries().find(p => p.type === "comptes" && p.groupe === "investissement") || null;
+  const projetEpargne = () => projetsTries().find(p => p.type === "comptes" && p.groupe === "epargne") || null;
+
+  // ----- opérations, charges, budget -----
+  const opsDu = cle => Object.entries((operations.docs[cle] || {}).ops || {}).map(([id, o]) => ({ id, cle, ...o }));
+  const texteOp = o => sansAccents(`${o.l} ${o.k}`);
+  const depenseDe = ops => -arrondi2(ops.filter(o => !HORS_DEPENSES.has(o.c)).reduce((t, o) => t + o.m, 0));
+  const chargesDuMois = cle => Object.values(charges.docs).filter(c => c.frequence === "mois" || c.mois === Number(cle.slice(5))).sort((a, b) => a.ordre - b.ordre || b.montant - a.montant);
+  // Une charge est payée si une opération du mois porte son mot-clé (« spotify », « nba|anthropic ») ou son montant exact.
+  function rapprocher(cle) {
+    const ops = opsDu(cle).filter(o => o.m < 0 && !HORS_DEPENSES.has(o.c)), prises = new Set(), lien = new Map();
+    chargesDuMois(cle).filter(c => !c.variable).forEach(c => {
+      const mots = c.motCle.split(/[|,]/).map(m => sansAccents(m).trim()).filter(Boolean);
+      const o = ops.find(o => !prises.has(o.id) && mots.some(m => texteOp(o).includes(m))) || ops.find(o => !prises.has(o.id) && Math.abs(-o.m - c.montant) < 0.01);
+      if (o) { prises.add(o.id); lien.set(c.id, o); }
+    });
+    return lien;
+  }
+  function paieDu(cle) {
+    const recue = paies.docs[cle];
+    if (recue) return { net: recue.net, recue: true, payeLe: recue.payeLe };
+    const e = paieEstimee(cle);
+    return e ? { net: e.net, recue: false } : null;
+  }
+  // Le budget du mois : la paie du mois d'avant (versée à la fin du mois) et les autres rentrées, moins les charges
+  // fixes (payées ou à venir), les dépenses courantes, l'épargne (versée, ou prévue et pas encore faite).
+  function budgetDu(cle) {
+    const ops = opsDu(cle), paie = paieDu(moisDecale(cle, -1)), payees = rapprocher(cle);
+    const autres = arrondi2(ops.filter(o => o.c === "revenus").reduce((t, o) => t + o.m, 0));
+    const revenus = arrondi2((paie ? paie.net : 0) + autres);
+    const lignes = chargesDuMois(cle).map(c => {
+      if (c.variable) {
+        const deja = depenseDe(ops.filter(o => o.c === c.categorie));
+        return { charge: c, deja, aVenir: Math.max(0, arrondi2(c.montant - deja)) };
+      }
+      const o = payees.get(c.id);
+      return { charge: c, op: o || null, deja: o ? -o.m : 0, aVenir: o ? 0 : c.montant };
+    });
+    const fixesPayees = arrondi2(lignes.filter(x => !x.charge.variable).reduce((t, x) => t + x.deja, 0));
+    const fixesAVenir = arrondi2(lignes.filter(x => !x.charge.variable).reduce((t, x) => t + x.aVenir, 0));
+    const variablesAVenir = arrondi2(lignes.filter(x => x.charge.variable).reduce((t, x) => t + x.aVenir, 0));
+    const depenses = depenseDe(ops);
+    const verse = -arrondi2(ops.filter(o => o.c === "epargne").reduce((t, o) => t + o.m, 0));
+    const prevu = reglagesArgent().versement, epargneAVenir = prevu != null ? Math.max(0, arrondi2(prevu - verse)) : 0;
+    const fixes = arrondi2(fixesPayees + fixesAVenir), courantes = arrondi2(depenses - fixesPayees + variablesAVenir), epargne = arrondi2(verse + epargneAVenir);
+    const reste = arrondi2(revenus - fixes - courantes - epargne);
+    const maintenant = cleMois(aujourdhui()), joursRestants = cle === maintenant ? joursDuMois(cle) - new Date(aujourdhui()).getUTCDate() + 1 : null;
+    return { cle, paie, autres, revenus, lignes, fixes, fixesAVenir, courantes, depenses, variablesAVenir, verse, prevu, epargne, reste, joursRestants, nbOps: ops.length };
+  }
+
+  // ----- la paie attendue -----
+  // Les cotisations salariales, d'après la fiche de septembre 2026 : 11,645 % du brut, la mutuelle (33,24 €), la
+  // CSG-CRDS (9,7 % de 98,25 % du brut plus la part patronale santé et prévoyance, 39,86 €), moins la réduction sur
+  // les heures sup (11,31 %). Le net retombe sur celui de la fiche à quelques centimes près.
+  const COTIS = { taux: 0.11645, mutuelle: 33.24, csg: 0.097, assiette: 0.9825, patronale: 39.86, exoHS: 0.1131 };
+  // Les heures sup : celles de la fiche si elle les donne, sinon celles du compteur sur les semaines du mois.
+  function paieEstimee(cle, heuresFiche) {
+    const r = reglagesArgent();
+    if (!r.taux) return null;
+    const minutes = calculerCompteur().semaines.filter(x => cleMois(x.lundi) === cle).reduce((t, x) => t + x.payees, 0);
+    const heuresSup = heuresFiche != null ? heuresFiche : Math.round(minutes / 60 * 100) / 100;
+    const base = arrondi2(r.taux * r.heures), tauxHS = arrondi2(r.taux * 1.25), hs = arrondi2(heuresSup * r.taux * 1.25), brut = arrondi2(base + hs);
+    const cotisations = arrondi2(COTIS.taux * brut + COTIS.mutuelle + COTIS.csg * (COTIS.assiette * brut + COTIS.patronale) - COTIS.exoHS * hs);
+    return { base, heuresSup, tauxHS, hs, brut, cotisations, net: arrondi2(brut - cotisations), taux: r.taux, heures: r.heures };
+  }
+
+  // ----- dessins -----
+  function barreProgression(zone, part, libelle) {
+    const v = element("span", "progression-valeur");
+    v.style.width = `${Math.max(0, Math.min(1, part)) * 100}%`;
+    zone.replaceChildren(v);
+    zone.setAttribute("role", "img");
+    zone.setAttribute("aria-label", libelle);
+  }
+  // Une barre en segments (parts d'un tout) et sa légende : la couleur suit le segment, jamais son rang.
+  function barreSegments(zone, legende, segments, total) {
+    const somme = segments.reduce((t, s) => t + Math.max(0, s.valeur), 0), base = Math.max(total || 0, somme) || 1;
+    zone.replaceChildren(...segments.filter(s => s.valeur > 0).map(s => {
+      const b = element("span", "segment " + s.classe);
+      b.style.flexGrow = String(s.valeur / base);
+      b.title = `${s.nom} : ${eur(s.valeur)}`;
+      return b;
+    }));
+    if (somme < base) { const vide = element("span", "segment vide"); vide.style.flexGrow = String((base - somme) / base); zone.append(vide); }
+    zone.setAttribute("role", "img");
+    zone.setAttribute("aria-label", segments.map(s => `${s.nom} ${eur(s.valeur)}`).join(", "));
+    if (legende) legende.replaceChildren(...segments.map(s => {
+      const li = element("li");
+      li.append(element("span", "pastille-seg " + s.classe), element("span", "legende-nom", s.nom), element("span", "legende-val", eur(s.valeur)));
+      if (s.detail) li.append(element("span", "legende-detail", s.detail));
+      return li;
+    }));
+  }
+  // Barres horizontales (une seule teinte : la longueur dit le montant) ; un clic choisit la ligne.
+  function barresH(zone, lignes, actif) {
+    const max = Math.max(...lignes.map(l => l.valeur), 1);
+    zone.replaceChildren(...lignes.map(l => {
+      const b = element("button", "barre-h" + (actif === l.id ? " active" : ""));
+      b.type = "button";
+      b.dataset.id = l.id;
+      const piste = element("span", "barre-h-piste"), v = element("span", "barre-h-valeur");
+      v.style.width = `${l.valeur / max * 100}%`;
+      piste.append(v);
+      b.append(element("span", "barre-h-nom", l.nom), piste, element("span", "barre-h-montant", l.texte || eur(l.valeur)));
+      b.setAttribute("aria-pressed", String(actif === l.id));
+      return b;
+    }));
+  }
+  // Barres verticales, mois par mois ; la barre du mois choisi est foncée, une barre estimée est hachurée.
+  function barresV(zone, barres) {
+    const max = Math.max(...barres.map(b => b.valeur), 1);
+    zone.replaceChildren(...barres.map(b => {
+      const col = element("button", "barre-v" + (b.actif ? " active" : "") + (b.estimee ? " estimee" : ""));
+      col.type = "button";
+      col.dataset.cle = b.cle;
+      col.title = `${b.titre} : ${eur(b.valeur)}${b.estimee ? " (estimée)" : ""}`;
+      const haut = element("span", "barre-v-zone"), v = element("span", "barre-v-valeur");
+      v.style.height = `${b.valeur / max * 100}%`;
+      haut.append(element("span", "barre-v-montant", b.valeur ? eur(b.valeur, 0) : "—"), v);
+      col.append(haut, element("span", "barre-v-nom", b.nom));
+      return col;
+    }));
+  }
+  const NS_SVG = "http://www.w3.org/2000/svg";
+  const svgEl = (tag, attrs, texte) => { const n = document.createElementNS(NS_SVG, tag); Object.entries(attrs).forEach(([k, v]) => n.setAttribute(k, v)); if (texte != null) n.textContent = texte; return n; };
+  // La courbe Road to 50k : mon total mois par mois, et la trajectoire droite du premier mois jusqu'à l'objectif.
+  function rendreCourbeRoad(p, av) {
+    const zone = $("ar-road-graphe");
+    $("ar-road-legende-courbe").hidden = !p || !av.pts.length;
+    if (!p || !av.pts.length || vueActive !== "argent") { zone.replaceChildren(); zone.hidden = !p || !av.pts.length; $("ar-road-vide").hidden = !p || !!av.pts.length; return; }
+    zone.hidden = false;
+    $("ar-road-vide").hidden = true;
+    const W = Math.max(300, zone.clientWidth || 640), H = 240, g = { haut: 26, bas: 26, gauche: 46, droite: 16 };
+    const debut = av.pts[0].cle, fin = p.date ? cleMois(depuisIso(p.date) - JOUR_MS) : av.pts[av.pts.length - 1].cle;
+    const n = Math.max(1, ecartMois(debut, fin)), hi = Math.ceil(Math.max(p.cible, ...av.pts.map(x => x.total)) / 10000) * 10000;
+    const x = cle => g.gauche + ecartMois(debut, cle) / n * (W - g.gauche - g.droite), y = v => g.haut + (1 - v / hi) * (H - g.haut - g.bas);
+    const svg = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: "img", "aria-label": `${p.nom} : ${av.pts.map(q => `${nomMois(q.cle)} ${eur(q.total, 0)}`).join(", ")}` });
+    for (let v = 0; v <= hi; v += hi / 5) {
+      svg.append(svgEl("line", { class: "grille", x1: g.gauche, x2: W - g.droite, y1: y(v), y2: y(v) }));
+      svg.append(svgEl("text", { class: "axe-texte", x: g.gauche - 8, y: y(v) + 4, "text-anchor": "end" }, v ? `${v / 1000} k` : "0"));
+    }
+    // Les années et quelques mois sous l'axe.
+    const pas = Math.max(1, Math.ceil(n / Math.floor((W - g.gauche - g.droite) / 54)));
+    for (let k = 0; k <= n; k += pas) { const cle = moisDecale(debut, k); svg.append(svgEl("text", { class: "axe-texte", x: x(cle), y: H - 6, "text-anchor": "middle" }, `${MOIS_COURTS[Number(cle.slice(5)) - 1].replace(".", "")} ${cle.slice(2, 4)}`)); }
+    svg.append(svgEl("line", { class: "trajectoire", x1: x(debut), y1: y(av.pts[0].total), x2: x(fin), y2: y(p.cible) }));
+    svg.append(svgEl("text", { class: "etiquette-trajectoire", x: x(fin), y: y(p.cible) - 8, "text-anchor": "end" }, `objectif ${kEur(p.cible)}`));
+    if (av.pts.length > 1) svg.append(svgEl("polyline", { class: "trace", points: av.pts.map(q => `${x(q.cle)},${y(q.total)}`).join(" ") }));
+    av.pts.forEach((q, i) => svg.append(svgEl("circle", { class: "point", cx: x(q.cle), cy: y(q.total), r: 4.5, "data-i": i })));
+    const der = av.pts[av.pts.length - 1];
+    svg.append(svgEl("text", { class: "etiquette-serie", x: Math.min(x(der.cle) + 8, W - g.droite - 70), y: y(der.total) - 10 }, eur(der.total, 0)));
+    // Survol : une zone par mois, plus large que le point.
+    const largeur = Math.max(24, (W - g.gauche - g.droite) / n);
+    av.pts.forEach((q, i) => svg.append(svgEl("rect", { class: "cible-survol", x: x(q.cle) - largeur / 2, y: g.haut, width: largeur, height: H - g.haut - g.bas, "data-i": i })));
+    const bulle = element("div", "bulle");
+    bulle.hidden = true;
+    const noms = Object.fromEntries(Object.values(comptesArgent.docs).map(c => [c.id, c.nom]));
+    svg.addEventListener("pointermove", ev => {
+      const r = ev.target.closest("[data-i]");
+      if (!r) return;
+      const q = av.pts[Number(r.dataset.i)];
+      svg.querySelectorAll(".point").forEach(c => c.classList.toggle("actif", c.dataset.i === r.dataset.i));
+      bulle.textContent = `${nomMois(q.cle)} · ${eur(q.total, 0)}` + (comptesDu(p.groupe).length > 1 ? ` (${comptesDu(p.groupe).filter(c => q.valeurs[c.id]).map(c => `${noms[c.id]} ${eur(q.valeurs[c.id], 0)}`).join(" · ")})` : "");
+      bulle.style.left = `${x(q.cle) / W * 100}%`;
+      bulle.style.top = `${y(q.total)}px`;
+      bulle.hidden = false;
+    });
+    svg.addEventListener("pointerleave", () => { bulle.hidden = true; svg.querySelectorAll(".point").forEach(c => c.classList.remove("actif")); });
+    zone.replaceChildren(svg, bulle);
+  }
+
+  // ----- affichage -----
+  let moisArgent = cleMois(aujourdhui()), moisPaie = cleMois(aujourdhui()), filtreCat = null;
+  const SEGMENTS = ["seg-1", "seg-2", "seg-3"];
+  function texteProjet(p, av) {
+    if (!av.reste) return "Objectif atteint !";
+    const morceaux = [];
+    if (av.moisRestants != null) morceaux.push(av.moisRestants ? `il reste ${eur(av.reste, 0)} en ${av.moisRestants} mois : ${eur(av.parMois, 0)} par mois` : `il reste ${eur(av.reste, 0)} ce mois-ci`);
+    else morceaux.push(`il reste ${eur(av.reste, 0)}`);
+    if (av.arrivee) morceaux.push(`à ton rythme, tu y es en ${nomMois(av.arrivee).toLowerCase()}`);
+    return majuscule(morceaux.join(" · ")) + ".";
+  }
+  function rendreHubArgent() {
+    const road = projetRoad(), epargne = projetEpargne();
+    $("ar-road").hidden = !road;
+    if (road) {
+      const av = avancee(road);
+      $("ar-road-titre").textContent = road.nom;
+      $("ar-road-total").textContent = eur(av.total, 0);
+      $("ar-road-sur").textContent = `sur ${eur(road.cible, 0)}` + (road.date ? ` · ${nomMois(cleMois(depuisIso(road.date) - JOUR_MS)).toLowerCase()}` : "");
+      $("ar-road-pourcent").textContent = `${nombreFr(Math.floor(av.part * 1000) / 10)} %`;
+      barreProgression($("ar-road-barre"), av.part, `${road.nom} : ${eur(av.total, 0)} sur ${eur(road.cible, 0)}`);
+      $("ar-road-detail").textContent = av.pts.length ? texteProjet(road, av) : "Mets à jour tes comptes pour lancer la barre et la courbe.";
+      const comptes = comptesDu("investissement"), der = av.pts[av.pts.length - 1];
+      $("ar-road-repartition").hidden = !der || comptes.length < 2;
+      if (der) barreSegments($("ar-road-segments"), $("ar-road-legende"), comptes.map((c, i) => ({ nom: c.nom, valeur: der.valeurs[c.id] || 0, classe: SEGMENTS[i] || "seg-autre", detail: av.total ? `${Math.round((der.valeurs[c.id] || 0) / av.total * 100)} %` : "" })), av.total);
+      rendreCourbeRoad(road, av);
+    }
+    $("ar-epargne").hidden = !epargne;
+    if (epargne) {
+      const av = avancee(epargne);
+      $("ar-ep-titre").textContent = epargne.nom;
+      $("ar-ep-total").textContent = eur(av.total, 0);
+      $("ar-ep-sur").textContent = `sur ${eur(epargne.cible, 0)}` + (epargne.date ? ` · ${dateLongue(epargne.date)}` : "");
+      barreProgression($("ar-ep-barre"), av.part, `${epargne.nom} : ${eur(av.total, 0)} sur ${eur(epargne.cible, 0)}`);
+      $("ar-ep-detail").textContent = av.pts.length ? texteProjet(epargne, av) : "Mets à jour tes comptes pour lancer la barre.";
+    }
+    const b = budgetDu(cleMois(aujourdhui()));
+    $("ar-mois-titre").textContent = `${majuscule(moisMin(b.cle))} · budget`;
+    $("ar-mois-reste").textContent = eur(b.reste, 0);
+    $("ar-mois-reste").classList.toggle("negatif", b.reste < 0);
+    barreSegments($("ar-mois-barre"), null, segmentsBudget(b), b.revenus);
+    $("ar-mois-detail").textContent = !b.paie ? "Indique ton taux horaire dans Ma paie pour calculer le budget."
+      : `${b.reste < 0 ? "Dépassement" : "À dépenser"}${b.joursRestants ? ` · ${eur(Math.max(0, b.reste) / b.joursRestants, 0)} par jour jusqu'au ${joursDuMois(b.cle)}` : ""} · ${eur(b.depenses, 0)} dépensés`;
+    // Les cartes des pages.
+    $("carte-budget-ligne").textContent = b.paie ? `${eur(b.reste, 0)} à dépenser en ${moisMin(b.cle)}` : "Budget à lancer";
+    const ops = opsDu(cleMois(aujourdhui())), top = CATS_DEPENSES.map(([c, nom]) => ({ nom, v: depenseDe(ops.filter(o => o.c === c)) })).sort((x, y) => y.v - x.v)[0];
+    $("carte-depenses-ligne").textContent = ops.length ? `${eur(depenseDe(ops), 0)} en ${moisMin(b.cle)}` + (top && top.v > 0 ? ` · surtout ${top.nom.toLowerCase()}` : "") : "Importe un relevé ou note une dépense";
+    $("carte-epargne-ligne").textContent = [road && `${road.nom} : ${nombreFr(Math.floor(avancee(road).part * 1000) / 10)} %`, epargne && `${epargne.nom} : ${Math.floor(avancee(epargne).part * 100)} %`].filter(Boolean).join(" · ") || "Tes objectifs d'épargne";
+    const pa = paieDu(cleMois(aujourdhui()));
+    $("carte-paie-ligne").textContent = pa ? `${pa.recue ? "Reçue" : "Attendue"} en ${moisMin(cleMois(aujourdhui()))} : ${eur(pa.net)}` : "Indique ton taux horaire";
+  }
+  const segmentsBudget = b => [
+    { nom: "Charges fixes", valeur: b.fixes, classe: "seg-1" },
+    { nom: "Dépenses courantes", valeur: b.courantes, classe: "seg-2" },
+    { nom: "Épargne", valeur: b.epargne, classe: "seg-3" },
+  ];
+
+  function moisNav(zone, cle) { zone.textContent = majuscule(nomMois(cle).toLowerCase()); }
+  function rendreBudget() {
+    const b = budgetDu(moisArgent);
+    moisNav($("bu-mois"), moisArgent);
+    $("bu-reste").textContent = eur(b.reste);
+    $("bu-reste").classList.toggle("negatif", b.reste < 0);
+    $("bu-par-jour").textContent = !b.paie ? "Indique ton taux horaire dans Ma paie : la paie attendue sert de point de départ."
+      : b.reste < 0 ? `Tu dépasses de ${eur(-b.reste)} ce que tu as ce mois-ci.`
+      : b.joursRestants ? `Soit ${eur(b.reste / b.joursRestants)} par jour jusqu'au ${joursDuMois(b.cle)} ${moisMin(b.cle)}.` : `Ce qu'il est resté en ${moisMin(b.cle)}.`;
+    const seg = segmentsBudget(b);
+    seg[0].detail = b.fixesAVenir ? `dont ${eur(b.fixesAVenir)} à venir` : "";
+    seg[1].detail = b.variablesAVenir ? `dont ${eur(b.variablesAVenir)} prévus` : "";
+    seg[2].detail = b.prevu != null && b.verse < b.prevu ? `dont ${eur(b.prevu - b.verse)} à verser` : "";
+    seg.push({ nom: "Reste", valeur: Math.max(0, b.reste), classe: "seg-reste" });
+    barreSegments($("bu-barre"), $("bu-legende"), seg, b.revenus);
+    // Ce qui rentre.
+    const rev = [];
+    const paieAvant = moisDecale(b.cle, -1);
+    rev.push(ligneArgent(`Paie ${deMois(paieAvant)}`, b.paie ? (b.paie.recue ? `reçue${b.paie.payeLe ? ` le ${dateCourte(depuisIso(b.paie.payeLe))}` : ""}` : "estimée d'après ton compteur") : "taux horaire à indiquer", b.paie ? eur(b.paie.net) : "—", "#paie"));
+    if (b.autres) rev.push(ligneArgent("Autres rentrées", "remboursements, ventes…", eur(b.autres)));
+    rev.push(ligneArgent("Total", "", eur(b.revenus), null, "total"));
+    $("bu-revenus").replaceChildren(...rev);
+    // Les charges fixes du mois.
+    const lignes = b.lignes.map(x => {
+      const c = x.charge, etat = c.variable ? `${eur(x.deja)} dépensés sur ${eur(c.montant)} prévus` : x.op ? `payée le ${dateCourte(depuisIso(x.op.d))}` : "à venir";
+      const li = ligneArgent(c.nom, `${c.frequence === "an" ? `par an, en ${MOIS[c.mois - 1]}` : c.variable ? "budget du mois" : "chaque mois"} · ${etat}`, eur(c.variable ? c.montant : x.op ? x.deja : c.montant), null, (x.op ? "payee" : "") + (c.variable ? " variable" : ""));
+      if (peutModifierArgent()) { const m = element("button", "tache-modifier"); m.type = "button"; m.dataset.charge = c.id; m.setAttribute("aria-label", `Modifier ${c.nom}`); m.innerHTML = PICTO_CRAYON; li.append(m); }
+      return li;
+    });
+    if (!lignes.length) lignes.push(element("li", "liste-vide", "Aucune charge ce mois-ci."));
+    $("bu-charges").replaceChildren(...lignes);
+    const annuelles = Object.values(charges.docs).filter(c => c.frequence === "an"), parAn = annuelles.reduce((t, c) => t + c.montant, 0);
+    $("bu-charges-aide").textContent = annuelles.length ? `Les abonnements annuels comptent le mois où ils sont prélevés (${annuelles.map(c => `${c.nom} en ${MOIS[c.mois - 1]}`).join(", ")}) : ${eur(parAn)} par an, soit ${eur(parAn / 12)} à garder de côté chaque mois.` : "";
+    // L'épargne du mois.
+    $("bu-epargne").textContent = `${eur(b.verse)} versés en ${moisMin(b.cle)}` + (b.prevu != null ? ` sur ${eur(b.prevu)} prévus` : "") + ".";
+    if (document.activeElement !== $("bu-versement")) $("bu-versement").value = b.prevu != null ? String(b.prevu).replace(".", ",") : "";
+    $("bu-versement-form").hidden = !peutModifierArgent();
+    $("bu-ajouter-charge").hidden = !peutModifierArgent();
+  }
+  function ligneArgent(titre, detail, montant, lien, classe) {
+    const li = element("li", "ligne-argent" + (classe ? " " + classe : ""));
+    const t = element(lien ? "a" : "span", "ligne-argent-titre", titre);
+    if (lien) t.href = lien;
+    const corps = element("span", "ligne-argent-corps");
+    corps.append(t);
+    if (detail) corps.append(element("span", "ligne-argent-detail", detail));
+    li.append(corps, element("span", "ligne-argent-montant", montant));
+    return li;
+  }
+
+  function rendreDepenses() {
+    moisNav($("de-mois"), moisArgent);
+    const ops = opsDu(moisArgent), total = depenseDe(ops), avant = depenseDe(opsDu(moisDecale(moisArgent, -1)));
+    $("de-total-titre").textContent = `Dépensé en ${moisMin(moisArgent)}`;
+    $("de-total").textContent = eur(total);
+    $("de-compare").textContent = !ops.length ? "Rien de noté ce mois-ci." : avant ? `${total > avant ? "+" : "−"}${eur(Math.abs(total - avant), 0)} par rapport à ${moisMin(moisDecale(moisArgent, -1))}.` : "";
+    const lignes = CATS_DEPENSES.map(([id, nom]) => ({ id, nom, valeur: depenseDe(ops.filter(o => o.c === id)) })).filter(l => l.valeur > 0).sort((a, b) => b.valeur - a.valeur)
+      .map(l => ({ ...l, texte: `${eur(l.valeur, 0)} · ${Math.round(l.valeur / (total || 1) * 100)} %` }));
+    $("de-categories").hidden = !lignes.length;
+    barresH($("de-categories"), lignes, filtreCat);
+    // Six mois, jusqu'au mois choisi.
+    barresV($("de-mois-barres"), [...Array(6)].map((_, i) => { const cle = moisDecale(moisArgent, i - 5); return { cle, nom: MOIS_COURTS[Number(cle.slice(5)) - 1].replace(".", ""), titre: nomMois(cle), valeur: depenseDe(opsDu(cle)), actif: cle === moisArgent }; }));
+    // Les opérations, les plus récentes en haut.
+    const vues = ops.filter(o => !filtreCat || o.c === filtreCat).sort((a, b) => b.d.localeCompare(a.d) || a.l.localeCompare(b.l));
+    $("de-filtre").hidden = !filtreCat;
+    if (filtreCat) $("de-filtre-nom").textContent = NOM_CAT[filtreCat];
+    const modifiable = peutModifierArgent(), regroupe = new Map();
+    vues.forEach(o => regroupe.set(o.d, [...(regroupe.get(o.d) || []), o]));
+    const items = [];
+    regroupe.forEach((liste, d) => {
+      items.push(element("li", "ops-jour", majuscule(dateCourte(depuisIso(d)))));
+      liste.forEach(o => {
+        const li = element("li", "op" + (HORS_DEPENSES.has(o.c) ? " hors" : ""));
+        li.dataset.op = o.id;
+        const corps = element("span", "op-corps");
+        corps.append(element("span", "op-libelle", o.l));
+        if (modifiable) {
+          const s = element("select", "op-categorie");
+          s.setAttribute("aria-label", `Catégorie de ${o.l}`);
+          s.append(...CATS.map(([id, nom]) => new Option(nom, id)));
+          s.value = o.c;
+          corps.append(s);
+        } else corps.append(element("span", "op-categorie", NOM_CAT[o.c]));
+        li.append(corps, element("span", "op-montant" + (o.m > 0 ? " plus" : ""), (o.m > 0 ? "+" : "") + eur(o.m)));
+        if (modifiable) { const x = element("button", "suppr-ca", "×"); x.type = "button"; x.dataset.supprOp = o.id; x.setAttribute("aria-label", `Supprimer ${o.l}`); li.append(x); }
+        items.push(li);
+      });
+    });
+    if (!items.length) items.push(element("li", "liste-vide", filtreCat ? "Rien dans cette catégorie ce mois-ci." : "Aucune opération ce mois-ci : importe le relevé de la Caisse d'Épargne ou note une dépense."));
+    $("de-ops").replaceChildren(...items);
+    $("de-actions").hidden = !modifiable;
+  }
+
+  function rendreEpargne() {
+    const modifiable = peutModifierArgent();
+    // Les comptes : le dernier solde, l'écart avec le mois d'avant.
+    const s = soldesTries(), dernier = s[s.length - 1], avantDernier = s[s.length - 2];
+    const lignes = ["investissement", "epargne"].flatMap(g => comptesDu(g).map(c => {
+      const v = dernierSolde(c.id), prec = avantDernier && c.id in avantDernier.valeurs ? avantDernier.valeurs[c.id] : null;
+      const ecart = v != null && prec != null && dernier && c.id in dernier.valeurs ? v - prec : null;
+      return ligneArgent(c.nom, `${g === "investissement" ? "Investissement" : "Épargne"}${ecart ? ` · ${ecart > 0 ? "+" : "−"}${eur(Math.abs(ecart), 0)} sur un mois` : ""}`, v == null ? "—" : eur(v));
+    }));
+    $("ep-comptes").replaceChildren(...lignes);
+    $("ep-maj").textContent = dernier ? `Dernière mise à jour : ${dateLongue(dernier.le)}.` : "Pas encore de solde : mets à jour tes comptes.";
+    // Les objectifs.
+    $("ep-objectifs").replaceChildren(...projetsTries().filter(p => p.type === "comptes").map(p => carteProjet(p, modifiable)));
+    const achats = projetsTries().filter(p => p.type === "achat");
+    $("ep-achats").replaceChildren(...(achats.length ? achats.map(p => carteProjet(p, modifiable)) : [element("li", "liste-vide", "Rien de prévu pour l'instant.")]));
+    $("ep-ajouter").hidden = !modifiable;
+    // Le tableau mois par mois (la vue en tableau de la courbe).
+    const corps = element("tbody");
+    const inv = new Map(totauxDu("investissement").map(x => [x.cle, x.total])), epa = new Map(totauxDu("epargne").map(x => [x.cle, x.total]));
+    [...s].reverse().forEach(x => corps.append(ligneTableau([[nomMois(x.id)], [inv.has(x.id) ? eur(inv.get(x.id), 0) : "—", true], [epa.has(x.id) ? eur(epa.get(x.id), 0) : "—", true]])));
+    if (!s.length) corps.append(ligneTableau([["Aucun mois enregistré."], [""], [""]]));
+    $("ep-historique").replaceChildren(teteTableau([["Mois"], ["Investi", true], ["Épargne", true]]), corps);
+  }
+  function carteProjet(p, modifiable) {
+    const av = avancee(p), li = element("li", "carte-argent projet");
+    const tete = element("div", "projet-tete");
+    tete.append(element("h3", "projet-nom", p.nom), element("span", "projet-chiffres", `${eur(av.total, 0)} / ${eur(p.cible, 0)}`));
+    if (modifiable) { const m = element("button", "tache-modifier"); m.type = "button"; m.dataset.projet = p.id; m.setAttribute("aria-label", `Modifier ${p.nom}`); m.innerHTML = PICTO_CRAYON; tete.append(m); }
+    const barre = element("div", "progression");
+    barreProgression(barre, av.part, `${p.nom} : ${Math.round(av.part * 100)} %`);
+    li.append(tete, barre, element("p", "aide", (p.date ? `Pour le ${dateLongue(p.date)}. ` : "") + texteProjet(p, av)));
+    if (p.lien) { const a = element("a", "lien-discret", "Voir l'article"); a.href = p.lien; a.target = "_blank"; a.rel = "noopener"; li.append(a); }
+    return li;
+  }
+
+  function rendrePaie() {
+    moisNav($("pa-mois"), moisPaie);
+    const recue = paies.docs[moisPaie], e = paieEstimee(moisPaie, recue && recue.heuresSup != null ? recue.heuresSup : null);
+    $("pa-titre").textContent = `Paie ${deMois(moisPaie)}`;
+    $("pa-net").textContent = recue ? eur(recue.net) : e ? eur(e.net) : "—";
+    $("pa-statut").textContent = recue ? `Reçue${recue.payeLe ? ` le ${dateCourte(depuisIso(recue.payeLe))}` : ""}`
+        + (e ? (Math.abs(recue.net - e.net) < 1 ? ` · comme le calcul (${eur(e.net)})` : ` · calcul : ${eur(e.net)}, soit ${recue.net >= e.net ? "+" : "−"}${eur(Math.abs(recue.net - e.net))} sur la fiche`) : "")
+      : e ? `Attendue vers le ${Math.min(JOUR_PAIE, joursDuMois(moisPaie))} ${moisMin(moisPaie)}, d'après ton compteur d'heures.` : "Indique ton taux horaire dans les réglages ci-dessous.";
+    const corps = element("tbody");
+    if (e) {
+      corps.append(ligneTableau([[`Salaire de base (${nombreFr(e.heures)} h × ${eur(e.taux)})`], [eur(e.base), true]]));
+      corps.append(ligneTableau([[`Heures sup à 25 % (${nombreFr(e.heuresSup)} h × ${eur(e.tauxHS)})`], [eur(e.hs), true]]));
+      corps.append(ligneTableau([["Brut"], [eur(e.brut), true]]));
+      corps.append(ligneTableau([["Cotisations"], [`−${eur(e.cotisations)}`, true]]));
+      corps.append(ligneTableau([["Net estimé"], [eur(e.net), true]]));
+    }
+    $("pa-detail").replaceChildren(teteTableau([["Calcul"], ["Montant", true]]), corps);
+    $("pa-detail").hidden = !e;
+    $("pa-aide").textContent = e ? `Les heures sup sont ${recue && recue.heuresSup != null ? "celles de ta fiche" : `celles de ton compteur, sur les semaines qui commencent en ${moisMin(moisPaie)}`}. Les cotisations suivent ta fiche de septembre 2026.` : "";
+    // L'historique : les paies reçues, et la paie attendue du mois en cours.
+    const cles = Object.keys(paies.docs).sort(), maintenant = cleMois(aujourdhui());
+    if (!cles.includes(maintenant)) cles.push(maintenant);
+    const barres = cles.slice(-12).map(cle => {
+      const r = paies.docs[cle], x = r ? null : paieEstimee(cle);
+      return { cle, nom: MOIS_COURTS[Number(cle.slice(5)) - 1].replace(".", ""), titre: nomMois(cle), valeur: r ? r.net : x ? x.net : 0, estimee: !r, actif: cle === moisPaie };
+    });
+    barresV($("pa-historique"), barres);
+    // Le formulaire : la fiche du mois choisi.
+    if (!$("pa-form").contains(document.activeElement)) {
+      $("pa-form-titre").textContent = `Ma fiche de paie ${deMois(moisPaie)}`;
+      $("pa-brut").value = recue && recue.brut ? String(recue.brut).replace(".", ",") : "";
+      $("pa-hs").value = recue && recue.heuresSup != null ? String(recue.heuresSup).replace(".", ",") : e ? String(e.heuresSup).replace(".", ",") : "";
+      $("pa-recu").value = recue ? String(recue.net).replace(".", ",") : "";
+      $("pa-le").value = recue && recue.payeLe ? recue.payeLe : "";
+      const r = reglagesArgent();
+      $("pa-taux").value = r.taux ? String(r.taux).replace(".", ",") : "";
+      $("pa-heures").value = String(r.heures).replace(".", ",");
+    }
+    $("pa-form").hidden = $("pa-reglages").hidden = !peutModifierArgent();
+  }
+
+  function rendreCarteAccueilArgent() {
+    const road = projetRoad(), b = budgetDu(cleMois(aujourdhui()));
+    $("resume-argent").textContent = [road && `${road.nom} : ${nombreFr(Math.floor(avancee(road).part * 1000) / 10)} %`, b.paie && `${eur(b.reste, 0)} à dépenser`].filter(Boolean).join(" · ") || "Budget, dépenses, épargne";
+  }
+  function rendreArgent() {
+    if (!journeePrete) return;
+    rendreHubArgent();
+    rendreBudget();
+    rendreDepenses();
+    rendreEpargne();
+    rendrePaie();
+    rendreCarteAccueilArgent();
+  }
+
+  // ----- naviguer entre les mois -----
+  document.querySelectorAll("[data-mois-argent]").forEach(b => b.addEventListener("click", () => { moisArgent = moisDecale(moisArgent, Number(b.dataset.moisArgent)); filtreCat = null; rendreBudget(); rendreDepenses(); }));
+  document.querySelectorAll("[data-mois-paie]").forEach(b => b.addEventListener("click", () => { moisPaie = moisDecale(moisPaie, Number(b.dataset.moisPaie)); rendrePaie(); }));
+  $("de-mois-barres").addEventListener("click", e => { const b = e.target.closest("[data-cle]"); if (b) { moisArgent = b.dataset.cle; filtreCat = null; rendreBudget(); rendreDepenses(); } });
+  $("pa-historique").addEventListener("click", e => { const b = e.target.closest("[data-cle]"); if (b) { moisPaie = b.dataset.cle; rendrePaie(); } });
+  $("de-categories").addEventListener("click", e => { const b = e.target.closest("[data-id]"); if (b) { filtreCat = filtreCat === b.dataset.id ? null : b.dataset.id; rendreDepenses(); } });
+  $("de-filtre-tout").addEventListener("click", () => { filtreCat = null; rendreDepenses(); });
+
+  // ----- importer un relevé (CSV de la Caisse d'Épargne, ou d'une autre banque) -----
+  async function lireTexte(fichier) {
+    const octets = await fichier.arrayBuffer();
+    try { return new TextDecoder("utf-8", { fatal: true }).decode(octets); } catch (_) { return new TextDecoder("windows-1252").decode(octets); }
+  }
+  // Un CSV avec guillemets : « ; », « , » ou tabulation, au choix du fichier.
+  function lignesCsv(texte) {
+    const debut = texte.split(/\r?\n/).slice(0, 30).join("\n");
+    const sep = [";", "\t", ","].map(s => [s, debut.split(s).length]).sort((a, b) => b[1] - a[1])[0][0];
+    const lignes = [];
+    let ligne = [], champ = "", guillemets = false;
+    for (let i = 0; i < texte.length; i++) {
+      const ch = texte[i];
+      if (guillemets) {
+        if (ch === '"' && texte[i + 1] === '"') { champ += '"'; i++; } else if (ch === '"') guillemets = false; else champ += ch;
+      } else if (ch === '"') guillemets = true;
+      else if (ch === sep) { ligne.push(champ); champ = ""; }
+      else if (ch === "\n" || ch === "\r") { if (ch === "\r" && texte[i + 1] === "\n") i++; ligne.push(champ); lignes.push(ligne); ligne = []; champ = ""; }
+      else champ += ch;
+    }
+    if (champ || ligne.length) { ligne.push(champ); lignes.push(ligne); }
+    return lignes.map(l => l.map(c => c.trim())).filter(l => l.some(Boolean));
+  }
+  const lireDateReleve = v => {
+    let m = /^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/.exec(v);
+    if (m) return `${m[3].length === 2 ? "20" + m[3] : m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+    m = /^(\d{4})-(\d{2})-(\d{2})/.exec(v);
+    return m ? `${m[1]}-${m[2]}-${m[3]}` : null;
+  };
+  const lireMontantReleve = v => { const t = String(v || "").replace(/[\s  €+]/g, "").replace(/\.(?=\d{3}(\D|$))/g, "").replace(",", "."); const n = Number(t); return t && Number.isFinite(n) ? n : null; };
+  function analyserReleve(texte) {
+    const lignes = lignesCsv(texte);
+    const norm = c => sansAccents(c).replace(/[^a-z ]/g, " ").replace(/\s+/g, " ").trim();
+    const iTete = lignes.findIndex(l => { const n = l.map(norm); return n.some(c => c.startsWith("date")) && n.some(c => /debit|credit|montant/.test(c)); });
+    if (iTete < 0) return [];
+    const tete = lignes[iTete].map(norm), col = (...motifs) => { for (const re of motifs) { const i = tete.findIndex(c => re.test(c)); if (i >= 0) return i; } return -1; };
+    const iDate = col(/^date (de l )?operation/, /^date de comptabilisation/, /^date comptable/, /^date/);
+    const iLib = col(/^libelle simplifie/, /^libelle operation/, /^libelle/, /^detail/, /^description/), iLib2 = col(/^libelle operation/, /^informations complementaires/, /^detail/);
+    const iMontant = col(/^montant/), iDebit = col(/^debit/), iCredit = col(/^credit/), iCat = col(/^categorie/), iSous = col(/^sous categorie/);
+    if (iDate < 0 || iLib < 0 || (iMontant < 0 && iDebit < 0 && iCredit < 0)) return [];
+    const ops = [];
+    lignes.slice(iTete + 1).forEach(l => {
+      const d = lireDateReleve(l[iDate] || "");
+      let m = iMontant >= 0 ? lireMontantReleve(l[iMontant]) : null;
+      if (m == null) {
+        const deb = iDebit >= 0 ? lireMontantReleve(l[iDebit]) : null, cre = iCredit >= 0 ? lireMontantReleve(l[iCredit]) : null;
+        m = deb ? -Math.abs(deb) : cre ? Math.abs(cre) : null;
+      }
+      if (!d || m == null || !m) return;
+      const l1 = (l[iLib] || "").replace(/\s+/g, " "), l2 = iLib2 >= 0 && iLib2 !== iLib ? (l[iLib2] || "").replace(/\s+/g, " ") : "";
+      ops.push({ d, l: l1 || l2 || "Opération", k: l2 && l2 !== l1 ? l2 : "", m: arrondi2(m), banque: [iCat >= 0 ? l[iCat] : "", iSous >= 0 ? l[iSous] : ""].join(" ") });
+    });
+    return ops;
+  }
+  // L'identifiant d'une opération importée : sa date, son montant et son libellé (et son rang parmi les identiques).
+  function hashOp(texte) { let h = 2166136261; for (let i = 0; i < texte.length; i++) { h ^= texte.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36); }
+  async function importerReleve(fichier) {
+    const etat = $("de-import-etat"), dire = (texte, classe) => { etat.className = "remplissage" + (classe ? " " + classe : ""); $("de-import-texte").textContent = texte; etat.hidden = false; };
+    dire("Lecture du relevé…", "en-cours");
+    try {
+      const lues = analyserReleve(await lireTexte(fichier));
+      if (!lues.length) { dire("Je n'ai trouvé aucune opération dans ce fichier. Dans l'appli ou le site de la Caisse d'Épargne, exporte tes opérations au format CSV.", "erreur"); return; }
+      const vus = new Map(), parMois = new Map();
+      lues.forEach(o => {
+        const base = `${o.d}|${o.m}|${o.l}|${o.k}`, n = (vus.get(base) || 0) + 1;
+        vus.set(base, n);
+        const cle = o.d.slice(0, 7);
+        parMois.set(cle, [...(parMois.get(cle) || []), { id: "i" + hashOp(`${base}|${n}`), ...o }]);
+      });
+      let ajoutees = 0, deja = 0, remplacees = 0;
+      const changes = new Map();
+      const opsDe = cle => { if (!changes.has(cle)) changes.set(cle, { ...((operations.docs[cle] || {}).ops || {}) }); return changes.get(cle); };
+      for (const [cle, liste] of parMois) {
+        const ops = opsDe(cle);
+        liste.forEach(o => {
+          if (ops[o.id]) { deja++; return; }
+          // Une dépense notée à la main (même montant, à quatre jours près) est remplacée par la ligne du relevé.
+          for (const c of [cle, moisDecale(cle, -1), moisDecale(cle, 1)]) {
+            const autres = c === cle ? ops : opsDe(c);
+            const doublon = Object.entries(autres).find(([, x]) => x.s === "saisie" && Math.abs(x.m - o.m) < 0.01 && Math.abs(depuisIso(x.d) - depuisIso(o.d)) <= 4 * JOUR_MS);
+            if (doublon) { delete autres[doublon[0]]; remplacees++; break; }
+          }
+          ops[o.id] = { d: o.d, l: o.l.slice(0, 120), ...(o.k ? { k: o.k.slice(0, 300) } : {}), m: o.m, c: categorieAuto(`${o.l} ${o.k}`, o.banque, o.m), s: "import", cm: false };
+          ajoutees++;
+        });
+      }
+      for (const [cle, ops] of changes) await operations.ecrire(cle, { ops, modifieLe: new Date().toISOString() });
+      const mois = [...parMois.keys()].sort();
+      moisArgent = mois[mois.length - 1];
+      filtreCat = null;
+      rendreArgent();
+      dire(`${ajoutees} opération${ajoutees > 1 ? "s" : ""} ajoutée${ajoutees > 1 ? "s" : ""}` + (deja ? `, ${deja} déjà là` : "") + (remplacees ? `, ${remplacees} saisie${remplacees > 1 ? "s" : ""} remplacée${remplacees > 1 ? "s" : ""} par le relevé` : "")
+        + `. Vérifie les catégories : une correction sert pour les prochaines fois.`);
+    } catch (e) { dire(e && e.code ? "L'import n'a pas été enregistré. Vérifie ta connexion et réessaie." : "Ce fichier ne se lit pas : exporte le relevé au format CSV.", "erreur"); }
+  }
+  $("de-fichier").addEventListener("change", e => { const f = e.target.files[0]; e.target.value = ""; if (f && peutModifierArgent()) importerReleve(f); });
+
+  // ----- noter une dépense -----
+  $("de-cats").replaceChildren(...CATS.filter(([c]) => c !== "salaire" && c !== "interne").map(([id, nom], i) => {
+    const l = element("label", "puce-choix"), r = element("input");
+    r.type = "radio"; r.name = "de-cat"; r.value = id; r.checked = i === 0;
+    l.append(r, element("span", null, nom));
+    return l;
+  }));
+  $("de-form").addEventListener("submit", async e => {
+    e.preventDefault();
+    if (!peutModifierArgent()) return;
+    const montant = lireMontant($("de-montant").value), c = (document.querySelector('input[name="de-cat"]:checked') || {}).value || "autres";
+    if (!montant) { $("de-montant").classList.add("en-erreur"); $("de-montant").focus(); return; }
+    const d = ISO_RE.test($("de-date").value) ? $("de-date").value : versIso(aujourdhui()), cle = d.slice(0, 7);
+    const op = { d, l: $("de-libelle").value.trim().slice(0, 120) || NOM_CAT[c], m: c === "revenus" ? montant : -montant, c, s: "saisie", cm: true };
+    try {
+      await operations.ecrire(cle, { ops: { ...((operations.docs[cle] || {}).ops || {}), ["s" + Date.now().toString(36)]: op }, modifieLe: new Date().toISOString() });
+      $("de-montant").value = ""; $("de-libelle").value = "";
+      moisArgent = cle;
+      toast(`${eur(montant)} noté${c === "revenus" ? "s en rentrée" : ""}.`);
+    } catch (err) { echecArgent(err); }
+  });
+  $("de-montant").addEventListener("input", () => $("de-montant").classList.remove("en-erreur"));
+  // Changer la catégorie : la règle vaut pour les opérations pareilles qui n'ont pas été rangées à la main.
+  $("de-ops").addEventListener("change", async e => {
+    const s = e.target.closest(".op-categorie"), li = e.target.closest("[data-op]");
+    if (!s || !li || !peutModifierArgent()) return;
+    const cle = moisArgent, op = ((operations.docs[cle] || {}).ops || {})[li.dataset.op];
+    if (!op) return;
+    const regle = cleRegle(`${op.l} ${op.k}`), changes = new Map([[cle, { ...operations.docs[cle].ops, [li.dataset.op]: { ...op, c: s.value, cm: true } }]]);
+    let autres = 0;
+    if (op.s === "import" && regle) Object.values(operations.docs).forEach(m => Object.entries(m.ops).forEach(([id, o]) => {
+      if (o.cm || o.s !== "import" || cleRegle(`${o.l} ${o.k}`) !== regle || id === li.dataset.op) return;
+      const ops = changes.get(m.id) || { ...m.ops };
+      ops[id] = { ...o, c: s.value };
+      changes.set(m.id, ops);
+      autres++;
+    }));
+    try {
+      for (const [c, ops] of changes) await operations.ecrire(c, { ops, modifieLe: new Date().toISOString() });
+      if (op.s === "import" && regle) await ecrireReglagesArgent({ regles: { ...reglagesArgent().regles, [regle]: s.value } });
+      if (autres) toast(`${autres} autre${autres > 1 ? "s" : ""} opération${autres > 1 ? "s" : ""} « ${regle} » rangée${autres > 1 ? "s" : ""} aussi en ${NOM_CAT[s.value].toLowerCase()}.`);
+    } catch (err) { echecArgent(err); }
+  });
+  $("de-ops").addEventListener("click", async e => {
+    const b = e.target.closest("[data-suppr-op]");
+    if (!b || !peutModifierArgent()) return;
+    if (!b.classList.contains("arme")) { b.classList.add("arme"); b.textContent = "Supprimer ?"; setTimeout(() => { b.classList.remove("arme"); b.textContent = "×"; }, 4000); return; }
+    const cle = moisArgent, ops = { ...((operations.docs[cle] || {}).ops || {}) };
+    delete ops[b.dataset.supprOp];
+    try { await operations.ecrire(cle, { ops, modifieLe: new Date().toISOString() }); } catch (err) { echecArgent(err); }
+  });
+
+  // ----- le versement d'épargne prévu chaque mois -----
+  $("bu-versement-form").addEventListener("submit", async e => {
+    e.preventDefault();
+    const v = $("bu-versement").value.trim() ? lireMontant($("bu-versement").value) : null;
+    if ($("bu-versement").value.trim() && v == null) { $("bu-versement").classList.add("en-erreur"); return; }
+    try { await ecrireReglagesArgent({ versementMensuel: v }); toast("Versement prévu enregistré."); } catch (err) { echecArgent(err); }
+  });
+  $("bu-versement").addEventListener("input", () => $("bu-versement").classList.remove("en-erreur"));
+
+  // ----- les charges fixes -----
+  let chargeEditee = null;
+  $("ch-categorie").replaceChildren(...CATS_DEPENSES.map(([id, nom]) => new Option(nom, id)));
+  $("ch-mois").replaceChildren(...MOIS.map((m, i) => new Option(majuscule(m), String(i + 1))));
+  function ouvrirCharge(id) {
+    const c = id ? charges.docs[id] : null;
+    chargeEditee = c ? c.id : null;
+    $("ch-titre").textContent = c ? "Modifier la charge" : "Ajouter une charge";
+    $("ch-nom").value = c ? c.nom : "";
+    $("ch-montant").value = c ? String(c.montant).replace(".", ",") : "";
+    document.querySelector(`input[name="ch-frequence"][value="${c ? c.frequence : "mois"}"]`).checked = true;
+    $("ch-mois").value = String(c && c.mois ? c.mois : new Date(aujourdhui()).getUTCMonth() + 1);
+    $("ch-categorie").value = c ? c.categorie : "abonnements";
+    $("ch-mot").value = c ? c.motCle : "";
+    $("ch-variable").checked = !!(c && c.variable);
+    $("ch-supprimer").hidden = !c;
+    desarmer($("ch-supprimer"), "Supprimer");
+    $("ch-erreur").hidden = true;
+    majCharge();
+    ouvrir($("fenetre-charge"));
+    $("ch-nom").focus();
+  }
+  const majCharge = () => { $("ch-mois-bloc").hidden = document.querySelector('input[name="ch-frequence"]:checked').value !== "an"; };
+  $("fenetre-charge").addEventListener("change", majCharge);
+  $("bu-ajouter-charge").addEventListener("click", () => ouvrirCharge(null));
+  $("bu-charges").addEventListener("click", e => { const b = e.target.closest("[data-charge]"); if (b) ouvrirCharge(b.dataset.charge); });
+  $("ch-enregistrer").addEventListener("click", async () => {
+    const nom = $("ch-nom").value.trim(), montant = lireMontant($("ch-montant").value), an = document.querySelector('input[name="ch-frequence"]:checked').value === "an";
+    const erreur = t => { $("ch-erreur").textContent = t; $("ch-erreur").hidden = false; };
+    if (!nom) return erreur("Donne un nom à la charge.");
+    if (!montant) return erreur("Le montant doit être un nombre, par exemple 11,12.");
+    const corps = { nom: nom.slice(0, 60), montant, frequence: an ? "an" : "mois", mois: an ? Number($("ch-mois").value) : null, categorie: $("ch-categorie").value,
+      motCle: ($("ch-mot").value.trim() || sansAccents(nom).split(/\s+/)[0]).slice(0, 80), variable: $("ch-variable").checked,
+      ordre: chargeEditee ? charges.docs[chargeEditee].ordre : Object.keys(charges.docs).length + 1 };
+    try { await charges.ecrire(chargeEditee || charges.nouvelId(), corps); fermer($("fenetre-charge")); } catch (err) { erreur("La charge n'a pas été enregistrée. Réessaie."); }
+  });
+  $("ch-supprimer").addEventListener("click", async e => {
+    const b = e.currentTarget;
+    if (!chargeEditee) return;
+    if (!b.classList.contains("arme")) { armer(b, "Confirmer la suppression", "Supprimer"); return; }
+    try { await charges.ecrire(chargeEditee, null); fermer($("fenetre-charge")); } catch (err) { echecArgent(err); }
+  });
+
+  // ----- les comptes : un solde par compte, une fois par mois -----
+  function ouvrirComptes() {
+    const zone = $("sol-champs");
+    zone.replaceChildren(...["investissement", "epargne"].map(g => {
+      const bloc = element("fieldset", "co-groupe");
+      bloc.append(element("legend", null, g === "investissement" ? "Investissement (Road to 50k)" : "Épargne"));
+      comptesDu(g).forEach(c => {
+        const l = element("label", "titre-champ", c.nom), i = element("input");
+        i.type = "text"; i.inputMode = "decimal"; i.dataset.compte = c.id; i.placeholder = "0";
+        const v = dernierSolde(c.id);
+        i.value = v != null ? String(v).replace(".", ",") : "";
+        l.append(i);
+        bloc.append(l);
+      });
+      return bloc;
+    }));
+    $("sol-date").value = versIso(aujourdhui());
+    $("sol-erreur").hidden = true;
+    ouvrir($("fenetre-comptes"));
+    zone.querySelector("input")?.focus();
+  }
+  document.querySelectorAll("[data-maj-comptes]").forEach(b => b.addEventListener("click", () => { if (peutModifierArgent()) ouvrirComptes(); }));
+  $("sol-enregistrer").addEventListener("click", async () => {
+    const valeurs = {};
+    for (const i of $("sol-champs").querySelectorAll("[data-compte]")) {
+      if (!i.value.trim()) continue;
+      const v = lireMontant(i.value);
+      if (v == null) { $("sol-erreur").textContent = "Un montant ne se lit pas : écris-le comme 1 234,56."; $("sol-erreur").hidden = false; i.focus(); return; }
+      valeurs[i.dataset.compte] = v;
+    }
+    const le = ISO_RE.test($("sol-date").value) ? $("sol-date").value : versIso(aujourdhui()), cle = le.slice(0, 7);
+    try {
+      await soldes.ecrire(cle, { valeurs: { ...((soldes.docs[cle] || {}).valeurs || {}), ...valeurs }, le });
+      fermer($("fenetre-comptes"));
+      toast(`Comptes ${deMois(cle)} enregistrés.`);
+    } catch (err) { $("sol-erreur").textContent = "Ce n'a pas été enregistré. Réessaie."; $("sol-erreur").hidden = false; }
+  });
+
+  // ----- les projets : objectifs d'épargne et achats prévus -----
+  let projetEdite = null;
+  function ouvrirProjet(id) {
+    const p = id ? projets.docs[id] : null;
+    projetEdite = p ? p.id : null;
+    $("pr-titre").textContent = p ? (p.type === "comptes" ? "Modifier l'objectif" : "Modifier l'achat") : "Ajouter un achat prévu";
+    $("pr-nom").value = p ? p.nom : "";
+    $("pr-cible").value = p ? String(p.cible).replace(".", ",") : "";
+    $("pr-date").value = p && p.date ? p.date : "";
+    $("pr-mis").value = p && p.misDeCote ? String(p.misDeCote).replace(".", ",") : "";
+    $("pr-lien").value = p && p.lien ? p.lien : "";
+    $("pr-mis-bloc").hidden = $("pr-lien-bloc").hidden = !!(p && p.type === "comptes");
+    $("pr-aide").textContent = p && p.type === "comptes" ? `Le total vient des soldes de tes comptes ${p.groupe === "investissement" ? "d'investissement" : "d'épargne"}.` : "";
+    $("pr-supprimer").hidden = !p || p.type === "comptes";
+    desarmer($("pr-supprimer"), "Supprimer");
+    $("pr-erreur").hidden = true;
+    ouvrir($("fenetre-projet"));
+    $("pr-nom").focus();
+  }
+  $("ep-ajouter").addEventListener("click", () => ouvrirProjet(null));
+  document.querySelector('[data-vue="epargne"]').addEventListener("click", e => { const b = e.target.closest("[data-projet]"); if (b) ouvrirProjet(b.dataset.projet); });
+  $("pr-enregistrer").addEventListener("click", async () => {
+    const avant = projetEdite ? projets.docs[projetEdite] : null, cible = lireMontant($("pr-cible").value), nom = $("pr-nom").value.trim();
+    const erreur = t => { $("pr-erreur").textContent = t; $("pr-erreur").hidden = false; };
+    if (!nom) return erreur("Donne un nom.");
+    if (!cible) return erreur("Le montant visé doit être un nombre, par exemple 350.");
+    const mis = $("pr-mis").value.trim() ? lireMontant($("pr-mis").value) : 0;
+    if (mis == null) return erreur("Ce qui est mis de côté doit être un nombre.");
+    let lien = $("pr-lien").value.trim() || null;
+    if (lien && !/^https?:\/\//i.test(lien)) lien = "https://" + lien;
+    const corps = { ...(avant ? { type: avant.type, groupe: avant.groupe, ordre: avant.ordre, creeLe: avant.creeLe, note: avant.note } : { type: "achat", groupe: "investissement", ordre: 99, creeLe: new Date().toISOString(), note: "" }),
+      nom: nom.slice(0, 60), cible, date: ISO_RE.test($("pr-date").value) ? $("pr-date").value : null, misDeCote: avant && avant.type === "comptes" ? 0 : mis, lien: avant && avant.type === "comptes" ? null : lien };
+    try { await projets.ecrire(projetEdite || projets.nouvelId(), corps); fermer($("fenetre-projet")); } catch (err) { erreur("Ce n'a pas été enregistré. Réessaie."); }
+  });
+  $("pr-supprimer").addEventListener("click", async e => {
+    const b = e.currentTarget;
+    if (!projetEdite) return;
+    if (!b.classList.contains("arme")) { armer(b, "Confirmer la suppression", "Supprimer"); return; }
+    try { await projets.ecrire(projetEdite, null); fermer($("fenetre-projet")); } catch (err) { echecArgent(err); }
+  });
+
+  // ----- la paie : la fiche reçue, et les réglages du calcul -----
+  $("pa-form").addEventListener("submit", async e => {
+    e.preventDefault();
+    const net = lireMontant($("pa-recu").value), brut = $("pa-brut").value.trim() ? lireMontant($("pa-brut").value) : null, hs = $("pa-hs").value.trim() ? lireMontant($("pa-hs").value) : null;
+    if (!net) { $("pa-recu").classList.add("en-erreur"); $("pa-recu").focus(); return; }
+    try {
+      await paies.ecrire(moisPaie, { net, brut, heuresSup: hs, payeLe: ISO_RE.test($("pa-le").value) ? $("pa-le").value : null, modifieLe: new Date().toISOString() });
+      document.activeElement.blur();
+      toast(`Paie ${deMois(moisPaie)} enregistrée.`);
+    } catch (err) { echecArgent(err); }
+  });
+  $("pa-reglages-form").addEventListener("submit", async e => {
+    e.preventDefault();
+    const taux = lireMontant($("pa-taux").value), heures = lireMontant($("pa-heures").value);
+    if (!taux) { $("pa-taux").classList.add("en-erreur"); return; }
+    try { await ecrireReglagesArgent({ tauxHoraire: taux, heuresMois: heures || 151.67 }); document.activeElement.blur(); toast("Réglages de la paie enregistrés."); } catch (err) { echecArgent(err); }
+  });
+  ["pa-recu", "pa-taux"].forEach(id => $(id).addEventListener("input", () => $(id).classList.remove("en-erreur")));
+
+  let minuterieRoad = 0;
+  window.addEventListener("resize", () => { clearTimeout(minuterieRoad); minuterieRoad = setTimeout(() => { if (vueActive === "argent") rendreHubArgent(); }, 150); });
 
   // ---------- démarrage ----------
   construireSaisie();

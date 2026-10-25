@@ -109,9 +109,19 @@ La part homme du chiffre d'affaires du magasin, comparée à l'objectif (55 à 6
 - **La courbe** de la part homme semaine par semaine (12 semaines), avec la bande de l'objectif ; le survol d'une semaine affiche ses chiffres.
 - **Mode discret** (activé au départ, gardé dans ce navigateur) : les montants sont cachés à l'écran, y compris pendant la saisie ; seuls les pourcentages restent. La page n'est visible que de son propriétaire.
 
-## Argent et Sport
+## Argent
 
-À construire : chaque rubrique montre des idées de contenu, marquées « Idée ».
+Très visuelle, en vert. Sur les pages d'Argent, la barre de ses sous-rubriques (Budget, Dépenses, Épargne, Ma paie) reste affichée sous le bandeau.
+
+- **La page Argent** : **Road to 50k** en tête (le total investi sur Trade Republic : PEA, compte-titres, crypto), une grande barre de progression vers 50 000 € fin 2027, ce qu'il reste à mettre par mois et, au rythme des trois derniers mois, le mois où l'objectif est atteint ; la répartition entre les comptes (barre en parts, chaque compte avec son montant) ; la courbe du total mois par mois face à la trajectoire droite jusqu'à l'objectif (survol : le détail par compte). Puis l'objectif d'épargne (6 000 € sur les livrets pour le 1er janvier 2027), le budget du mois en un coup d'œil, et les quatre pages.
+- **Budget du mois** : le reste à dépenser, et par jour jusqu'à la fin du mois ; une barre en parts (charges fixes, dépenses courantes, épargne, reste) avec sa légende. Ce qui rentre : la paie du mois d'avant (versée le 30 : celle de septembre fait le budget d'octobre), reçue ou estimée, et les autres rentrées. Les charges fixes du mois (mensuelles, et annuelles le mois où elles sont prélevées) : « payée » quand une opération du mois porte leur mot-clé ou leur montant exact, sinon « à venir » et comptée dans le budget ; une charge « qui varie » (l'essence) est un budget, dont le reste est réservé. L'épargne du mois : les virements vers Trade Republic et les livrets, et le versement prévu chaque mois.
+- **Dépenses** : « Importer un relevé (CSV) » lit l'export de la Caisse d'Épargne (récent ou ancien format, `;`, Windows-1252 ou UTF-8 ; ou un autre CSV avec date, libellé, montant ou débit et crédit). Chaque opération est rangée d'après son libellé (Carrefour : courses, Total : essence, Spotify : abonnements, Trade Republic : épargne, le salaire de SAS JMC…), sinon d'après la catégorie de la banque. Un même relevé importé deux fois n'ajoute rien ; une dépense notée à la main (même montant, à quatre jours près) est remplacée par la ligne du relevé. Corriger une catégorie crée une règle, appliquée aux opérations pareilles déjà importées et aux prochains imports. « Noter » ajoute une dépense (montant, catégorie en une touche, libellé, date). Le total du mois et l'écart avec le mois d'avant, les barres par catégorie (un clic filtre la liste), six mois en barres, et la liste des opérations par jour.
+- **Épargne et projets** : mes comptes (dernier solde, écart sur un mois), « Mettre à jour mes comptes » (un solde par compte, une fois par mois), mes objectifs, les achats prévus (montant visé, date, déjà mis de côté, lien : la barre et ce qu'il faut mettre par mois), et le tableau mois par mois.
+- **Ma paie** : la paie attendue du mois, calculée comme la fiche : salaire de base (taux horaire × 151,67 h), heures sup à 25 % (celles du compteur d'heures, sur les semaines qui commencent dans le mois), cotisations d'après la fiche de septembre 2026 (le net retombe au centime). « Ma fiche de paie » enregistre le net reçu (et le brut, les heures sup) : l'écart avec le calcul s'affiche. Les paies nettes en barres, la paie attendue hachurée. Réglages : taux horaire, heures par mois.
+
+## Sport
+
+À construire : la rubrique montre des idées de contenu, marquées « Idée ».
 
 ## Données
 
@@ -120,6 +130,8 @@ Sur la page publiée, le planning, la to-do list et la garde-robe (pièces, tenu
 Réglages : `reglages/travail` (`heuresSemaine`, `joursSemaine`, `debutContrat` AAAA-MM-JJ) et `reglages/objectifs` (`cibleMin`, `cibleMax` en %).
 
 Calendrier : `calendrier/<id>` (`nom`, `debut`, `fin`, `affluence` : `forte` ou `normale`, `theme`, `vitrineLe`, `vitrinePrete`, `tenues` : identifiants de tenues, `note`, `creeLe`). Objectifs : `ca/AAAA-MM-JJ` (`homme`, `femme` en euros, `modifieLe`).
+
+Argent : `comptes/<id>` (`nom`, `groupe` investissement ou epargne, `ordre`) ; `soldes/AAAA-MM` (`valeurs` : un montant par compte, `le`) ; `projets/<id>` (`nom`, `type` comptes ou achat, `groupe`, `cible`, `date`, `misDeCote`, `lien`) ; `charges/<id>` (`nom`, `montant`, `frequence` mois ou an, `mois`, `categorie`, `motCle`, `variable`) ; `depenses/AAAA-MM` (`ops` : une opération par identifiant, `{ d, l, k, m, c, s, cm }` : date, libellé, libellé complet, montant signé, catégorie, import ou saisie, catégorie choisie à la main) ; `paies/AAAA-MM` (`net`, `brut`, `heuresSup`, `payeLe`) ; `reglages/argent` (`tauxHoraire`, `heuresMois`, `versementMensuel`, `regles` : libellé → catégorie).
 
 Un document par tâche : `todo/<id>`, avec `texte`, `type` (`faire` ou `dire`), `personne`, `pour` (`AAAA-MM-JJ` ou rien), `urgent`, `repete` (revient chaque semaine), `suivante` (l'identifiant de la copie créée pour la semaine suivante, une fois cochée), `fait`, `faitLe` et `creeLe`.
 
