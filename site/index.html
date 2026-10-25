@@ -634,6 +634,8 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
 .saisie-depense { display: grid; gap: 10px; }
 .saisie-depense-ligne { display: grid; grid-template-columns: minmax(0, 8em) minmax(0, 1fr) minmax(0, 11em) auto; gap: 10px; }
 .saisie-depense-ligne input { width: 100%; min-width: 0; }
+.saisie-depense .paiement { justify-self: start; }
+.saisie-depense .paiement span { padding: 6px 12px; font-size: .9rem; }
 @media (max-width: 599px) { .saisie-depense-ligne { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .saisie-depense-ligne #de-libelle { grid-column: 1 / -1; grid-row: 2; } }
 .puces-choix { display: flex; flex-wrap: wrap; gap: 6px; }
 .puce-choix { position: relative; }
@@ -1583,6 +1585,7 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
       <section aria-labelledby="bu-rev-titre">
         <div class="section-tete-ligne"><h2 id="bu-rev-titre">Ce qui rentre</h2></div>
         <ul class="lignes-argent" id="bu-revenus"></ul>
+        <p class="aide" id="bu-interne" hidden></p>
         <p class="aide">La paie arrive à la fin du mois : celle d'un mois sert au budget du mois suivant.</p>
       </section>
       <section aria-labelledby="bu-ch-titre">
@@ -1618,7 +1621,12 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
             <input type="date" id="de-date" aria-label="Date">
             <button class="bouton-principal" type="submit">Noter</button>
           </div>
+          <div class="type-tache paiement" role="radiogroup" aria-label="Payé en">
+            <label><input type="radio" name="de-paiement" value="especes" checked><span>En espèces</span></label>
+            <label><input type="radio" name="de-paiement" value="carte"><span>Par carte</span></label>
+          </div>
           <div class="puces-choix" id="de-cats" role="radiogroup" aria-label="Catégorie"></div>
+          <p class="aide">Note ici ce que tu paies en liquide : la carte arrive avec le relevé. Une dépense par carte notée à la main est remplacée par la ligne du relevé à l'import.</p>
         </form>
         <label class="bouton-second bouton-fichier"><span>Importer un relevé (CSV)</span><input class="invisible" type="file" id="de-fichier" accept=".csv,text/csv,text/plain"></label>
       </div>
@@ -1628,6 +1636,7 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
         <p class="budget-reste" id="de-total"></p>
         <p class="aide" id="de-compare"></p>
         <div class="barres-h" id="de-categories"></div>
+        <p class="aide" id="de-especes" hidden></p>
       </section>
       <section aria-labelledby="de-mois-titre">
         <div class="section-tete-ligne"><h2 id="de-mois-titre">Mois par mois</h2></div>
@@ -6211,16 +6220,21 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
     ["abonnements", "Abonnements"], ["shopping", "Shopping"], ["loisirs", "Loisirs et jeux"], ["sante", "Santé"],
     ["cadeaux", "Cadeaux"], ["autres", "Autres dépenses"],
     ["epargne", "Épargne et investissement"], ["salaire", "Salaire"], ["revenus", "Autres rentrées"], ["interne", "Entre mes comptes"],
+    ["especes", "Retrait d'espèces"],
   ];
   const NOM_CAT = Object.fromEntries(CATS);
-  const HORS_DEPENSES = new Set(["epargne", "salaire", "revenus", "interne"]);
+  // Hors dépenses : l'épargne, les rentrées, les virements entre mes comptes et les retraits d'espèces (ce qui
+  // est payé en liquide se note à la main : le retrait ne compte pas une deuxième fois).
+  const HORS_DEPENSES = new Set(["epargne", "salaire", "revenus", "interne", "especes"]);
   const CATS_DEPENSES = CATS.filter(([c]) => !HORS_DEPENSES.has(c));
   // Le libellé du relevé range l'opération ; une catégorie corrigée à la main sert ensuite de règle.
   const MOTS_CATEGORIES = [
     ["epargne", /trade ?republic|livret|\blep\b|\bldds?\b|epargne/],
     ["salaire", /salaire|\bjmc\b/],
+    ["interne", /cpt depot|compte depot|virement interne/],
+    ["autres", /cotisations? bancaires?|remise cotisations?|offre confort|frais bancaires|frais de tenue/],
     ["courses", /carrefour|leclerc|intermarche|auchan|lidl|aldi|super ?u\b|hyper ?u\b|u express|casino|monoprix|franprix|netto|picard|grand frais|biocoop|\bspar\b|proxi/],
-    ["restos", /mc ?do|mcdonald|burger king|\bkfc\b|\bquick\b|restau|brasserie|pizz|sushi|kebab|uber ?eats|deliveroo|starbucks|tacos|boulang|\bbar\b|\bcafe\b/],
+    ["restos", /mc ?do|mcdonald|burger king|\bkfc\b|\bquick\b|restau|brasserie|pizz|sushi|kebab|uber ?eats|deliveroo|starbucks|tacos|boulang|\bbar\b|\bcafe\b|\bwok\b|snack|grill|traiteur|creperie/],
     ["transport", /\btotal|esso|\bbp\b|shell|\bavia\b|station|carbur|autoroute|peage|sanef|aprr|vinci|sncf|ouigo|blablacar|parking|\buber\b/],
     ["voiture", /\bpret\b|credit auto|norauto|feu vert|midas|speedy|controle tech|carglass|garage/],
     ["abonnements", /spotify|netflix|disney|playstation|\bsony\b|\bnba\b|anthropic|claude\.ai|apple\.com|itunes|google|prime video|amazon prime|deezer|canal ?\+|youtube|free mobile|bouygues|\bsfr\b|\borange\b/],
@@ -6233,18 +6247,40 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
     [/loisir|culture|sport|voyage/, "loisirs"], [/sante|pharma|medical/, "sante"], [/cadeau|\bdon/, "cadeaux"], [/epargne|placement/, "epargne"],
     [/salaire|remuneration/, "salaire"], [/virement interne|transfert/, "interne"]];
   // La clé d'une règle : les premiers mots du libellé, sans « CB », « PRLV SEPA », les dates ni les numéros.
-  const cleRegle = texte => sansAccents(texte).replace(/\b(cb|carte|prlv|prelevement|sepa|vir|virement|inst|instantane|facture|paiement|achat|retrait|dab|du|le)\b/g, " ")
-    .replace(/[^a-z\s]/g, " ").split(/\s+/).filter(m => m.length > 1).slice(0, 3).join(" ");
+  const cleSignee = (texte, montant) => { const c = cleRegle(texte); return c ? (montant < 0 ? "-" : "+") + c : ""; };
+  const cleRegle = texte => [...new Set(sansAccents(texte).replace(/\b(cb|carte|prlv|prelevement|sepa|vir|virement|inst|instantane|fact|facture|paiement|achat|retrait|dab|du|le)\b/g, " ")
+    .replace(/[^a-z\s]/g, " ").split(/\s+/).filter(m => m.length > 1))].slice(0, 3).join(" ");
+  // La catégorie d'après le libellé : une règle apprise, un retrait, un virement à mon nom, un mot connu, la
+  // catégorie de la banque. « sure » : faux quand rien de tout ça n'a parlé (catégorie par défaut).
   function categorieAuto(texte, banque, montant) {
-    const t = sansAccents(texte), cle = cleRegle(texte), regles = reglagesArgent().regles;
-    if (cle && NOM_CAT[regles[cle]]) return regles[cle];
+    const t = sansAccents(texte).replace(/caisse d.?epargne( et de prevoyance)?/g, " "), r = reglagesArgent(), cle = cleSignee(texte, montant);
+    const sure = c => ({ c, sure: true }), regle = r.regles[cle] || r.regles[cle.slice(1)];
+    if (cle && NOM_CAT[regle]) return sure(regle);
     // Une vente Vinted, un remboursement, la CAF : une rentrée, pas un remboursement d'achat.
-    if (montant > 0 && /vinted|leboncoin|rembours|\bcaf\b|prime d.?activite|tresor public|impots/.test(t)) return "revenus";
-    for (const [c, re] of MOTS_CATEGORIES) if (re.test(t) && !(c === "salaire" && montant < 0)) return c;
+    if (montant > 0 && /vinted|leboncoin|rembours|\bcaf\b|prime d.?activite|tresor public|impots/.test(t)) return sure("revenus");
+    if (montant < 0 && /retrait|\bdab\b/.test(t)) return sure("especes");
+    // Une charge fixe se range dans sa catégorie : par son mot, ou par son montant exact quand rien d'autre ne parle.
+    const fixes = montant < 0 ? Object.values(charges.docs).filter(c => !c.variable) : [];
+    const parMot = fixes.find(c => c.motCle.split(/[|,]/).map(m => sansAccents(m).trim()).some(m => m && t.includes(m)));
+    if (parMot) return sure(parMot.categorie);
+    const titulaire = sansAccents(r.titulaire).split(/\s+/).filter(m => m.length > 1);
+    for (const [c, re] of MOTS_CATEGORIES) {
+      if (c === "interne" && titulaire.length && titulaire.every(m => new RegExp(`\\b${m}\\b`).test(t)) && !/trade ?republic/.test(t)) return sure("interne");
+      if (re.test(t) && !(c === "salaire" && montant < 0)) return sure(c);
+    }
+    const parMontant = fixes.find(c => Math.abs(-montant - c.montant) < 0.01);
+    if (parMontant) return sure(parMontant.categorie);
     const b = sansAccents(banque || "");
     const x = b && CATS_BANQUE.find(([re]) => re.test(b));
-    if (x) return x[1];
-    return montant > 0 ? "revenus" : "autres";
+    if (x) return sure(x[1]);
+    return { c: montant > 0 ? "revenus" : "autres", sure: false };
+  }
+  // La catégorie d'une opération : choisie à la main, sinon celle des règles d'aujourd'hui (une correction vaut
+  // pour tout l'historique), sinon celle trouvée à l'import.
+  function categorieDe(o) {
+    if (o.s !== "import" || o.cm) return o.c;
+    const a = categorieAuto(`${o.l} ${o.k}`, o.b, o.m);
+    return a.sure ? a.c : o.c;
   }
 
   // ----- lecture des documents -----
@@ -6271,7 +6307,8 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
     };
   }
   const lireOp = o => (o && typeof o === "object" && ISO_RE.test(o.d) && nombreValide(o.m)
-    ? { d: o.d, l: texteArgent(o.l, 120) || "Opération", k: texteArgent(o.k, 300), m: arrondi2(o.m), c: NOM_CAT[o.c] ? o.c : "autres", s: o.s === "saisie" ? "saisie" : "import", cm: o.cm === true } : null);
+    ? { d: o.d, l: texteArgent(o.l, 120) || "Opération", k: texteArgent(o.k, 300), m: arrondi2(o.m), c: NOM_CAT[o.c] ? o.c : "autres", s: o.s === "saisie" ? "saisie" : "import", cm: o.cm === true,
+        ...(o.b ? { b: texteArgent(o.b, 80) } : {}), ...(o.s === "saisie" ? { p: o.p === "carte" ? "carte" : "especes" } : {}) } : null);
   const lireMoisOps = (id, d) => (MOIS_RE.test(id) && d && d.ops && typeof d.ops === "object"
     ? { id, ops: Object.fromEntries(Object.entries(d.ops).map(([k, o]) => [k, lireOp(o)]).filter(([k, o]) => o && /^[\w-]{1,40}$/.test(k))) } : null);
   const lirePaie = (id, d) => (MOIS_RE.test(id) && d && nombreValide(d.net) && d.net > 0
@@ -6292,6 +6329,7 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
       heures: nombreValide(d.heuresMois) && d.heuresMois > 0 ? d.heuresMois : 151.67,
       versement: nombreValide(d.versementMensuel) && d.versementMensuel >= 0 ? d.versementMensuel : null,
       regles: d.regles && typeof d.regles === "object" ? d.regles : {},
+      titulaire: texteArgent(d.titulaire, 60),   // mon nom : un virement à mon nom va d'un de mes comptes à l'autre
     };
   }
   function ecrireReglagesArgent(patch) {
@@ -6329,7 +6367,7 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
   const projetEpargne = () => projetsTries().find(p => p.type === "comptes" && p.groupe === "epargne") || null;
 
   // ----- opérations, charges, budget -----
-  const opsDu = cle => Object.entries((operations.docs[cle] || {}).ops || {}).map(([id, o]) => ({ id, cle, ...o }));
+  const opsDu = cle => Object.entries((operations.docs[cle] || {}).ops || {}).map(([id, o]) => ({ id, cle, ...o, c: categorieDe(o) }));
   const texteOp = o => sansAccents(`${o.l} ${o.k}`);
   const depenseDe = ops => -arrondi2(ops.filter(o => !HORS_DEPENSES.has(o.c)).reduce((t, o) => t + o.m, 0));
   const chargesDuMois = cle => Object.values(charges.docs).filter(c => c.frequence === "mois" || c.mois === Number(cle.slice(5))).sort((a, b) => a.ordre - b.ordre || b.montant - a.montant);
@@ -6537,7 +6575,7 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
     $("ar-mois-reste").classList.toggle("negatif", b.reste < 0);
     barreSegments($("ar-mois-barre"), null, segmentsBudget(b), b.revenus);
     $("ar-mois-detail").textContent = !b.paie ? "Indique ton taux horaire dans Ma paie pour calculer le budget."
-      : `${b.reste < 0 ? "Dépassement" : "À dépenser"}${b.joursRestants ? ` · ${eur(Math.max(0, b.reste) / b.joursRestants, 0)} par jour jusqu'au ${joursDuMois(b.cle)}` : ""} · ${eur(b.depenses, 0)} dépensés`;
+      : `${b.reste < 0 ? "Dépassement" : "À dépenser"}${b.joursRestants && b.reste > 0 ? ` · ${eur(b.reste / b.joursRestants, 0)} par jour jusqu'au ${joursDuMois(b.cle)}` : ""} · ${eur(b.depenses, 0)} dépensés`;
     // Les cartes des pages.
     $("carte-budget-ligne").textContent = b.paie ? `${eur(b.reste, 0)} à dépenser en ${moisMin(b.cle)}` : "Budget à lancer";
     const ops = opsDu(cleMois(aujourdhui())), top = CATS_DEPENSES.map(([c, nom]) => ({ nom, v: depenseDe(ops.filter(o => o.c === c)) })).sort((x, y) => y.v - x.v)[0];
@@ -6574,6 +6612,11 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
     if (b.autres) rev.push(ligneArgent("Autres rentrées", "remboursements, ventes…", eur(b.autres)));
     rev.push(ligneArgent("Total", "", eur(b.revenus), null, "total"));
     $("bu-revenus").replaceChildren(...rev);
+    // Les virements entre mes comptes ne sont pas des rentrées, mais disent si le mois a puisé dans l'épargne.
+    const internes = opsDu(b.cle).filter(o => o.c === "interne"), recu = arrondi2(internes.filter(o => o.m > 0).reduce((t, o) => t + o.m, 0)), envoye = -arrondi2(internes.filter(o => o.m < 0).reduce((t, o) => t + o.m, 0));
+    $("bu-interne").hidden = !recu && !envoye;
+    $("bu-interne").textContent = [recu ? `${eur(recu)} pris sur tes autres comptes` : "", envoye ? `${eur(envoye)} mis sur tes autres comptes` : ""].filter(Boolean).join(", ")
+      + ` en ${moisMin(b.cle)} (virements à ton nom). Ils ne comptent ni dans les rentrées ni dans les dépenses.`;
     // Les charges fixes du mois.
     const lignes = b.lignes.map(x => {
       const c = x.charge, etat = c.variable ? `${eur(x.deja)} dépensés sur ${eur(c.montant)} prévus` : x.op ? `payée le ${dateCourte(depuisIso(x.op.d))}` : "à venir";
@@ -6612,6 +6655,12 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
       .map(l => ({ ...l, texte: `${eur(l.valeur, 0)} · ${Math.round(l.valeur / (total || 1) * 100)} %` }));
     $("de-categories").hidden = !lignes.length;
     barresH($("de-categories"), lignes, filtreCat);
+    // Les espèces : ce qui a été retiré, ce qui a été noté comme payé en liquide.
+    const retire = -arrondi2(ops.filter(o => o.c === "especes").reduce((t, o) => t + o.m, 0));
+    const liquide = -arrondi2(ops.filter(o => o.s === "saisie" && o.p !== "carte" && o.m < 0 && !HORS_DEPENSES.has(o.c)).reduce((t, o) => t + o.m, 0));
+    $("de-especes").hidden = !retire;
+    $("de-especes").textContent = `Espèces : ${eur(retire)} retirés, ${eur(liquide)} de dépenses notées en liquide`
+      + (retire - liquide >= 1 ? `. Il reste ${eur(retire - liquide)} en poche ou pas encore notés.` : ". Tout le liquide est noté.");
     // Six mois, jusqu'au mois choisi.
     barresV($("de-mois-barres"), [...Array(6)].map((_, i) => { const cle = moisDecale(moisArgent, i - 5); return { cle, nom: MOIS_COURTS[Number(cle.slice(5)) - 1].replace(".", ""), titre: nomMois(cle), valeur: depenseDe(opsDu(cle)), actif: cle === moisArgent }; }));
     // Les opérations, les plus récentes en haut.
@@ -6813,23 +6862,34 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
         parMois.set(cle, [...(parMois.get(cle) || []), { id: "i" + hashOp(`${base}|${n}`), ...o }]);
       });
       let ajoutees = 0, deja = 0, remplacees = 0;
-      const changes = new Map();
+      const changes = new Map(), touches = new Set(), salaires = [];
       const opsDe = cle => { if (!changes.has(cle)) changes.set(cle, { ...((operations.docs[cle] || {}).ops || {}) }); return changes.get(cle); };
       for (const [cle, liste] of parMois) {
         const ops = opsDe(cle);
         liste.forEach(o => {
           if (ops[o.id]) { deja++; return; }
-          // Une dépense notée à la main (même montant, à quatre jours près) est remplacée par la ligne du relevé.
+          // Une dépense par carte notée à la main (même montant, à quatre jours près) est remplacée par la ligne du
+          // relevé. Une dépense en espèces reste : le relevé n'en montre que le retrait.
           for (const c of [cle, moisDecale(cle, -1), moisDecale(cle, 1)]) {
             const autres = c === cle ? ops : opsDe(c);
-            const doublon = Object.entries(autres).find(([, x]) => x.s === "saisie" && Math.abs(x.m - o.m) < 0.01 && Math.abs(depuisIso(x.d) - depuisIso(o.d)) <= 4 * JOUR_MS);
-            if (doublon) { delete autres[doublon[0]]; remplacees++; break; }
+            const doublon = Object.entries(autres).find(([, x]) => x.s === "saisie" && x.p === "carte" && Math.abs(x.m - o.m) < 0.01 && Math.abs(depuisIso(x.d) - depuisIso(o.d)) <= 4 * JOUR_MS);
+            if (doublon) { delete autres[doublon[0]]; touches.add(c); remplacees++; break; }
           }
-          ops[o.id] = { d: o.d, l: o.l.slice(0, 120), ...(o.k ? { k: o.k.slice(0, 300) } : {}), m: o.m, c: categorieAuto(`${o.l} ${o.k}`, o.banque, o.m), s: "import", cm: false };
+          const banque = o.banque.replace(/\s+/g, " ").trim().slice(0, 80), c = categorieAuto(`${o.l} ${o.k}`, banque, o.m).c;
+          ops[o.id] = { d: o.d, l: o.l.slice(0, 120), ...(o.k ? { k: o.k.slice(0, 300) } : {}), m: o.m, c, ...(banque ? { b: banque } : {}), s: "import", cm: false };
+          if (c === "salaire" && o.m > 0) salaires.push(o);
+          touches.add(cle);
           ajoutees++;
         });
       }
-      for (const [cle, ops] of changes) await operations.ecrire(cle, { ops, modifieLe: new Date().toISOString() });
+      // Seuls les mois qui changent sont écrits (les mois voisins ne servent qu'à trouver les saisies en double).
+      for (const cle of touches) await operations.ecrire(cle, { ops: changes.get(cle), modifieLe: new Date().toISOString() });
+      // Le salaire du relevé devient la paie reçue, si elle n'est pas déjà notée : versé à partir du 20, c'est la paie
+      // du mois ; avant, celle du mois d'avant (une paie en retard).
+      for (const o of salaires) {
+        const mois = Number(o.d.slice(8)) >= 20 ? o.d.slice(0, 7) : moisDecale(o.d.slice(0, 7), -1);
+        if (!paies.docs[mois]) await paies.ecrire(mois, { net: o.m, payeLe: o.d, modifieLe: new Date().toISOString() });
+      }
       const mois = [...parMois.keys()].sort();
       moisArgent = mois[mois.length - 1];
       filtreCat = null;
@@ -6841,7 +6901,7 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
   $("de-fichier").addEventListener("change", e => { const f = e.target.files[0]; e.target.value = ""; if (f && peutModifierArgent()) importerReleve(f); });
 
   // ----- noter une dépense -----
-  $("de-cats").replaceChildren(...CATS.filter(([c]) => c !== "salaire" && c !== "interne").map(([id, nom], i) => {
+  $("de-cats").replaceChildren(...CATS.filter(([c]) => c !== "salaire" && c !== "interne" && c !== "especes").map(([id, nom], i) => {
     const l = element("label", "puce-choix"), r = element("input");
     r.type = "radio"; r.name = "de-cat"; r.value = id; r.checked = i === 0;
     l.append(r, element("span", null, nom));
@@ -6853,7 +6913,8 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
     const montant = lireMontant($("de-montant").value), c = (document.querySelector('input[name="de-cat"]:checked') || {}).value || "autres";
     if (!montant) { $("de-montant").classList.add("en-erreur"); $("de-montant").focus(); return; }
     const d = ISO_RE.test($("de-date").value) ? $("de-date").value : versIso(aujourdhui()), cle = d.slice(0, 7);
-    const op = { d, l: $("de-libelle").value.trim().slice(0, 120) || NOM_CAT[c], m: c === "revenus" ? montant : -montant, c, s: "saisie", cm: true };
+    const p = (document.querySelector('input[name="de-paiement"]:checked') || {}).value === "carte" ? "carte" : "especes";
+    const op = { d, l: $("de-libelle").value.trim().slice(0, 120) || NOM_CAT[c], m: c === "revenus" ? montant : -montant, c, s: "saisie", cm: true, p };
     try {
       await operations.ecrire(cle, { ops: { ...((operations.docs[cle] || {}).ops || {}), ["s" + Date.now().toString(36)]: op }, modifieLe: new Date().toISOString() });
       $("de-montant").value = ""; $("de-libelle").value = "";
@@ -6862,25 +6923,23 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
     } catch (err) { echecArgent(err); }
   });
   $("de-montant").addEventListener("input", () => $("de-montant").classList.remove("en-erreur"));
-  // Changer la catégorie : la règle vaut pour les opérations pareilles qui n'ont pas été rangées à la main.
+  // Changer la catégorie : elle devient une règle (une sortie et une rentrée ont chacune la leur), qui range aussi
+  // les opérations pareilles du relevé qui n'ont pas été rangées à la main, d'avant comme à venir.
   $("de-ops").addEventListener("change", async e => {
     const s = e.target.closest(".op-categorie"), li = e.target.closest("[data-op]");
     if (!s || !li || !peutModifierArgent()) return;
     const cle = moisArgent, op = ((operations.docs[cle] || {}).ops || {})[li.dataset.op];
     if (!op) return;
-    const regle = cleRegle(`${op.l} ${op.k}`), changes = new Map([[cle, { ...operations.docs[cle].ops, [li.dataset.op]: { ...op, c: s.value, cm: true } }]]);
-    let autres = 0;
-    if (op.s === "import" && regle) Object.values(operations.docs).forEach(m => Object.entries(m.ops).forEach(([id, o]) => {
-      if (o.cm || o.s !== "import" || cleRegle(`${o.l} ${o.k}`) !== regle || id === li.dataset.op) return;
-      const ops = changes.get(m.id) || { ...m.ops };
-      ops[id] = { ...o, c: s.value };
-      changes.set(m.id, ops);
-      autres++;
-    }));
+    const regle = op.s === "import" ? cleSignee(`${op.l} ${op.k}`, op.m) : "";
+    const pareilles = o => o.s === "import" && !o.cm && cleSignee(`${o.l} ${o.k}`, o.m) === regle;
+    const avant = regle ? Object.values(operations.docs).flatMap(m => Object.entries(m.ops).filter(([id, o]) => id !== li.dataset.op && pareilles(o) && categorieDe(o) !== s.value)).length : 0;
     try {
-      for (const [c, ops] of changes) await operations.ecrire(c, { ops, modifieLe: new Date().toISOString() });
-      if (op.s === "import" && regle) await ecrireReglagesArgent({ regles: { ...reglagesArgent().regles, [regle]: s.value } });
-      if (autres) toast(`${autres} autre${autres > 1 ? "s" : ""} opération${autres > 1 ? "s" : ""} « ${regle} » rangée${autres > 1 ? "s" : ""} aussi en ${NOM_CAT[s.value].toLowerCase()}.`);
+      await operations.ecrire(cle, { ops: { ...operations.docs[cle].ops, [li.dataset.op]: { ...op, c: s.value, cm: true } }, modifieLe: new Date().toISOString() });
+      if (regle) {
+        const { [regle.slice(1)]: _, ...regles } = reglagesArgent().regles;
+        await ecrireReglagesArgent({ regles: { ...regles, [regle]: s.value } });
+      }
+      if (avant) toast(`${avant} autre${avant > 1 ? "s" : ""} opération${avant > 1 ? "s" : ""} « ${regle.slice(1)} » rangée${avant > 1 ? "s" : ""} aussi en ${NOM_CAT[s.value].toLowerCase()}.`);
     } catch (err) { echecArgent(err); }
   });
   $("de-ops").addEventListener("click", async e => {
