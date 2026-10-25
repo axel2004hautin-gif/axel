@@ -3517,6 +3517,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     const estCode = m => /\d/.test(m) && /^[a-z0-9]{6,}$/.test(m);
     const code = mots.find(estCode) || segments.map(x => sansAccents(x).replace(/\.html?$/, "")).reverse().find(estCode);
     if (code) r.ref = code.toUpperCase();
+    if (/levi/.test(hote) && /^[0-9A-Z]{9}$/.test(r.ref)) r.ref = r.ref.slice(0, 5) + "-" + r.ref.slice(5);   // le code Levi's : 00501-0162
     // Sans les mots de la marque : « sweat-tommy-jeans-noir » → « sweat noir ».
     const motsMarque = new Set(sansAccents(r.marque).split(/[^a-z0-9]+/).filter(m => m.length > 1));
     mots = mots.filter(m => m !== code && !MOTS_VIDES.has(m) && !motsMarque.has(m));
@@ -3930,7 +3931,16 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   let cleLot = 0, analysesLot = 0, ajoutLot = false;
   const ctlLot = new Set();
   const LIEN_RE = /^https?:\/\/[^\s"<>]+\.[^\s"<>]+$/i;
-  const liensDuLot = () => [...new Set($("lot-liens").value.split(/\s+/).filter(x => LIEN_RE.test(x)))];
+  // Un lien collé sans « https:// » est complété ; les paramètres de suivi (srsltid, utm_…) sont retirés.
+  function lienPropre(x) {
+    const brut = /^https?:\/\//i.test(x) ? x : /^[\w-]+(\.[\w-]+)+\//.test(x) ? "https://" + x : x;
+    try {
+      const u = new URL(brut);
+      [...u.searchParams.keys()].filter(k => /^(srsltid|utm_|_pos|_sid|_ss|_fid|gclid|fbclid)/.test(k)).forEach(k => u.searchParams.delete(k));
+      return u.toString();
+    } catch (_) { return brut; }
+  }
+  const liensDuLot = () => [...new Set($("lot-liens").value.split(/\s+/).map(lienPropre).filter(x => LIEN_RE.test(x)))];
   const nomLien = l => { try { return decodeURIComponent(new URL(l).pathname.split("/").filter(Boolean).pop() || l).replace(/\.html?$/, ""); } catch (_) { return l; } };
   const lienPris = (l, sauf) => lot.some(b => b !== sauf && b.lien === l);
   const dansGardeRobe = l => !!l && Object.values(pieces).some(x => x.lien === l);
@@ -3986,10 +3996,11 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     const marques = [...new Set(Object.values(pieces).map(x => x.marque).filter(Boolean))];
     // La marque : écrite comme dans la garde-robe, ou comme le site connu du lien (« le temps des cerises »).
     const compact = v => sansAccents(v).replace(/[^a-z0-9]/g, "");
-    const lue = texte(r.marque, 60), marque = !lue || compact(lue) === compact(duLien.marque || "") ? duLien.marque || lue : lue;
+    const lue = texte(r.marque, 60), connues = [duLien.marque, ...marques, ...MARQUES_SITES.map(m => m[1])].filter(Boolean);
+    const marque = !lue ? duLien.marque || "" : connues.find(m => compact(m) === compact(lue)) || lue;
     const couleur = texte(r.couleur, 60);
     b.champs = {
-      marque: marques.find(m => sansAccents(m) === sansAccents(marque)) || marque,
+      marque,
       categorie: NOM_CATEGORIE[r.categorie] ? r.categorie : duLien.categorie || "",
       modele: texte(r.modele, 120) || duLien.modele || "",
       couleur: (NUANCE.get(sansAccents(couleur)) || {}).nom || couleur || duLien.couleur || "",
@@ -4019,10 +4030,14 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
         if (!limites.images) throw { code: "images_unavailable" };
         const image = await versJpeg(b.fichier, 1568);
         if (image.size > limites.images.maxInputBytes) throw { code: "too_large" };
-        const liens = liensDuLot().filter(l => !lienPris(l, b) && !dansGardeRobe(l));
+        const tous = liensDuLot(), liens = tous.filter(l => !lienPris(l, b) && !dansGardeRobe(l));
+        // Les captures sont rangées par heure de prise : si elles suivent la liste des liens, le rang départage
+        // les liens d'un même modèle dont l'adresse ne donne pas la couleur (Levi's).
+        const rang = [...lot].sort((x, y) => x.fichier.lastModified - y.fichier.lastModified || x.cle - y.cle).indexOf(b) + 1;
         const marques = [...new Set(Object.values(pieces).map(x => x.marque).filter(Boolean))];
         const consigne = `Tu aides un vendeur du magasin de vêtements Blue Box (rayon homme) à créer la fiche d'un article à partir d'une capture d'écran de sa fiche sur le site de la marque.`
-          + (liens.length ? `\n\nLes liens des articles à ajouter. L'adresse donne souvent le modèle et la couleur : « horva00000000ml262coffee », c'est le modèle Orva, couleur coffee.\n${liens.map(l => "- " + l).join("\n")}` : "")
+          + (liens.length ? `\n\nLes liens des articles à ajouter, numérotés dans l'ordre où le vendeur les a donnés. L'adresse donne souvent le modèle et la couleur : « horva00000000ml262coffee », c'est le modèle Orva, couleur coffee.\n${liens.map(l => `${tous.indexOf(l) + 1}. ${l}`).join("\n")}`
+            + `\n\nCette capture est la n° ${rang} sur ${lot.length}, dans l'ordre où elles ont été prises. Si la capture montre le code de l'article (par exemple 005010162 ou 00501-0162), choisis le lien qui se termine par ce code. Sinon, si plusieurs liens du même modèle conviennent (adresse sans couleur), prends celui dont le numéro est le plus proche de ${rang}.` : "")
           + (marques.length ? `\n\nMarques déjà dans la garde-robe, à écrire pareil si c'est l'une d'elles : ${marques.join(", ")}.` : "")
           + `\n\nRéponds seulement avec un objet JSON : {"lien": "", "marque": "", "categorie": "", "modele": "", "couleur": "", "coupe": "", "matiere": "", "prix": null, "cadre": {"x": 0, "y": 0, "l": 100, "h": 100}, "remarque": ""}.`
           + (liens.length ? `\n- lien : celui de la liste qui correspond à cet article, recopié exactement ; "" si aucun ne correspond sans doute possible. Le modèle et la couleur écrits dans la fiche doivent être ceux de ce lien : deux modèles proches (Nardi, Nitor) se distinguent par le nom, la coupe des manches et le prix.` : `\n- lien : "".`)
@@ -4166,7 +4181,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   $("gr-lot").addEventListener("click", () => {
     if (!peutModifierPieces()) return;
     const attente = reglagesCollection.docs.lot;
-    if (!$("lot-liens").value.trim() && attente && Array.isArray(attente.liens)) $("lot-liens").value = attente.liens.filter(l => typeof l === "string" && LIEN_RE.test(l)).join("\n");
+    if (!$("lot-liens").value.trim() && attente && Array.isArray(attente.liens)) $("lot-liens").value = attente.liens.filter(l => typeof l === "string").map(lienPropre).filter(l => LIEN_RE.test(l)).join("\n");
     $("lot-liens-bloc").open = !lot.length && !!$("lot-liens").value.trim();
     $("lot-erreur").hidden = true;
     rendreLot();
@@ -4176,7 +4191,8 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   const sauverLiensLot = liens => reglagesCollection.ecrire("lot", { liens, modifieLe: new Date().toISOString() }).catch(() => {});
   $("lot-liens").addEventListener("change", () => { sauverLiensLot(liensDuLot()); rendreLot(); });
   $("lot-fichiers").addEventListener("change", e => {
-    const fichiers = [...e.target.files].filter(f => /^image\//.test(f.type) || /\.(png|jpe?g|webp|heic|heif)$/i.test(f.name));
+    const fichiers = [...e.target.files].filter(f => /^image\//.test(f.type) || /\.(png|jpe?g|webp|heic|heif)$/i.test(f.name))
+      .sort((a, b) => a.lastModified - b.lastModified);   // dans l'ordre où les captures ont été prises
     e.target.value = "";
     fichiers.forEach(fichier => lot.push({ cle: ++cleLot, fichier, etat: "attente", photos: {}, recadrer: false, url: null, champs: null, lien: "", garder: true, remarque: "", erreur: "" }));
     $("lot-liens-bloc").open = false;
