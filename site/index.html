@@ -6826,9 +6826,10 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
   // Les placements d'un objectif d'investissement : un montant par compte, le premier compte reçoit le reste.
   function texteDePlacements(p, placements, montant) {
     const comptes = p.groupe === "investissement" ? comptesDu("investissement") : [];
-    if (comptes.length < 2 || !Object.keys(placements || {}).length) return "";
-    const autres = comptes.slice(1).filter(c => placements[c.id]), somme = autres.reduce((t, c) => t + placements[c.id], 0);
+    if (comptes.length < 2) return "";
+    const autres = comptes.slice(1).filter(c => (placements || {})[c.id]), somme = autres.reduce((t, c) => t + placements[c.id], 0);
     const nom = c => c.support ? `${c.nom} (${c.support})` : c.nom;
+    if (!autres.length) return ` : tout sur ${nom(comptes[0])}`;
     return ` : ${[...autres.map(c => `${eur(placements[c.id], 0)} sur ${nom(c)}`), montant != null ? `${eur(Math.max(0, montant - somme), 0)} sur ${nom(comptes[0])}` : `le reste sur ${nom(comptes[0])}`].join(", ")}`;
   }
   function ligneArgent(titre, detail, montant, lien, classe) {
