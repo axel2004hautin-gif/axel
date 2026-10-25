@@ -4,7 +4,9 @@ Mon tableau de bord, publié sur claude.ai : https://claude.ai/artifact/QcoRPH8Y
 
 Ouvre `index.html` dans un navigateur pour le voir en local (rien à installer). En local, le planning, la to-do list et la garde-robe sont gardés dans le navigateur.
 
-Fond blanc, titre bleu marine, et sous le titre un bandeau marine avec les trois rubriques. Au survol d'une rubrique, ses sous-rubriques s'affichent dans un bandeau clair juste en dessous. Cliquer sur une rubrique ouvre la page de ses sous-rubriques ; sur téléphone, c'est le chemin pour y accéder. Le titre ramène à l'accueil.
+Fond blanc, titre bleu marine, et sous le titre un bandeau marine avec les trois rubriques. Au survol d'une rubrique, ses sous-rubriques s'affichent dans un bandeau clair juste en dessous. Cliquer sur une rubrique ouvre la page de ses sous-rubriques. Sur les pages de Travail, la barre de ses sous-rubriques (Planning, To-do, Garde-robe, Calendrier, Objectifs) reste affichée sous le bandeau, celle ouverte soulignée ; sur téléphone, elle défile au doigt. Le titre ramène à l'accueil.
+
+L'accueil commence par **Ma journée** : mes horaires d'aujourd'hui (ou repos, congé, férié) et ceux du prochain service ; les tâches pour aujourd'hui et en retard ; le prochain temps fort et la date de sa vitrine ; et, pour les objectifs, si le dernier jour travaillé est saisi. En mode discret, ce dernier bloc ne montre aucun chiffre (« À jour » ou « Samedi 24 à saisir »). Un bloc qui demande quelque chose (tâches du jour, vitrine dans trois jours au plus, journée à saisir) est encadré. Chaque bloc ouvre sa page. Viennent ensuite les trois rubriques.
 
 Une adresse qui finit par `#travail`, `#argent` ou `#sport` ouvre directement la rubrique ; `#planning`, `#todo`, `#garde-robe`, `#calendrier` et `#objectifs` ouvrent les sous-rubriques « Mon planning », « To-do list », « Garde-robe Blue Box », « Calendrier commercial » et « Objectifs ».
 
@@ -20,7 +22,7 @@ Tout tient dans l'écran, sans descendre, sur ordinateur comme sur téléphone :
 - **Le planning** : une frise du lundi au samedi, de 10h à 19h (elle s'allonge si une semaine commence plus tôt ou finit plus tard). Les heures sont écrites à gauche avec un trait marqué ; la demi-heure a un trait léger. Le temps travaillé est en bleu à la minute près, le reste en blanc. Deux barres rouges, à 12h et à 14h, marquent le milieu de la journée. L'heure d'arrivée est écrite en haut de chaque bloc bleu, l'heure de départ en bas. Aujourd'hui est encadré en marine, les jours de repos sont hachurés marron.
 - **Le bilan** : les heures travaillées de la semaine et leur écart avec le contrat (« +1h payées », « +0h20 à récup. »), le jour de repos et les congés, et les boutons « Mon compteur » et « Modifier le planning ».
 
-« Modifier le planning » ouvre une fenêtre au milieu de l'écran : pour chaque jour, le début et la fin du matin et de l'après-midi.
+« Modifier le planning » ouvre une fenêtre au milieu de l'écran : pour chaque jour, le début et la fin du matin et de l'après-midi. En haut, « Reprendre ses horaires » recopie les horaires et le jour de repos de la dernière semaine remplie (jusqu'à deux mois en arrière) ; les congés et fériés déjà cochés restent, et rien n'est enregistré avant « Enregistrer ».
 
 | Période | Choix |
 |---|---|
@@ -41,10 +43,11 @@ Chaque période a aussi « Autre… » pour taper une heure (retard, fin plus ta
 
 Ce que je dois faire au magasin et ce que je dois dire à quelqu'un.
 
-- **Ajouter** (en haut) : « À faire » ou « À dire », le texte, « À qui ? » pour ce qui est à dire (les prénoms déjà utilisés sont proposés), « Pour quand ? » (pas de date, aujourd'hui, demain, prochain service, ou une date) et « Urgent ». Entrée ajoute la tâche ; le type et la personne restent pour la suivante.
+- **Ajouter** (en haut) : « À faire » ou « À dire », le texte, « À qui ? » pour ce qui est à dire (les prénoms déjà utilisés sont proposés), « Pour quand ? » (pas de date, aujourd'hui, demain, prochain service, ou une date), « Urgent » et « Chaque semaine ». Entrée ajoute la tâche ; le type et la personne restent pour la suivante.
 - **Prochain service** : le prochain jour travaillé d'après le planning, à partir de demain.
 - **Deux colonnes** : « À faire au magasin » et « À dire », regroupé par personne. Les tâches urgentes passent en premier (trait rouge), puis par échéance ; une échéance dépassée est marquée « En retard ».
 - **Cocher** une tâche la range dans « Fait », en bas, d'où on peut la décocher. « Effacer ce qui est fait » vide cette partie (second appui pour confirmer).
+- **Chaque semaine** : la tâche revient le même jour de la semaine que sa date (« ↻ Chaque ven. »). Cochée, elle se recrée pour la semaine suivante (jamais avant aujourd'hui) ; décochée, cette copie disparaît si elle n'est pas faite. Pour arrêter, ouvrir la prochaine et décocher « Chaque semaine ».
 - **Le crayon** ouvre la tâche pour la modifier ou la supprimer (second appui pour confirmer).
 
 ### Garde-robe Blue Box
@@ -92,7 +95,7 @@ Les pièces du magasin (rayon homme), pour penser les vitrines, les tenues et le
 Les temps forts de l'année pour préparer les vitrines, et les bons moments pour poser des congés.
 
 - **Prochain temps fort** : ses dates et le compte à rebours, le thème et les idées de vitrine, la date de montage de la vitrine, les tenues choisies (un clic ouvre la tenue), « Vitrine prête » et « Ajouter à la to-do » (« Monter la vitrine … » pour le jour du montage, ou la veille du temps fort).
-- **Les 12 prochains mois** : une frise où chaque temps fort est une barre (plein : temps fort, je reste au magasin ; contour : affluence normale), les congés posés dans le planning en vert, et aujourd'hui en rouge. Toucher une barre ouvre le temps fort.
+- **Les 12 prochains mois** : une frise où chaque temps fort est une barre (plein : temps fort, je reste au magasin ; contour : affluence normale), les congés posés dans le planning en vert, et aujourd'hui en rouge. Un nom trop long pour sa barre s'écrit à côté. Toucher une barre ou son nom ouvre le temps fort.
 - **Bons moments pour poser des congés** : les périodes d'au moins une semaine sans temps fort, en dehors de la semaine qui le prépare.
 - **Tous les temps forts**, mois par mois, avec leur affluence, la vitrine et le nombre de tenues. « Ajouter un temps fort » : nom, dates, affluence, thème et idées, montage de la vitrine, tenues (celles marquées vitrine d'abord), note.
 
@@ -117,7 +120,7 @@ Réglages : `reglages/travail` (`heuresSemaine`, `joursSemaine`, `debutContrat` 
 
 Calendrier : `calendrier/<id>` (`nom`, `debut`, `fin`, `affluence` : `forte` ou `normale`, `theme`, `vitrineLe`, `vitrinePrete`, `tenues` : identifiants de tenues, `note`, `creeLe`). Objectifs : `ca/AAAA-MM-JJ` (`homme`, `femme` en euros, `modifieLe`).
 
-Un document par tâche : `todo/<id>`, avec `texte`, `type` (`faire` ou `dire`), `personne`, `pour` (`AAAA-MM-JJ` ou rien), `urgent`, `fait`, `faitLe` et `creeLe`.
+Un document par tâche : `todo/<id>`, avec `texte`, `type` (`faire` ou `dire`), `personne`, `pour` (`AAAA-MM-JJ` ou rien), `urgent`, `repete` (revient chaque semaine), `suivante` (l'identifiant de la copie créée pour la semaine suivante, une fois cochée), `fait`, `faitLe` et `creeLe`.
 
 Un document par pièce : `pieces/<id>`, avec `marque`, `categorie` (`pulls`, `jeans`, `pantalons`…), `modele`, `coupe`, `couleur`, `matiere`, `rayon` (toujours `homme`), `prix`, `ref`, `lien` (la page de l'article sur le site de la marque), `photos`, `photo`, `reperes` (`nouveaute`, `promo`, `vitrine`, `reseaux`), `note` et `creeLe`. `photos` est la liste des photos (6 au plus, la principale en premier) ; `photo` reprend la principale, et une pièce qui n'a que `photo` est lue comme une pièce à une photo. Une photo est l'identifiant d'un fichier envoyé depuis la page (stockage de la page), ou le chemin d'une image publiée avec elle (`images/…jpg`). Les fichiers qu'une pièce n'utilise plus (photo retirée, pièce supprimée) sont effacés du stockage.
 

@@ -10,7 +10,8 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:wght@400;600;700&display=swap">
 <style>
 /* Layout : fond blanc, titre marine, bandeau marine des rubriques ; au survol d'une rubrique, ses
-   sous-rubriques s'affichent dessous. Une rubrique ouvre la page de ses sous-rubriques. « Mon planning »
+   sous-rubriques s'affichent dessous, et sur les pages de Travail elles restent affichées. L'accueil :
+   « Ma journée » en blocs, puis les rubriques. Une rubrique ouvre la page de ses sous-rubriques. « Mon planning »
    tient dans l'écran : semaine, frise (une colonne par jour, une ligne par heure, elle prend toute la
    place qui reste), bilan. « To-do list » : ajout rapide en haut, puis deux colonnes, « À faire » et
    « À dire » (par personne), et ce qui est fait en bas. « Garde-robe Blue Box » : quatre onglets (pièces,
@@ -105,11 +106,37 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 .bande .sous-bande a:hover, .bande .sous-bande a[aria-current="page"] { background: var(--fond); color: var(--marine); }
 .bande .sous-bande a[aria-current="page"]::after { height: 3px; background: var(--marine); }
 .bande .sous-bande a:focus-visible { outline-color: var(--marine); }
+/* Sur une page de Travail, ses sous-rubriques restent affichées sous le bandeau (le menu au survol se
+   tait alors) ; sur téléphone, elles défilent au doigt. */
+.sous-nav { background: var(--marine-doux); border-bottom: 1px solid var(--trait); }
+.sous-nav-dedans { position: relative; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+.sous-nav-dedans::-webkit-scrollbar { display: none; }
+.sous-nav a { position: relative; flex: none; padding: clamp(10px, 1.6vh, 13px) 18px; color: var(--marine); font: 600 1rem/1 var(--f-body); text-decoration: none; white-space: nowrap; }
+.sous-nav a:hover, .sous-nav a[aria-current="page"] { background: var(--fond); }
+.sous-nav a[aria-current="page"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--marine); }
+.sous-nav a:focus-visible { outline-offset: -3px; }
+.sous-nav .nom-court { display: none; }
+.avec-sous-nav .sous-bande { display: none !important; }
+@media (max-width: 719px) {
+  .sous-nav-dedans { gap: 0; }
+  .sous-nav a { padding-inline: 12px; font-size: .95rem; }
+  .sous-nav .nom-long { display: none; }
+  .sous-nav .nom-court { display: inline; }
+}
 
 /* Accueil */
 .accueil { display: grid; gap: 20px; padding-block: 28px 56px; }
 .accueil-tete { display: grid; gap: 6px; }
 .accueil-tete h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(1.5rem, 3.4vw, 2rem); line-height: 1.1; }
+.titre-rubriques { margin-top: 8px; font-family: var(--f-display); font-weight: 800; font-size: clamp(1.25rem, 2.6vw, 1.5rem); line-height: 1.1; }
+/* Ma journée : horaires, tâches, prochain temps fort, objectifs ; un bloc à traiter est marqué. */
+.journee { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 12px; }
+.bloc-jour { display: grid; align-content: start; gap: 4px; height: 100%; padding: 14px 16px; border: 1.5px solid var(--trait); border-radius: 12px; color: var(--encre); text-decoration: none; transition: border-color .15s ease; }
+.bloc-jour:hover { border-color: var(--marine); }
+.bloc-jour.a-traiter { border-color: var(--marine); background: var(--marine-doux); }
+.bloc-principal { font-family: var(--f-display); font-weight: 750; font-size: 1.15rem; line-height: 1.25; color: var(--marine); }
+.bloc-jour.retard .bloc-principal { color: var(--rouge); }
+.bloc-detail { display: -webkit-box; overflow: hidden; color: var(--gris); font-size: .95rem; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .rubriques { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
 @media (min-width: 820px) { .rubriques { grid-template-columns: repeat(3, 1fr); } }
 .carte-rubrique { display: flex; flex-direction: column; gap: 10px; height: 100%; padding: 22px 22px 18px; border: 1.5px solid transparent; border-radius: 12px; background: var(--c-doux); text-decoration: none; transition: border-color .15s ease; }
@@ -220,6 +247,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   .titre-ligne { padding-block: 8px 6px; }
   .titre-site { font-size: 1.4rem; }
   .bande a { padding-block: 9px; }
+  .sous-nav a { padding-block: 7px; }
   .planning { grid-template-rows: auto minmax(calc(var(--creneaux, 18) * 12px), 1fr); }
   .bilan .valeur { font-size: 1.2rem; }
   .bilan .bouton-principal, .bilan .bouton-second { min-height: 40px; }
@@ -243,6 +271,9 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 .saisie thead th { position: sticky; top: 0; z-index: 1; padding: 12px 6px 6px; background: var(--fond); font: 600 .72rem/1.2 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--gris); text-align: left; }
 .saisie .tete-jour { padding: 16px 0 6px; }
 .saisie .tete-jour { text-align: left; }
+.reprendre { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin-top: 14px; padding: 10px 12px; border-radius: 10px; background: var(--marine-doux); }
+.reprendre span { color: var(--gris); }
+@media (max-width: 479px) { .reprendre .bouton-second { flex: 1 1 100%; } }
 /* Sur téléphone, les pastilles passent sous le nom du jour quand elles n'ont plus la place à côté. */
 .jour-tete { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 12px; padding-bottom: 8px; border-bottom: 1px solid var(--trait); }
 .jour-titre { flex: 1 1 8em; min-width: 0; font-family: var(--f-display); font-weight: 750; font-size: 1.1rem; line-height: 1.2; color: var(--marine); }
@@ -364,11 +395,18 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 .urgent-choix { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border: 1.5px solid var(--trait); border-radius: 999px; background: var(--fond); color: var(--gris); font-weight: 600; cursor: pointer; }
 .urgent-choix input { width: 18px; height: 18px; margin: 0; accent-color: var(--rouge); }
 .urgent-choix.coche { border-color: var(--rouge); background: var(--rouge-doux); color: var(--rouge); }
+/* Une tâche qui revient chaque semaine, le même jour : cochée, elle se recrée pour la semaine suivante. */
+.repete-choix input { accent-color: var(--marine); }
+.repete-choix:has(input:checked) { border-color: var(--marine); background: var(--marine-doux); color: var(--marine); }
+.ligne-pastilles { display: flex; flex-wrap: wrap; gap: 8px; }
+.puce.repete { background: none; box-shadow: inset 0 0 0 1px var(--trait); color: var(--gris); }
 .erreur-tache { flex: 1 1 100%; color: var(--erreur); font-weight: 600; }
 @media (max-width: 599px) {
   .ajout-tache { padding: 12px; }
   .ajout-tache .type-tache, .ajout-tache .champ-texte, .ajout-tache .champ-personne, .ajout-tache .bouton-principal { flex: 1 1 100%; }
   .ajout-tache .champ-pour, .ajout-tache .champ-date { flex: 1 1 0; }
+  .ajout-tache .champ-pour { flex-basis: 100%; }
+  .ajout-tache .urgent-choix { flex: 1 1 0; justify-content: center; padding-inline: 10px; white-space: nowrap; }
 }
 
 .listes { display: grid; gap: 28px; align-items: start; }
@@ -826,6 +864,15 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
       <a href="#sport" data-aller="sport">Sport</a>
     </div>
   </nav>
+  <nav class="sous-nav" id="sous-nav-travail" aria-label="Sous-rubriques de Travail" hidden>
+    <div class="cadre sous-nav-dedans">
+      <a href="#planning" data-aller="planning"><span class="nom-long">Mon planning</span><span class="nom-court">Planning</span></a>
+      <a href="#todo" data-aller="todo"><span class="nom-long">To-do list</span><span class="nom-court">To-do</span></a>
+      <a href="#garde-robe" data-aller="garde-robe"><span class="nom-long">Garde-robe Blue Box</span><span class="nom-court">Garde-robe</span></a>
+      <a href="#calendrier" data-aller="calendrier"><span class="nom-long">Calendrier commercial</span><span class="nom-court">Calendrier</span></a>
+      <a href="#objectifs" data-aller="objectifs">Objectifs</a>
+    </div>
+  </nav>
 </header>
 
 <main>
@@ -833,8 +880,10 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     <div class="cadre accueil">
       <div class="accueil-tete">
         <p class="eyebrow" id="aujourdhui">Aujourd'hui</p>
-        <h1 id="titre-accueil" tabindex="-1">Mes rubriques</h1>
+        <h1 id="titre-accueil" tabindex="-1">Ma journée</h1>
       </div>
+      <ul class="journee" id="journee"></ul>
+      <h2 class="titre-rubriques">Mes rubriques</h2>
       <ol class="rubriques">
         <li class="r-travail">
           <a class="carte-rubrique" href="#travail">
@@ -980,6 +1029,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
         <select class="champ-pour" id="a-pour" aria-label="Pour quand ?"></select>
         <input class="champ-date" id="a-date" type="date" aria-label="Date" hidden>
         <label class="urgent-choix"><input type="checkbox" id="a-urgent"><span>Urgent</span></label>
+        <label class="urgent-choix repete-choix"><input type="checkbox" id="a-repete"><span>Chaque semaine</span></label>
         <button class="bouton-principal" type="submit">Ajouter</button>
         <p class="erreur-tache" id="a-erreur" role="alert" hidden></p>
       </form>
@@ -1301,6 +1351,10 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     <button class="fermer" type="button" data-fermer aria-label="Fermer sans enregistrer">×</button>
   </div>
   <div class="fenetre-corps">
+    <div class="reprendre" id="fp-reprendre" hidden>
+      <span id="fp-reprendre-texte"></span>
+      <button class="bouton-second" type="button" id="fp-reprendre-bouton">Reprendre ses horaires</button>
+    </div>
     <table class="saisie" id="fp-table">
       <thead><tr><th scope="col"><span class="invisible">Période</span></th><th scope="col">Début</th><th scope="col">Fin</th></tr></thead>
     </table>
@@ -1417,7 +1471,10 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
         <input class="champ-date" id="e-date" type="date" aria-label="Date" hidden>
       </div>
     </div>
-    <label class="urgent-choix"><input type="checkbox" id="e-urgent"><span>Urgent</span></label>
+    <div class="ligne-pastilles">
+      <label class="urgent-choix"><input type="checkbox" id="e-urgent"><span>Urgent</span></label>
+      <label class="urgent-choix repete-choix"><input type="checkbox" id="e-repete"><span>Chaque semaine</span></label>
+    </div>
   </form>
   <div class="fenetre-pied">
     <p class="fenetre-erreur" id="e-erreur" role="alert" hidden></p>
@@ -1516,20 +1573,27 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   // Les onglets de la garde-robe restent sous la sous-rubrique « Garde-robe Blue Box ».
   const SOUS_RUBRIQUE_DE = { tenues: "garde-robe", comparer: "garde-robe", manque: "garde-robe" };
   let vueActive = "accueil";
+  let journeePrete = false;   // « Ma journée » attend que toutes les données soient en place
 
   function montrer(nom, opts = {}) {
     if (!VUES.includes(nom)) return false;
     vueActive = nom;
     document.querySelectorAll("[data-vue]").forEach(v => { v.hidden = v.dataset.vue !== nom; });
     // Dans le bandeau, la rubrique reste marquée quand une de ses sous-rubriques est ouverte.
-    document.querySelectorAll(".bande [data-aller]").forEach(a => {
-      const cible = a.closest(".sous-bande") ? SOUS_RUBRIQUE_DE[nom] || nom : RUBRIQUE_DE[nom] || nom;
+    const sousNav = $("sous-nav-travail");
+    sousNav.hidden = RUBRIQUE_DE[nom] !== "travail";
+    document.body.classList.toggle("avec-sous-nav", !sousNav.hidden);
+    document.querySelectorAll(".bande [data-aller], .sous-nav [data-aller]").forEach(a => {
+      const cible = a.closest(".sous-bande, .sous-nav") ? SOUS_RUBRIQUE_DE[nom] || nom : RUBRIQUE_DE[nom] || nom;
       if (a.dataset.aller === cible) a.setAttribute("aria-current", "page");
       else a.removeAttribute("aria-current");
     });
     document.querySelectorAll(".onglets-gr a").forEach(a => {
       if (a.dataset.onglet === nom) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
+    // Sur téléphone, la sous-rubrique ouverte se place au milieu de sa barre.
+    const courante = sousNav.querySelector('[aria-current="page"]'), barre = sousNav.firstElementChild;
+    if (courante) barre.scrollLeft = courante.offsetLeft - (barre.clientWidth - courante.offsetWidth) / 2;
     if (nom === "objectifs") requestAnimationFrame(rendreGraphe);   // la courbe et la frise ont besoin de leur largeur
     if (nom === "calendrier") requestAnimationFrame(rendreFrise);
     if (!opts.garderDefilement) window.scrollTo(0, 0);
@@ -1728,6 +1792,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   let mode = window.claude && typeof window.claude.use === "function" ? "attente" : "local";
   let db = null;
   let semaines = Object.create(null);
+  let planningRecu = false, todoRecu = false;   // premières réponses de la base
 
   function chargerLocal() {
     semaines = Object.create(null);
@@ -1762,12 +1827,14 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
       const m = Object.create(null);
       snap.docs.forEach(doc => { const s = doc.exists && CLE_RE.test(doc.id) && lireSemaine(doc.data()); if (s) m[doc.id] = s; });
       semaines = m;
+      planningRecu = true;
       rendreTout();
     }, () => toast("Le planning n'a pas pu être chargé. Recharge la page.", "erreur"));
     db.collection("todo").onSnapshot(snap => {
       const m = Object.create(null);
       snap.docs.forEach(doc => { const t = doc.exists && lireTache(doc.id, doc.data()); if (t) m[doc.id] = t; });
       taches = m;
+      todoRecu = true;
       rendreTodo();
     }, () => toast("La to-do list n'a pas pu être chargée. Recharge la page.", "erreur"));
     db.collection("pieces").onSnapshot(snap => {
@@ -2015,6 +2082,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     rendreCalendrier();
     rendreObjectifs();
     if ($("fenetre-semaine").open) rendreGrilleSemaines();
+    rendreJournee();
   }
 
   const changerSemaine = delta => { lundiAffiche += delta * 7 * JOUR_MS; rendrePlanning(); };
@@ -2150,8 +2218,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     tb.querySelectorAll(".repos-texte").forEach(t => { t.textContent = statut ? NOM_STATUT[statut] : ""; });
   }
   let lundiEdite = null;
-  function remplirSaisie() {
-    const sem = semaines[infoSemaine(lundiEdite).cle] || semaineVide();
+  function remplirSaisie(sem = semaines[infoSemaine(lundiEdite).cle] || semaineVide()) {
     JOURS.forEach((jour, i) => {
       const date = new Date(lundiEdite + i * JOUR_MS);
       const tb = $("fp-table").querySelector(`tbody[data-jour="${i}"]`);
@@ -2212,6 +2279,31 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     return { semaine: sem };
   }
 
+  // La dernière semaine remplie avant celle-ci (deux mois en arrière au plus), pour en reprendre les horaires.
+  function semaineModele(lundi) {
+    for (let k = 1; k <= 8; k++) {
+      const l = lundi - 7 * k * JOUR_MS, s = semaines[infoSemaine(l).cle];
+      if (!estVide(s)) return { lundi: l, semaine: s };
+    }
+    return null;
+  }
+  // Horaires et repos de la semaine modèle ; les congés et fériés déjà cochés cette semaine restent.
+  $("fp-reprendre-bouton").addEventListener("click", () => {
+    const modele = semaineModele(lundiEdite);
+    if (!modele) return;
+    const sem = semaineVide();
+    JOURS.forEach((jour, i) => {
+      const garde = ["conge", "ferie"].find(x => $(`fp-${i}-${x}`).checked);
+      const j = modele.semaine.jours[jour];
+      sem.jours[jour] = garde ? { ...jourVide(), [garde]: true }
+        : j.repos ? { ...jourVide(), repos: true }
+        : statutDe(j) ? jourVide() : { ...jourVide(), matin: j.matin, apresMidi: j.apresMidi };
+    });
+    effacerErreur();
+    remplirSaisie(sem);
+    $("fp-reprendre-texte").textContent = `Horaires de la semaine ${infoSemaine(modele.lundi).num} repris : vérifie puis enregistre.`;
+  });
+
   $("ouvrir-modif").addEventListener("click", () => {
     if (mode === "attente" || mode === "lecture") return;
     lundiEdite = lundiAffiche;
@@ -2219,6 +2311,9 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     $("fp-semaine").textContent = `Semaine ${info.num} · ${libelleDates(lundiEdite)}`;
     effacerErreur();
     remplirSaisie();
+    const modele = semaineModele(lundiEdite);
+    $("fp-reprendre").hidden = !modele;
+    if (modele) $("fp-reprendre-texte").textContent = `Les mêmes horaires que la semaine ${infoSemaine(modele.lundi).num} ?`;
     ouvrir($("fenetre-planning"));
     $("fenetre-planning").querySelector(".fenetre-corps").scrollTop = 0;
     $("fp-0-conge").focus();
@@ -2386,12 +2481,23 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
       personne: type === "dire" ? texteBorne(d.personne, 60) || "Quelqu'un" : "",
       pour: typeof d.pour === "string" && ISO_RE.test(d.pour) ? d.pour : null,
       urgent: d.urgent === true,
+      repete: d.repete === true,
+      suivante: texteBorne(d.suivante, 40) || null,
       fait: d.fait === true,
       faitLe: texteBorne(d.faitLe, 40) || null,
       creeLe: texteBorne(d.creeLe, 40),
     };
   }
-  const corpsDe = t => ({ texte: t.texte, type: t.type, personne: t.type === "dire" ? t.personne : null, pour: t.pour, urgent: t.urgent, fait: t.fait, faitLe: t.faitLe, creeLe: t.creeLe });
+  // repete : la tâche revient chaque semaine, le jour de « pour » ; suivante : la copie déjà créée
+  // pour la semaine d'après, quand elle a été cochée.
+  const corpsDe = t => ({ texte: t.texte, type: t.type, personne: t.type === "dire" ? t.personne : null, pour: t.pour, urgent: t.urgent,
+    repete: t.repete, suivante: t.suivante, fait: t.fait, faitLe: t.faitLe, creeLe: t.creeLe });
+  // La prochaine fois d'une tâche qui revient : même jour de la semaine, pas avant aujourd'hui.
+  function prochaineFois(pour) {
+    let t = depuisIso(pour) + 7 * JOUR_MS;
+    while (t < aujourdhui()) t += 7 * JOUR_MS;
+    return versIso(t);
+  }
 
   function chargerTodoLocal() {
     taches = Object.create(null);
@@ -2490,7 +2596,9 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
       if (!ISO_RE.test($(prefixe + "-date").value)) return { erreur: "Choisis la date.", champ: $(prefixe + "-date") };
       pour = $(prefixe + "-date").value;
     }
-    return { tache: { texte: texte.slice(0, 300), type, personne: type === "dire" ? personne.slice(0, 60) : "", pour, urgent: $(prefixe + "-urgent").checked } };
+    const repete = $(prefixe + "-repete").checked;
+    if (repete && !pour) return { erreur: "Choisis un jour : la tâche reviendra ce jour-là chaque semaine.", champ: $(prefixe + "-pour") };
+    return { tache: { texte: texte.slice(0, 300), type, personne: type === "dire" ? personne.slice(0, 60) : "", pour, urgent: $(prefixe + "-urgent").checked, repete } };
   }
   function signalerTache(prefixe, lu) {
     $(prefixe + "-erreur").textContent = lu.erreur;
@@ -2511,11 +2619,12 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     effacerErreurTache("a");
     const lu = lireChamps("a");
     if (lu.erreur) { signalerTache("a", lu); return; }
-    const corps = { ...lu.tache, personne: lu.tache.type === "dire" ? lu.tache.personne : null, fait: false, faitLe: null, creeLe: new Date().toISOString() };
+    const corps = { ...lu.tache, personne: lu.tache.type === "dire" ? lu.tache.personne : null, suivante: null, fait: false, faitLe: null, creeLe: new Date().toISOString() };
     // On vide tout de suite pour enchaîner ; le type et la personne restent pour la tâche suivante.
     $("a-texte").value = "";
     $("a-pour").value = "";
     $("a-urgent").checked = false;
+    $("a-repete").checked = false;
     majChamps("a");
     $("a-texte").focus();
     try { await ecrireTache(nouvelId(), corps); } catch (err) { echecEcriture(err); }
@@ -2525,8 +2634,22 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   document.querySelector('[data-vue="todo"]').addEventListener("change", async e => {
     const cb = e.target.closest(".tache-case input");
     if (!cb || !taches[cb.dataset.id]) return;
-    const t = taches[cb.dataset.id];
-    try { await ecrireTache(t.id, { ...corpsDe(t), fait: cb.checked, faitLe: cb.checked ? new Date().toISOString() : null }); }
+    const t = taches[cb.dataset.id], maintenant = new Date().toISOString();
+    try {
+      // Cochée, une tâche qui revient se recrée pour la semaine suivante ; décochée, sa copie part (si elle n'est pas faite).
+      if (cb.checked && t.repete && t.pour && !t.suivante) {
+        const id = nouvelId(), pour = prochaineFois(t.pour);
+        await ecrireTache(id, { ...corpsDe(t), pour, suivante: null, fait: false, faitLe: null, creeLe: maintenant });
+        await ecrireTache(t.id, { ...corpsDe(t), suivante: id, fait: true, faitLe: maintenant });
+        toast(`Fait. Elle revient le ${dateCourte(depuisIso(pour))}`);
+      } else if (!cb.checked && t.suivante) {
+        const copie = taches[t.suivante];
+        if (copie && !copie.fait) await ecrireTache(copie.id, null);
+        await ecrireTache(t.id, { ...corpsDe(t), suivante: null, fait: false, faitLe: null });
+      } else {
+        await ecrireTache(t.id, { ...corpsDe(t), fait: cb.checked, faitLe: cb.checked ? maintenant : null });
+      }
+    }
     catch (err) { cb.checked = !cb.checked; echecEcriture(err); }
   });
 
@@ -2544,6 +2667,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     $("e-pour").value = !t.pour ? "" : t.pour === auj ? "aujourdhui" : t.pour === demain ? "demain" : "autre";
     $("e-date").value = $("e-pour").value === "autre" ? t.pour : "";
     $("e-urgent").checked = t.urgent;
+    $("e-repete").checked = t.repete;
     effacerErreurTache("e");
     desarmer($("ft-supprimer"), "Supprimer");
     majChamps("e");
@@ -2609,6 +2733,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     } else {
       if (t.urgent) meta.append(element("span", "puce urgente", "Urgent"));
       if (t.pour) { const e = echeance(t.pour); meta.append(element("span", "puce " + e.classe, e.texte)); }
+      if (t.repete && t.pour) meta.append(element("span", "puce repete", `↻ Chaque ${JOURS_SEMAINE[new Date(depuisIso(t.pour)).getUTCDay()]}`));
     }
     li.append(label, meta);
     if (peutModifierTodo()) {
@@ -2623,6 +2748,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   }
 
   function rendreTodo() {
+    rendreJournee();
     const toutes = Object.values(taches);
     const enCours = toutes.filter(t => !t.fait).sort(trierTaches);
     const faire = enCours.filter(t => t.type === "faire");
@@ -3749,7 +3875,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 
   // Une collection de la base (ou du navigateur hors de claude.ai) : lecture vérifiée, une écriture à la fois par document.
   function creerCollection(nom, cleLocale, lire, rendu) {
-    const c = { docs: Object.create(null), brut: {}, files: Object.create(null) };
+    const c = { docs: Object.create(null), brut: {}, files: Object.create(null), recu: false };
     const depuisBrut = () => { c.docs = Object.create(null); for (const [id, d] of Object.entries(c.brut)) { const x = lire(id, d); if (x) c.docs[id] = x; } };
     c.chargerLocal = () => {
       try { const b = JSON.parse(localStorage.getItem(cleLocale) || "{}"); c.brut = b && typeof b === "object" ? b : {}; } catch (_) { c.brut = {}; }
@@ -3759,6 +3885,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
       const m = Object.create(null);
       snap.docs.forEach(doc => { const x = doc.exists && lire(doc.id, doc.data()); if (x) m[doc.id] = x; });
       c.docs = m;
+      c.recu = true;
       rendu();
     }, () => toast("Une partie de la garde-robe n'a pas pu être chargée. Recharge la page.", "erreur"));
     c.ecrire = (id, corps) => {
@@ -4746,6 +4873,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     zone.append(actions);
   }
   function rendreCalendrier() {
+    rendreJournee();
     rendreFrise();
     rendreProchain();
     const calmes = periodesCalmes();
@@ -4985,6 +5113,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     t.append(corps);
     if (vueActive === "objectifs") rendreGraphe();
     rendreCarteObjectifs();
+    rendreJournee();
   }
   function rendreCarteObjectifs() {
     const c = cibles(), r = partDe(joursDePeriode("mois"));
@@ -4992,6 +5121,63 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     if (r.part != null) $("ligne-objectifs").textContent = `Part homme ce mois-ci : ${pourcent(r.part)} · objectif ${nombreFr(c.min)}–${nombreFr(c.max)} %`;
     $("resume-objectifs").textContent = Object.keys(chiffres.docs).length ? `${Object.keys(chiffres.docs).length} jour${Object.keys(chiffres.docs).length > 1 ? "s" : ""} saisi${Object.keys(chiffres.docs).length > 1 ? "s" : ""}` : "Rien de saisi pour l'instant";
   }
+  // ---------- Ma journée, sur l'accueil ----------
+  const JOURS_LONGS = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+  const horairesDe = j => [j.matin, j.apresMidi].filter(p => dureePeriode(p) > 0).map(p => `${formatHeure(p.debut)} – ${formatHeure(p.fin)}`).join(" · ");
+  const jourDuPlanning = t => { const i = (new Date(t).getUTCDay() || 7) - 1, s = semaines[infoSemaine(lundiDe(t)).cle]; return i < 6 && s ? s.jours[JOURS[i]] : null; };
+  function blocJour(aller, titre, principal, detail, classe) {
+    const li = element("li"), a = element("a", "bloc-jour" + (classe ? " " + classe : ""));
+    a.href = "#" + aller;
+    a.append(element("span", "eyebrow", titre), element("span", "bloc-principal", principal));
+    if (detail) { const d = element("span", "bloc-detail", detail); d.title = detail; a.append(d); }
+    li.append(a);
+    return li;
+  }
+  function rendreJournee() {
+    if (!journeePrete) return;
+    // Rien tant que la base n'a pas tout envoyé : pas de « Rien pour aujourd'hui » qui clignote au chargement.
+    $("journee").hidden = mode !== "local" && !(planningRecu && todoRecu && calendrier.recu && chiffres.recu);
+    if ($("journee").hidden) return;
+    const t = aujourdhui(), demain = t + JOUR_MS, blocs = [];
+    // Mes horaires : aujourd'hui, puis le prochain service.
+    const j = jourDuPlanning(t), statut = j && statutDe(j), ferie = ferieDe(t);
+    const principal = estVide(semaines[infoSemaine(lundiDe(t)).cle]) && new Date(t).getUTCDay() !== 0 ? "Planning de la semaine à remplir"
+      : statut ? NOM_STATUT[statut] + (statut === "ferie" && ferie ? ` · ${ferie}` : "")
+      : j && dureeJour(j) > 0 ? `${horairesDe(j)} (${formatDuree(dureeJour(j))})` : "Pas de service aujourd'hui";
+    const service = prochainService();
+    const suite = service ? `${service === demain ? "Demain" : majuscule(dateCourte(service))} : ${horairesDe(jourDuPlanning(service))}` : "Prochain service : planning à remplir";
+    blocs.push(blocJour("planning", "Mes horaires", principal, suite));
+    // À faire : ce qui est pour aujourd'hui ou en retard.
+    const enCours = Object.values(taches).filter(x => !x.fait).sort(trierTaches);
+    const dus = enCours.filter(x => x.pour && depuisIso(x.pour) <= t), retard = dus.filter(x => depuisIso(x.pour) < t).length;
+    const pourDemain = enCours.filter(x => x.pour && depuisIso(x.pour) === demain).length;
+    const libelle = x => (x.type === "dire" ? `Dire à ${x.personne} : ${x.texte}` : x.texte);
+    const compte = [dus.length > retard ? `${dus.length - retard} pour aujourd'hui` : "", retard ? `${retard} en retard` : ""].filter(Boolean).join(" · ");
+    blocs.push(blocJour("todo", "À faire", compte || "Rien pour aujourd'hui",
+      dus.length ? dus.slice(0, 3).map(libelle).join(" · ") : pourDemain ? `${pourDemain} pour demain` : enCours.length ? `${enCours.length} en cours, sans urgence` : "Liste à jour",
+      retard ? "a-traiter retard" : dus.length ? "a-traiter" : ""));
+    // Prochain temps fort, et sa vitrine.
+    const e = prochainEvenement();
+    if (e) {
+      const enCoursEvt = depuisIso(e.debut) <= t, vitrine = e.vitrineLe ? depuisIso(e.vitrineLe) : null;
+      const bientot = !e.vitrinePrete && vitrine != null && vitrine - t <= 3 * JOUR_MS;
+      blocs.push(blocJour("calendrier", "Prochain temps fort", `${e.nom} ${enCoursEvt ? `: en cours jusqu'au ${dateCourte(finDe(e))}` : dansJours(depuisIso(e.debut))}`,
+        e.vitrinePrete ? "Vitrine prête" : vitrine != null ? `Vitrine le ${dateCourte(vitrine)}, ${dansJours(vitrine)}` : "Date de la vitrine à choisir", bientot ? "a-traiter" : ""));
+    } else blocs.push(blocJour("calendrier", "Prochain temps fort", "Rien de prévu", "Ajoute les temps forts de l'année"));
+    // Objectifs : le dernier jour travaillé est-il saisi ? En mode discret, aucun chiffre ici.
+    let veille = null;
+    for (let k = 1; k <= 7 && veille == null; k++) { const x = jourDuPlanning(t - k * JOUR_MS); if (x && dureeJour(x) > 0) veille = t - k * JOUR_MS; }
+    if (veille == null) { veille = t - JOUR_MS; if (new Date(veille).getUTCDay() === 0) veille -= JOUR_MS; }
+    const nomVeille = veille === t - JOUR_MS ? "hier" : `${JOURS_LONGS[new Date(veille).getUTCDay()]} ${new Date(veille).getUTCDate()}`;
+    if (!chiffres.docs[versIso(veille)]) blocs.push(blocJour("objectifs", "Objectifs", `${majuscule(nomVeille)} à saisir`, "Deux chiffres à noter", "a-traiter"));
+    else {
+      const r = partDe(joursDePeriode("semaine")), c = cibles(), etat = etatDe(r.part, c);
+      blocs.push(blocJour("objectifs", "Objectifs", discret || r.part == null ? "À jour" : `Part homme : ${pourcent(r.part)} cette semaine`,
+        discret || r.part == null ? `Dernière journée saisie : ${dateCourte(veille)}` : etat === "dans" ? "Dans l'objectif" : etat === "sous" ? "En dessous de l'objectif" : "Au-dessus de l'objectif"));
+    }
+    $("journee").replaceChildren(...blocs);
+  }
+
   // La courbe : la part homme de chaque semaine qui a des chiffres (12 au plus), avec la bande de l'objectif.
   function rendreGraphe() {
     const zone = $("ob-graphe"), c = cibles();
@@ -5117,6 +5303,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   window.claude?.hot?.snapshot?.(() => ({ vue: vueActive, lundi: lundiAffiche }));
   const demarrer = data => {
     if (data && Number.isFinite(data.lundi)) lundiAffiche = lundiDe(data.lundi);
+    journeePrete = true;
     rendreTout();
     montrer((data && data.vue) || cibleAdresse() || "accueil", { garderDefilement: true });
     brancher();
