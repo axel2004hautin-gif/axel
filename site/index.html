@@ -3940,9 +3940,19 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
       return u.toString();
     } catch (_) { return brut; }
   }
-  const liensDuLot = () => [...new Set($("lot-liens").value.split(/\s+/).map(lienPropre).filter(x => LIEN_RE.test(x)))];
+  // Dans l'ordre de la liste ; un lien donné deux fois compte pour deux articles (deux pièces sur la même fiche).
+  const liensDuLot = () => $("lot-liens").value.split(/\s+/).map(lienPropre).filter(x => LIEN_RE.test(x));
   const nomLien = l => { try { return decodeURIComponent(new URL(l).pathname.split("/").filter(Boolean).pop() || l).replace(/\.html?$/, ""); } catch (_) { return l; } };
-  const lienPris = (l, sauf) => lot.some(b => b !== sauf && b.lien === l);
+  const prisPar = (l, sauf) => lot.filter(b => b !== sauf && b.lien === l).length;
+  const lienPris = (l, sauf) => prisPar(l, sauf) >= liensDuLot().filter(x => x === l).length;
+  // Les liens encore libres, chacun avec son numéro dans la liste (les premières fois d'un lien déjà pris sont sautées).
+  function liensLibres(sauf) {
+    const vus = Object.create(null);
+    return liensDuLot().map((l, i) => ({ l, n: i + 1 })).filter(({ l }) => {
+      vus[l] = (vus[l] || 0) + 1;
+      return vus[l] > prisPar(l, sauf);
+    });
+  }
   const dansGardeRobe = l => !!l && Object.values(pieces).some(x => x.lien === l);
   $("lot-nuances").replaceChildren(...NUANCES.map(n => new Option(n[0])));
 
@@ -4030,13 +4040,13 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
         if (!limites.images) throw { code: "images_unavailable" };
         const image = await versJpeg(b.fichier, 1568);
         if (image.size > limites.images.maxInputBytes) throw { code: "too_large" };
-        const tous = liensDuLot(), liens = tous.filter(l => !lienPris(l, b) && !dansGardeRobe(l));
+        const libres = liensLibres(b), liens = [...new Set(libres.map(x => x.l))];
         // Les captures sont rangées par heure de prise : si elles suivent la liste des liens, le rang départage
         // les liens d'un même modèle dont l'adresse ne donne pas la couleur (Levi's).
         const rang = [...lot].sort((x, y) => x.fichier.lastModified - y.fichier.lastModified || x.cle - y.cle).indexOf(b) + 1;
         const marques = [...new Set(Object.values(pieces).map(x => x.marque).filter(Boolean))];
         const consigne = `Tu aides un vendeur du magasin de vêtements Blue Box (rayon homme) à créer la fiche d'un article à partir d'une capture d'écran de sa fiche sur le site de la marque.`
-          + (liens.length ? `\n\nLes liens des articles à ajouter, numérotés dans l'ordre où le vendeur les a donnés. L'adresse donne souvent le modèle et la couleur : « horva00000000ml262coffee », c'est le modèle Orva, couleur coffee.\n${liens.map(l => `${tous.indexOf(l) + 1}. ${l}`).join("\n")}`
+          + (liens.length ? `\n\nLes liens des articles à ajouter, numérotés dans l'ordre où le vendeur les a donnés. L'adresse donne souvent le modèle et la couleur : « horva00000000ml262coffee », c'est le modèle Orva, couleur coffee.\n${libres.map(x => `${x.n}. ${x.l}`).join("\n")}`
             + `\n\nCette capture est la n° ${rang} sur ${lot.length}, dans l'ordre où elles ont été prises. Si la capture montre le code de l'article (par exemple 005010162 ou 00501-0162), choisis le lien qui se termine par ce code. Sinon, si plusieurs liens du même modèle conviennent (adresse sans couleur), prends celui dont le numéro est le plus proche de ${rang}.` : "")
           + (marques.length ? `\n\nMarques déjà dans la garde-robe, à écrire pareil si c'est l'une d'elles : ${marques.join(", ")}.` : "")
           + `\n\nRéponds seulement avec un objet JSON : {"lien": "", "marque": "", "categorie": "", "modele": "", "couleur": "", "coupe": "", "matiere": "", "prix": null, "cadre": {"x": 0, "y": 0, "l": 100, "h": 100}, "remarque": ""}.`
@@ -4149,7 +4159,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     const ligne = element("div", "lot-ligne");
     ligne.append(categorie, couleur, prix);
     const lien = champLot("select", "lien", null, { "aria-label": "Lien de l'article" });
-    lien.append(new Option("Sans lien", ""), ...liensDuLot().map(l => { const o = new Option(nomLien(l), l); o.disabled = lienPris(l, b); return o; }));
+    lien.append(new Option("Sans lien", ""), ...[...new Set(liensDuLot())].map(l => { const o = new Option(nomLien(l), l); o.disabled = lienPris(l, b); return o; }));
     if (b.lien && ![...lien.options].some(o => o.value === b.lien)) lien.append(new Option(nomLien(b.lien), b.lien));
     lien.value = b.lien;
     corps.append(tete, modele, ligne, lien);
@@ -4287,7 +4297,8 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
       ajoutLot = false;
       // Les liens utilisés quittent la liste d'attente.
       if (liensPris.length) {
-        const restants = liensDuLot().filter(l => !liensPris.includes(l));
+        const restants = liensDuLot();
+        liensPris.forEach(l => { const i = restants.indexOf(l); if (i >= 0) restants.splice(i, 1); });
         $("lot-liens").value = restants.join("\n");
         sauverLiensLot(restants);
       }
