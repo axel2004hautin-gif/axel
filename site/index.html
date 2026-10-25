@@ -629,6 +629,37 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
 .ligne-reglage { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; margin-top: 10px; }
 .ligne-reglage .titre-champ { flex: 1 1 260px; }
 .ligne-reglage input { width: 100%; }
+.page-argent-bloc { display: grid; gap: 22px; min-width: 0; }
+.budget-vide { gap: 12px; border-color: var(--argent); background: var(--argent-doux); }
+.budget-vide h2 { margin: 0; font-size: 1.35rem; }
+.budget-vide p { margin: 0; }
+.budget-vide .bouton-principal { justify-self: start; }
+/* Les enveloppes : une barre par catégorie (une teinte), l'état écrit en toutes lettres. */
+.enveloppes { display: grid; gap: 4px 28px; margin: 0; padding: 0; list-style: none; }
+@media (min-width: 760px) { .enveloppes { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.enveloppe { display: grid; gap: 6px; padding: 10px 2px; border-bottom: 1px solid var(--trait); }
+.enveloppe-tete { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.enveloppe-nom { color: var(--encre); font-weight: 600; text-decoration: none; }
+a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-underline-offset: 3px; }
+.enveloppe-chiffres { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.enveloppe-etat { margin: 0; color: var(--gris); font-size: .9rem; }
+.enveloppe.presque .progression-valeur { background: var(--or); }
+.enveloppe.presque .enveloppe-etat { color: var(--or); font-weight: 600; }
+.enveloppe.depassee .progression-valeur { background: var(--erreur); }
+.enveloppe.depassee .enveloppe-etat { color: var(--erreur); font-weight: 600; }
+.enveloppe .progression { height: 10px; }
+/* La fenêtre « Répartir ma paie ». */
+.rp-groupe { margin: 8px 0 0; color: var(--argent); font-size: 1rem; }
+.rp-fixes { margin: 0; color: var(--gris); }
+.rp-lignes { display: grid; gap: 8px; }
+.rp-ligne { display: grid; grid-template-columns: minmax(0, 1fr) 8em; align-items: center; gap: 4px 12px; }
+.rp-nom { display: grid; gap: 1px; font-weight: 600; }
+.rp-indice { color: var(--gris); font-size: .85rem; font-weight: 400; }
+.rp-ligne input { width: 100%; text-align: right; font-variant-numeric: tabular-nums; }
+.rp-total { flex: 1 1 100%; margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+.rp-total.negatif { color: var(--erreur); }
+.recherche-ops input { width: 100%; min-height: 44px; padding: 8px 14px; border: 1.5px solid var(--trait); border-radius: 10px; background: var(--fond); font: inherit; }
+.recherche-ops input:focus-visible { outline: 2px solid var(--argent); outline-offset: 1px; border-color: var(--argent); }
 .depenses-actions { display: grid; gap: 12px; padding: 14px; border: 1.5px solid var(--trait); border-radius: 12px; background: var(--argent-doux); }
 .depenses-actions .bouton-fichier { justify-self: start; }
 .saisie-depense { display: grid; gap: 10px; }
@@ -1510,7 +1541,7 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
           <div class="segments" id="ar-road-segments"></div>
           <ul class="legende-segments" id="ar-road-legende"></ul>
         </div>
-        <ul class="legende-courbe" id="ar-road-legende-courbe" aria-hidden="true"><li class="l-total">Mon total</li><li class="l-trajectoire">Trajectoire jusqu'à l'objectif</li></ul>
+        <ul class="legende-courbe" id="ar-road-legende-courbe" aria-hidden="true"><li class="l-total">Mon total</li><li class="l-trajectoire" id="ar-road-l-trajectoire">Trajectoire jusqu'à l'objectif</li></ul>
         <div class="graphe-zone" id="ar-road-graphe" hidden></div>
         <p class="aide" id="ar-road-vide" hidden>La courbe apparaît dès le premier mois enregistré.</p>
       </section>
@@ -1523,9 +1554,9 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
         </section>
         <a class="carte-argent carte-lien" href="#budget">
           <span class="eyebrow" id="ar-mois-titre">Ce mois-ci</span>
-          <span class="carte-argent-chiffre"><span id="ar-mois-reste"></span> <span class="road-sur">à dépenser</span></span>
+          <span class="carte-argent-chiffre"><span id="ar-mois-reste"></span> <span class="road-sur" id="ar-mois-sur">à dépenser</span></span>
           <span class="segments" id="ar-mois-barre"></span>
-          <span class="legende-segments petite"><span><span class="pastille-seg seg-1"></span>Charges fixes</span><span><span class="pastille-seg seg-2"></span>Dépenses</span><span><span class="pastille-seg seg-3"></span>Épargne</span></span>
+          <span class="legende-segments petite"><span><span class="pastille-seg seg-1"></span>Charges fixes</span><span><span class="pastille-seg seg-2"></span>Dépensé</span><span><span class="pastille-seg seg-3"></span>Épargne</span></span>
           <span class="aide" id="ar-mois-detail"></span>
         </a>
       </div>
@@ -1533,7 +1564,7 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
         <li>
           <a class="carte-sous" href="#budget">
             <span class="carte-sous-titre">Budget du mois</span>
-            <span class="carte-sous-texte">Ce qui rentre, les charges fixes, l'épargne et ce qu'il reste à dépenser.</span>
+            <span class="carte-sous-texte">Mon solde le jour de la paie, réparti entre charges fixes, épargne et enveloppes.</span>
             <span class="carte-sous-ligne" id="carte-budget-ligne"></span>
             <span class="carte-sous-pied"><span>Mois par mois</span><span class="fleche">Ouvrir →</span></span>
           </a>
@@ -1575,31 +1606,39 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
         </div>
         <div class="mois-nav"><button type="button" data-mois-argent="-1" aria-label="Mois précédent">‹</button><span id="bu-mois"></span><button type="button" data-mois-argent="1" aria-label="Mois suivant">›</button></div>
       </div>
-      <section class="carte-argent budget-tete" aria-labelledby="bu-reste-titre">
-        <p class="eyebrow" id="bu-reste-titre">Reste à dépenser</p>
-        <p class="budget-reste" id="bu-reste"></p>
-        <p class="aide" id="bu-par-jour"></p>
-        <div class="segments grande" id="bu-barre"></div>
-        <ul class="legende-segments" id="bu-legende"></ul>
+      <section class="carte-argent budget-vide" id="bu-vide" aria-labelledby="bu-vide-titre" hidden>
+        <p class="eyebrow">Pour commencer</p>
+        <h2 id="bu-vide-titre"></h2>
+        <p id="bu-vide-texte"></p>
+        <button class="bouton-principal" type="button" data-repartir>Ma paie est arrivée</button>
       </section>
-      <section aria-labelledby="bu-rev-titre">
-        <div class="section-tete-ligne"><h2 id="bu-rev-titre">Ce qui rentre</h2></div>
-        <ul class="lignes-argent" id="bu-revenus"></ul>
-        <p class="aide" id="bu-interne" hidden></p>
-        <p class="aide">La paie arrive à la fin du mois : celle d'un mois sert au budget du mois suivant.</p>
-      </section>
+      <div class="page-argent-bloc" id="bu-plein" hidden>
+        <section class="carte-argent budget-tete" aria-labelledby="bu-reste-titre">
+          <p class="eyebrow" id="bu-reste-titre">Reste à dépenser</p>
+          <p class="budget-reste" id="bu-reste"></p>
+          <p class="aide" id="bu-par-jour"></p>
+          <div class="segments grande" id="bu-barre"></div>
+          <ul class="legende-segments" id="bu-legende"></ul>
+        </section>
+        <section aria-labelledby="bu-env-titre">
+          <div class="section-tete-ligne"><h2 id="bu-env-titre">Mes enveloppes</h2><button class="bouton-second" type="button" data-repartir id="bu-repartir">Modifier la répartition</button></div>
+          <ul class="enveloppes" id="bu-enveloppes"></ul>
+          <p class="aide" id="bu-env-aide"></p>
+        </section>
+        <section aria-labelledby="bu-depart-titre">
+          <div class="section-tete-ligne"><h2 id="bu-depart-titre">Le point de départ</h2></div>
+          <ul class="lignes-argent" id="bu-revenus"></ul>
+        </section>
+        <section aria-labelledby="bu-ep-titre">
+          <div class="section-tete-ligne"><h2 id="bu-ep-titre">Épargne</h2></div>
+          <ul class="lignes-argent" id="bu-epargne"></ul>
+          <p class="aide" id="bu-interne" hidden></p>
+        </section>
+      </div>
       <section aria-labelledby="bu-ch-titre">
         <div class="section-tete-ligne"><h2 id="bu-ch-titre">Charges fixes</h2><button class="bouton-second" type="button" id="bu-ajouter-charge">Ajouter une charge</button></div>
         <ul class="lignes-argent" id="bu-charges"></ul>
         <p class="aide" id="bu-charges-aide"></p>
-      </section>
-      <section aria-labelledby="bu-ep-titre">
-        <div class="section-tete-ligne"><h2 id="bu-ep-titre">Épargne du mois</h2></div>
-        <p id="bu-epargne"></p>
-        <form class="ligne-reglage champs-tache" id="bu-versement-form" novalidate>
-          <label class="titre-champ">Versement prévu chaque mois (Trade Republic et livrets)<input type="text" inputmode="decimal" id="bu-versement" placeholder="Ex. : 500"></label>
-          <button class="bouton-second" type="submit">Enregistrer</button>
-        </form>
       </section>
     </div>
   </section>
@@ -1644,6 +1683,8 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
       </section>
       <section aria-labelledby="de-ops-titre">
         <div class="section-tete-ligne"><h2 id="de-ops-titre">Opérations</h2><p class="filtre-actif" id="de-filtre" hidden><span id="de-filtre-nom"></span> <button class="lien-discret" type="button" id="de-filtre-tout">Tout afficher</button></p></div>
+        <label class="recherche-ops"><span class="invisible">Chercher une opération</span><input type="search" id="de-recherche" placeholder="Chercher dans tous les mois : un libellé, un montant…" autocomplete="off"></label>
+        <p class="aide" id="de-recherche-etat" hidden></p>
         <ol class="ops" id="de-ops"></ol>
       </section>
     </div>
@@ -1937,6 +1978,37 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
   </div>
 </dialog>
 
+<dialog class="fenetre fenetre-petite" id="fenetre-repartition" aria-labelledby="rp-titre">
+  <div class="fenetre-tete">
+    <div>
+      <h2 id="rp-titre">Répartir ma paie</h2>
+      <p class="fenetre-sous">Le solde de ton compte le jour où la paie tombe, puis ce que tu mets de côté et ce que tu prévois de dépenser jusqu'à la prochaine.</p>
+    </div>
+    <button class="fermer" type="button" data-fermer aria-label="Fermer sans enregistrer">×</button>
+  </div>
+  <form class="fenetre-corps champs-tache edition" id="rp-form" autocomplete="off" novalidate>
+    <div class="ligne-champs">
+      <label class="titre-champ">Solde après la paie (€)<input type="text" inputmode="decimal" id="rp-solde" placeholder="Ex. : 1 850"></label>
+      <label class="titre-champ">Le<input type="date" id="rp-date"></label>
+    </div>
+    <p class="aide" id="rp-periode"></p>
+    <h3 class="rp-groupe">Charges fixes</h3>
+    <p class="rp-fixes" id="rp-fixes"></p>
+    <h3 class="rp-groupe">Épargne</h3>
+    <div class="rp-lignes" id="rp-epargne"></div>
+    <h3 class="rp-groupe">Enveloppes</h3>
+    <p class="aide">Ce que tu prévois de dépenser par catégorie jusqu'à la prochaine paie. Sous chaque nom : ce que tu as dépensé la fois d'avant.</p>
+    <div class="rp-lignes" id="rp-enveloppes"></div>
+  </form>
+  <div class="fenetre-pied">
+    <p class="rp-total" id="rp-total" aria-live="polite"></p>
+    <p class="fenetre-erreur" id="rp-erreur" role="alert" hidden></p>
+    <button class="bouton-danger" type="button" id="rp-supprimer">Supprimer</button>
+    <button class="bouton-second" type="button" data-fermer>Annuler</button>
+    <button class="bouton-principal" type="button" id="rp-enregistrer">Enregistrer</button>
+  </div>
+</dialog>
+
 <dialog class="fenetre fenetre-petite" id="fenetre-projet" aria-labelledby="pr-titre">
   <div class="fenetre-tete">
     <h2 id="pr-titre">Ajouter un achat prévu</h2>
@@ -1948,6 +2020,7 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
       <label class="titre-champ">Montant visé (€)<input type="text" inputmode="decimal" id="pr-cible" placeholder="Ex. : 350"></label>
       <label class="titre-champ">Pour le<input type="date" id="pr-date"></label>
     </div>
+    <label class="titre-champ" id="pr-rendement-bloc">Rendement annuel supposé (%)<input type="text" inputmode="decimal" id="pr-rendement" placeholder="Ex. : 7"></label>
     <label class="titre-champ" id="pr-mis-bloc">Déjà mis de côté (€)<input type="text" inputmode="decimal" id="pr-mis" placeholder="0"></label>
     <label class="titre-champ" id="pr-lien-bloc">Lien (facultatif)<input type="url" id="pr-lien" placeholder="https://…"></label>
     <p class="aide" id="pr-aide"></p>
@@ -2315,7 +2388,7 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
     tenues.chargerLocal();
     comparaisons.chargerLocal();
     demandes.chargerLocal();
-    [comptesArgent, soldes, projets, charges, operations, paies].forEach(c => c.chargerLocal());
+    [comptesArgent, soldes, projets, charges, operations, paies, budgets].forEach(c => c.chargerLocal());
   }
   function sauverLocal() {
     try { localStorage.setItem(CLE_LOCALE, JSON.stringify(semaines)); return true; } catch (_) { return false; }
@@ -2357,7 +2430,7 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
     tenues.abonner();
     comparaisons.abonner();
     demandes.abonner();
-    [comptesArgent, soldes, projets, charges, operations, paies].forEach(c => c.abonner());
+    [comptesArgent, soldes, projets, charges, operations, paies, budgets].forEach(c => c.abonner());
     // Claude, pour proposer une description de tenue : seulement pour qui peut modifier.
     if (proprio) c.use("sample").then(ns => { sampleNs = ns; rendreTenues(); }, () => {});
     rendreTout();
@@ -6294,6 +6367,7 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
       cible: arrondi2(d.cible), date: ISO_RE.test(d.date) ? d.date : null, misDeCote: nombreValide(d.misDeCote) && d.misDeCote > 0 ? arrondi2(d.misDeCote) : 0,
       lien: typeof d.lien === "string" && /^https?:\/\/\S+$/i.test(d.lien) ? d.lien.slice(0, 500) : null, note: texteArgent(d.note, 300),
       ordre: nombreValide(d.ordre) ? d.ordre : 99, creeLe: texteArgent(d.creeLe, 40),
+      rendement: d.type === "comptes" && nombreValide(d.rendement) && d.rendement > 0 && d.rendement <= 30 ? d.rendement : 0,   // % par an
     };
   }
   function lireCharge(id, d) {
@@ -6311,6 +6385,10 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
         ...(o.b ? { b: texteArgent(o.b, 80) } : {}), ...(o.s === "saisie" ? { p: o.p === "carte" ? "carte" : "especes" } : {}) } : null);
   const lireMoisOps = (id, d) => (MOIS_RE.test(id) && d && d.ops && typeof d.ops === "object"
     ? { id, ops: Object.fromEntries(Object.entries(d.ops).map(([k, o]) => [k, lireOp(o)]).filter(([k, o]) => o && /^[\w-]{1,40}$/.test(k))) } : null);
+  const montantsDe = (m, ok) => Object.fromEntries(Object.entries(m && typeof m === "object" ? m : {}).filter(([k, v]) => ok(k) && nombreValide(v) && v > 0).map(([k, v]) => [k, arrondi2(v)]));
+  // Un budget : le solde du compte noté le jour de la paie, et sa répartition (épargne par objectif, enveloppes).
+  const lireBudget = (id, d) => (MOIS_RE.test(id) && d && nombreValide(d.solde) && ISO_RE.test(d.le)
+    ? { id, solde: arrondi2(d.solde), le: d.le, enveloppes: montantsDe(d.enveloppes, c => NOM_CAT[c] && !HORS_DEPENSES.has(c)), epargne: montantsDe(d.epargne, k => /^[\w-]{1,40}$/.test(k)) } : null);
   const lirePaie = (id, d) => (MOIS_RE.test(id) && d && nombreValide(d.net) && d.net > 0
     ? { id, net: arrondi2(d.net), brut: nombreValide(d.brut) && d.brut > 0 ? arrondi2(d.brut) : null, heuresSup: nombreValide(d.heuresSup) && d.heuresSup >= 0 ? d.heuresSup : null, payeLe: ISO_RE.test(d.payeLe) ? d.payeLe : null } : null);
 
@@ -6320,6 +6398,7 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
   const charges = creerCollection("charges", "tableau-de-bord-axel:charges", lireCharge, () => rendreArgent());
   const operations = creerCollection("depenses", "tableau-de-bord-axel:depenses", lireMoisOps, () => rendreArgent());
   const paies = creerCollection("paies", "tableau-de-bord-axel:paies", lirePaie, () => rendreArgent());
+  const budgets = creerCollection("budgets", "tableau-de-bord-axel:budgets", lireBudget, () => rendreArgent());
   const echecArgent = e => toast(e && (e.code === "quota_exceeded" || e.code === "stockage_local") ? "Plus de place pour enregistrer." : "Ce n'a pas été enregistré. Vérifie ta connexion et réessaie.", "erreur");
 
   function reglagesArgent() {
@@ -6327,7 +6406,6 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
     return {
       taux: nombreValide(d.tauxHoraire) && d.tauxHoraire > 0 ? d.tauxHoraire : null,
       heures: nombreValide(d.heuresMois) && d.heuresMois > 0 ? d.heuresMois : 151.67,
-      versement: nombreValide(d.versementMensuel) && d.versementMensuel >= 0 ? d.versementMensuel : null,
       regles: d.regles && typeof d.regles === "object" ? d.regles : {},
       titulaire: texteArgent(d.titulaire, 60),   // mon nom : un virement à mon nom va d'un de mes comptes à l'autre
     };
@@ -6354,14 +6432,17 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
     const total = p.type === "comptes" ? (pts.length ? pts[pts.length - 1].total : 0) : p.misDeCote;
     const reste = Math.max(0, arrondi2(p.cible - total)), maintenant = cleMois(aujourdhui());
     const moisRestants = p.date ? Math.max(0, ecartMois(maintenant, cleMois(depuisIso(p.date) - JOUR_MS))) : null;
-    const parMois = reste && moisRestants != null ? reste / Math.max(1, moisRestants) : null;
+    const sansRendement = reste && moisRestants != null ? reste / Math.max(1, moisRestants) : null;
+    // Avec un rendement, ce qui est déjà là grossit aussi : il faut verser moins chaque mois.
+    const r = p.rendement ? Math.pow(1 + p.rendement / 100, 1 / 12) - 1 : 0, n = Math.max(1, moisRestants || 0);
+    const parMois = r && sansRendement != null ? Math.max(0, (p.cible - total * Math.pow(1 + r, n)) * r / (Math.pow(1 + r, n) - 1)) : sansRendement;
     let rythme = null, arrivee = null;
     if (pts.length >= 2) {
       const a = pts[Math.max(0, pts.length - 4)], b = pts[pts.length - 1], n = ecartMois(a.cle, b.cle);
       if (n > 0) rythme = (b.total - a.total) / n;
       if (rythme > 0 && reste) arrivee = moisDecale(b.cle, Math.ceil(reste / rythme));
     }
-    return { pts, total, reste, part: Math.min(1, total / p.cible), moisRestants, parMois, rythme, arrivee };
+    return { pts, total, reste, part: Math.min(1, total / p.cible), moisRestants, parMois, sansRendement, r, rythme, arrivee };
   }
   const projetRoad = () => projetsTries().find(p => p.type === "comptes" && p.groupe === "investissement") || null;
   const projetEpargne = () => projetsTries().find(p => p.type === "comptes" && p.groupe === "epargne") || null;
@@ -6371,9 +6452,29 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
   const texteOp = o => sansAccents(`${o.l} ${o.k}`);
   const depenseDe = ops => -arrondi2(ops.filter(o => !HORS_DEPENSES.has(o.c)).reduce((t, o) => t + o.m, 0));
   const chargesDuMois = cle => Object.values(charges.docs).filter(c => c.frequence === "mois" || c.mois === Number(cle.slice(5))).sort((a, b) => a.ordre - b.ordre || b.montant - a.montant);
-  // Une charge est payée si une opération du mois porte son mot-clé (« spotify », « nba|anthropic ») ou son montant exact.
-  function rapprocher(cle) {
-    const ops = opsDu(cle).filter(o => o.m < 0 && !HORS_DEPENSES.has(o.c)), prises = new Set(), lien = new Map();
+  // ----- les périodes : d'une paie à la suivante -----
+  // Le budget va d'une paie à l'autre et porte le nom du mois qu'il couvre : la paie d'octobre, versée le 30, ouvre
+  // le budget de novembre. Il commence le jour du solde noté après la paie (sinon le jour de paie habituel) et
+  // s'arrête la veille du suivant.
+  const jourPaie = cle => `${cle}-${String(Math.min(JOUR_PAIE, joursDuMois(cle))).padStart(2, "0")}`;
+  const debutPeriode = cle => (budgets.docs[cle] ? budgets.docs[cle].le : jourPaie(moisDecale(cle, -1)));
+  const finPeriode = cle => versIso(depuisIso(debutPeriode(moisDecale(cle, 1))) - JOUR_MS);
+  const periodeDe = iso => { const cle = iso.slice(0, 7); return iso >= debutPeriode(moisDecale(cle, 1)) ? moisDecale(cle, 1) : iso < debutPeriode(cle) ? moisDecale(cle, -1) : cle; };
+  const moisDeBudget = iso => (Number(iso.slice(8)) >= 20 ? moisDecale(iso.slice(0, 7), 1) : iso.slice(0, 7));   // la paie du 30 octobre ouvre novembre
+  const opsPeriode = cle => { const d = debutPeriode(cle), f = finPeriode(cle); return [-1, 0, 1].flatMap(k => opsDu(moisDecale(cle, k))).filter(o => o.d >= d && o.d <= f); };
+  const jourMois = iso => { const d = new Date(depuisIso(iso)); return `${quantieme(d.getUTCDate())} ${MOIS[d.getUTCMonth()]}`; };   // « 30 octobre »
+  const datesPeriode = cle => `du ${jourMois(debutPeriode(cle))} au ${jourMois(finPeriode(cle))}`;
+  // La période affichée : celle d'aujourd'hui ; quand son budget n'est pas lancé et que la paie tombe dans moins de
+  // dix jours, la suivante (c'est elle qu'on va remplir).
+  function periodeParDefaut() {
+    const auj = versIso(aujourdhui()), cle = periodeDe(auj), suivante = moisDecale(cle, 1);
+    return !budgets.docs[cle] && (depuisIso(debutPeriode(suivante)) - depuisIso(auj)) / JOUR_MS <= 10 ? suivante : cle;
+  }
+  const moisVu = () => moisArgent || periodeParDefaut();
+
+  // Une charge est payée si une opération de la période porte son mot-clé (« spotify », « nba|anthropic ») ou son montant exact.
+  function rapprocher(cle, toutes) {
+    const ops = toutes.filter(o => o.m < 0 && !HORS_DEPENSES.has(o.c)), prises = new Set(), lien = new Map();
     chargesDuMois(cle).filter(c => !c.variable).forEach(c => {
       const mots = c.motCle.split(/[|,]/).map(m => sansAccents(m).trim()).filter(Boolean);
       const o = ops.find(o => !prises.has(o.id) && mots.some(m => texteOp(o).includes(m))) || ops.find(o => !prises.has(o.id) && Math.abs(-o.m - c.montant) < 0.01);
@@ -6387,30 +6488,26 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
     const e = paieEstimee(cle);
     return e ? { net: e.net, recue: false } : null;
   }
-  // Le budget du mois : la paie du mois d'avant (versée à la fin du mois) et les autres rentrées, moins les charges
-  // fixes (payées ou à venir), les dépenses courantes, l'épargne (versée, ou prévue et pas encore faite).
+  // Le budget d'une période : le solde après la paie et les rentrées depuis, moins les charges fixes (payées ou à
+  // venir), l'épargne (versée, ou prévue et pas encore faite) et ce qui a été dépensé. Les enveloppes disent où
+  // va ce qui reste. Les retraits d'espèces ne comptent pas (le liquide se note à la main), ni ce qui revient de
+  // l'épargne ou de mes autres comptes (ce n'est pas un budget en plus).
   function budgetDu(cle) {
-    const ops = opsDu(cle), paie = paieDu(moisDecale(cle, -1)), payees = rapprocher(cle);
-    const autres = arrondi2(ops.filter(o => o.c === "revenus").reduce((t, o) => t + o.m, 0));
-    const revenus = arrondi2((paie ? paie.net : 0) + autres);
-    const lignes = chargesDuMois(cle).map(c => {
-      if (c.variable) {
-        const deja = depenseDe(ops.filter(o => o.c === c.categorie));
-        return { charge: c, deja, aVenir: Math.max(0, arrondi2(c.montant - deja)) };
-      }
-      const o = payees.get(c.id);
-      return { charge: c, op: o || null, deja: o ? -o.m : 0, aVenir: o ? 0 : c.montant };
-    });
-    const fixesPayees = arrondi2(lignes.filter(x => !x.charge.variable).reduce((t, x) => t + x.deja, 0));
-    const fixesAVenir = arrondi2(lignes.filter(x => !x.charge.variable).reduce((t, x) => t + x.aVenir, 0));
-    const variablesAVenir = arrondi2(lignes.filter(x => x.charge.variable).reduce((t, x) => t + x.aVenir, 0));
-    const depenses = depenseDe(ops);
-    const verse = -arrondi2(ops.filter(o => o.c === "epargne").reduce((t, o) => t + o.m, 0));
-    const prevu = reglagesArgent().versement, epargneAVenir = prevu != null ? Math.max(0, arrondi2(prevu - verse)) : 0;
-    const fixes = arrondi2(fixesPayees + fixesAVenir), courantes = arrondi2(depenses - fixesPayees + variablesAVenir), epargne = arrondi2(verse + epargneAVenir);
-    const reste = arrondi2(revenus - fixes - courantes - epargne);
-    const maintenant = cleMois(aujourdhui()), joursRestants = cle === maintenant ? joursDuMois(cle) - new Date(aujourdhui()).getUTCDate() + 1 : null;
-    return { cle, paie, autres, revenus, lignes, fixes, fixesAVenir, courantes, depenses, variablesAVenir, verse, prevu, epargne, reste, joursRestants, nbOps: ops.length };
+    const doc = budgets.docs[cle] || null, ops = opsPeriode(cle), payees = rapprocher(cle, ops), prises = new Set([...payees.values()].map(o => o.id));
+    const somme = l => arrondi2(l.reduce((t, o) => t + o.m, 0));
+    const rentrees = somme(ops.filter(o => o.c === "revenus"));
+    const lignes = chargesDuMois(cle).filter(c => !c.variable).map(c => { const o = payees.get(c.id); return { charge: c, op: o || null, montant: o ? -o.m : c.montant }; });
+    const fixes = arrondi2(lignes.reduce((t, x) => t + x.montant, 0)), fixesAVenir = arrondi2(lignes.filter(x => !x.op).reduce((t, x) => t + x.montant, 0));
+    const courantes = ops.filter(o => !HORS_DEPENSES.has(o.c) && !prises.has(o.id)), prevues = doc ? doc.enveloppes : {};
+    const enveloppes = CATS_DEPENSES.map(([c, nom]) => ({ c, nom, prevu: prevues[c] || 0, depense: depenseDe(courantes.filter(o => o.c === c)) })).filter(e => e.prevu || e.depense);
+    const depense = depenseDe(courantes);
+    const deCote = ops.filter(o => o.c === "epargne" || o.c === "interne"), verse = -somme(deCote.filter(o => o.m < 0)), repris = somme(deCote.filter(o => o.m > 0));
+    const prevu = doc ? arrondi2(Object.values(doc.epargne).reduce((t, v) => t + v, 0)) : 0, epargne = Math.max(verse, prevu);
+    const depart = doc ? arrondi2(doc.solde + rentrees) : null, reste = doc ? arrondi2(depart - fixes - epargne - depense) : null;
+    const dansEnveloppes = arrondi2(enveloppes.reduce((t, e) => t + Math.max(0, e.prevu - e.depense), 0));
+    const debut = debutPeriode(cle), fin = finPeriode(cle), auj = versIso(aujourdhui());
+    const joursRestants = auj >= debut && auj <= fin ? Math.round((depuisIso(fin) - depuisIso(auj)) / JOUR_MS) + 1 : null;
+    return { cle, doc, debut, fin, ops, rentrees, lignes, fixes, fixesAVenir, enveloppes, depense, verse, repris, prevu, epargne, depart, reste, dansEnveloppes, joursRestants, passee: auj > fin };
   }
 
   // ----- la paie attendue -----
@@ -6492,6 +6589,7 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
   function rendreCourbeRoad(p, av) {
     const zone = $("ar-road-graphe");
     $("ar-road-legende-courbe").hidden = !p || !av.pts.length;
+    $("ar-road-l-trajectoire").textContent = p && av.r ? `Le plan, avec ${nombreFr(p.rendement)} % par an` : "Trajectoire jusqu'à l'objectif";
     if (!p || !av.pts.length || vueActive !== "argent") { zone.replaceChildren(); zone.hidden = !p || !av.pts.length; $("ar-road-vide").hidden = !p || !!av.pts.length; return; }
     zone.hidden = false;
     $("ar-road-vide").hidden = true;
@@ -6507,7 +6605,12 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
     // Les années et quelques mois sous l'axe.
     const pas = Math.max(1, Math.ceil(n / Math.floor((W - g.gauche - g.droite) / 54)));
     for (let k = 0; k <= n; k += pas) { const cle = moisDecale(debut, k); svg.append(svgEl("text", { class: "axe-texte", x: x(cle), y: H - 6, "text-anchor": "middle" }, `${MOIS_COURTS[Number(cle.slice(5)) - 1].replace(".", "")} ${cle.slice(2, 4)}`)); }
-    svg.append(svgEl("line", { class: "trajectoire", x1: x(debut), y1: y(av.pts[0].total), x2: x(fin), y2: y(p.cible) }));
+    if (av.r && av.parMois != null && ecartMois(av.pts[av.pts.length - 1].cle, fin) > 0) {
+      // Le plan : chaque mois, le versement et le rendement (ce qui est déjà là grossit aussi).
+      const depart = av.pts[av.pts.length - 1], k = ecartMois(depart.cle, fin), plan = [];
+      for (let i = 0, v = depart.total; i <= k; i++, v = v * (1 + av.r) + av.parMois) plan.push(`${x(moisDecale(depart.cle, i))},${y(Math.min(v, hi))}`);
+      svg.append(svgEl("polyline", { class: "trajectoire", points: plan.join(" "), fill: "none" }));
+    } else svg.append(svgEl("line", { class: "trajectoire", x1: x(debut), y1: y(av.pts[0].total), x2: x(fin), y2: y(p.cible) }));
     svg.append(svgEl("text", { class: "etiquette-trajectoire", x: x(fin), y: y(p.cible) - 8, "text-anchor": "end" }, `objectif ${kEur(p.cible)}`));
     if (av.pts.length > 1) svg.append(svgEl("polyline", { class: "trace", points: av.pts.map(q => `${x(q.cle)},${y(q.total)}`).join(" ") }));
     av.pts.forEach((q, i) => svg.append(svgEl("circle", { class: "point", cx: x(q.cle), cy: y(q.total), r: 4.5, "data-i": i })));
@@ -6534,12 +6637,14 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
   }
 
   // ----- affichage -----
-  let moisArgent = cleMois(aujourdhui()), moisPaie = cleMois(aujourdhui()), filtreCat = null;
+  let moisArgent = null, moisPaie = cleMois(aujourdhui()), filtreCat = null, rechercheOps = "";
   const SEGMENTS = ["seg-1", "seg-2", "seg-3"];
   function texteProjet(p, av) {
     if (!av.reste) return "Objectif atteint !";
     const morceaux = [];
-    if (av.moisRestants != null) morceaux.push(av.moisRestants ? `il reste ${eur(av.reste, 0)} en ${av.moisRestants} mois : ${eur(av.parMois, 0)} par mois` : `il reste ${eur(av.reste, 0)} ce mois-ci`);
+    const avec = av.r ? ` avec ${nombreFr(p.rendement)} % par an (${eur(av.sansRendement, 0)} sans rendement)` : "";
+    if (av.moisRestants != null && av.moisRestants && av.r && !av.parMois) morceaux.push(`il reste ${eur(av.reste, 0)} en ${av.moisRestants} mois : à ${nombreFr(p.rendement)} % par an, le rendement seul y suffit`);
+    else if (av.moisRestants != null) morceaux.push(av.moisRestants ? `il reste ${eur(av.reste, 0)} en ${av.moisRestants} mois : ${eur(av.parMois, 0)} par mois${avec}` : `il reste ${eur(av.reste, 0)} ce mois-ci`);
     else morceaux.push(`il reste ${eur(av.reste, 0)}`);
     if (av.arrivee) morceaux.push(`à ton rythme, tu y es en ${nomMois(av.arrivee).toLowerCase()}`);
     return majuscule(morceaux.join(" · ")) + ".";
@@ -6569,16 +6674,17 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
       barreProgression($("ar-ep-barre"), av.part, `${epargne.nom} : ${eur(av.total, 0)} sur ${eur(epargne.cible, 0)}`);
       $("ar-ep-detail").textContent = av.pts.length ? texteProjet(epargne, av) : "Mets à jour tes comptes pour lancer la barre.";
     }
-    const b = budgetDu(cleMois(aujourdhui()));
+    const b = budgetDu(periodeParDefaut());
     $("ar-mois-titre").textContent = `${majuscule(moisMin(b.cle))} · budget`;
-    $("ar-mois-reste").textContent = eur(b.reste, 0);
-    $("ar-mois-reste").classList.toggle("negatif", b.reste < 0);
-    barreSegments($("ar-mois-barre"), null, segmentsBudget(b), b.revenus);
-    $("ar-mois-detail").textContent = !b.paie ? "Indique ton taux horaire dans Ma paie pour calculer le budget."
-      : `${b.reste < 0 ? "Dépassement" : "À dépenser"}${b.joursRestants && b.reste > 0 ? ` · ${eur(b.reste / b.joursRestants, 0)} par jour jusqu'au ${joursDuMois(b.cle)}` : ""} · ${eur(b.depenses, 0)} dépensés`;
+    $("ar-mois-reste").textContent = b.doc ? eur(b.reste, 0) : "À lancer";
+    $("ar-mois-reste").classList.toggle("negatif", !!b.doc && b.reste < 0);
+    $("ar-mois-sur").hidden = !b.doc;
+    barreSegments($("ar-mois-barre"), null, b.doc ? segmentsBudget(b) : [], b.depart || 0);
+    $("ar-mois-detail").textContent = !b.doc ? `Le jour de ta paie, note ton solde et répartis-le : le budget ${deMois(b.cle)} part de là.`
+      : `${b.reste < 0 ? "Dépassement" : "À dépenser"}${b.joursRestants && b.reste > 0 ? ` · ${eur(b.reste / b.joursRestants, 0)} par jour jusqu'au ${jourMois(b.fin)}` : ""} · ${eur(b.depense, 0)} dépensés`;
     // Les cartes des pages.
-    $("carte-budget-ligne").textContent = b.paie ? `${eur(b.reste, 0)} à dépenser en ${moisMin(b.cle)}` : "Budget à lancer";
-    const ops = opsDu(cleMois(aujourdhui())), top = CATS_DEPENSES.map(([c, nom]) => ({ nom, v: depenseDe(ops.filter(o => o.c === c)) })).sort((x, y) => y.v - x.v)[0];
+    $("carte-budget-ligne").textContent = b.doc ? `${eur(b.reste, 0)} à dépenser en ${moisMin(b.cle)}` : "Budget à lancer le jour de ta paie";
+    const ops = b.ops, top = CATS_DEPENSES.map(([c, nom]) => ({ nom, v: depenseDe(ops.filter(o => o.c === c)) })).sort((x, y) => y.v - x.v)[0];
     $("carte-depenses-ligne").textContent = ops.length ? `${eur(depenseDe(ops), 0)} en ${moisMin(b.cle)}` + (top && top.v > 0 ? ` · surtout ${top.nom.toLowerCase()}` : "") : "Importe un relevé ou note une dépense";
     $("carte-epargne-ligne").textContent = [road && `${road.nom} : ${nombreFr(Math.floor(avancee(road).part * 1000) / 10)} %`, epargne && `${epargne.nom} : ${Math.floor(avancee(epargne).part * 100)} %`].filter(Boolean).join(" · ") || "Tes objectifs d'épargne";
     const pa = paieDu(cleMois(aujourdhui()));
@@ -6586,53 +6692,76 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
   }
   const segmentsBudget = b => [
     { nom: "Charges fixes", valeur: b.fixes, classe: "seg-1" },
-    { nom: "Dépenses courantes", valeur: b.courantes, classe: "seg-2" },
+    { nom: "Dépensé", valeur: b.depense, classe: "seg-2" },
     { nom: "Épargne", valeur: b.epargne, classe: "seg-3" },
   ];
 
   function moisNav(zone, cle) { zone.textContent = majuscule(nomMois(cle).toLowerCase()); }
   function rendreBudget() {
-    const b = budgetDu(moisArgent);
-    moisNav($("bu-mois"), moisArgent);
-    $("bu-reste").textContent = eur(b.reste);
-    $("bu-reste").classList.toggle("negatif", b.reste < 0);
-    $("bu-par-jour").textContent = !b.paie ? "Indique ton taux horaire dans Ma paie : la paie attendue sert de point de départ."
-      : b.reste < 0 ? `Tu dépasses de ${eur(-b.reste)} ce que tu as ce mois-ci.`
-      : b.joursRestants ? `Soit ${eur(b.reste / b.joursRestants)} par jour jusqu'au ${joursDuMois(b.cle)} ${moisMin(b.cle)}.` : `Ce qu'il est resté en ${moisMin(b.cle)}.`;
-    const seg = segmentsBudget(b);
-    seg[0].detail = b.fixesAVenir ? `dont ${eur(b.fixesAVenir)} à venir` : "";
-    seg[1].detail = b.variablesAVenir ? `dont ${eur(b.variablesAVenir)} prévus` : "";
-    seg[2].detail = b.prevu != null && b.verse < b.prevu ? `dont ${eur(b.prevu - b.verse)} à verser` : "";
-    seg.push({ nom: "Reste", valeur: Math.max(0, b.reste), classe: "seg-reste" });
-    barreSegments($("bu-barre"), $("bu-legende"), seg, b.revenus);
-    // Ce qui rentre.
-    const rev = [];
-    const paieAvant = moisDecale(b.cle, -1);
-    rev.push(ligneArgent(`Paie ${deMois(paieAvant)}`, b.paie ? (b.paie.recue ? `reçue${b.paie.payeLe ? ` le ${dateCourte(depuisIso(b.paie.payeLe))}` : ""}` : "estimée d'après ton compteur") : "taux horaire à indiquer", b.paie ? eur(b.paie.net) : "—", "#paie"));
-    if (b.autres) rev.push(ligneArgent("Autres rentrées", "remboursements, ventes…", eur(b.autres)));
-    rev.push(ligneArgent("Total", "", eur(b.revenus), null, "total"));
-    $("bu-revenus").replaceChildren(...rev);
-    // Les virements entre mes comptes ne sont pas des rentrées, mais disent si le mois a puisé dans l'épargne.
-    const internes = opsDu(b.cle).filter(o => o.c === "interne"), recu = arrondi2(internes.filter(o => o.m > 0).reduce((t, o) => t + o.m, 0)), envoye = -arrondi2(internes.filter(o => o.m < 0).reduce((t, o) => t + o.m, 0));
-    $("bu-interne").hidden = !recu && !envoye;
-    $("bu-interne").textContent = [recu ? `${eur(recu)} pris sur tes autres comptes` : "", envoye ? `${eur(envoye)} mis sur tes autres comptes` : ""].filter(Boolean).join(", ")
-      + ` en ${moisMin(b.cle)} (virements à ton nom). Ils ne comptent ni dans les rentrées ni dans les dépenses.`;
-    // Les charges fixes du mois.
-    const lignes = b.lignes.map(x => {
-      const c = x.charge, etat = c.variable ? `${eur(x.deja)} dépensés sur ${eur(c.montant)} prévus` : x.op ? `payée le ${dateCourte(depuisIso(x.op.d))}` : "à venir";
-      const li = ligneArgent(c.nom, `${c.frequence === "an" ? `par an, en ${MOIS[c.mois - 1]}` : c.variable ? "budget du mois" : "chaque mois"} · ${etat}`, eur(c.variable ? c.montant : x.op ? x.deja : c.montant), null, (x.op ? "payee" : "") + (c.variable ? " variable" : ""));
-      if (peutModifierArgent()) { const m = element("button", "tache-modifier"); m.type = "button"; m.dataset.charge = c.id; m.setAttribute("aria-label", `Modifier ${c.nom}`); m.innerHTML = PICTO_CRAYON; li.append(m); }
+    const cle = moisVu(), b = budgetDu(cle), modifiable = peutModifierArgent();
+    moisNav($("bu-mois"), cle);
+    $("bu-vide").hidden = !!b.doc;
+    $("bu-plein").hidden = !b.doc;
+    document.querySelectorAll("[data-repartir]").forEach(x => { x.hidden = !modifiable; });
+    if (!b.doc) {
+      const avant = moisDecale(cle, -1), paie = paieDu(avant), jour = jourPaie(avant), tombee = versIso(aujourdhui()) >= jour;
+      $("bu-vide-titre").textContent = `Le budget ${deMois(cle)} commence à ta paie`;
+      $("bu-vide-texte").textContent = `Ta paie ${deMois(avant)}${paie ? ` (${eur(paie.net)}${paie.recue ? "" : " attendus"})` : ""} ${tombee ? "est tombée vers" : "arrive vers"} le ${jourMois(jour)}. `
+        + "Ce jour-là, note le solde de ton compte et répartis-le entre tes charges fixes, ton épargne et tes enveloppes. Ensuite, il suffit d'importer le relevé à partir de cette date.";
+    } else {
+      $("bu-reste").textContent = eur(b.reste);
+      $("bu-reste").classList.toggle("negatif", b.reste < 0);
+      $("bu-reste-titre").textContent = `Reste à dépenser · ${datesPeriode(cle)}`;
+      $("bu-par-jour").textContent = b.reste < 0 ? `Tu as dépensé ${eur(-b.reste)} de plus que ce que tu avais.`
+        : b.joursRestants ? `Soit ${eur(b.reste / b.joursRestants)} par jour jusqu'au ${jourMois(b.fin)}.` : b.passee ? "Ce qu'il est resté à la fin de la période." : "La période n'a pas encore commencé.";
+      const seg = segmentsBudget(b);
+      seg[0].detail = b.fixesAVenir ? `dont ${eur(b.fixesAVenir)} à venir` : "";
+      seg[2].detail = b.verse < b.prevu ? `dont ${eur(b.prevu - b.verse)} à verser` : "";
+      seg.push({ nom: "Reste", valeur: Math.max(0, b.reste), classe: "seg-reste" });
+      barreSegments($("bu-barre"), $("bu-legende"), seg, b.depart);
+      // Les enveloppes : ce qui est dépensé sur ce qui est prévu.
+      const env = b.enveloppes.map(e => {
+        const part = e.prevu ? e.depense / e.prevu : 1, depassee = e.depense > e.prevu + 0.005, presque = !depassee && e.prevu && part >= 0.85;
+        const li = element("li", "enveloppe" + (depassee ? " depassee" : presque ? " presque" : ""));
+        const tete = element("div", "enveloppe-tete"), nom = element("a", "enveloppe-nom", e.nom);
+        nom.href = "#depenses";
+        nom.dataset.enveloppe = e.c;
+        tete.append(nom, element("span", "enveloppe-chiffres", e.prevu ? `${eur(e.depense, 0)} / ${eur(e.prevu, 0)}` : eur(e.depense, 0)));
+        const barre = element("div", "progression");
+        barreProgression(barre, part, `${e.nom} : ${eur(e.depense)} dépensés${e.prevu ? ` sur ${eur(e.prevu)}` : ""}`);
+        li.append(tete, barre, element("p", "enveloppe-etat", !e.prevu ? "⚠ Pas d'enveloppe : pris sur ce qui n'est pas réparti"
+          : depassee ? `⚠ Dépassée de ${eur(e.depense - e.prevu)}` : presque ? `Presque vide : ${eur(e.prevu - e.depense)} restants` : `Reste ${eur(e.prevu - e.depense)}`));
+        return li;
+      });
+      if (!env.length) env.push(element("li", "liste-vide", "Aucune enveloppe : touche « Modifier la répartition » pour en prévoir."));
+      $("bu-enveloppes").replaceChildren(...env);
+      const libre = arrondi2(b.reste - b.dansEnveloppes);
+      $("bu-env-aide").textContent = b.reste < 0 ? "" : libre >= 0.5 ? `${eur(b.dansEnveloppes)} encore dans tes enveloppes, ${eur(libre)} qui ne sont dans aucune.`
+        : libre <= -0.5 ? `Tes enveloppes prévoient ${eur(-libre)} de plus que ce qu'il te reste : quelque chose a dépassé.` : "Tout ce qui reste est dans tes enveloppes.";
+      // Le point de départ.
+      const dep = [ligneArgent("Solde après la paie", `le ${jourMois(b.doc.le)}`, eur(b.doc.solde))];
+      if (b.rentrees) dep.push(ligneArgent("Rentrées depuis", "CAF, ventes, remboursements…", eur(b.rentrees)));
+      dep.push(ligneArgent("Total", "", eur(b.depart), null, "total"));
+      $("bu-revenus").replaceChildren(...dep);
+      // L'épargne : prévue par objectif, versée depuis la paie.
+      const ep = projetsTries().filter(p => b.doc.epargne[p.id]).map(p => ligneArgent(p.nom, "prévu", eur(b.doc.epargne[p.id])));
+      ep.push(ligneArgent("Versé depuis la paie", `vers Trade Republic, tes livrets et tes autres comptes${b.prevu ? ` · ${b.verse >= b.prevu ? "tout est versé" : `${eur(b.prevu - b.verse)} à verser`}` : ""}`, eur(b.verse), null, "total"));
+      $("bu-epargne").replaceChildren(...ep);
+      $("bu-interne").hidden = !b.repris;
+      $("bu-interne").textContent = `${eur(b.repris)} repris sur ton épargne ou tes autres comptes depuis la paie : ils ne comptent pas dans ce qu'il te reste.`;
+    }
+    // Les charges fixes de la période.
+    const lignes = chargesDuMois(cle).map(c => {
+      const x = b.lignes.find(l => l.charge.id === c.id), etat = c.variable ? "à répartir dans tes enveloppes avec ta paie" : x.op ? `payée le ${dateCourte(depuisIso(x.op.d))}` : "à venir";
+      const li = ligneArgent(c.nom, `${c.frequence === "an" ? `par an, en ${MOIS[c.mois - 1]}` : c.variable ? "budget du mois" : "chaque mois"} · ${etat}`, eur(x ? x.montant : c.montant), null, (x && x.op ? "payee" : "") + (c.variable ? " variable" : ""));
+      if (modifiable) { const m = element("button", "tache-modifier"); m.type = "button"; m.dataset.charge = c.id; m.setAttribute("aria-label", `Modifier ${c.nom}`); m.innerHTML = PICTO_CRAYON; li.append(m); }
       return li;
     });
     if (!lignes.length) lignes.push(element("li", "liste-vide", "Aucune charge ce mois-ci."));
     $("bu-charges").replaceChildren(...lignes);
     const annuelles = Object.values(charges.docs).filter(c => c.frequence === "an"), parAn = annuelles.reduce((t, c) => t + c.montant, 0);
     $("bu-charges-aide").textContent = annuelles.length ? `Les abonnements annuels comptent le mois où ils sont prélevés (${annuelles.map(c => `${c.nom} en ${MOIS[c.mois - 1]}`).join(", ")}) : ${eur(parAn)} par an, soit ${eur(parAn / 12)} à garder de côté chaque mois.` : "";
-    // L'épargne du mois.
-    $("bu-epargne").textContent = `${eur(b.verse)} versés en ${moisMin(b.cle)}` + (b.prevu != null ? ` sur ${eur(b.prevu)} prévus` : "") + ".";
-    if (document.activeElement !== $("bu-versement")) $("bu-versement").value = b.prevu != null ? String(b.prevu).replace(".", ",") : "";
-    $("bu-versement-form").hidden = !peutModifierArgent();
-    $("bu-ajouter-charge").hidden = !peutModifierArgent();
+    $("bu-ajouter-charge").hidden = !modifiable;
   }
   function ligneArgent(titre, detail, montant, lien, classe) {
     const li = element("li", "ligne-argent" + (classe ? " " + classe : ""));
@@ -6646,11 +6775,12 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
   }
 
   function rendreDepenses() {
-    moisNav($("de-mois"), moisArgent);
-    const ops = opsDu(moisArgent), total = depenseDe(ops), avant = depenseDe(opsDu(moisDecale(moisArgent, -1)));
-    $("de-total-titre").textContent = `Dépensé en ${moisMin(moisArgent)}`;
+    const cle = moisVu();
+    moisNav($("de-mois"), cle);
+    const ops = opsPeriode(cle), total = depenseDe(ops), avant = depenseDe(opsPeriode(moisDecale(cle, -1)));
+    $("de-total-titre").textContent = `Dépensé en ${moisMin(cle)}`;
     $("de-total").textContent = eur(total);
-    $("de-compare").textContent = !ops.length ? "Rien de noté ce mois-ci." : avant ? `${total > avant ? "+" : "−"}${eur(Math.abs(total - avant), 0)} par rapport à ${moisMin(moisDecale(moisArgent, -1))}.` : "";
+    $("de-compare").textContent = majuscule(datesPeriode(cle)) + (!ops.length ? " : rien de noté pour l'instant." : avant ? ` · ${total > avant ? "+" : "−"}${eur(Math.abs(total - avant), 0)} par rapport à ${moisMin(moisDecale(cle, -1))}.` : ".");
     const lignes = CATS_DEPENSES.map(([id, nom]) => ({ id, nom, valeur: depenseDe(ops.filter(o => o.c === id)) })).filter(l => l.valeur > 0).sort((a, b) => b.valeur - a.valeur)
       .map(l => ({ ...l, texte: `${eur(l.valeur, 0)} · ${Math.round(l.valeur / (total || 1) * 100)} %` }));
     $("de-categories").hidden = !lignes.length;
@@ -6662,19 +6792,25 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
     $("de-especes").textContent = `Espèces : ${eur(retire)} retirés, ${eur(liquide)} de dépenses notées en liquide`
       + (retire - liquide >= 1 ? `. Il reste ${eur(retire - liquide)} en poche ou pas encore notés.` : ". Tout le liquide est noté.");
     // Six mois, jusqu'au mois choisi.
-    barresV($("de-mois-barres"), [...Array(6)].map((_, i) => { const cle = moisDecale(moisArgent, i - 5); return { cle, nom: MOIS_COURTS[Number(cle.slice(5)) - 1].replace(".", ""), titre: nomMois(cle), valeur: depenseDe(opsDu(cle)), actif: cle === moisArgent }; }));
-    // Les opérations, les plus récentes en haut.
-    const vues = ops.filter(o => !filtreCat || o.c === filtreCat).sort((a, b) => b.d.localeCompare(a.d) || a.l.localeCompare(b.l));
+    barresV($("de-mois-barres"), [...Array(6)].map((_, i) => { const c = moisDecale(cle, i - 5); return { cle: c, nom: MOIS_COURTS[Number(c.slice(5)) - 1].replace(".", ""), titre: `${nomMois(c)} (${datesPeriode(c)})`, valeur: depenseDe(opsPeriode(c)), actif: c === cle }; }));
+    // Les opérations, les plus récentes en haut ; une recherche fouille tous les mois.
+    const q = sansAccents(rechercheOps.trim()), qMontant = /^-?\d+([,.]\d{1,2})?$/.test(q) ? Math.abs(Number(q.replace(",", "."))) : null;
+    const trouvee = o => (qMontant != null && Math.abs(Math.abs(o.m) - qMontant) < 0.005) || sansAccents(`${o.l} ${o.k} ${NOM_CAT[o.c]}`).includes(q);
+    const source = q ? Object.keys(operations.docs).flatMap(opsDu).filter(trouvee) : ops;
+    const vues = source.filter(o => !filtreCat || o.c === filtreCat).sort((a, b) => b.d.localeCompare(a.d) || a.l.localeCompare(b.l));
+    $("de-recherche-etat").hidden = !q;
+    $("de-recherche-etat").textContent = vues.length ? `${vues.length} opération${vues.length > 1 ? "s" : ""} trouvée${vues.length > 1 ? "s" : ""} dans tous les mois` + (vues.length > 200 ? " (les 200 plus récentes)." : ".") : "";
     $("de-filtre").hidden = !filtreCat;
     if (filtreCat) $("de-filtre-nom").textContent = NOM_CAT[filtreCat];
     const modifiable = peutModifierArgent(), regroupe = new Map();
-    vues.forEach(o => regroupe.set(o.d, [...(regroupe.get(o.d) || []), o]));
+    vues.slice(0, 200).forEach(o => regroupe.set(o.d, [...(regroupe.get(o.d) || []), o]));
     const items = [];
     regroupe.forEach((liste, d) => {
-      items.push(element("li", "ops-jour", majuscule(dateCourte(depuisIso(d)))));
+      items.push(element("li", "ops-jour", majuscule(dateCourte(depuisIso(d))) + (q && d.slice(0, 4) !== versIso(aujourdhui()).slice(0, 4) ? ` ${d.slice(0, 4)}` : "")));
       liste.forEach(o => {
         const li = element("li", "op" + (HORS_DEPENSES.has(o.c) ? " hors" : ""));
         li.dataset.op = o.id;
+        li.dataset.cle = o.cle;
         const corps = element("span", "op-corps");
         corps.append(element("span", "op-libelle", o.l));
         if (modifiable) {
@@ -6689,7 +6825,7 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
         items.push(li);
       });
     });
-    if (!items.length) items.push(element("li", "liste-vide", filtreCat ? "Rien dans cette catégorie ce mois-ci." : "Aucune opération ce mois-ci : importe le relevé de la Caisse d'Épargne ou note une dépense."));
+    if (!items.length) items.push(element("li", "liste-vide", q ? "Aucune opération ne correspond." : filtreCat ? "Rien dans cette catégorie ce mois-ci." : "Aucune opération ce mois-ci : importe le relevé de la Caisse d'Épargne à partir du jour de ta paie, ou note une dépense."));
     $("de-ops").replaceChildren(...items);
     $("de-actions").hidden = !modifiable;
   }
@@ -6771,8 +6907,8 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
   }
 
   function rendreCarteAccueilArgent() {
-    const road = projetRoad(), b = budgetDu(cleMois(aujourdhui()));
-    $("resume-argent").textContent = [road && `${road.nom} : ${nombreFr(Math.floor(avancee(road).part * 1000) / 10)} %`, b.paie && `${eur(b.reste, 0)} à dépenser`].filter(Boolean).join(" · ") || "Budget, dépenses, épargne";
+    const road = projetRoad(), b = budgetDu(periodeParDefaut());
+    $("resume-argent").textContent = [road && `${road.nom} : ${nombreFr(Math.floor(avancee(road).part * 1000) / 10)} %`, b.doc && `${eur(b.reste, 0)} à dépenser`].filter(Boolean).join(" · ") || "Budget, dépenses, épargne";
   }
   function rendreArgent() {
     if (!journeePrete) return;
@@ -6785,7 +6921,10 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
   }
 
   // ----- naviguer entre les mois -----
-  document.querySelectorAll("[data-mois-argent]").forEach(b => b.addEventListener("click", () => { moisArgent = moisDecale(moisArgent, Number(b.dataset.moisArgent)); filtreCat = null; rendreBudget(); rendreDepenses(); }));
+  document.querySelectorAll("[data-mois-argent]").forEach(b => b.addEventListener("click", () => { moisArgent = moisDecale(moisVu(), Number(b.dataset.moisArgent)); filtreCat = null; rendreBudget(); rendreDepenses(); }));
+  $("de-recherche").addEventListener("input", e => { rechercheOps = e.target.value; rendreDepenses(); });
+  // Une enveloppe ouvre ses dépenses.
+  $("bu-enveloppes").addEventListener("click", e => { const a = e.target.closest("[data-enveloppe]"); if (a) { filtreCat = a.dataset.enveloppe; rechercheOps = $("de-recherche").value = ""; rendreDepenses(); } });
   document.querySelectorAll("[data-mois-paie]").forEach(b => b.addEventListener("click", () => { moisPaie = moisDecale(moisPaie, Number(b.dataset.moisPaie)); rendrePaie(); }));
   $("de-mois-barres").addEventListener("click", e => { const b = e.target.closest("[data-cle]"); if (b) { moisArgent = b.dataset.cle; filtreCat = null; rendreBudget(); rendreDepenses(); } });
   $("pa-historique").addEventListener("click", e => { const b = e.target.closest("[data-cle]"); if (b) { moisPaie = b.dataset.cle; rendrePaie(); } });
@@ -6852,8 +6991,10 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
     const etat = $("de-import-etat"), dire = (texte, classe) => { etat.className = "remplissage" + (classe ? " " + classe : ""); $("de-import-texte").textContent = texte; etat.hidden = false; };
     dire("Lecture du relevé…", "en-cours");
     try {
-      const lues = analyserReleve(await lireTexte(fichier));
-      if (!lues.length) { dire("Je n'ai trouvé aucune opération dans ce fichier. Dans l'appli ou le site de la Caisse d'Épargne, exporte tes opérations au format CSV.", "erreur"); return; }
+      const toutes = analyserReleve(await lireTexte(fichier));
+      if (!toutes.length) { dire("Je n'ai trouvé aucune opération dans ce fichier. Dans l'appli ou le site de la Caisse d'Épargne, exporte tes opérations au format CSV.", "erreur"); return; }
+      // Le budget part du solde noté après la paie : ce qui est avant le premier budget y est déjà compté.
+      const premier = Object.values(budgets.docs).map(b => b.le).sort()[0] || null, lues = premier ? toutes.filter(o => o.d >= premier) : toutes, avantPremier = toutes.length - lues.length;
       const vus = new Map(), parMois = new Map();
       lues.forEach(o => {
         const base = `${o.d}|${o.m}|${o.l}|${o.k}`, n = (vus.get(base) || 0) + 1;
@@ -6862,7 +7003,7 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
         parMois.set(cle, [...(parMois.get(cle) || []), { id: "i" + hashOp(`${base}|${n}`), ...o }]);
       });
       let ajoutees = 0, deja = 0, remplacees = 0;
-      const changes = new Map(), touches = new Set(), salaires = [];
+      const changes = new Map(), touches = new Set(), salaires = toutes.filter(o => o.d < (premier || "") && o.m > 0 && categorieAuto(`${o.l} ${o.k}`, o.banque, o.m).c === "salaire");
       const opsDe = cle => { if (!changes.has(cle)) changes.set(cle, { ...((operations.docs[cle] || {}).ops || {}) }); return changes.get(cle); };
       for (const [cle, liste] of parMois) {
         const ops = opsDe(cle);
@@ -6890,11 +7031,12 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
         const mois = Number(o.d.slice(8)) >= 20 ? o.d.slice(0, 7) : moisDecale(o.d.slice(0, 7), -1);
         if (!paies.docs[mois]) await paies.ecrire(mois, { net: o.m, payeLe: o.d, modifieLe: new Date().toISOString() });
       }
-      const mois = [...parMois.keys()].sort();
-      moisArgent = mois[mois.length - 1];
+      const dates = lues.map(o => o.d).sort();
+      if (dates.length) moisArgent = periodeDe(dates[dates.length - 1]);
       filtreCat = null;
       rendreArgent();
       dire(`${ajoutees} opération${ajoutees > 1 ? "s" : ""} ajoutée${ajoutees > 1 ? "s" : ""}` + (deja ? `, ${deja} déjà là` : "") + (remplacees ? `, ${remplacees} saisie${remplacees > 1 ? "s" : ""} remplacée${remplacees > 1 ? "s" : ""} par le relevé` : "")
+        + (avantPremier ? `, ${avantPremier} d'avant le ${jourMois(premier)} laissée${avantPremier > 1 ? "s" : ""} de côté (déjà dans ton solde)` : "")
         + `. Vérifie les catégories : une correction sert pour les prochaines fois.`);
     } catch (e) { dire(e && e.code ? "L'import n'a pas été enregistré. Vérifie ta connexion et réessaie." : "Ce fichier ne se lit pas : exporte le relevé au format CSV.", "erreur"); }
   }
@@ -6918,7 +7060,7 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
     try {
       await operations.ecrire(cle, { ops: { ...((operations.docs[cle] || {}).ops || {}), ["s" + Date.now().toString(36)]: op }, modifieLe: new Date().toISOString() });
       $("de-montant").value = ""; $("de-libelle").value = "";
-      moisArgent = cle;
+      moisArgent = periodeDe(d);
       toast(`${eur(montant)} noté${c === "revenus" ? "s en rentrée" : ""}.`);
     } catch (err) { echecArgent(err); }
   });
@@ -6928,7 +7070,7 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
   $("de-ops").addEventListener("change", async e => {
     const s = e.target.closest(".op-categorie"), li = e.target.closest("[data-op]");
     if (!s || !li || !peutModifierArgent()) return;
-    const cle = moisArgent, op = ((operations.docs[cle] || {}).ops || {})[li.dataset.op];
+    const cle = li.dataset.cle, op = ((operations.docs[cle] || {}).ops || {})[li.dataset.op];
     if (!op) return;
     const regle = op.s === "import" ? cleSignee(`${op.l} ${op.k}`, op.m) : "";
     const pareilles = o => o.s === "import" && !o.cm && cleSignee(`${o.l} ${o.k}`, o.m) === regle;
@@ -6946,19 +7088,103 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
     const b = e.target.closest("[data-suppr-op]");
     if (!b || !peutModifierArgent()) return;
     if (!b.classList.contains("arme")) { b.classList.add("arme"); b.textContent = "Supprimer ?"; setTimeout(() => { b.classList.remove("arme"); b.textContent = "×"; }, 4000); return; }
-    const cle = moisArgent, ops = { ...((operations.docs[cle] || {}).ops || {}) };
+    const cle = b.closest("[data-cle]").dataset.cle, ops = { ...((operations.docs[cle] || {}).ops || {}) };
     delete ops[b.dataset.supprOp];
     try { await operations.ecrire(cle, { ops, modifieLe: new Date().toISOString() }); } catch (err) { echecArgent(err); }
   });
 
-  // ----- le versement d'épargne prévu chaque mois -----
-  $("bu-versement-form").addEventListener("submit", async e => {
-    e.preventDefault();
-    const v = $("bu-versement").value.trim() ? lireMontant($("bu-versement").value) : null;
-    if ($("bu-versement").value.trim() && v == null) { $("bu-versement").classList.add("en-erreur"); return; }
-    try { await ecrireReglagesArgent({ versementMensuel: v }); toast("Versement prévu enregistré."); } catch (err) { echecArgent(err); }
+  // ----- répartir ma paie : le solde du jour de paie, l'épargne, les enveloppes -----
+  let budgetEdite = null;
+  const montantChamp = v => { const t = String(v).replace(/\s|€/g, "").replace(",", ".").replace(/^[−–]/, "-"); const n = Number(t); return t && Number.isFinite(n) && Math.abs(n) < 1e7 ? arrondi2(n) : null; };
+  const versChamp = n => (n ? String(n).replace(".", ",") : "");
+  // Le budget d'avant (le plus récent avant celui-ci) : sa répartition sert de point de départ.
+  const budgetAvant = cle => Object.values(budgets.docs).filter(b => b.id < cle).sort((a, b) => b.id.localeCompare(a.id))[0] || null;
+  function ligneRepartition(nom, indice, attribut, id, valeur) {
+    const l = element("label", "rp-ligne"), n = element("span", "rp-nom", nom), champ = element("input");
+    if (indice) n.append(element("span", "rp-indice", indice));
+    champ.type = "text"; champ.inputMode = "decimal"; champ.placeholder = "0"; champ.dataset[attribut] = id; champ.value = versChamp(valeur);
+    l.append(n, champ);
+    return l;
+  }
+  function cleRepartition() { const d = $("rp-date").value; return ISO_RE.test(d) ? moisDeBudget(d) : budgetEdite || moisVu(); }
+  // Les charges fixes et les indices dépendent de la période (la date choisie).
+  function rendreRepartitionPeriode() {
+    const cle = cleRepartition(), fixes = chargesDuMois(cle).filter(c => !c.variable), d = $("rp-date").value;
+    $("rp-titre").textContent = `Budget ${deMois(cle)}`;
+    $("rp-periode").textContent = ISO_RE.test(d) ? `Du ${jourMois(d)} au ${jourMois(finPeriode(cle))}, jusqu'à la paie suivante.` : "";
+    $("rp-fixes").textContent = fixes.length ? `${fixes.map(c => `${c.nom} ${eur(c.montant)}`).join(" · ")} : ${eur(fixes.reduce((t, c) => t + c.montant, 0))}, comptées d'office.` : "Aucune charge fixe ce mois-là.";
+    const passe = budgetDu(moisDecale(cle, -1));
+    $("rp-enveloppes").querySelectorAll("[data-env]").forEach(champ => {
+      const e = passe.enveloppes.find(x => x.c === champ.dataset.env), indice = champ.closest(".rp-ligne").querySelector(".rp-indice");
+      if (indice) indice.textContent = e && e.depense ? `${eur(e.depense, 0)} la fois d'avant` : "";
+    });
+    totalRepartition();
+  }
+  function totalRepartition() {
+    const solde = montantChamp($("rp-solde").value), cle = cleRepartition();
+    const fixes = chargesDuMois(cle).filter(c => !c.variable).reduce((t, c) => t + c.montant, 0);
+    const parts = [...$("rp-form").querySelectorAll("[data-env], [data-ep]")].reduce((t, c) => t + (lireMontant(c.value) || 0), 0);
+    const reste = solde == null ? null : arrondi2(solde - fixes - parts), t = $("rp-total");
+    t.classList.toggle("negatif", reste != null && reste < 0);
+    t.textContent = reste == null ? "Indique ton solde pour voir ce qu'il reste à répartir." : reste < 0 ? `Tu répartis ${eur(-reste)} de plus que ton solde.` : `Reste à répartir : ${eur(reste)}`;
+  }
+  function ouvrirRepartition() {
+    const cle = moisVu(), doc = budgets.docs[cle] || null, avant = doc ? null : budgetAvant(cle), auj = versIso(aujourdhui());
+    budgetEdite = doc ? cle : null;
+    $("rp-solde").value = doc ? versChamp(doc.solde) : "";
+    $("rp-date").value = doc ? doc.le : moisDeBudget(auj) === cle ? auj : jourPaie(moisDecale(cle, -1));
+    const ep = doc ? doc.epargne : avant ? avant.epargne : {};
+    const objectifs = projetsTries().filter(p => p.type === "comptes");
+    $("rp-epargne").replaceChildren(...(objectifs.length ? objectifs.map(p => { const av = avancee(p); return ligneRepartition(p.nom, av.parMois ? `${eur(av.parMois, 0)} par mois pour tenir la date` : "", "ep", p.id, ep[p.id]); })
+      : [element("p", "aide", "Pas encore d'objectif d'épargne.")]));
+    // Les enveloppes : celles du budget d'avant, sinon les charges qui varient (l'essence).
+    const variables = Object.fromEntries(Object.values(charges.docs).filter(c => c.variable).map(c => [c.categorie, c.montant]));
+    const env = doc ? doc.enveloppes : avant ? avant.enveloppes : variables;
+    $("rp-enveloppes").replaceChildren(...CATS_DEPENSES.map(([c, nom]) => ligneRepartition(nom, " ", "env", c, env[c])));
+    $("rp-supprimer").hidden = !doc;
+    desarmer($("rp-supprimer"), "Supprimer");
+    $("rp-erreur").hidden = true;
+    $("rp-solde").classList.remove("en-erreur");
+    rendreRepartitionPeriode();
+    ouvrir($("fenetre-repartition"));
+    $("rp-solde").focus();
+  }
+  document.querySelectorAll("[data-repartir]").forEach(b => b.addEventListener("click", () => { if (peutModifierArgent()) ouvrirRepartition(); }));
+  $("rp-form").addEventListener("input", e => { if (e.target.id === "rp-date") rendreRepartitionPeriode(); else { e.target.classList.remove("en-erreur"); totalRepartition(); } });
+  $("rp-form").addEventListener("submit", e => e.preventDefault());
+  $("rp-enregistrer").addEventListener("click", async () => {
+    const erreur = (t, champ) => { $("rp-erreur").textContent = t; $("rp-erreur").hidden = false; if (champ) { champ.classList.add("en-erreur"); champ.focus(); } };
+    const solde = montantChamp($("rp-solde").value), le = $("rp-date").value;
+    if (solde == null) return erreur("Indique le solde de ton compte après la paie, par exemple 1 850.", $("rp-solde"));
+    if (!ISO_RE.test(le)) return erreur("Indique le jour où la paie est tombée.", $("rp-date"));
+    const lire = attribut => {
+      const m = {};
+      for (const champ of $("rp-form").querySelectorAll(`[data-${attribut}]`)) {
+        if (!champ.value.trim()) continue;
+        const v = lireMontant(champ.value);
+        if (v == null) { erreur("Les montants sont des nombres, par exemple 150.", champ); return null; }
+        if (v) m[champ.dataset[attribut]] = v;
+      }
+      return m;
+    };
+    const enveloppes = lire("env"), epargne = enveloppes && lire("ep");
+    if (!enveloppes || !epargne) return;
+    const cle = moisDeBudget(le);
+    try {
+      await budgets.ecrire(cle, { solde, le, enveloppes, epargne, modifieLe: new Date().toISOString() });
+      if (budgetEdite && budgetEdite !== cle) await budgets.ecrire(budgetEdite, null);
+      moisArgent = cle;
+      fermer($("fenetre-repartition"));
+      rendreArgent();
+      toast(`Budget ${deMois(cle)} enregistré.`);
+    } catch (err) { erreur("Ce n'a pas été enregistré. Réessaie."); }
   });
-  $("bu-versement").addEventListener("input", () => $("bu-versement").classList.remove("en-erreur"));
+  $("rp-supprimer").addEventListener("click", async e => {
+    const b = e.currentTarget;
+    if (!budgetEdite) return;
+    if (!b.classList.contains("arme")) { armer(b, "Confirmer la suppression", "Supprimer"); return; }
+    try { await budgets.ecrire(budgetEdite, null); fermer($("fenetre-repartition")); rendreArgent(); } catch (err) { echecArgent(err); }
+  });
 
   // ----- les charges fixes -----
   let chargeEditee = null;
@@ -7053,7 +7279,9 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
     $("pr-mis").value = p && p.misDeCote ? String(p.misDeCote).replace(".", ",") : "";
     $("pr-lien").value = p && p.lien ? p.lien : "";
     $("pr-mis-bloc").hidden = $("pr-lien-bloc").hidden = !!(p && p.type === "comptes");
-    $("pr-aide").textContent = p && p.type === "comptes" ? `Le total vient des soldes de tes comptes ${p.groupe === "investissement" ? "d'investissement" : "d'épargne"}.` : "";
+    $("pr-rendement-bloc").hidden = !(p && p.type === "comptes");
+    $("pr-rendement").value = p && p.rendement ? String(p.rendement).replace(".", ",") : "";
+    $("pr-aide").textContent = p && p.type === "comptes" ? `Le total vient des soldes de tes comptes ${p.groupe === "investissement" ? "d'investissement" : "d'épargne"}. Le rendement (ce que rapportent tes placements chaque année) fait une partie du chemin : ce qu'il faut verser chaque mois en tient compte.` : "";
     $("pr-supprimer").hidden = !p || p.type === "comptes";
     desarmer($("pr-supprimer"), "Supprimer");
     $("pr-erreur").hidden = true;
@@ -7069,10 +7297,13 @@ a.ligne-argent-titre { color: var(--argent); text-underline-offset: 3px; }
     if (!cible) return erreur("Le montant visé doit être un nombre, par exemple 350.");
     const mis = $("pr-mis").value.trim() ? lireMontant($("pr-mis").value) : 0;
     if (mis == null) return erreur("Ce qui est mis de côté doit être un nombre.");
+    const rendement = $("pr-rendement").value.trim() ? lireMontant($("pr-rendement").value.replace("%", "")) : 0;
+    if (avant && avant.type === "comptes" && (rendement == null || rendement > 30)) return erreur("Le rendement est un pourcentage par an, par exemple 7.");
     let lien = $("pr-lien").value.trim() || null;
     if (lien && !/^https?:\/\//i.test(lien)) lien = "https://" + lien;
     const corps = { ...(avant ? { type: avant.type, groupe: avant.groupe, ordre: avant.ordre, creeLe: avant.creeLe, note: avant.note } : { type: "achat", groupe: "investissement", ordre: 99, creeLe: new Date().toISOString(), note: "" }),
-      nom: nom.slice(0, 60), cible, date: ISO_RE.test($("pr-date").value) ? $("pr-date").value : null, misDeCote: avant && avant.type === "comptes" ? 0 : mis, lien: avant && avant.type === "comptes" ? null : lien };
+      nom: nom.slice(0, 60), cible, date: ISO_RE.test($("pr-date").value) ? $("pr-date").value : null, misDeCote: avant && avant.type === "comptes" ? 0 : mis, lien: avant && avant.type === "comptes" ? null : lien,
+      ...(avant && avant.type === "comptes" && rendement ? { rendement } : {}) };
     try { await projets.ecrire(projetEdite || projets.nouvelId(), corps); fermer($("fenetre-projet")); } catch (err) { erreur("Ce n'a pas été enregistré. Réessaie."); }
   });
   $("pr-supprimer").addEventListener("click", async e => {
