@@ -6,11 +6,11 @@ Ouvre `index.html` dans un navigateur pour le voir en local (rien à installer).
 
 Fond blanc, titre bleu marine, et sous le titre un bandeau marine avec les trois rubriques. Au survol d'une rubrique, ses sous-rubriques s'affichent dans un bandeau clair juste en dessous. Cliquer sur une rubrique ouvre la page de ses sous-rubriques ; sur téléphone, c'est le chemin pour y accéder. Le titre ramène à l'accueil.
 
-Une adresse qui finit par `#travail`, `#argent` ou `#sport` ouvre directement la rubrique ; `#planning`, `#todo` et `#garde-robe` ouvrent les sous-rubriques « Mon planning », « To-do list » et « Garde-robe Blue Box ».
+Une adresse qui finit par `#travail`, `#argent` ou `#sport` ouvre directement la rubrique ; `#planning`, `#todo`, `#garde-robe`, `#calendrier` et `#objectifs` ouvrent les sous-rubriques « Mon planning », « To-do list », « Garde-robe Blue Box », « Calendrier commercial » et « Objectifs ».
 
 ## Travail
 
-La page Travail présente ses sous-rubriques en cartes. « Mon planning » montre la semaine en cours en miniature, les horaires d'aujourd'hui, le total d'heures et le jour de repos ; « To-do list » montre les compteurs et les trois tâches les plus pressantes ; « Garde-robe Blue Box » montre six pièces en photo et le nombre de pièces et de marques.
+La page Travail présente ses sous-rubriques en cartes. « Mon planning » montre la semaine en cours en miniature, les horaires d'aujourd'hui, le total d'heures, le jour de repos, les heures à récupérer et les congés restants ; « To-do list » montre les compteurs et les trois tâches les plus pressantes ; « Garde-robe Blue Box » montre six pièces en photo et le nombre de pièces et de marques ; « Calendrier commercial » montre le prochain temps fort et sa vitrine ; « Objectifs » montre la part homme du mois.
 
 ### Mon planning
 
@@ -18,7 +18,7 @@ Tout tient dans l'écran, sans descendre, sur ordinateur comme sur téléphone :
 
 - **La semaine** : « Semaine 43 du 19 au 25 octobre », avec les flèches pour passer à la semaine d'avant ou d'après. Toucher le titre ouvre le choix de la semaine : l'année, puis les 52 ou 53 semaines (celles déjà remplies ont un point).
 - **Le planning** : une frise du lundi au samedi, de 10h à 19h (elle s'allonge si une semaine commence plus tôt ou finit plus tard). Les heures sont écrites à gauche avec un trait marqué ; la demi-heure a un trait léger. Le temps travaillé est en bleu à la minute près, le reste en blanc. Deux barres rouges, à 12h et à 14h, marquent le milieu de la journée. L'heure d'arrivée est écrite en haut de chaque bloc bleu, l'heure de départ en bas. Aujourd'hui est encadré en marine, les jours de repos sont hachurés marron.
-- **Le bilan** : les heures travaillées de la semaine, le jour de repos et le bouton « Modifier le planning ».
+- **Le bilan** : les heures travaillées de la semaine et leur écart avec le contrat (« +1h payées », « +0h20 à récup. »), le jour de repos et les congés, et les boutons « Mon compteur » et « Modifier le planning ».
 
 « Modifier le planning » ouvre une fenêtre au milieu de l'écran : pour chaque jour, le début et la fin du matin et de l'après-midi.
 
@@ -29,7 +29,13 @@ Tout tient dans l'écran, sans descendre, sur ordinateur comme sur téléphone :
 | Début après-midi | 14h, 14h30 |
 | Fin après-midi | 18h, 19h |
 
-Chaque période a aussi « Autre… » pour taper une heure (retard, fin plus tard), et « — » quand elle n'est pas travaillée. « Repos », en face du jour, met le matin et l'après-midi en repos.
+Chaque période a aussi « Autre… » pour taper une heure (retard, fin plus tard), et « — » quand elle n'est pas travaillée. En face du jour, « Repos », « Congé » ou « Férié » (seulement les jours fériés, dont le nom s'affiche) remplacent le matin et l'après-midi. Dans le planning, le repos est hachuré marron, le congé vert, le férié violet.
+
+**Mon compteur** (heures en plus et congés) :
+- Le contrat (réglages dans la fenêtre) : heures par semaine, jours travaillés, date de début. Un congé ou un férié chômé compte une journée de contrat (heures ÷ jours travaillés), cinq au plus par semaine.
+- Chaque semaine remplie depuis le début du contrat est comparée au contrat. Les heures en plus : par défaut, les demi-heures pleines sont payées et le reste (quelques minutes pour finir une vente) est à récupérer ; pour chaque semaine, on peut choisir « Tout payé » ou « Tout à récupérer ». Une semaine sous le contrat consomme la récupération. Une semaine non remplie ne compte pas ; les semaines à venir sont affichées « prévues » sans compter.
+- En haut : les heures à récupérer (ou à rattraper), les heures payées du mois (à retrouver sur la fiche de paie) et les congés restants : 2,5 jours ouvrables acquis par mois depuis le début du contrat, moins les jours pris et posés. Une semaine entière de congés se compte 6 jours (lundi au samedi) : mettre aussi le jour de repos en Congé.
+- En dessous : semaine par semaine, mois par mois, et la liste des congés posés.
 
 ### To-do list
 
@@ -81,13 +87,35 @@ Les pièces du magasin (rayon homme), pour penser les vitrines, les tenues et le
 - Statut : À proposer, Proposé à Maxime, Commandé, Pas retenu. « À dire à Maxime » l'ajoute à la to-do, dans « À dire ».
 - En dessous, les catégories où le magasin n'a encore aucune pièce.
 
+### Calendrier commercial
+
+Les temps forts de l'année pour préparer les vitrines, et les bons moments pour poser des congés.
+
+- **Prochain temps fort** : ses dates et le compte à rebours, le thème et les idées de vitrine, la date de montage de la vitrine, les tenues choisies (un clic ouvre la tenue), « Vitrine prête » et « Ajouter à la to-do » (« Monter la vitrine … » pour le jour du montage, ou la veille du temps fort).
+- **Les 12 prochains mois** : une frise où chaque temps fort est une barre (plein : temps fort, je reste au magasin ; contour : affluence normale), les congés posés dans le planning en vert, et aujourd'hui en rouge. Toucher une barre ouvre le temps fort.
+- **Bons moments pour poser des congés** : les périodes d'au moins une semaine sans temps fort, en dehors de la semaine qui le prépare.
+- **Tous les temps forts**, mois par mois, avec leur affluence, la vitrine et le nombre de tenues. « Ajouter un temps fort » : nom, dates, affluence, thème et idées, montage de la vitrine, tenues (celles marquées vitrine d'abord), note.
+
+### Objectifs
+
+La part homme du chiffre d'affaires du magasin, comparée à l'objectif (55 à 60 % au départ, modifiable).
+
+- **Saisie** : le jour, le CA homme et le CA femme ; un jour déjà saisi est remplacé. Un jour sans saisie ne compte pas.
+- **La part** d'aujourd'hui, de la semaine, du mois ou depuis le début, avec une jauge, l'état (dans l'objectif, en dessous, au-dessus) et, en dessous de l'objectif, ce qu'il manque côté homme pour l'atteindre.
+- **La courbe** de la part homme semaine par semaine (12 semaines), avec la bande de l'objectif ; le survol d'une semaine affiche ses chiffres.
+- **Mode discret** (activé au départ, gardé dans ce navigateur) : les montants sont cachés à l'écran, y compris pendant la saisie ; seuls les pourcentages restent. La page n'est visible que de son propriétaire.
+
 ## Argent et Sport
 
 À construire : chaque rubrique montre des idées de contenu, marquées « Idée ».
 
 ## Données
 
-Sur la page publiée, le planning, la to-do list et la garde-robe (pièces, tenues, comparaisons, demandes) sont enregistrés dans la base de la page : ils sont les mêmes sur le téléphone et l'ordinateur, et seul le propriétaire peut les modifier. Un document par semaine : `planning/AAAA-Wss` (semaine ISO, par exemple `planning/2026-W43`), avec `jours.lundi` … `jours.samedi` : `{ repos, matin: { debut, fin }, apresMidi: { debut, fin } }`, les heures au format `HH:MM`.
+Sur la page publiée, le planning, la to-do list et la garde-robe (pièces, tenues, comparaisons, demandes) sont enregistrés dans la base de la page : ils sont les mêmes sur le téléphone et l'ordinateur, et seul le propriétaire peut les modifier. Un document par semaine : `planning/AAAA-Wss` (semaine ISO, par exemple `planning/2026-W43`), avec `jours.lundi` … `jours.samedi` : `{ repos, conge, ferie, matin: { debut, fin }, apresMidi: { debut, fin } }`, les heures au format `HH:MM`, et `heuresSup` (`payees`, `recup`, ou rien pour la répartition par défaut).
+
+Réglages : `reglages/travail` (`heuresSemaine`, `joursSemaine`, `debutContrat` AAAA-MM-JJ) et `reglages/objectifs` (`cibleMin`, `cibleMax` en %).
+
+Calendrier : `calendrier/<id>` (`nom`, `debut`, `fin`, `affluence` : `forte` ou `normale`, `theme`, `vitrineLe`, `vitrinePrete`, `tenues` : identifiants de tenues, `note`, `creeLe`). Objectifs : `ca/AAAA-MM-JJ` (`homme`, `femme` en euros, `modifieLe`).
 
 Un document par tâche : `todo/<id>`, avec `texte`, `type` (`faire` ou `dire`), `personne`, `pour` (`AAAA-MM-JJ` ou rien), `urgent`, `fait`, `faitLe` et `creeLe`.
 
