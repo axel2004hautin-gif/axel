@@ -129,7 +129,46 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 .accueil-tete { display: grid; gap: 6px; }
 .accueil-tete h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(1.5rem, 3.4vw, 2rem); line-height: 1.1; }
 .titre-rubriques { margin-top: 8px; font-family: var(--f-display); font-weight: 800; font-size: clamp(1.25rem, 2.6vw, 1.5rem); line-height: 1.1; }
-/* Ma journée : horaires, tâches, prochain temps fort, objectifs ; un bloc à traiter est marqué. */
+.r-perso { --c: var(--ferie); --c-doux: var(--ferie-doux); }
+.accueil-resume { color: var(--gris); font-size: 1.05rem; }
+/* L'accueil : la to-do du jour (toutes rubriques) à gauche, la journée en un coup d'œil à droite. */
+.accueil-grille { display: grid; gap: 20px; align-items: start; }
+@media (min-width: 900px) { .accueil-grille { grid-template-columns: minmax(0, 1.65fr) minmax(280px, 1fr); gap: 28px; } }
+.jour-todo { display: grid; gap: 4px; min-width: 0; padding: 18px 20px 20px; border: 1.5px solid var(--trait); border-radius: 14px; background: var(--fond); }
+.jt-tete { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--marine); }
+.jt-tete h2 { font-family: var(--f-display); font-weight: 800; font-size: 1.35rem; line-height: 1.2; color: var(--marine); }
+.jt-compte { font: 600 .85rem/1.3 var(--f-mono); color: var(--gris); white-space: nowrap; }
+.puce-rubrique { padding: 3px 8px; border-radius: 999px; background: var(--c-doux); color: var(--c); font: 600 .72rem/1.3 var(--f-mono); white-space: nowrap; }
+.tache.rappel .tache-texte { font-weight: 600; }
+.rappel-aller { display: inline-flex; align-items: center; min-height: 36px; padding: 0 10px; border-radius: 8px; color: var(--marine); font-weight: 600; font-size: .92rem; text-decoration: none; white-space: nowrap; }
+.rappel-aller:hover { background: var(--marine-doux); }
+.tache-detail { display: block; color: var(--gris); font-size: .9rem; font-weight: 400; }
+.jt-ajout { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; padding: 12px; border-radius: 12px; background: var(--trait-doux); }
+.jt-ajout .champ-texte { flex: 1 1 100%; min-width: 0; }
+.jt-ajout .champ-pour { flex: 0 1 190px; min-width: 0; }
+.jt-ajout .champ-date { flex: 0 1 170px; min-width: 0; }
+.jt-ajout .bouton-principal { margin-left: auto; }
+.jt-rubriques { display: flex; flex-wrap: wrap; gap: 6px; }
+.jt-rubriques label { position: relative; }
+.jt-rubriques input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.jt-rubriques span { display: inline-block; padding: 7px 12px; border: 1.5px solid var(--trait); border-radius: 999px; background: var(--fond); color: var(--c); font-weight: 600; font-size: .9rem; }
+.jt-rubriques input:checked + span { border-color: var(--c); background: var(--c); color: var(--sur-marine); }
+.jt-rubriques input:focus-visible + span { outline: 2px solid var(--c); outline-offset: 2px; }
+@media (max-width: 599px) { .jt-ajout .champ-pour, .jt-ajout .champ-date { flex: 1 1 0; } .jt-ajout .bouton-principal { flex: 1 1 100%; } }
+.jt-ensuite { display: grid; margin-top: 6px; }
+.jt-groupe { border-bottom: 1px solid var(--trait); }
+.jt-groupe summary { padding: 12px 0; color: var(--marine); font-weight: 700; cursor: pointer; }
+.jt-groupe summary .nombre { margin-left: 6px; }
+.jt-groupe .taches { margin-bottom: 8px; }
+.jour-infos .journee { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 600px) and (max-width: 899px) { .jour-infos .journee { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.bloc-jour .progression { margin-top: 6px; height: 10px; }
+/* Les rubriques, en bas de l'accueil : une ligne par rubrique. */
+.rubriques.compactes .numero, .rubriques.compactes .carte-texte { display: none; }
+.rubriques.compactes .carte-rubrique { min-height: 0; gap: 6px; padding: 16px 18px 14px; }
+.rubriques.compactes .carte-titre { font-size: 1.45rem; }
+.rubriques.compactes .carte-pied { padding-top: 10px; }
+/* Ma journée : horaires, budget, prochain temps fort, Road to 50k ; un bloc à traiter est marqué. */
 .journee { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 12px; }
 .bloc-jour { display: grid; align-content: start; gap: 4px; height: 100%; padding: 14px 16px; border: 1.5px solid var(--trait); border-radius: 12px; color: var(--encre); text-decoration: none; transition: border-color .15s ease; }
 .bloc-jour:hover { border-color: var(--marine); }
@@ -661,6 +700,12 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
 .rp-placement-reste { margin: 0; min-height: 40px; }
 .rp-support { color: var(--gris); font-size: .85rem; text-align: right; }
 .rp-details summary { color: var(--argent); font-weight: 600; cursor: pointer; }
+.rp-primes { display: grid; gap: 8px; }
+.rp-prime { display: grid; grid-template-columns: minmax(0, 1fr) 7em minmax(0, 11em) auto; align-items: center; gap: 8px; }
+.rp-prime input, .rp-prime select { width: 100%; min-width: 0; }
+.rp-prime [data-prime-montant] { text-align: right; }
+@media (max-width: 559px) { .rp-prime { grid-template-columns: minmax(0, 1fr) 6.5em auto; } .rp-prime select { grid-column: 1 / 3; } }
+.rp-ajouter-prime { justify-self: start; }
 .rp-details[open] summary { margin-bottom: 8px; }
 .rp-total { flex: 1 1 100%; margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
 .rp-total.negatif { color: var(--erreur); }
@@ -1104,10 +1149,39 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
       <div class="accueil-tete">
         <p class="eyebrow" id="aujourdhui">Aujourd'hui</p>
         <h1 id="titre-accueil" tabindex="-1">Ma journée</h1>
+        <p class="accueil-resume" id="accueil-resume"></p>
       </div>
-      <ul class="journee" id="journee"></ul>
+      <div class="accueil-grille" id="accueil-grille" hidden>
+        <section class="jour-todo" aria-labelledby="jt-titre">
+          <div class="jt-tete"><h2 id="jt-titre">À faire aujourd'hui</h2><span class="jt-compte" id="jt-compte"></span></div>
+          <ul class="taches jt-liste" id="jt-liste"></ul>
+          <p class="liste-vide" id="jt-vide" hidden>Rien de prévu aujourd'hui.</p>
+          <form class="jt-ajout champs-tache" id="jt-ajout" autocomplete="off" novalidate>
+            <input class="champ-texte" id="jt-texte" type="text" maxlength="300" placeholder="Ajouter quelque chose à faire…" aria-label="Quoi ?">
+            <div class="jt-rubriques" role="radiogroup" aria-label="Rubrique">
+              <label class="r-travail"><input type="radio" name="jt-rubrique" value="travail"><span>Travail</span></label>
+              <label class="r-argent"><input type="radio" name="jt-rubrique" value="argent"><span>Argent</span></label>
+              <label class="r-sport"><input type="radio" name="jt-rubrique" value="sport"><span>Sport</span></label>
+              <label class="r-perso"><input type="radio" name="jt-rubrique" value="perso" checked><span>Perso</span></label>
+            </div>
+            <select class="champ-pour" id="jt-pour" aria-label="Pour quand ?">
+              <option value="aujourdhui">Aujourd'hui</option>
+              <option value="demain">Demain</option>
+              <option value="">Pas de date</option>
+              <option value="autre">Choisir une date…</option>
+            </select>
+            <input class="champ-date" id="jt-date" type="date" aria-label="Date" hidden>
+            <button class="bouton-principal" type="submit">Ajouter</button>
+            <p class="erreur-tache" id="jt-erreur" role="alert" hidden></p>
+          </form>
+          <div class="jt-ensuite" id="jt-ensuite"></div>
+        </section>
+        <aside class="jour-infos" aria-label="Ma journée en un coup d'œil">
+          <ul class="journee" id="journee"></ul>
+        </aside>
+      </div>
       <h2 class="titre-rubriques">Mes rubriques</h2>
-      <ol class="rubriques">
+      <ol class="rubriques compactes">
         <li class="r-travail">
           <a class="carte-rubrique" href="#travail">
             <span class="numero" aria-hidden="true">1</span>
@@ -1916,6 +1990,14 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
       <label><input type="radio" name="e-type" value="dire"><span>À dire</span></label>
     </div>
     <label class="titre-champ">Quoi ?<input class="champ-texte" id="e-texte" type="text" maxlength="300"></label>
+    <div class="titre-champ">Rubrique
+      <div class="jt-rubriques" role="radiogroup" aria-label="Rubrique">
+        <label class="r-travail"><input type="radio" name="e-rubrique" value="travail"><span>Travail</span></label>
+        <label class="r-argent"><input type="radio" name="e-rubrique" value="argent"><span>Argent</span></label>
+        <label class="r-sport"><input type="radio" name="e-rubrique" value="sport"><span>Sport</span></label>
+        <label class="r-perso"><input type="radio" name="e-rubrique" value="perso"><span>Perso</span></label>
+      </div>
+    </div>
     <label class="titre-champ" id="e-personne-bloc">À qui ?<input class="champ-personne" id="e-personne" type="text" maxlength="60" list="personnes"></label>
     <div class="titre-champ">Pour quand ?
       <div class="ligne-champs">
@@ -2001,6 +2083,8 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     <p class="aide" id="rp-periode"></p>
     <label class="titre-champ">Prime d'activité attendue (€)<input type="text" inputmode="decimal" id="rp-attendu" placeholder="0"></label>
     <p class="aide">Comptée d'avance : la CAF la verse quelques jours après la paie. Si elle est un peu plus grosse, la différence reste sur le compte.</p>
+    <div class="rp-primes" id="rp-primes"></div>
+    <button class="lien-discret rp-ajouter-prime" type="button" id="rp-ajouter-prime">+ Ajouter une prime</button>
     <h3 class="rp-groupe">Charges fixes</h3>
     <p class="rp-fixes" id="rp-fixes"></p>
     <h3 class="rp-groupe">Épargne</h3>
@@ -3067,13 +3151,16 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
   let taches = Object.create(null);
 
   const texteBorne = (v, max) => (typeof v === "string" ? v.trim().slice(0, max) : "");
+  // Une tâche appartient à une rubrique (le travail pour celles d'avant) ; l'accueil les montre toutes.
+  const RUBRIQUES_TACHE = [["travail", "Travail"], ["argent", "Argent"], ["sport", "Sport"], ["perso", "Perso"]];
+  const NOM_RUBRIQUE = Object.fromEntries(RUBRIQUES_TACHE);
   function lireTache(id, d) {
     if (!d || typeof d !== "object") return null;
     const texte = texteBorne(d.texte, 300);
     if (!texte) return null;
     const type = d.type === "dire" ? "dire" : "faire";
     return {
-      id, texte, type,
+      id, texte, type, rubrique: RUBRIQUES_TACHE.some(([r]) => r === d.rubrique) ? d.rubrique : "travail",
       personne: type === "dire" ? texteBorne(d.personne, 60) || "Quelqu'un" : "",
       pour: typeof d.pour === "string" && ISO_RE.test(d.pour) ? d.pour : null,
       urgent: d.urgent === true,
@@ -3086,7 +3173,7 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
   }
   // repete : la tâche revient chaque semaine, le jour de « pour » ; suivante : la copie déjà créée
   // pour la semaine d'après, quand elle a été cochée.
-  const corpsDe = t => ({ texte: t.texte, type: t.type, personne: t.type === "dire" ? t.personne : null, pour: t.pour, urgent: t.urgent,
+  const corpsDe = t => ({ texte: t.texte, type: t.type, rubrique: t.rubrique, personne: t.type === "dire" ? t.personne : null, pour: t.pour, urgent: t.urgent,
     repete: t.repete, suivante: t.suivante, fait: t.fait, faitLe: t.faitLe, creeLe: t.creeLe });
   // La prochaine fois d'une tâche qui revient : même jour de la semaine, pas avant aujourd'hui.
   function prochaineFois(pour) {
@@ -3215,7 +3302,7 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     effacerErreurTache("a");
     const lu = lireChamps("a");
     if (lu.erreur) { signalerTache("a", lu); return; }
-    const corps = { ...lu.tache, personne: lu.tache.type === "dire" ? lu.tache.personne : null, suivante: null, fait: false, faitLe: null, creeLe: new Date().toISOString() };
+    const corps = { ...lu.tache, rubrique: "travail", personne: lu.tache.type === "dire" ? lu.tache.personne : null, suivante: null, fait: false, faitLe: null, creeLe: new Date().toISOString() };
     // On vide tout de suite pour enchaîner ; le type et la personne restent pour la tâche suivante.
     $("a-texte").value = "";
     $("a-pour").value = "";
@@ -3226,8 +3313,8 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     try { await ecrireTache(nouvelId(), corps); } catch (err) { echecEcriture(err); }
   });
 
-  // ----- cocher, décocher -----
-  document.querySelector('[data-vue="todo"]').addEventListener("change", async e => {
+  // ----- cocher, décocher (sur la page To-do et sur l'accueil) -----
+  async function cocherTache(e) {
     const cb = e.target.closest(".tache-case input");
     if (!cb || !taches[cb.dataset.id]) return;
     const t = taches[cb.dataset.id], maintenant = new Date().toISOString();
@@ -3247,7 +3334,9 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
       }
     }
     catch (err) { cb.checked = !cb.checked; echecEcriture(err); }
-  });
+  }
+  document.querySelector('[data-vue="todo"]').addEventListener("change", cocherTache);
+  document.querySelector('[data-vue="accueil"]').addEventListener("change", cocherTache);
 
   // ----- modifier, supprimer -----
   let tacheEditee = null;
@@ -3257,6 +3346,7 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     tacheEditee = id;
     document.querySelector(`input[name="e-type"][value="${t.type}"]`).checked = true;
     $("e-texte").value = t.texte;
+    document.querySelector(`input[name="e-rubrique"][value="${t.rubrique}"]`).checked = true;
     $("e-personne").value = t.type === "dire" ? t.personne : "";
     optionsPour("e");
     const auj = versIso(aujourdhui()), demain = versIso(aujourdhui() + JOUR_MS);
@@ -3270,10 +3360,10 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     ouvrir($("fenetre-tache"));
     $("e-texte").focus();
   }
-  document.querySelector('[data-vue="todo"]').addEventListener("click", e => {
+  ['[data-vue="todo"]', '[data-vue="accueil"]'].forEach(v => document.querySelector(v).addEventListener("click", e => {
     const b = e.target.closest(".tache-modifier");
     if (b) ouvrirEdition(b.dataset.id);
-  });
+  }));
   $("ft-enregistrer").addEventListener("click", async () => {
     const t = taches[tacheEditee];
     if (!t) { fermer($("fenetre-tache")); return; }
@@ -3281,7 +3371,8 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     const lu = lireChamps("e");
     if (lu.erreur) { signalerTache("e", lu); return; }
     fermer($("fenetre-tache"));
-    try { await ecrireTache(t.id, { ...corpsDe(t), ...lu.tache, personne: lu.tache.type === "dire" ? lu.tache.personne : null }); }
+    const rubrique = (document.querySelector('input[name="e-rubrique"]:checked') || {}).value || t.rubrique;
+    try { await ecrireTache(t.id, { ...corpsDe(t), ...lu.tache, rubrique, personne: lu.tache.type === "dire" ? lu.tache.personne : null }); }
     catch (err) { echecEcriture(err); }
   });
 
@@ -3304,7 +3395,7 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
   });
   $("effacer-faites").addEventListener("click", async e => {
     const b = e.currentTarget;
-    const faites = Object.values(taches).filter(t => t.fait);
+    const faites = Object.values(taches).filter(t => t.fait && t.rubrique === "travail");
     if (!faites.length || !peutModifierTodo()) return;
     if (!b.classList.contains("arme")) { armer(b, `Confirmer : effacer ${faites.length} tâche${faites.length > 1 ? "s" : ""}`, "Effacer ce qui est fait"); return; }
     desarmer(b, "Effacer ce qui est fait");
@@ -3345,7 +3436,7 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
 
   function rendreTodo() {
     rendreJournee();
-    const toutes = Object.values(taches);
+    const toutes = Object.values(taches).filter(t => t.rubrique === "travail");
     const enCours = toutes.filter(t => !t.fait).sort(trierTaches);
     const faire = enCours.filter(t => t.type === "faire");
     const dire = enCours.filter(t => t.type === "dire");
@@ -6116,13 +6207,137 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     li.append(a);
     return li;
   }
+  // ---------- les rappels du tableau de bord ----------
+  // Ce que les données disent de faire aujourd'hui, à côté des tâches. Chaque rappel a un identifiant stable :
+  // coché, il est gardé dans reglages/rappels ; la plupart disparaissent seuls quand la donnée arrive (le budget
+  // lancé, le virement sur le relevé, les comptes à jour, les chiffres saisis).
+  const rappelsFaits = () => { const f = (reglagesCollection.docs.rappels || {}).faits; return f && typeof f === "object" ? f : {}; };
+  function dernierJourTravaille() {
+    const t = aujourdhui();
+    for (let k = 1; k <= 7; k++) { const x = jourDuPlanning(t - k * JOUR_MS); if (x && dureeJour(x) > 0) return t - k * JOUR_MS; }
+    let v = t - JOUR_MS;
+    if (new Date(v).getUTCDay() === 0) v -= JOUR_MS;
+    return v;
+  }
+  const nomJourPasse = v => (v === aujourdhui() - JOUR_MS ? "d'hier" : `de ${JOURS_LONGS[new Date(v).getUTCDay()]} ${quantieme(new Date(v).getUTCDate())}`);
+  function rappelsDuJour() {
+    const t = aujourdhui(), auj = versIso(t), liste = [];
+    const ajouter = (id, rubrique, texte, lien, extra) => liste.push({ id, rubrique, texte, lien, ...extra });
+    // Travail : le planning de la semaine (et le week-end, celui de la suivante), les chiffres du dernier jour travaillé.
+    const cette = infoSemaine(lundiDe(t)).cle, suivante = infoSemaine(lundiDe(t) + 7 * JOUR_MS).cle, jour = new Date(t).getUTCDay();
+    if (estVide(semaines[cette]) && jour !== 0) ajouter(`travail:planning:${cette}`, "travail", "Remplir mon planning de la semaine", "planning");
+    else if ((jour === 6 || jour === 0) && estVide(semaines[suivante])) ajouter(`travail:planning:${suivante}`, "travail", "Remplir mon planning de la semaine prochaine", "planning");
+    const veille = dernierJourTravaille(), debutContrat = reglagesTravail().debut;
+    if (!chiffres.docs[versIso(veille)] && (!debutContrat || versIso(veille) >= debutContrat))
+      ajouter(`travail:chiffres:${versIso(veille)}`, "travail", `Noter les chiffres ${nomJourPasse(veille)}`, "objectifs");
+    // Argent : la paie à répartir, dès la veille du jour de paie habituel et pendant dix jours.
+    const k = moisDeBudget(auj), attendueLe = depuisIso(jourPaie(moisDecale(k, -1)));
+    if (!budgets.docs[k] && t >= attendueLe - JOUR_MS && t <= attendueLe + 10 * JOUR_MS)
+      ajouter(`argent:paie:${k}`, "argent", `Ta paie ${deMois(moisDecale(k, -1))} est tombée ? Note ton solde et répartis-la`, "budget", { budget: k, action: "repartir", libelleAction: "Répartir" });
+    // Le budget en cours : les virements prévus, la prime, le relevé, les comptes.
+    const cle = periodeDe(auj), doc = budgets.docs[cle];
+    if (doc) {
+      const b = budgetDu(cle), r = reglagesArgent(), somme = l => -arrondi2(l.reduce((x, o) => x + o.m, 0));
+      const versTR = somme(b.ops.filter(o => o.m < 0 && o.c === "epargne" && /trade ?republic/.test(texteOp(o))));
+      const versLivrets = somme(b.ops.filter(o => o.m < 0 && (o.c === "interne" || (o.c === "epargne" && !/trade ?republic/.test(texteOp(o))))));
+      const attente = arrondi2(doc.attendu + doc.primes.filter(x => !x.tombee).reduce((x, y) => x + y.montant, 0));
+      // Les livrets d'abord, puis l'investissement.
+      projetsTries().filter(p => doc.epargne[p.id]).sort((x, y) => (x.groupe === "investissement") - (y.groupe === "investissement")).forEach(p => {
+        const montant = doc.epargne[p.id], invest = p.groupe === "investissement", tout = p.id === r.resteVers;
+        const jourJ = tout ? Math.max(0, arrondi2(montant - attente)) : montant, deja = invest ? versTR : versLivrets;
+        const compte = comptesArgent.docs[p.compte] || (invest ? comptesDu("investissement")[0] : null);
+        const ou = invest && Object.keys(doc.placements).length ? `sur Trade Republic${texteDePlacements(p, doc.placements, jourJ)}` : compte ? `sur le ${compte.nom}` : `pour ${p.nom}`;
+        if (jourJ >= 1 && deja < jourJ - 1) ajouter(`argent:virement:${cle}:${p.id}`, "argent", `Vire ${eur(jourJ)} ${ou}`, "budget", { budget: cle, detail: `${p.nom} · prévu dans le budget ${deMois(cle)}` });
+        // Ce qui est compté d'avance part quand il tombe : la prime d'activité (vers le 5), une prime attendue.
+        if (tout && attente >= 1 && deja < montant - 1) {
+          if (doc.attendu && (auj >= `${cle}-04` || b.caf)) ajouter(`argent:prime:${cle}`, "argent", `${b.caf ? "La prime d'activité est tombée : vire" : "La prime d'activité est tombée ? Vire"} ${eur(b.caf ? Math.min(b.caf, doc.attendu) : doc.attendu)} ${compte ? `sur le ${compte.nom}` : `pour ${p.nom}`}`, "budget", { budget: cle });
+          b.primes.filter(x => !x.tombee && x.op).forEach((x, i) => ajouter(`argent:prime:${cle}:${i}`, "argent", `Ta prime « ${x.nom} » est tombée : vire ${eur(x.montant)} ${compte ? `sur le ${compte.nom}` : `pour ${p.nom}`}`, "budget", { budget: cle }));
+        }
+      });
+      // Le relevé : toutes les semaines (le dernier importé date de plus de sept jours).
+      const derniere = Object.keys(operations.docs).flatMap(opsDu).filter(o => o.s === "import").map(o => o.d).sort().pop() || null;
+      if (t - depuisIso(derniere && derniere > doc.le ? derniere : doc.le) >= 7 * JOUR_MS)
+        ajouter(`argent:releve:${cette}`, "argent", "Importer mon relevé de la Caisse d'Épargne", "depenses", { detail: derniere ? `Le dernier va jusqu'au ${jourMois(derniere)}` : `Depuis ta paie du ${jourMois(doc.le)}` });
+      // Les comptes : deux jours après la paie (les virements sont arrivés), tant qu'aucun solde n'est noté depuis.
+      const dernierSolde = soldesTries().pop();
+      if ((!dernierSolde || dernierSolde.le < doc.le) && t - depuisIso(doc.le) >= 2 * JOUR_MS)
+        ajouter(`argent:comptes:${cle}`, "argent", "Mettre à jour mes comptes (Trade Republic et livrets)", "epargne", { action: "comptes", libelleAction: "Mettre à jour" });
+    }
+    const faits = rappelsFaits();
+    return liste.map(x => ({ ...x, fait: faits[x.id] || null })).filter(x => !x.fait || x.fait === auj);
+  }
+  async function cocherRappel(id, fait) {
+    const auj = versIso(aujourdhui()), limite = versIso(aujourdhui() - 60 * JOUR_MS);
+    const faits = Object.fromEntries(Object.entries(rappelsFaits()).filter(([k, d]) => d >= limite && k !== id));
+    if (fait) faits[id] = auj;
+    await reglagesCollection.ecrire("rappels", { faits, modifieLe: new Date().toISOString() });
+  }
+
+  // ---------- l'accueil : la to-do du jour et la journée en un coup d'œil ----------
+  const RANG_RUBRIQUE = Object.fromEntries(RUBRIQUES_TACHE.map(([r], i) => [r, i]));
+  const puceRubrique = r => element("span", `puce-rubrique r-${r}`, NOM_RUBRIQUE[r] || r);
+  function ligneAccueil(t) {
+    const li = ligneTache(t, true), meta = li.querySelector(".tache-meta");
+    meta.querySelectorAll(".puce.jour").forEach(x => x.remove());
+    meta.prepend(puceRubrique(t.rubrique));
+    return li;
+  }
+  function ligneRappel(x) {
+    const li = element("li", "tache rappel" + (x.fait ? " faite" : ""));
+    const label = element("label", "tache-case"), cb = element("input"), texte = element("span", "tache-texte", x.texte);
+    cb.type = "checkbox"; cb.checked = !!x.fait; cb.dataset.rappel = x.id; cb.disabled = !peutModifierTodo();
+    if (x.detail) texte.append(element("span", "tache-detail", x.detail));
+    label.append(cb, texte);
+    const meta = element("span", "tache-meta");
+    meta.append(puceRubrique(x.rubrique));
+    const a = element("a", "rappel-aller", x.libelleAction || "Ouvrir");
+    a.href = "#" + x.lien;
+    if (x.budget) a.dataset.budget = x.budget;
+    if (x.action) a.dataset.action = x.action;
+    li.append(label, meta, a);
+    return li;
+  }
+  function groupeAccueil(titre, liste, ouvert) {
+    const d = element("details", "jt-groupe"), s = element("summary");
+    s.append(document.createTextNode(titre), element("span", "nombre", String(liste.length)));
+    const ul = element("ul", "taches");
+    ul.append(...liste.map(ligneAccueil));
+    d.append(s, ul);
+    d.open = !!ouvert;
+    return d;
+  }
+  function blocJourBarre(aller, titre, principal, detail, part, libelle) {
+    const li = blocJour(aller, titre, principal, detail), barre = element("span", "progression");
+    barreProgression(barre, part, libelle);
+    li.firstChild.append(barre);
+    return li;
+  }
   function rendreJournee() {
     if (!journeePrete) return;
-    // Rien tant que la base n'a pas tout envoyé : pas de « Rien pour aujourd'hui » qui clignote au chargement.
-    $("journee").hidden = mode !== "local" && !(planningRecu && todoRecu && calendrier.recu && chiffres.recu);
-    if ($("journee").hidden) return;
-    const t = aujourdhui(), demain = t + JOUR_MS, blocs = [];
-    // Mes horaires : aujourd'hui, puis le prochain service.
+    // Rien tant que la base n'a pas tout envoyé : pas de rappel ni de « Rien pour aujourd'hui » qui clignote au chargement.
+    const pret = mode === "local" || (planningRecu && todoRecu && calendrier.recu && chiffres.recu && reglagesCollection.recu && budgets.recu && operations.recu && soldes.recu && projets.recu);
+    $("accueil-grille").hidden = !pret;
+    if (!pret) return;
+    const t = aujourdhui(), demain = t + JOUR_MS, auj = versIso(t), blocs = [];
+    // La to-do du jour : en retard, pour aujourd'hui, les rappels, puis ce qui est fait aujourd'hui.
+    const toutes = Object.values(taches), rappels = rappelsDuJour();
+    const ouvertes = toutes.filter(x => !x.fait && x.pour && depuisIso(x.pour) <= t);
+    const faitesAuj = toutes.filter(x => x.fait && x.faitLe && x.faitLe.slice(0, 10) === auj && (!x.pour || depuisIso(x.pour) <= t));
+    const rang = x => (x.pour && depuisIso(x.pour) < t ? 0 : x.urgent ? 1 : 2);
+    ouvertes.sort((a, b) => rang(a) - rang(b) || RANG_RUBRIQUE[a.rubrique] - RANG_RUBRIQUE[b.rubrique] || trierTaches(a, b));
+    const aFaire = rappels.filter(x => !x.fait), faitsRappels = rappels.filter(x => x.fait);
+    const lignes = [...ouvertes.filter(x => rang(x) < 2).map(ligneAccueil), ...ouvertes.filter(x => rang(x) === 2).map(ligneAccueil), ...aFaire.map(ligneRappel),
+      ...faitesAuj.map(ligneAccueil), ...faitsRappels.map(ligneRappel)];
+    $("jt-liste").replaceChildren(...lignes);
+    $("jt-vide").hidden = lignes.length > 0;
+    const total = lignes.length, faits = faitesAuj.length + faitsRappels.length;
+    $("jt-compte").textContent = total ? (faits ? `${faits} sur ${total} fait${faits > 1 ? "s" : ""}` : `${total} chose${total > 1 ? "s" : ""}`) : "";
+    // Ensuite : demain, plus tard, sans date.
+    const enCours = toutes.filter(x => !x.fait).sort(trierTaches);
+    const pourDemain = enCours.filter(x => x.pour && depuisIso(x.pour) === demain), plusTard = enCours.filter(x => x.pour && depuisIso(x.pour) > demain), sansDate = enCours.filter(x => !x.pour);
+    $("jt-ensuite").replaceChildren(...[pourDemain.length && groupeAccueil("Demain", pourDemain, false), plusTard.length && groupeAccueil("Plus tard", plusTard, false), sansDate.length && groupeAccueil("Sans date", sansDate, false)].filter(Boolean));
+    $("jt-ajout").hidden = !peutModifierTodo();
+    // La journée en un coup d'œil : mes horaires, mon budget, le prochain temps fort, Road to 50k.
     const j = jourDuPlanning(t), statut = j && statutDe(j), ferie = ferieDe(t);
     const principal = estVide(semaines[infoSemaine(lundiDe(t)).cle]) && new Date(t).getUTCDay() !== 0 ? "Planning de la semaine à remplir"
       : statut ? NOM_STATUT[statut] + (statut === "ferie" && ferie ? ` · ${ferie}` : "")
@@ -6130,16 +6345,10 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     const service = prochainService();
     const suite = service ? `${service === demain ? "Demain" : majuscule(dateCourte(service))} : ${horairesDe(jourDuPlanning(service))}` : "Prochain service : planning à remplir";
     blocs.push(blocJour("planning", "Mes horaires", principal, suite));
-    // À faire : ce qui est pour aujourd'hui ou en retard.
-    const enCours = Object.values(taches).filter(x => !x.fait).sort(trierTaches);
-    const dus = enCours.filter(x => x.pour && depuisIso(x.pour) <= t), retard = dus.filter(x => depuisIso(x.pour) < t).length;
-    const pourDemain = enCours.filter(x => x.pour && depuisIso(x.pour) === demain).length;
-    const libelle = x => (x.type === "dire" ? `Dire à ${x.personne} : ${x.texte}` : x.texte);
-    const compte = [dus.length > retard ? `${dus.length - retard} pour aujourd'hui` : "", retard ? `${retard} en retard` : ""].filter(Boolean).join(" · ");
-    blocs.push(blocJour("todo", "À faire", compte || "Rien pour aujourd'hui",
-      dus.length ? dus.slice(0, 3).map(libelle).join(" · ") : pourDemain ? `${pourDemain} pour demain` : enCours.length ? `${enCours.length} en cours, sans urgence` : "Liste à jour",
-      retard ? "a-traiter retard" : dus.length ? "a-traiter" : ""));
-    // Prochain temps fort, et sa vitrine.
+    const b = budgetDu(periodeParDefaut());
+    if (!b.doc) blocs.push(blocJour("budget", "Mon budget", "À lancer le jour de ta paie", `Le budget ${deMois(b.cle)} part de ton solde après la paie`));
+    else blocs.push(blocJour("budget", `Budget ${deMois(b.cle)}`, b.reste < 0 ? `Dépassé de ${eur(-b.reste, 0)}` : b.joursRestants ? `${eur(b.reste / b.joursRestants, 0)} par jour` : `${eur(b.reste, 0)} restants`,
+      `${eur(Math.max(0, b.reste), 0)} à dépenser jusqu'au ${jourMois(b.fin)}`, b.reste < 0 ? "a-traiter retard" : ""));
     const e = prochainEvenement();
     if (e) {
       const enCoursEvt = depuisIso(e.debut) <= t, vitrine = e.vitrineLe ? depuisIso(e.vitrineLe) : null;
@@ -6147,19 +6356,54 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
       blocs.push(blocJour("calendrier", "Prochain temps fort", `${e.nom} ${enCoursEvt ? `: en cours jusqu'au ${dateCourte(finDe(e))}` : dansJours(depuisIso(e.debut))}`,
         e.vitrinePrete ? "Vitrine prête" : vitrine != null ? `Vitrine le ${dateCourte(vitrine)}, ${dansJours(vitrine)}` : "Date de la vitrine à choisir", bientot ? "a-traiter" : ""));
     } else blocs.push(blocJour("calendrier", "Prochain temps fort", "Rien de prévu", "Ajoute les temps forts de l'année"));
-    // Objectifs : le dernier jour travaillé est-il saisi ? En mode discret, aucun chiffre ici.
-    let veille = null;
-    for (let k = 1; k <= 7 && veille == null; k++) { const x = jourDuPlanning(t - k * JOUR_MS); if (x && dureeJour(x) > 0) veille = t - k * JOUR_MS; }
-    if (veille == null) { veille = t - JOUR_MS; if (new Date(veille).getUTCDay() === 0) veille -= JOUR_MS; }
-    const nomVeille = veille === t - JOUR_MS ? "hier" : `${JOURS_LONGS[new Date(veille).getUTCDay()]} ${new Date(veille).getUTCDate()}`;
-    if (!chiffres.docs[versIso(veille)]) blocs.push(blocJour("objectifs", "Objectifs", `${majuscule(nomVeille)} à saisir`, "Deux chiffres à noter", "a-traiter"));
-    else {
+    const road = projetRoad();
+    if (road) { const av = avancee(road); blocs.push(blocJourBarre("argent", road.nom, `${eur(av.total, 0)} · ${nombreFr(Math.floor(av.part * 1000) / 10)} %`, av.reste ? `${eur(av.reste, 0)} pour atteindre ${eur(road.cible, 0)}` : "Objectif atteint !", av.part, `${road.nom} : ${Math.round(av.part * 100)} %`)); }
+    // Les objectifs, quand les chiffres sont à jour (sinon c'est un rappel) ; en mode discret, aucun chiffre ici.
+    const veille = dernierJourTravaille();
+    if (chiffres.docs[versIso(veille)]) {
       const r = partDe(joursDePeriode("semaine")), c = cibles(), etat = etatDe(r.part, c);
       blocs.push(blocJour("objectifs", "Objectifs", discret || r.part == null ? "À jour" : `Part homme : ${pourcent(r.part)} cette semaine`,
         discret || r.part == null ? `Dernière journée saisie : ${dateCourte(veille)}` : etat === "dans" ? "Dans l'objectif" : etat === "sous" ? "En dessous de l'objectif" : "Au-dessus de l'objectif"));
     }
     $("journee").replaceChildren(...blocs);
+    // La phrase sous le titre : la journée de travail et ce qu'il reste à faire.
+    const reste = total - faits;
+    const plages = j && dureeJour(j) > 0 ? [j.matin, j.apresMidi].filter(x => dureePeriode(x) > 0).map(x => `de ${formatHeure(x.debut)} à ${formatHeure(x.fin)}`).join(", puis ") : "";
+    $("accueil-resume").textContent = [plages ? `Tu travailles ${plages}` : principal,
+      reste ? `${reste} chose${reste > 1 ? "s" : ""} à faire` : total ? "Tout est fait" : ""].filter(Boolean).join(" · ") + ".";
   }
+  // Cocher un rappel ; « Répartir », « Mettre à jour » ouvrent la bonne fenêtre, la page du budget ouvre le bon mois.
+  document.querySelector('[data-vue="accueil"]').addEventListener("change", async e => {
+    const cb = e.target.closest("[data-rappel]");
+    if (!cb || !peutModifierTodo()) return;
+    try { await cocherRappel(cb.dataset.rappel, cb.checked); } catch (err) { cb.checked = !cb.checked; echecEcriture(err); }
+  });
+  document.querySelector('[data-vue="accueil"]').addEventListener("click", e => {
+    const a = e.target.closest(".rappel-aller");
+    if (!a) return;
+    if (a.dataset.budget) { moisArgent = a.dataset.budget; filtreCat = null; rendreBudget(); rendreDepenses(); }
+    if (a.dataset.action === "repartir" && peutModifierArgent()) setTimeout(ouvrirRepartition, 0);
+    if (a.dataset.action === "comptes" && peutModifierArgent()) setTimeout(ouvrirComptes, 0);
+  });
+  // Ajouter depuis l'accueil : une tâche à faire, dans la rubrique choisie (gardée pour la suivante).
+  const CLE_RUBRIQUE_ACCUEIL = "tableau-de-bord-axel:rubrique-accueil";
+  try { const r = localStorage.getItem(CLE_RUBRIQUE_ACCUEIL); if (NOM_RUBRIQUE[r]) document.querySelector(`input[name="jt-rubrique"][value="${r}"]`).checked = true; } catch (_) { /* la rubrique par défaut */ }
+  $("jt-pour").addEventListener("change", () => { $("jt-date").hidden = $("jt-pour").value !== "autre"; });
+  $("jt-ajout").addEventListener("input", () => { $("jt-erreur").hidden = true; $("jt-texte").classList.remove("en-erreur"); $("jt-date").classList.remove("en-erreur"); });
+  $("jt-ajout").addEventListener("submit", async e => {
+    e.preventDefault();
+    if (!peutModifierTodo()) return;
+    const texte = $("jt-texte").value.trim(), choix = $("jt-pour").value, rubrique = (document.querySelector('input[name="jt-rubrique"]:checked') || {}).value || "perso";
+    const erreur = (m, champ) => { $("jt-erreur").textContent = m; $("jt-erreur").hidden = false; champ.classList.add("en-erreur"); champ.focus(); };
+    if (!texte) return erreur("Écris ce que tu dois faire.", $("jt-texte"));
+    if (choix === "autre" && !ISO_RE.test($("jt-date").value)) return erreur("Choisis la date.", $("jt-date"));
+    const pour = choix === "aujourdhui" ? versIso(aujourdhui()) : choix === "demain" ? versIso(aujourdhui() + JOUR_MS) : choix === "autre" ? $("jt-date").value : null;
+    try { localStorage.setItem(CLE_RUBRIQUE_ACCUEIL, rubrique); } catch (_) { /* rien de grave */ }
+    $("jt-texte").value = "";
+    $("jt-texte").focus();
+    try { await ecrireTache(nouvelId(), { texte: texte.slice(0, 300), type: "faire", rubrique, personne: null, pour, urgent: false, repete: false, suivante: null, fait: false, faitLe: null, creeLe: new Date().toISOString() }); }
+    catch (err) { echecEcriture(err); }
+  });
 
   // La courbe : la part homme de chaque semaine qui a des chiffres (12 au plus), avec la bande de l'objectif.
   function rendreGraphe() {
@@ -6381,6 +6625,7 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
       lien: typeof d.lien === "string" && /^https?:\/\/\S+$/i.test(d.lien) ? d.lien.slice(0, 500) : null, note: texteArgent(d.note, 300),
       ordre: nombreValide(d.ordre) ? d.ordre : 99, creeLe: texteArgent(d.creeLe, 40),
       rendement: d.type === "comptes" && nombreValide(d.rendement) && d.rendement > 0 && d.rendement <= 30 ? d.rendement : 0,   // % par an
+      compte: texteArgent(d.compte, 40),   // le compte où virer ce qui est prévu (le LEP)
     };
   }
   function lireCharge(id, d) {
@@ -6405,8 +6650,10 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
   // d'investissement, sauf le premier qui reçoit le reste).
   // L'enveloppe « variables » prend toutes les dépenses qui n'ont pas leur propre enveloppe. « attendu » : la prime
   // d'activité, comptée d'avance (elle tombe quelques jours après la paie).
+  // « primes » : les primes du mois, déjà sur le compte (dans le solde) ou attendues (comptées d'avance).
+  const lirePrime = x => (x && nombreValide(x.montant) && x.montant > 0 ? { nom: texteArgent(x.nom, 40) || "Prime", montant: arrondi2(x.montant), tombee: x.tombee === true } : null);
   const lireRepartition = d => ({ enveloppes: montantsDe(d.enveloppes, c => c === "variables" || (NOM_CAT[c] && !HORS_DEPENSES.has(c))), epargne: montantsDe(d.epargne, idValide), placements: montantsDe(d.placements, idValide),
-    attendu: nombreValide(d.attendu) && d.attendu > 0 ? arrondi2(d.attendu) : 0 });
+    attendu: nombreValide(d.attendu) && d.attendu > 0 ? arrondi2(d.attendu) : 0, primes: (Array.isArray(d.primes) ? d.primes : []).slice(0, 10).map(lirePrime).filter(Boolean) });
   const nomEnveloppe = c => (c === "variables" ? "Dépenses variables" : NOM_CAT[c]);
   const lireBudget = (id, d) => (MOIS_RE.test(id) && d && nombreValide(d.solde) && ISO_RE.test(d.le) ? { id, solde: arrondi2(d.solde), le: d.le, ...lireRepartition(d) } : null);
   const lirePaie = (id, d) => (MOIS_RE.test(id) && d && nombreValide(d.net) && d.net > 0
@@ -6543,14 +6790,27 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     }
     const depense = depenseDe(courantes);
     // La prime d'activité attendue compte d'avance, jusqu'à ce que la CAF la verse.
-    const caf = somme(ops.filter(o => o.c === "revenus" && o.m > 0 && /\bcaf\b|prime d.?activite/.test(texteOp(o)))), attendu = doc ? doc.attendu : 0, attenteCaf = Math.max(0, arrondi2(attendu - caf));
+    const estCaf = o => o.c === "revenus" && o.m > 0 && /\bcaf\b|prime d.?activite/.test(texteOp(o));
+    const caf = somme(ops.filter(estCaf)), attendu = doc ? doc.attendu : 0, attenteCaf = Math.max(0, arrondi2(attendu - caf));
+    // Une prime attendue compte d'avance jusqu'à ce qu'une rentrée du même montant (à 5 % près) arrive. Versée avec
+    // le salaire, elle ne compte pas dans les rentrées : on l'ajoute alors à part.
+    const prisesPrimes = new Set();
+    const primes = (doc ? doc.primes : []).map(x => {
+      if (x.tombee) return { ...x, op: null };
+      const o = ops.find(o => o.m > 0 && (o.c === "revenus" || o.c === "salaire") && !estCaf(o) && !prisesPrimes.has(o.id) && Math.abs(o.m - x.montant) <= Math.max(1, x.montant * 0.05));
+      if (o) prisesPrimes.add(o.id);
+      return { ...x, op: o || null };
+    });
+    const attentePrimes = arrondi2(primes.filter(x => !x.tombee && !x.op).reduce((t, x) => t + x.montant, 0));
+    const primesSalaire = arrondi2(primes.filter(x => x.op && x.op.c === "salaire").reduce((t, x) => t + x.op.m, 0));
+    const primesRentrees = arrondi2(primes.filter(x => x.op && x.op.c === "revenus").reduce((t, x) => t + x.op.m, 0));
     const deCote = ops.filter(o => o.c === "epargne" || o.c === "interne"), verse = -somme(deCote.filter(o => o.m < 0)), repris = somme(deCote.filter(o => o.m > 0));
     const prevu = doc ? arrondi2(Object.values(doc.epargne).reduce((t, v) => t + v, 0)) : 0, epargne = Math.max(verse, prevu);
-    const depart = doc ? arrondi2(doc.solde + rentrees + attenteCaf) : null, reste = doc ? arrondi2(depart - fixes - epargne - depense) : null;
+    const depart = doc ? arrondi2(doc.solde + rentrees + attenteCaf + attentePrimes + primesSalaire) : null, reste = doc ? arrondi2(depart - fixes - epargne - depense) : null;
     const dansEnveloppes = arrondi2(enveloppes.reduce((t, e) => t + Math.max(0, e.prevu - e.depense), 0));
     const debut = debutPeriode(cle), fin = finPeriode(cle), auj = versIso(aujourdhui());
     const joursRestants = auj >= debut && auj <= fin ? Math.round((depuisIso(fin) - depuisIso(auj)) / JOUR_MS) + 1 : null;
-    return { cle, doc, debut, fin, ops, rentrees, caf, attendu, attenteCaf, lignes, fixes, fixesAVenir, parCategorie, enveloppes, depense, verse, repris, prevu, epargne, depart, reste, dansEnveloppes, joursRestants, passee: auj > fin };
+    return { cle, doc, debut, fin, ops, rentrees, caf, attendu, attenteCaf, primes, attentePrimes, primesSalaire, primesRentrees, lignes, fixes, fixesAVenir, parCategorie, enveloppes, depense, verse, repris, prevu, epargne, depart, reste, dansEnveloppes, joursRestants, passee: auj > fin };
   }
 
   // ----- la paie attendue -----
@@ -6797,9 +7057,11 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
       $("bu-env-aide").textContent = b.reste < 0 ? "" : libre >= 0.5 ? `${eur(b.dansEnveloppes)} encore dans tes enveloppes, ${eur(libre)} qui ne sont dans aucune${versReste ? ` : ils peuvent partir sur ${versReste.nom}` : ""}.`
         : libre <= -0.5 ? `Tes enveloppes prévoient ${eur(-libre)} de plus que ce qu'il te reste : quelque chose a dépassé.` : "Tout ce qui reste est dans tes enveloppes.";
       // Le point de départ.
-      const dep = [ligneArgent("Solde après la paie", `le ${jourMois(b.doc.le)}`, eur(b.doc.solde))];
+      const dansSolde = b.primes.filter(x => x.tombee);
+      const dep = [ligneArgent("Solde après la paie", `le ${jourMois(b.doc.le)}` + (dansSolde.length ? ` · dont ${dansSolde.map(x => `${x.nom.toLowerCase()} ${eur(x.montant, 0)}`).join(", ")}` : ""), eur(b.doc.solde))];
+      b.primes.filter(x => !x.tombee).forEach(x => dep.push(ligneArgent(x.nom, x.op ? `reçue le ${jourMois(x.op.d)}` : "attendue, comptée d'avance", eur(x.op ? x.op.m : x.montant))));
       if (b.attendu || b.caf) dep.push(ligneArgent("Prime d'activité (CAF)", b.attenteCaf ? (b.caf ? `${eur(b.caf)} reçus, ${eur(b.attenteCaf)} encore attendus` : "attendue vers le 5, comptée d'avance") : `reçue${b.attendu ? ` (${eur(b.attendu)} prévus)` : ""}`, eur(b.caf + b.attenteCaf)));
-      const autresRentrees = arrondi2(b.rentrees - b.caf);
+      const autresRentrees = arrondi2(b.rentrees - b.caf - b.primesRentrees);
       if (autresRentrees) dep.push(ligneArgent("Autres rentrées", "ventes, remboursements…", eur(autresRentrees)));
       dep.push(ligneArgent("Total", "", eur(b.depart), null, "total"));
       $("bu-revenus").replaceChildren(...dep);
@@ -6987,6 +7249,7 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     rendreEpargne();
     rendrePaie();
     rendreCarteAccueilArgent();
+    rendreJournee();
   }
 
   // ----- naviguer entre les mois -----
@@ -7175,6 +7438,22 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     l.append(n, champ);
     return l;
   }
+  function lignePrime(x) {
+    const l = element("div", "rp-prime"), nom = element("input"), montant = element("input"), etat = element("select"), suppr = element("button", "suppr-ca", "×");
+    nom.type = "text"; nom.maxLength = 40; nom.placeholder = "Prime (ex. : de Noël)"; nom.dataset.primeNom = ""; nom.value = x ? x.nom : "";
+    nom.setAttribute("aria-label", "Nom de la prime");
+    montant.type = "text"; montant.inputMode = "decimal"; montant.placeholder = "0"; montant.dataset.primeMontant = ""; montant.value = x ? versChamp(x.montant) : "";
+    montant.setAttribute("aria-label", "Montant de la prime");
+    etat.dataset.primeEtat = "";
+    etat.append(new Option("Pas encore tombée", "attendue"), new Option("Déjà sur le compte", "tombee"));
+    etat.value = x && x.tombee ? "tombee" : "attendue";
+    etat.setAttribute("aria-label", "La prime est-elle déjà sur le compte ?");
+    suppr.type = "button"; suppr.dataset.supprPrime = ""; suppr.setAttribute("aria-label", "Retirer cette prime");
+    l.append(nom, montant, etat, suppr);
+    return l;
+  }
+  // Les primes pas encore tombées s'ajoutent à ce qu'il y a à répartir (celles déjà tombées sont dans le solde).
+  const primesAttendues = () => [...$("rp-primes").querySelectorAll(".rp-prime")].filter(l => l.querySelector("[data-prime-etat]").value === "attendue").reduce((t, l) => t + (lireMontant(l.querySelector("[data-prime-montant]").value) || 0), 0);
   function cleRepartition() { const d = $("rp-date").value; return ISO_RE.test(d) ? moisDeBudget(d) : budgetEdite || moisVu(); }
   // Les charges fixes et les indices dépendent de la période (la date choisie).
   function rendreRepartitionPeriode() {
@@ -7195,7 +7474,7 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
   }
   function totalRepartition() {
     const soldeSeul = montantChamp($("rp-solde").value), cle = cleRepartition();
-    const solde = soldeSeul == null ? null : arrondi2(soldeSeul + (lireMontant($("rp-attendu").value) || 0));
+    const solde = soldeSeul == null ? null : arrondi2(soldeSeul + (lireMontant($("rp-attendu").value) || 0) + primesAttendues());
     const fixes = chargesDuMois(cle).filter(c => !c.variable).reduce((t, c) => t + c.montant, 0);
     // L'objectif qui reçoit le reste se remplit tout seul, tant qu'il n'a pas été tapé à la main.
     const auto = resteAuto && $("rp-form").querySelector(`[data-ep="${resteAuto}"]`);
@@ -7227,6 +7506,7 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
       || { enveloppes: chargesVariables, epargne: {}, placements: {}, attendu: 0 };
     const ep = source.epargne, env = source.enveloppes;
     $("rp-attendu").value = versChamp(source.attendu);
+    $("rp-primes").replaceChildren(...(doc ? doc.primes : []).map(lignePrime));
     // Les objectifs : ceux qui reçoivent quelque chose, celui qui prend le reste, et l'objectif en cours de chaque
     // groupe de comptes (pas les étapes suivantes sur les mêmes comptes).
     const objectifs = projetsTries().filter(p => p.type === "comptes" && (ep[p.id] || p.id === resteAuto || (objectifActif(p.groupe) || {}).id === p.id)), placements = comptesDu("investissement");
@@ -7264,6 +7544,9 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     totalRepartition();
   });
   $("rp-form").addEventListener("submit", e => e.preventDefault());
+  $("rp-form").addEventListener("change", e => { if (e.target.matches("[data-prime-etat]")) totalRepartition(); });
+  $("rp-ajouter-prime").addEventListener("click", () => { const l = lignePrime(null); $("rp-primes").append(l); l.querySelector("[data-prime-nom]").focus(); });
+  $("rp-primes").addEventListener("click", e => { const b = e.target.closest("[data-suppr-prime]"); if (b) { b.closest(".rp-prime").remove(); totalRepartition(); } });
   $("rp-enregistrer").addEventListener("click", async () => {
     const erreur = (t, champ) => { $("rp-erreur").textContent = t; $("rp-erreur").hidden = false; if (champ) { champ.classList.add("en-erreur"); champ.focus(); } };
     const solde = montantChamp($("rp-solde").value), le = $("rp-date").value, attendu = $("rp-attendu").value.trim() ? lireMontant($("rp-attendu").value) : 0;
@@ -7282,9 +7565,17 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     };
     const enveloppes = lire("env"), epargne = enveloppes && lire("ep"), placements = epargne && lire("pl");
     if (!enveloppes || !epargne || !placements) return;
+    const primes = [];
+    for (const l of $("rp-primes").querySelectorAll(".rp-prime")) {
+      const champ = l.querySelector("[data-prime-montant]");
+      if (!champ.value.trim()) continue;
+      const v = lireMontant(champ.value);
+      if (!v) return erreur("Le montant d'une prime est un nombre, par exemple 150.", champ);
+      primes.push({ nom: l.querySelector("[data-prime-nom]").value.trim().slice(0, 40) || "Prime", montant: v, tombee: l.querySelector("[data-prime-etat]").value === "tombee" });
+    }
     const cle = moisDeBudget(le);
     try {
-      await budgets.ecrire(cle, { solde, le, enveloppes, epargne, placements, ...(attendu ? { attendu } : {}), modifieLe: new Date().toISOString() });
+      await budgets.ecrire(cle, { solde, le, enveloppes, epargne, placements, ...(attendu ? { attendu } : {}), ...(primes.length ? { primes } : {}), modifieLe: new Date().toISOString() });
       if (budgetEdite && budgetEdite !== cle) await budgets.ecrire(budgetEdite, null);
       moisArgent = cle;
       fermer($("fenetre-repartition"));
@@ -7416,7 +7707,7 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     if (lien && !/^https?:\/\//i.test(lien)) lien = "https://" + lien;
     const corps = { ...(avant ? { type: avant.type, groupe: avant.groupe, ordre: avant.ordre, creeLe: avant.creeLe, note: avant.note } : { type: "achat", groupe: "investissement", ordre: 99, creeLe: new Date().toISOString(), note: "" }),
       nom: nom.slice(0, 60), cible, date: ISO_RE.test($("pr-date").value) ? $("pr-date").value : null, misDeCote: avant && avant.type === "comptes" ? 0 : mis, lien: avant && avant.type === "comptes" ? null : lien,
-      ...(avant && avant.type === "comptes" && rendement ? { rendement } : {}) };
+      ...(avant && avant.type === "comptes" && rendement ? { rendement } : {}), ...(avant && avant.compte ? { compte: avant.compte } : {}) };
     try { await projets.ecrire(projetEdite || projets.nouvelId(), corps); fermer($("fenetre-projet")); } catch (err) { erreur("Ce n'a pas été enregistré. Réessaie."); }
   });
   $("pr-supprimer").addEventListener("click", async e => {
