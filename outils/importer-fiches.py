@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
-"""Prépare des fiches de la garde-robe à partir de liens d'articles (sites Shopify, comme teddy-smith.com).
+"""Prépare des fiches de la garde-robe à partir de liens d'articles (sites Shopify comme teddy-smith.com, et
+hugoboss.com).
 
     python3 outils/importer-fiches.py DOSSIER LIEN [LIEN…] [--photos 3]
 
-Pour chaque lien, lit la fiche publique de l'article (`<lien>.js`) : titre, marque, type, coupe, matière,
-couleur, prix, référence et photos. Écrit dans DOSSIER :
+Pour chaque lien, lit la fiche publique de l'article (Shopify : `<lien>.js` ; hugoboss.com : les données
+schema.org de la page) : titre, marque, type, coupe, matière, couleur, prix, référence et photos. Les autres
+grands sites (Tommy Hilfiger, Calvin Klein, Levi's, Le Temps des Cerises) refusent les robots : leurs pièces
+s'ajoutent depuis la page, avec « Remplir avec Claude ». Écrit dans DOSSIER :
 - `fiches.json` : une entrée par article, `{lien, piece, images}` ; `piece` a les champs d'un document
   `pieces/<id>` (sans `photos`), `images` les chemins des photos préparées ;
 - les photos, en JPEG de 900 px au plus, sur fond blanc ;
@@ -91,16 +94,75 @@ def lire_description(description):
     return champs
 
 
+NAVIGATEUR = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36",
+              "Accept-Language": "fr-FR,fr;q=0.9"}
+# « Coupe Regular. », « Coupe Slim Fit. » (hugoboss.com) vers les coupes déjà utilisées dans la garde-robe.
+COUPES = {"regular": "Droite (Regular Fit)", "slim": "Ajustée (Slim Fit)", "extra slim": "Ajustée (Extra Slim Fit)",
+          "relaxed": "Décontractée (Relaxed Fit)", "loose": "Ample (Loose Fit)", "oversized": "Ample (Oversized Fit)",
+          "oversize": "Ample (Oversized Fit)", "straight": "Droite (Straight Fit)", "tapered": "Fuselée (Tapered Fit)"}
+
+
+def lire_shopify(adresse):
+    """Une fiche Shopify (`<lien>.js`), dans la forme commune aux sites."""
+    with urllib.request.urlopen(urllib.request.Request(adresse + ".js", headers=NAVIGATEUR), timeout=30) as r:
+        d = json.load(r)
+    champs = lire_description(d.get("description"))
+    # Les promos du site ne valent pas en magasin : toujours le prix normal.
+    prix, barre = d.get("price"), d.get("compare_at_price")
+    promo = isinstance(barre, int) and isinstance(prix, int) and barre > prix
+    images = [("https:" + i) if i.startswith("//") else i for i in d.get("images", [])]
+    return {
+        "marque": d.get("vendor") or "",
+        "textes": [d.get("type", ""), d.get("title", ""), d.get("handle", "").replace("-", " ")],
+        "modele": d.get("title") or "",
+        "coupe": champs.get("coupe", "").strip(),
+        "couleur": couleur_de(champs.get("couleur") or champs.get("coloris", "")),
+        "matiere": champs.get("matiere", ""),
+        "prix": round((barre if promo else prix) / 100, 2) if isinstance(prix, int) else None,
+        "ref": next((t for t in d.get("tags", []) if re.fullmatch(r"[A-Z]{0,4}\d{6,}[A-Z0-9]*", t)), ""),   # 11018388D, 10117266DL32, STR1070123D
+        "images": [i + ("&" if "?" in i else "?") + "width=1200" for i in images],
+    }
+
+
+def lire_boss(adresse):
+    """Une fiche hugoboss.com : le ProductGroup schema.org de la page, « Matière: » et la coupe de la description."""
+    with urllib.request.urlopen(urllib.request.Request(adresse, headers=NAVIGATEUR), timeout=40) as r:
+        page = r.read().decode("utf-8", "replace")
+    produit = None
+    for bloc in re.findall(r'<script[^>]*application/ld\+json[^>]*>(.*?)</script>', page, re.S):
+        try:
+            donnees = json.loads(bloc)
+        except ValueError:
+            continue
+        produit = next((x for x in (donnees if isinstance(donnees, list) else [donnees]) if x.get("@type") in ("ProductGroup", "Product")), produit)
+    if not produit:
+        raise ValueError("pas de fiche produit dans la page")
+    variantes = produit.get("hasVariant") or [produit]
+    prix = max((v.get("offers") or {}).get("price") or 0 for v in variantes) or None
+    coupe = re.search(r"Coupe ((?:extra )?[a-z]+)(?: fit)?\b", produit.get("description", ""), re.I)
+    matiere = re.search(r"Matière\s*:\s*([^<]+)", page)
+    mpn = re.fullmatch(r"hbeu(\d+)_(\w+)", produit.get("mpn", ""))
+    marque = produit.get("brand")
+    return {
+        "marque": (marque.get("name") if isinstance(marque, dict) else marque) or "BOSS",
+        "textes": [produit.get("name", ""), produit.get("category", "")],   # « Pull col polo » : le nom avant la catégorie
+        "modele": produit.get("name", ""),
+        "coupe": COUPES.get(coupe.group(1).lower(), coupe.group(1) + " Fit") if coupe else "",
+        "couleur": couleur_de(produit.get("color", "")),
+        "matiere": html.unescape(matiere.group(1)) if matiere else "",
+        "prix": float(prix) if prix else None,
+        "ref": f"{mpn.group(1)}-{mpn.group(2)}" if mpn else "",
+        "images": [i.split("?")[0] + "?wid=1200&fmt=jpg&qlt=90" for i in produit.get("image", [])],
+    }
+
+
 def lire(url):
-    adresse = url.split("?")[0].rstrip("/")
-    with urllib.request.urlopen(urllib.request.Request(adresse + ".js", headers={"User-Agent": "Mozilla/5.0"}), timeout=30) as r:
-        return adresse, json.load(r)
+    adresse = url.split("#")[0].split("?")[0].rstrip("/")
+    return adresse, (lire_boss(adresse) if "hugoboss.com" in adresse else lire_shopify(adresse))
 
 
 def preparer_photo(src, chemin):
-    src = ("https:" + src) if src.startswith("//") else src
-    src += ("&" if "?" in src else "?") + "width=1200"
-    with urllib.request.urlopen(urllib.request.Request(src, headers={"User-Agent": "Mozilla/5.0"}), timeout=60) as r:
+    with urllib.request.urlopen(urllib.request.Request(src, headers=NAVIGATEUR), timeout=60) as r:
         image = Image.open(io.BytesIO(r.read()))
     image.thumbnail((900, 900))
     if image.mode in ("RGBA", "LA", "P"):
@@ -139,34 +201,28 @@ def main():
     for n, lien in enumerate(liens, 1):
         try:
             adresse, d = lire(lien)
-        except Exception as e:   # pas une fiche Shopify, ou site injoignable
+        except Exception as e:   # pas une fiche lisible, ou site injoignable
             print(f"{lien} : illisible ({e})", file=sys.stderr)
             continue
-        champs = lire_description(d.get("description"))
-        coupe = champs.get("coupe", "").strip()
-        matiere = re.sub(r"(\d)\s*%", r"\1 %", champs.get("matiere", "")).strip()
+        matiere = re.sub(r"(\d)\s*%", r"\1 %", d["matiere"]).strip()
         matiere = matiere[:1].upper() + matiere[1:].lower()   # « 100 % Coton » → « 100 % coton »
-        # Les promos du site ne valent pas en magasin : toujours le prix normal.
-        prix, barre = d.get("price"), d.get("compare_at_price")
-        promo = isinstance(barre, int) and isinstance(prix, int) and barre > prix
-        ref = next((t for t in d.get("tags", []) if re.fullmatch(r"[A-Z]{0,4}\d{6,}[A-Z0-9]*", t)), "")   # 11018388D, 10117266DL32, STR1070123D
         piece = {
-            "marque": (d.get("vendor") or "")[:60] or None,
-            "categorie": categorie_de(d.get("type", ""), d.get("title", ""), d.get("handle", "").replace("-", " ")) or None,
-            "modele": (d.get("title") or "")[:120] or None,
-            "coupe": coupe[:120] or None,
-            "couleur": couleur_de(champs.get("couleur") or champs.get("coloris", ""))[:60] or None,
+            "marque": d["marque"][:60] or None,
+            "categorie": categorie_de(*d["textes"]) or None,
+            "modele": d["modele"][:120] or None,
+            "coupe": d["coupe"][:120] or None,
+            "couleur": d["couleur"][:60] or None,
             "matiere": matiere[:120] or None,
             "rayon": "homme",
-            "prix": round((barre if promo else prix) / 100, 2) if isinstance(prix, int) else None,
-            "ref": ref or None,
+            "prix": d["prix"],
+            "ref": d["ref"] or None,
             "lien": adresse,
             "reperes": {"nouveaute": False, "promo": False, "vitrine": False, "reseaux": False},
             "note": None,
             "creeLe": datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
         }
         images = []
-        for k, src in enumerate(d.get("images", [])[:nb_photos], 1):
+        for k, src in enumerate(d["images"][:nb_photos], 1):
             chemin = dossier / f"article-{n:02d}-photo-{k}.jpg"
             try:
                 preparer_photo(src, chemin)
