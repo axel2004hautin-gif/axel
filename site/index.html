@@ -660,6 +660,8 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
 .rp-placements .rp-nom { font-weight: 500; }
 .rp-placement-reste { margin: 0; min-height: 40px; }
 .rp-support { color: var(--gris); font-size: .85rem; text-align: right; }
+.rp-details summary { color: var(--argent); font-weight: 600; cursor: pointer; }
+.rp-details[open] summary { margin-bottom: 8px; }
 .rp-total { flex: 1 1 100%; margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
 .rp-total.negatif { color: var(--erreur); }
 .recherche-ops input { width: 100%; min-height: 44px; padding: 8px 14px; border: 1.5px solid var(--trait); border-radius: 10px; background: var(--fond); font: inherit; }
@@ -1997,13 +1999,19 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
       <label class="titre-champ">Le<input type="date" id="rp-date"></label>
     </div>
     <p class="aide" id="rp-periode"></p>
+    <label class="titre-champ">Prime d'activité attendue (€)<input type="text" inputmode="decimal" id="rp-attendu" placeholder="0"></label>
+    <p class="aide">Comptée d'avance : la CAF la verse quelques jours après la paie. Si elle est un peu plus grosse, la différence reste sur le compte.</p>
     <h3 class="rp-groupe">Charges fixes</h3>
     <p class="rp-fixes" id="rp-fixes"></p>
     <h3 class="rp-groupe">Épargne</h3>
     <div class="rp-lignes" id="rp-epargne"></div>
     <h3 class="rp-groupe">Enveloppes</h3>
-    <p class="aide">Ce que tu prévois de dépenser par catégorie jusqu'à la prochaine paie. Sous chaque nom : ce que tu as dépensé la fois d'avant.</p>
+    <p class="aide">Ce que tu prévois de dépenser jusqu'à la prochaine paie. « Dépenses variables » prend tout ce qui n'a pas sa propre enveloppe (restos, shopping, courses…). Sous chaque nom : ce que tu as dépensé la fois d'avant.</p>
     <div class="rp-lignes" id="rp-enveloppes"></div>
+    <details class="rp-details" id="rp-details">
+      <summary>Une enveloppe à part pour une catégorie</summary>
+      <div class="rp-lignes" id="rp-enveloppes-plus"></div>
+    </details>
   </form>
   <div class="fenetre-pied">
     <p class="rp-total" id="rp-total" aria-live="polite"></p>
@@ -6395,7 +6403,11 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
   const idValide = k => /^[\w-]{1,40}$/.test(k);
   // Une répartition : les enveloppes, l'épargne par objectif, et les placements (le montant pour chaque compte
   // d'investissement, sauf le premier qui reçoit le reste).
-  const lireRepartition = d => ({ enveloppes: montantsDe(d.enveloppes, c => NOM_CAT[c] && !HORS_DEPENSES.has(c)), epargne: montantsDe(d.epargne, idValide), placements: montantsDe(d.placements, idValide) });
+  // L'enveloppe « variables » prend toutes les dépenses qui n'ont pas leur propre enveloppe. « attendu » : la prime
+  // d'activité, comptée d'avance (elle tombe quelques jours après la paie).
+  const lireRepartition = d => ({ enveloppes: montantsDe(d.enveloppes, c => c === "variables" || (NOM_CAT[c] && !HORS_DEPENSES.has(c))), epargne: montantsDe(d.epargne, idValide), placements: montantsDe(d.placements, idValide),
+    attendu: nombreValide(d.attendu) && d.attendu > 0 ? arrondi2(d.attendu) : 0 });
+  const nomEnveloppe = c => (c === "variables" ? "Dépenses variables" : NOM_CAT[c]);
   const lireBudget = (id, d) => (MOIS_RE.test(id) && d && nombreValide(d.solde) && ISO_RE.test(d.le) ? { id, solde: arrondi2(d.solde), le: d.le, ...lireRepartition(d) } : null);
   const lirePaie = (id, d) => (MOIS_RE.test(id) && d && nombreValide(d.net) && d.net > 0
     ? { id, net: arrondi2(d.net), brut: nombreValide(d.brut) && d.brut > 0 ? arrondi2(d.brut) : null, heuresSup: nombreValide(d.heuresSup) && d.heuresSup >= 0 ? d.heuresSup : null, payeLe: ISO_RE.test(d.payeLe) ? d.payeLe : null } : null);
@@ -6464,7 +6476,9 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     return { pts, total, reste, part: Math.min(1, total / p.cible), moisRestants, parMois, sansRendement, r, rythme, arrivee };
   }
   const projetRoad = () => projetsTries().find(p => p.type === "comptes" && p.groupe === "investissement") || null;
-  const projetEpargne = () => projetsTries().find(p => p.type === "comptes" && p.groupe === "epargne") || null;
+  // Plusieurs objectifs sur les mêmes comptes (6 000 € au 1er janvier, puis le déménagement) : le premier pas encore atteint.
+  const objectifActif = groupe => { const l = projetsTries().filter(p => p.type === "comptes" && p.groupe === groupe); return l.find(p => avancee(p).reste > 0) || l[l.length - 1] || null; };
+  const projetEpargne = () => objectifActif("epargne");
 
   // ----- opérations, charges, budget -----
   const opsDu = cle => Object.entries((operations.docs[cle] || {}).ops || {}).map(([id, o]) => ({ id, cle, ...o, c: categorieDe(o) }));
@@ -6518,15 +6532,25 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     const lignes = chargesDuMois(cle).filter(c => !c.variable).map(c => { const o = payees.get(c.id); return { charge: c, op: o || null, montant: o ? -o.m : c.montant }; });
     const fixes = arrondi2(lignes.reduce((t, x) => t + x.montant, 0)), fixesAVenir = arrondi2(lignes.filter(x => !x.op).reduce((t, x) => t + x.montant, 0));
     const courantes = ops.filter(o => !HORS_DEPENSES.has(o.c) && !prises.has(o.id)), prevues = doc ? doc.enveloppes : {};
-    const enveloppes = CATS_DEPENSES.map(([c, nom]) => ({ c, nom, prevu: prevues[c] || 0, depense: depenseDe(courantes.filter(o => o.c === c)) })).filter(e => e.prevu || e.depense);
+    const parCategorie = Object.fromEntries(CATS_DEPENSES.map(([c]) => [c, depenseDe(courantes.filter(o => o.c === c))]));
+    // Une enveloppe par catégorie prévue ; « Dépenses variables » prend tout le reste (sinon, une dépense sans
+    // enveloppe est signalée).
+    const enveloppes = CATS_DEPENSES.filter(([c]) => prevues[c] || (!prevues.variables && parCategorie[c])).map(([c, nom]) => ({ c, nom, prevu: prevues[c] || 0, depense: parCategorie[c] }));
+    if (prevues.variables) {
+      const autres = CATS_DEPENSES.filter(([c]) => !prevues[c]);
+      enveloppes.unshift({ c: "variables", nom: "Dépenses variables", prevu: prevues.variables, depense: arrondi2(autres.reduce((t, [c]) => t + parCategorie[c], 0)),
+        detail: autres.filter(([c]) => parCategorie[c] > 0).sort((a, b) => parCategorie[b[0]] - parCategorie[a[0]]).map(([c, nom]) => `${nom.toLowerCase()} ${eur(parCategorie[c], 0)}`) });
+    }
     const depense = depenseDe(courantes);
+    // La prime d'activité attendue compte d'avance, jusqu'à ce que la CAF la verse.
+    const caf = somme(ops.filter(o => o.c === "revenus" && o.m > 0 && /\bcaf\b|prime d.?activite/.test(texteOp(o)))), attendu = doc ? doc.attendu : 0, attenteCaf = Math.max(0, arrondi2(attendu - caf));
     const deCote = ops.filter(o => o.c === "epargne" || o.c === "interne"), verse = -somme(deCote.filter(o => o.m < 0)), repris = somme(deCote.filter(o => o.m > 0));
     const prevu = doc ? arrondi2(Object.values(doc.epargne).reduce((t, v) => t + v, 0)) : 0, epargne = Math.max(verse, prevu);
-    const depart = doc ? arrondi2(doc.solde + rentrees) : null, reste = doc ? arrondi2(depart - fixes - epargne - depense) : null;
+    const depart = doc ? arrondi2(doc.solde + rentrees + attenteCaf) : null, reste = doc ? arrondi2(depart - fixes - epargne - depense) : null;
     const dansEnveloppes = arrondi2(enveloppes.reduce((t, e) => t + Math.max(0, e.prevu - e.depense), 0));
     const debut = debutPeriode(cle), fin = finPeriode(cle), auj = versIso(aujourdhui());
     const joursRestants = auj >= debut && auj <= fin ? Math.round((depuisIso(fin) - depuisIso(auj)) / JOUR_MS) + 1 : null;
-    return { cle, doc, debut, fin, ops, rentrees, lignes, fixes, fixesAVenir, enveloppes, depense, verse, repris, prevu, epargne, depart, reste, dansEnveloppes, joursRestants, passee: auj > fin };
+    return { cle, doc, debut, fin, ops, rentrees, caf, attendu, attenteCaf, lignes, fixes, fixesAVenir, parCategorie, enveloppes, depense, verse, repris, prevu, epargne, depart, reste, dansEnveloppes, joursRestants, passee: auj > fin };
   }
 
   // ----- la paie attendue -----
@@ -6735,8 +6759,9 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
       const r = reglagesArgent(), plan = r.plan[cle], env = plan ? Object.entries(plan.enveloppes) : [];
       $("bu-vide-plan").hidden = !plan;
       if (plan) $("bu-vide-plan").textContent = "Le plan pour cette paie, déjà prérempli : " + [
+        plan.attendu ? `${eur(plan.attendu, 0)} de prime d'activité comptés d'avance` : "",
         ...Object.entries(plan.epargne).filter(([id]) => projets.docs[id]).map(([id, v]) => `${eur(v, 0)} pour ${projets.docs[id].nom}`),
-        env.length ? `${eur(env.reduce((t, [, v]) => t + v, 0), 0)} d'enveloppes (${env.map(([c, v]) => `${NOM_CAT[c].toLowerCase()} ${eur(v, 0)}`).join(", ")})` : "",
+        env.length ? `${eur(env.reduce((t, [, v]) => t + v, 0), 0)} d'enveloppes (${env.map(([c, v]) => `${nomEnveloppe(c).toLowerCase()} ${eur(v, 0)}`).join(", ")})` : "",
         projets.docs[r.resteVers] ? `et le reste pour ${projets.docs[r.resteVers].nom}${texteDePlacements(projets.docs[r.resteVers], plan.placements, null)}` : "",
       ].filter(Boolean).join(", ") + ".";
     } else {
@@ -6760,8 +6785,9 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
         tete.append(nom, element("span", "enveloppe-chiffres", e.prevu ? `${eur(e.depense, 0)} / ${eur(e.prevu, 0)}` : eur(e.depense, 0)));
         const barre = element("div", "progression");
         barreProgression(barre, part, `${e.nom} : ${eur(e.depense)} dépensés${e.prevu ? ` sur ${eur(e.prevu)}` : ""}`);
-        li.append(tete, barre, element("p", "enveloppe-etat", !e.prevu ? "⚠ Pas d'enveloppe : pris sur ce qui n'est pas réparti"
-          : depassee ? `⚠ Dépassée de ${eur(e.depense - e.prevu)}` : presque ? `Presque vide : ${eur(e.prevu - e.depense)} restants` : `Reste ${eur(e.prevu - e.depense)}`));
+        li.append(tete, barre, element("p", "enveloppe-etat", (!e.prevu ? "⚠ Pas d'enveloppe : pris sur ce qui n'est pas réparti"
+          : depassee ? `⚠ Dépassée de ${eur(e.depense - e.prevu)}` : presque ? `Presque vide : ${eur(e.prevu - e.depense)} restants` : `Reste ${eur(e.prevu - e.depense)}`)
+          + (e.detail && e.detail.length ? ` · ${e.detail.slice(0, 3).join(", ")}` : "")));
         return li;
       });
       if (!env.length) env.push(element("li", "liste-vide", "Aucune enveloppe : touche « Modifier la répartition » pour en prévoir."));
@@ -6772,7 +6798,9 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
         : libre <= -0.5 ? `Tes enveloppes prévoient ${eur(-libre)} de plus que ce qu'il te reste : quelque chose a dépassé.` : "Tout ce qui reste est dans tes enveloppes.";
       // Le point de départ.
       const dep = [ligneArgent("Solde après la paie", `le ${jourMois(b.doc.le)}`, eur(b.doc.solde))];
-      if (b.rentrees) dep.push(ligneArgent("Rentrées depuis", "CAF, ventes, remboursements…", eur(b.rentrees)));
+      if (b.attendu || b.caf) dep.push(ligneArgent("Prime d'activité (CAF)", b.attenteCaf ? (b.caf ? `${eur(b.caf)} reçus, ${eur(b.attenteCaf)} encore attendus` : "attendue vers le 5, comptée d'avance") : `reçue${b.attendu ? ` (${eur(b.attendu)} prévus)` : ""}`, eur(b.caf + b.attenteCaf)));
+      const autresRentrees = arrondi2(b.rentrees - b.caf);
+      if (autresRentrees) dep.push(ligneArgent("Autres rentrées", "ventes, remboursements…", eur(autresRentrees)));
       dep.push(ligneArgent("Total", "", eur(b.depart), null, "total"));
       $("bu-revenus").replaceChildren(...dep);
       // L'épargne : prévue par objectif, versée depuis la paie.
@@ -6964,7 +6992,7 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
   document.querySelectorAll("[data-mois-argent]").forEach(b => b.addEventListener("click", () => { moisArgent = moisDecale(moisVu(), Number(b.dataset.moisArgent)); filtreCat = null; rendreBudget(); rendreDepenses(); }));
   $("de-recherche").addEventListener("input", e => { rechercheOps = e.target.value; rendreDepenses(); });
   // Une enveloppe ouvre ses dépenses.
-  $("bu-enveloppes").addEventListener("click", e => { const a = e.target.closest("[data-enveloppe]"); if (a) { filtreCat = a.dataset.enveloppe; rechercheOps = $("de-recherche").value = ""; rendreDepenses(); } });
+  $("bu-enveloppes").addEventListener("click", e => { const a = e.target.closest("[data-enveloppe]"); if (a) { filtreCat = a.dataset.enveloppe === "variables" ? null : a.dataset.enveloppe; rechercheOps = $("de-recherche").value = ""; rendreDepenses(); } });
   document.querySelectorAll("[data-mois-paie]").forEach(b => b.addEventListener("click", () => { moisPaie = moisDecale(moisPaie, Number(b.dataset.moisPaie)); rendrePaie(); }));
   $("de-mois-barres").addEventListener("click", e => { const b = e.target.closest("[data-cle]"); if (b) { moisArgent = b.dataset.cle; filtreCat = null; rendreBudget(); rendreDepenses(); } });
   $("pa-historique").addEventListener("click", e => { const b = e.target.closest("[data-cle]"); if (b) { moisPaie = b.dataset.cle; rendrePaie(); } });
@@ -7153,15 +7181,20 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     $("rp-titre").textContent = `Budget ${deMois(cle)}`;
     $("rp-periode").textContent = ISO_RE.test(d) ? `Du ${jourMois(d)} au ${jourMois(finPeriode(cle))}, jusqu'à la paie suivante.` : "";
     $("rp-fixes").textContent = fixes.length ? `${fixes.map(c => `${c.nom} ${eur(c.montant)}`).join(" · ")} : ${eur(fixes.reduce((t, c) => t + c.montant, 0))}, comptées d'office.` : "Aucune charge fixe ce mois-là.";
-    const passe = budgetDu(moisDecale(cle, -1));
-    $("rp-enveloppes").querySelectorAll("[data-env]").forEach(champ => {
-      const e = passe.enveloppes.find(x => x.c === champ.dataset.env), indice = champ.closest(".rp-ligne").querySelector(".rp-indice");
-      if (indice) indice.textContent = e && e.depense ? `${eur(e.depense, 0)} la fois d'avant` : "";
+    // Ce qui a été dépensé la fois d'avant : par catégorie, et pour « Dépenses variables », tout ce qui n'a pas
+    // son enveloppe ici.
+    const passe = budgetDu(moisDecale(cle, -1)), champs = [...$("rp-form").querySelectorAll("[data-env]")];
+    const dediees = new Set(champs.filter(c => c.dataset.env !== "variables" && c.value.trim()).map(c => c.dataset.env));
+    champs.forEach(champ => {
+      const c = champ.dataset.env, indice = champ.closest(".rp-ligne").querySelector(".rp-indice");
+      const v = c === "variables" ? CATS_DEPENSES.filter(([x]) => !dediees.has(x)).reduce((t, [x]) => t + passe.parCategorie[x], 0) : passe.parCategorie[c];
+      if (indice) indice.textContent = v > 0 ? `${eur(v, 0)} la fois d'avant` : "";
     });
     totalRepartition();
   }
   function totalRepartition() {
-    const solde = montantChamp($("rp-solde").value), cle = cleRepartition();
+    const soldeSeul = montantChamp($("rp-solde").value), cle = cleRepartition();
+    const solde = soldeSeul == null ? null : arrondi2(soldeSeul + (lireMontant($("rp-attendu").value) || 0));
     const fixes = chargesDuMois(cle).filter(c => !c.variable).reduce((t, c) => t + c.montant, 0);
     // L'objectif qui reçoit le reste se remplit tout seul, tant qu'il n'a pas été tapé à la main.
     const auto = resteAuto && $("rp-form").querySelector(`[data-ep="${resteAuto}"]`);
@@ -7177,7 +7210,7 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     }
     const t = $("rp-total");
     t.classList.toggle("negatif", reste != null && reste < 0);
-    t.textContent = reste == null ? "Indique ton solde pour voir ce qu'il reste à répartir." : reste < 0 ? `Tu répartis ${eur(-reste)} de plus que ton solde.` : `Reste à répartir : ${eur(reste)}`;
+    t.textContent = reste == null ? "Indique ton solde pour voir ce qu'il reste à répartir." : reste < 0 ? `Tu répartis ${eur(-reste)} de plus que ce que tu as.` : `Reste à répartir : ${eur(reste)}`;
   }
   function ouvrirRepartition() {
     const cle = moisVu(), doc = budgets.docs[cle] || null, r = reglagesArgent(), plan = doc ? null : r.plan[cle] || null, auj = versIso(aujourdhui());
@@ -7188,11 +7221,14 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     // Le point de départ : le budget lui-même, sinon le plan de cette paie, sinon le budget d'avant (sans les
     // objectifs déjà atteints), sinon les charges qui varient (l'essence).
     const avant = doc || plan ? null : budgetAvant(cle);
-    const variables = Object.fromEntries(Object.values(charges.docs).filter(c => c.variable).map(c => [c.categorie, c.montant]));
+    const chargesVariables = Object.fromEntries(Object.values(charges.docs).filter(c => c.variable).map(c => [c.categorie, c.montant]));
     const source = doc || plan || (avant && { ...avant, epargne: Object.fromEntries(Object.entries(avant.epargne).filter(([id]) => projets.docs[id] && avancee(projets.docs[id]).reste > 0)) })
-      || { enveloppes: variables, epargne: {}, placements: {} };
+      || { enveloppes: chargesVariables, epargne: {}, placements: {}, attendu: 0 };
     const ep = source.epargne, env = source.enveloppes;
-    const objectifs = projetsTries().filter(p => p.type === "comptes"), placements = comptesDu("investissement");
+    $("rp-attendu").value = versChamp(source.attendu);
+    // Les objectifs : ceux qui reçoivent quelque chose, celui qui prend le reste, et l'objectif en cours de chaque
+    // groupe de comptes (pas les étapes suivantes sur les mêmes comptes).
+    const objectifs = projetsTries().filter(p => p.type === "comptes" && (ep[p.id] || p.id === resteAuto || (objectifActif(p.groupe) || {}).id === p.id)), placements = comptesDu("investissement");
     $("rp-epargne").replaceChildren(...(objectifs.length ? objectifs.flatMap(p => {
       const av = avancee(p), ligne = ligneRepartition(p.nom, p.id === resteAuto ? "le reste, calculé tout seul" : av.parMois ? `${eur(av.parMois, 0)} par paie pour tenir la date` : "", "ep", p.id, p.id === resteAuto ? 0 : ep[p.id]);
       if (p.groupe !== "investissement" || placements.length < 2) return [ligne];
@@ -7205,7 +7241,12 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
       bloc.append(premier, ...placements.slice(1).map(c => ligneRepartition(c.nom, c.support, "pl", c.id, source.placements[c.id])));
       return [ligne, bloc];
     }) : [element("p", "aide", "Pas encore d'objectif d'épargne.")]));
-    $("rp-enveloppes").replaceChildren(...CATS_DEPENSES.map(([c, nom]) => ligneRepartition(nom, " ", "env", c, env[c])));
+    // Les enveloppes : « Dépenses variables », l'essence et celles déjà prévues ; les autres catégories à part.
+    const enTete = ["variables", "transport", ...CATS_DEPENSES.map(([c]) => c).filter(c => c !== "transport" && env[c])];
+    const ligneEnv = c => ligneRepartition(nomEnveloppe(c), " ", "env", c, env[c]);
+    $("rp-enveloppes").replaceChildren(...enTete.map(ligneEnv));
+    $("rp-enveloppes-plus").replaceChildren(...CATS_DEPENSES.map(([c]) => c).filter(c => !enTete.includes(c)).map(ligneEnv));
+    $("rp-details").open = false;
     $("rp-supprimer").hidden = !doc;
     desarmer($("rp-supprimer"), "Supprimer");
     $("rp-erreur").hidden = true;
@@ -7224,8 +7265,9 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
   $("rp-form").addEventListener("submit", e => e.preventDefault());
   $("rp-enregistrer").addEventListener("click", async () => {
     const erreur = (t, champ) => { $("rp-erreur").textContent = t; $("rp-erreur").hidden = false; if (champ) { champ.classList.add("en-erreur"); champ.focus(); } };
-    const solde = montantChamp($("rp-solde").value), le = $("rp-date").value;
+    const solde = montantChamp($("rp-solde").value), le = $("rp-date").value, attendu = $("rp-attendu").value.trim() ? lireMontant($("rp-attendu").value) : 0;
     if (solde == null) return erreur("Indique le solde de ton compte après la paie, par exemple 1 850.", $("rp-solde"));
+    if (attendu == null) return erreur("La prime d'activité est un montant, par exemple 100.", $("rp-attendu"));
     if (!ISO_RE.test(le)) return erreur("Indique le jour où la paie est tombée.", $("rp-date"));
     const lire = attribut => {
       const m = {};
@@ -7241,7 +7283,7 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     if (!enveloppes || !epargne || !placements) return;
     const cle = moisDeBudget(le);
     try {
-      await budgets.ecrire(cle, { solde, le, enveloppes, epargne, placements, modifieLe: new Date().toISOString() });
+      await budgets.ecrire(cle, { solde, le, enveloppes, epargne, placements, ...(attendu ? { attendu } : {}), modifieLe: new Date().toISOString() });
       if (budgetEdite && budgetEdite !== cle) await budgets.ecrire(budgetEdite, null);
       moisArgent = cle;
       fermer($("fenetre-repartition"));
