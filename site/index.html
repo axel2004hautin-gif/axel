@@ -84,18 +84,28 @@ h1:focus { outline: none; }
 main { flex: 1 0 auto; display: flex; flex-direction: column; }
 [data-vue] { flex: 1 0 auto; }
 
-/* En-tête : le titre, puis le bandeau marine des rubriques */
-.titre-ligne { padding-block: clamp(12px, 2.4vh, 22px) clamp(10px, 1.8vh, 16px); }
-.titre-site { display: inline-block; font-family: var(--f-display); font-weight: 800; font-stretch: 112%; font-size: clamp(1.55rem, min(4.2vw, 5.2vh), 2.75rem); line-height: 1.05; letter-spacing: -.015em; color: var(--marine); text-decoration: none; }
+/* En-tête : une barre marine fine (le nom, l'accueil, les rubriques), puis les sous-rubriques de la page.
+   Sur téléphone, les rubriques passent dans une barre d'onglets en bas de l'écran. */
+.titre-site { align-self: center; margin-right: 14px; padding: 6px 0; font-family: var(--f-display); font-weight: 850; font-stretch: 112%; font-size: 1.45rem; line-height: 1; letter-spacing: -.015em; color: var(--sur-marine); text-decoration: none; }
 .bande { position: relative; z-index: 15; background: var(--marine); }
 .bande-dedans { display: flex; gap: 4px; }
 .rubrique-menu { display: flex; }
-.bande a { position: relative; padding: clamp(11px, 1.8vh, 15px) 24px; color: var(--sur-marine-2); font: 600 1.05rem/1 var(--f-body); text-decoration: none; }
+.bande a { position: relative; padding: 15px 20px; color: var(--sur-marine-2); font: 600 1.02rem/1 var(--f-body); text-decoration: none; }
+.bande a.titre-site { padding: 6px 0; color: var(--sur-marine); font: 850 1.45rem/1 var(--f-display); font-stretch: 112%; }
 .bande a:hover { color: var(--sur-marine); }
 .bande a[aria-current="page"] { background: var(--marine-2); color: var(--sur-marine); }
 .bande a[aria-current="page"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: var(--sur-marine); }
 .bande a:focus-visible { outline-color: var(--sur-marine); outline-offset: -4px; }
-@media (max-width: 599px) { .bande-dedans { gap: 0; } .rubrique-menu { flex: 1; } .bande a { flex: 1; padding-inline: 8px; text-align: center; } }
+.onglets-bas { display: none; }
+@media (max-width: 719px) {
+  .bande { display: none; }
+  .onglets-bas { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding-bottom: env(safe-area-inset-bottom, 0px); border-top: 1px solid var(--trait); background: var(--fond); box-shadow: 0 -6px 18px rgba(15, 25, 50, .08); }
+  .onglets-bas a { position: relative; display: grid; justify-items: center; gap: 3px; padding: 8px 4px 7px; color: var(--gris); font: 600 .78rem/1.1 var(--f-body); text-decoration: none; }
+  .onglets-bas a[aria-current="page"] { color: var(--c); }
+  .onglets-bas a[aria-current="page"]::before { content: ""; position: absolute; top: 0; left: 28%; right: 28%; height: 3px; border-radius: 0 0 3px 3px; background: currentColor; }
+  .onglets-bas svg { width: 25px; height: 25px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .app { padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px)); }
+}
 /* Sous-rubriques : un bandeau clair sous le bandeau marine, au survol (ou au clavier) de la rubrique */
 .sous-bande { position: absolute; left: 0; right: 0; top: 100%; display: none; background: var(--c-doux); border-bottom: 1px solid var(--trait); box-shadow: 0 10px 24px rgba(15, 25, 50, .14); }
 @media (hover: hover) { .rubrique-menu:hover .sous-bande { display: block; } }
@@ -125,9 +135,9 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 }
 
 /* Accueil */
-.accueil { display: grid; gap: 20px; padding-block: 28px 56px; }
+.accueil { display: grid; gap: 20px; padding-block: 24px 48px; }
 .accueil-tete { display: grid; gap: 6px; }
-.accueil-tete h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(1.5rem, 3.4vw, 2rem); line-height: 1.1; }
+.accueil-tete h1 { font-family: var(--f-display); font-weight: 850; font-stretch: 110%; font-size: clamp(1.6rem, 3.6vw, 2.4rem); line-height: 1.05; letter-spacing: -.015em; color: var(--marine); }
 .titre-rubriques { margin-top: 8px; font-family: var(--f-display); font-weight: 800; font-size: clamp(1.25rem, 2.6vw, 1.5rem); line-height: 1.1; }
 .r-perso { --c: var(--ferie); --c-doux: var(--ferie-doux); }
 .accueil-resume { color: var(--gris); font-size: 1.05rem; }
@@ -283,9 +293,6 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 }
 /* Petit écran : l'en-tête se resserre pour laisser la place au planning */
 @media (max-width: 699px) and (max-height: 660px) {
-  .titre-ligne { padding-block: 8px 6px; }
-  .titre-site { font-size: 1.4rem; }
-  .bande a { padding-block: 9px; }
   .sous-nav a { padding-block: 7px; }
   .planning { grid-template-rows: auto minmax(calc(var(--creneaux, 18) * 12px), 1fr); }
   .bilan .valeur { font-size: 1.2rem; }
@@ -384,18 +391,19 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 .legende .cadre-actuel { display: inline-block; width: 12px; height: 12px; margin-right: 6px; border: 2px solid var(--marine); border-radius: 3px; vertical-align: -1px; }
 
 /* Page d'une rubrique : ses sous-rubriques en cartes */
-.sous-rubriques { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); gap: 16px; }
-.carte-sous { display: flex; flex-direction: column; gap: 14px; height: 100%; padding: 22px; border: 1.5px solid transparent; border-radius: 12px; background: var(--c-doux); text-decoration: none; transition: border-color .15s ease; }
+/* Les pages des rubriques : une grille serrée ; chaque carte montre l'essentiel de sa sous-rubrique. */
+.sous-rubriques { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 12px; }
+.carte-sous { display: flex; flex-direction: column; gap: 10px; height: 100%; padding: 16px 18px 14px; border: 1.5px solid transparent; border-radius: 12px; background: var(--c-doux); text-decoration: none; transition: border-color .15s ease; }
 .carte-sous:hover { border-color: var(--c); }
-.carte-sous-titre { font-family: var(--f-display); font-weight: 800; font-stretch: 108%; font-size: 1.6rem; line-height: 1.05; color: var(--c); }
-.carte-sous-texte { color: var(--gris); }
+.carte-sous-titre { font-family: var(--f-display); font-weight: 800; font-stretch: 108%; font-size: 1.25rem; line-height: 1.1; color: var(--c); }
+.carte-sous-texte { display: none; }
 .carte-sous-ligne { font-weight: 600; }
-.carte-sous-pied { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 12px; margin-top: auto; padding-top: 12px; border-top: 1px solid var(--trait); border-top-color: color-mix(in srgb, var(--c) 28%, transparent); font: 500 .8rem/1.4 var(--f-mono); color: var(--gris); }
+.carte-sous-pied { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 12px; margin-top: auto; padding-top: 10px; border-top: 1px solid var(--trait); border-top-color: color-mix(in srgb, var(--c) 28%, transparent); font: 500 .8rem/1.4 var(--f-mono); color: var(--gris); }
 .carte-sous:hover .fleche { transform: translateX(3px); }
 /* La semaine en miniature dans la carte « Mon planning » */
 .mini { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
 .mini-jour { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.mini-col { position: relative; display: block; width: 100%; height: 88px; border: 1px solid var(--trait); border-radius: 4px; overflow: hidden; background: var(--fond); }
+.mini-col { position: relative; display: block; width: 100%; height: 60px; border: 1px solid var(--trait); border-radius: 4px; overflow: hidden; background: var(--fond); }
 .mini-col.repos { background: repeating-linear-gradient(135deg, var(--repos-doux) 0 6px, var(--repos-raie) 6px 12px); }
 .mini-col.conge { background: repeating-linear-gradient(135deg, var(--conge-doux) 0 6px, var(--conge-raie) 6px 12px); }
 .mini-col.ferie { background: repeating-linear-gradient(135deg, var(--ferie-doux) 0 6px, var(--ferie-raie) 6px 12px); }
@@ -413,7 +421,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 /* To-do list */
 .todo { display: grid; gap: 20px; padding-block: 28px 56px; }
 .todo-tete, .page-tete { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 8px 24px; }
-.todo-tete h1, .page-tete h1 { margin-top: 6px; font-family: var(--f-display); font-weight: 850; font-stretch: 120%; font-size: clamp(2rem, 6vw, 3.25rem); line-height: .95; letter-spacing: -.02em; color: var(--marine); }
+.todo-tete h1, .page-tete h1, .rubrique-tete h1 { font-family: var(--f-display); font-weight: 850; font-stretch: 110%; font-size: clamp(1.6rem, 3.6vw, 2.4rem); line-height: 1.05; letter-spacing: -.015em; color: var(--marine); }
 .todo-compte { font: 600 .85rem/1.4 var(--f-mono); color: var(--gris); }
 .todo-compte .rouge { color: var(--rouge); }
 
@@ -651,8 +659,8 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 .carte-lien:hover { border-color: var(--argent); }
 .page-argent { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; padding-block: 28px 56px; }
 .mois-nav { display: inline-flex; align-items: center; gap: 6px; }
-.mois-nav button { display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 1.5px solid var(--trait); border-radius: 50%; background: var(--fond); color: var(--argent); font-size: 1.4rem; line-height: 1; }
-.mois-nav button:hover { border-color: var(--argent); }
+.mois-nav button { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 1.5px solid var(--trait); border-radius: 50%; background: var(--fond); color: var(--c); }
+.mois-nav button:hover { border-color: var(--c); background: var(--c-doux); }
 .mois-nav span { min-width: 9.5em; font-family: var(--f-display); font-weight: 750; font-size: 1.1rem; text-align: center; }
 .budget-reste { font-family: var(--f-display); font-weight: 850; font-size: clamp(2rem, 6vw, 2.8rem); line-height: 1.05; color: var(--argent); font-variant-numeric: tabular-nums; }
 .lignes-argent { display: grid; margin: 0; padding: 0; list-style: none; }
@@ -711,8 +719,12 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
 .rp-total.negatif { color: var(--erreur); }
 .recherche-ops input { width: 100%; min-height: 44px; padding: 8px 14px; border: 1.5px solid var(--trait); border-radius: 10px; background: var(--fond); font: inherit; }
 .recherche-ops input:focus-visible { outline: 2px solid var(--argent); outline-offset: 1px; border-color: var(--argent); }
-.depenses-actions { display: grid; gap: 12px; padding: 14px; border: 1.5px solid var(--trait); border-radius: 12px; background: var(--argent-doux); }
-.depenses-actions .bouton-fichier { justify-self: start; }
+.de-tete { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 12px 20px; }
+.de-chiffres { display: grid; gap: 6px; }
+.de-boutons { display: flex; flex-wrap: wrap; gap: 8px; }
+.de-boutons .bouton-fichier { display: inline-flex; align-items: center; }
+#fenetre-depense .saisie-depense-ligne { grid-template-columns: minmax(0, 8em) minmax(0, 1fr) minmax(0, 11em); }
+@media (max-width: 599px) { #fenetre-depense .saisie-depense-ligne { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .de-boutons { width: 100%; } .de-boutons > * { flex: 1 1 auto; justify-content: center; } }
 .saisie-depense { display: grid; gap: 10px; }
 .saisie-depense-ligne { display: grid; grid-template-columns: minmax(0, 8em) minmax(0, 1fr) minmax(0, 11em) auto; gap: 10px; }
 .saisie-depense-ligne input { width: 100%; min-width: 0; }
@@ -804,6 +816,28 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
 .lien-discret { padding: 4px 0; border: 0; background: none; color: var(--marine); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 .groupes-pieces { display: grid; gap: 28px; }
 .groupe-pieces { display: grid; gap: 14px; }
+details.groupe-pieces { display: block; }
+.groupe-pieces > summary { list-style: none; cursor: pointer; }
+.groupe-pieces > summary::-webkit-details-marker { display: none; }
+.groupe-pieces > summary h2::after { content: "▾"; margin-left: auto; color: var(--gris); font-size: 1rem; transition: transform .15s ease; }
+.groupe-pieces:not([open]) > summary h2::after { transform: rotate(-90deg); }
+.groupe-pieces:not([open]) > summary h2 { border-bottom-width: 1px; border-bottom-color: var(--trait); }
+.groupe-pieces[open] > summary { margin-bottom: 14px; }
+.groupes-pieces:has(details) { gap: 18px; }
+.gr-replier { display: flex; justify-content: flex-end; gap: 16px; }
+.gr-filtres-bouton { display: none; }
+@media (max-width: 719px) {
+  .gr-filtres-bouton { display: inline-flex; flex: 0 0 auto; }
+  .filtres:not(.ouverts) .filtres-plus, .filtres:not(.ouverts) #gr-marque { display: none; }
+  .filtres-ligne input[type="search"] { flex-basis: 0; }
+  .filtres-ligne select { flex: 1 1 100%; }
+  .catalogue .grille-pieces { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 8px; }
+  .catalogue .piece-marque { margin-top: 4px; font-size: .6rem; }
+  .catalogue .piece-modele { font-size: .85rem; }
+  .catalogue .piece-ligne { font-size: .78rem; }
+  .barre-selection { bottom: calc(60px + env(safe-area-inset-bottom, 0px)); padding-bottom: 0; }
+}
+.filtres-plus { display: grid; gap: 10px; min-width: 0; }
 .groupe-pieces h2 { display: flex; align-items: baseline; gap: 10px; padding-bottom: 8px; border-bottom: 2px solid var(--marine); font-family: var(--f-display); font-weight: 800; font-size: 1.3rem; line-height: 1.2; color: var(--marine); }
 .grille-pieces { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); gap: 18px 14px; }
 @media (max-width: 479px) { .grille-pieces { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 10px; } }
@@ -1070,10 +1104,11 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
 .rayons-vides { display: grid; gap: 10px; }
 
 /* Argent et Sport : rubriques encore à construire */
-.rubrique { display: grid; gap: 24px; padding-block: 32px 56px; }
-.rubrique-tete { display: grid; gap: 8px; }
-.rubrique-tete h1 { font-family: var(--f-display); font-weight: 850; font-stretch: 120%; font-size: clamp(2.25rem, 7vw, 3.75rem); line-height: .95; letter-spacing: -.02em; color: var(--c); }
-.chapo { max-width: 34em; font-size: 1.15rem; line-height: 1.45; color: var(--gris); }
+.rubrique { display: grid; gap: 18px; padding-block: 24px 48px; }
+.rubrique-tete { display: grid; gap: 4px; }
+.rubrique-tete h1 { color: var(--c); }
+.chapo { max-width: 40em; color: var(--gris); }
+@media (max-width: 719px) { .rubrique .chapo { display: none; } }
 .section-tete { display: grid; gap: 4px; }
 .section-tete h2 { font-family: var(--f-display); font-weight: 750; font-size: 1.4rem; line-height: 1.15; }
 .section-tete p { color: var(--gris); }
@@ -1093,11 +1128,10 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
 <div class="app">
 
 <header>
-  <div class="cadre titre-ligne">
-    <a class="titre-site" href="#accueil" data-aller="accueil">Tableau de bord Axel</a>
-  </div>
   <nav class="bande" aria-label="Rubriques">
     <div class="cadre bande-dedans">
+      <a class="titre-site" href="#accueil" aria-label="Tableau de bord Axel : l'accueil">Axel</a>
+      <a href="#accueil" data-aller="accueil">Accueil</a>
       <div class="rubrique-menu">
         <a href="#travail" data-aller="travail">Travail</a>
         <div class="sous-bande" role="group" aria-label="Sous-rubriques de Travail">
@@ -1213,7 +1247,6 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
   <section class="r-travail" data-vue="travail" aria-labelledby="titre-travail" hidden>
     <div class="cadre rubrique">
       <div class="rubrique-tete">
-        <p class="eyebrow">Rubrique 1 sur 3</p>
         <h1 id="titre-travail" tabindex="-1">Travail</h1>
         <p class="chapo">Tout ce qui touche à mon boulot chez Blue Box.</p>
       </div>
@@ -1269,7 +1302,7 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     <div class="cadre travail">
       <div class="semaine-nav">
         <button class="fleche-semaine" id="semaine-prec" type="button" aria-label="Semaine précédente">
-          <svg class="picto" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6l-6 6 6 6M18 6l-6 6 6 6"/></svg>
+          <svg class="picto" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6l-6 6 6 6"/></svg>
         </button>
         <button class="semaine-titre" id="ouvrir-semaines" type="button" aria-haspopup="dialog">
           <span class="invisible">Choisir une semaine. Affichée :</span>
@@ -1281,7 +1314,7 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
           </span>
         </button>
         <button class="fleche-semaine" id="semaine-suiv" type="button" aria-label="Semaine suivante">
-          <svg class="picto" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6l6 6-6 6M6 6l6 6-6 6"/></svg>
+          <svg class="picto" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 6l6 6-6 6"/></svg>
         </button>
       </div>
 
@@ -1310,7 +1343,6 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     <div class="cadre todo">
       <div class="todo-tete">
         <div>
-          <p class="eyebrow">Travail</p>
           <h1 id="titre-todo" tabindex="-1">To-do list</h1>
         </div>
         <p class="todo-compte" id="todo-compte"></p>
@@ -1357,7 +1389,6 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     <div class="cadre catalogue">
       <div class="page-tete">
         <div>
-          <p class="eyebrow">Travail</p>
           <h1 id="titre-garde-robe" tabindex="-1">Garde-robe Blue Box</h1>
         </div>
         <div class="page-tete-actions">
@@ -1369,15 +1400,19 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
       </div>
       <nav class="onglets-gr" aria-label="Garde-robe"></nav>
 
-      <div class="filtres champs-tache" role="search">
+      <div class="filtres champs-tache" id="gr-filtres" role="search">
         <div class="filtres-ligne">
           <input type="search" id="gr-recherche" placeholder="Chercher un modèle, une marque, une couleur…" aria-label="Chercher une pièce">
+          <button class="bouton-second gr-filtres-bouton" type="button" id="gr-filtres-bouton" aria-expanded="false" aria-controls="gr-filtres-plus">Filtres</button>
           <select id="gr-marque" aria-label="Marque"></select>
         </div>
-        <div class="puces-filtre" id="gr-categories" role="group" aria-label="Catégorie"></div>
-        <div class="puces-filtre" id="gr-teintes" role="group" aria-label="Couleur"></div>
-        <div class="puces-filtre" id="gr-reperes" role="group" aria-label="Repères"></div>
+        <div class="filtres-plus" id="gr-filtres-plus">
+          <div class="puces-filtre" id="gr-categories" role="group" aria-label="Catégorie"></div>
+          <div class="puces-filtre" id="gr-teintes" role="group" aria-label="Couleur"></div>
+          <div class="puces-filtre" id="gr-reperes" role="group" aria-label="Repères"></div>
+        </div>
       </div>
+      <div class="gr-replier" id="gr-replier" hidden><button class="lien-discret" type="button" id="gr-tout-deplier">Tout déplier</button><button class="lien-discret" type="button" id="gr-tout-replier">Tout replier</button></div>
 
       <p class="resultat" id="gr-resultat"></p>
       <div class="groupes-pieces" id="gr-grille"></div>
@@ -1517,7 +1552,6 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     <div class="cadre agenda">
       <div class="page-tete">
         <div>
-          <p class="eyebrow">Travail</p>
           <h1 id="titre-calendrier" tabindex="-1">Calendrier commercial</h1>
         </div>
         <div class="page-tete-actions">
@@ -1547,7 +1581,6 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     <div class="cadre objectifs">
       <div class="page-tete">
         <div>
-          <p class="eyebrow">Travail</p>
           <h1 id="titre-objectifs" tabindex="-1">Objectifs</h1>
         </div>
         <div class="page-tete-actions">
@@ -1600,7 +1633,6 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
   <section class="r-argent" data-vue="argent" aria-labelledby="titre-argent" hidden>
     <div class="cadre rubrique argent">
       <div class="rubrique-tete">
-        <p class="eyebrow">Rubrique 2 sur 3</p>
         <h1 id="titre-argent" tabindex="-1">Argent</h1>
         <p class="chapo">Mon budget, mes dépenses, ma paie et mon épargne, au même endroit.</p>
       </div>
@@ -1681,10 +1713,9 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     <div class="cadre page-argent">
       <div class="page-tete">
         <div>
-          <p class="eyebrow">Argent</p>
           <h1 id="titre-budget" tabindex="-1">Budget du mois</h1>
         </div>
-        <div class="mois-nav"><button type="button" data-mois-argent="-1" aria-label="Mois précédent">‹</button><span id="bu-mois"></span><button type="button" data-mois-argent="1" aria-label="Mois suivant">›</button></div>
+        <div class="mois-nav"><button type="button" data-mois-argent="-1" aria-label="Mois précédent"><svg class="picto" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6l-6 6 6 6"/></svg></button><span id="bu-mois"></span><button type="button" data-mois-argent="1" aria-label="Mois suivant"><svg class="picto" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 6l6 6-6 6"/></svg></button></div>
       </div>
       <section class="carte-argent budget-vide" id="bu-vide" aria-labelledby="bu-vide-titre" hidden>
         <p class="eyebrow">Pour commencer</p>
@@ -1728,33 +1759,23 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     <div class="cadre page-argent">
       <div class="page-tete">
         <div>
-          <p class="eyebrow">Argent</p>
           <h1 id="titre-depenses" tabindex="-1">Dépenses</h1>
         </div>
-        <div class="mois-nav"><button type="button" data-mois-argent="-1" aria-label="Mois précédent">‹</button><span id="de-mois"></span><button type="button" data-mois-argent="1" aria-label="Mois suivant">›</button></div>
+        <div class="mois-nav"><button type="button" data-mois-argent="-1" aria-label="Mois précédent"><svg class="picto" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6l-6 6 6 6"/></svg></button><span id="de-mois"></span><button type="button" data-mois-argent="1" aria-label="Mois suivant"><svg class="picto" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 6l6 6-6 6"/></svg></button></div>
       </div>
-      <div class="depenses-actions" id="de-actions">
-        <form class="saisie-depense champs-tache" id="de-form" autocomplete="off" novalidate>
-          <div class="saisie-depense-ligne">
-            <input type="text" inputmode="decimal" id="de-montant" placeholder="Montant €" aria-label="Montant en euros">
-            <input type="text" id="de-libelle" maxlength="120" placeholder="Quoi ? (facultatif)" aria-label="Quoi ?">
-            <input type="date" id="de-date" aria-label="Date">
-            <button class="bouton-principal" type="submit">Noter</button>
-          </div>
-          <div class="type-tache paiement" role="radiogroup" aria-label="Payé en">
-            <label><input type="radio" name="de-paiement" value="especes" checked><span>En espèces</span></label>
-            <label><input type="radio" name="de-paiement" value="carte"><span>Par carte</span></label>
-          </div>
-          <div class="puces-choix" id="de-cats" role="radiogroup" aria-label="Catégorie"></div>
-          <p class="aide">Note ici ce que tu paies en liquide : la carte arrive avec le relevé. Une dépense par carte notée à la main est remplacée par la ligne du relevé à l'import.</p>
-        </form>
-        <label class="bouton-second bouton-fichier"><span>Importer un relevé (CSV)</span><input class="invisible" type="file" id="de-fichier" accept=".csv,text/csv,text/plain"></label>
-      </div>
-      <p class="remplissage" id="de-import-etat" hidden><span class="remplissage-texte" id="de-import-texte"></span></p>
       <section class="carte-argent" aria-labelledby="de-total-titre">
-        <p class="eyebrow" id="de-total-titre">Dépensé ce mois-ci</p>
-        <p class="budget-reste" id="de-total"></p>
-        <p class="aide" id="de-compare"></p>
+        <div class="de-tete">
+          <div class="de-chiffres">
+            <p class="eyebrow" id="de-total-titre">Dépensé ce mois-ci</p>
+            <p class="budget-reste" id="de-total"></p>
+            <p class="aide" id="de-compare"></p>
+          </div>
+          <div class="de-boutons" id="de-actions">
+            <button class="bouton-principal" type="button" id="de-noter">Noter une dépense</button>
+            <label class="bouton-second bouton-fichier"><span>Importer un relevé (CSV)</span><input class="invisible" type="file" id="de-fichier" accept=".csv,text/csv,text/plain"></label>
+          </div>
+        </div>
+        <p class="remplissage" id="de-import-etat" hidden><span class="remplissage-texte" id="de-import-texte"></span></p>
         <div class="barres-h" id="de-categories"></div>
         <p class="aide" id="de-especes" hidden></p>
       </section>
@@ -1775,7 +1796,6 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     <div class="cadre page-argent">
       <div class="page-tete">
         <div>
-          <p class="eyebrow">Argent</p>
           <h1 id="titre-epargne" tabindex="-1">Épargne et projets</h1>
         </div>
         <button class="bouton-principal" type="button" data-maj-comptes>Mettre à jour mes comptes</button>
@@ -1804,10 +1824,9 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     <div class="cadre page-argent">
       <div class="page-tete">
         <div>
-          <p class="eyebrow">Argent</p>
           <h1 id="titre-paie" tabindex="-1">Ma paie</h1>
         </div>
-        <div class="mois-nav"><button type="button" data-mois-paie="-1" aria-label="Mois précédent">‹</button><span id="pa-mois"></span><button type="button" data-mois-paie="1" aria-label="Mois suivant">›</button></div>
+        <div class="mois-nav"><button type="button" data-mois-paie="-1" aria-label="Mois précédent"><svg class="picto" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6l-6 6 6 6"/></svg></button><span id="pa-mois"></span><button type="button" data-mois-paie="1" aria-label="Mois suivant"><svg class="picto" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 6l6 6-6 6"/></svg></button></div>
       </div>
       <section class="carte-argent" aria-labelledby="pa-titre">
         <p class="eyebrow" id="pa-titre">Paie du mois</p>
@@ -1848,7 +1867,6 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
   <section class="r-sport" data-vue="sport" aria-labelledby="titre-sport" hidden>
     <div class="cadre rubrique">
       <div class="rubrique-tete">
-        <p class="eyebrow">Rubrique 3 sur 3</p>
         <h1 id="titre-sport" tabindex="-1">Sport</h1>
         <p class="chapo">Mes entraînements, du programme aux résultats.</p>
       </div>
@@ -1866,6 +1884,12 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
   </section>
 </main>
 
+<nav class="onglets-bas" aria-label="Rubriques">
+  <a href="#accueil" data-aller="accueil"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1z"/></svg><span>Accueil</span></a>
+  <a class="r-travail" href="#travail" data-aller="travail"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="7.5" width="17" height="12" rx="2"/><path d="M9 7.5V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v1.5M3.5 12.5h17"/></svg><span>Travail</span></a>
+  <a class="r-argent" href="#argent" data-aller="argent"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.5 7.2A6.5 6.5 0 1 0 17.5 16.8M5 10.5h8M5 13.5h8"/></svg><span>Argent</span></a>
+  <a class="r-sport" href="#sport" data-aller="sport"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 8v8M17.5 8v8M4 10v4M20 10v4M6.5 12h11"/></svg><span>Sport</span></a>
+</nav>
 </div>
 
 <dialog class="fenetre" id="fenetre-planning" aria-labelledby="fp-titre">
@@ -2067,6 +2091,30 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
   </div>
 </dialog>
 
+<dialog class="fenetre fenetre-petite" id="fenetre-depense" aria-labelledby="dp-titre">
+  <div class="fenetre-tete">
+    <h2 id="dp-titre">Noter une dépense</h2>
+    <button class="fermer" type="button" data-fermer aria-label="Fermer sans enregistrer">×</button>
+  </div>
+  <form class="fenetre-corps saisie-depense champs-tache edition" id="de-form" autocomplete="off" novalidate>
+          <div class="saisie-depense-ligne">
+            <input type="text" inputmode="decimal" id="de-montant" placeholder="Montant €" aria-label="Montant en euros">
+            <input type="text" id="de-libelle" maxlength="120" placeholder="Quoi ? (facultatif)" aria-label="Quoi ?">
+            <input type="date" id="de-date" aria-label="Date">
+          </div>
+          <div class="type-tache paiement" role="radiogroup" aria-label="Payé en">
+            <label><input type="radio" name="de-paiement" value="especes" checked><span>En espèces</span></label>
+            <label><input type="radio" name="de-paiement" value="carte"><span>Par carte</span></label>
+          </div>
+          <div class="puces-choix" id="de-cats" role="radiogroup" aria-label="Catégorie"></div>
+          <p class="aide">Note ici ce que tu paies en liquide : la carte arrive avec le relevé. Une dépense par carte notée à la main est remplacée par la ligne du relevé à l'import.</p>
+        </form>
+  <div class="fenetre-pied">
+    <button class="bouton-second" type="button" data-fermer>Annuler</button>
+    <button class="bouton-principal" type="submit" form="de-form">Noter</button>
+  </div>
+</dialog>
+
 <dialog class="fenetre fenetre-petite" id="fenetre-repartition" aria-labelledby="rp-titre">
   <div class="fenetre-tete">
     <div>
@@ -2257,9 +2305,9 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     document.querySelectorAll("[data-vue]").forEach(v => { v.hidden = v.dataset.vue !== nom; });
     // Dans le bandeau, la rubrique reste marquée quand une de ses sous-rubriques est ouverte.
     let sousNav = null;
-    document.querySelectorAll(".sous-nav").forEach(n => { n.hidden = n.dataset.rubrique !== RUBRIQUE_DE[nom]; if (!n.hidden) sousNav = n; });
+    document.querySelectorAll(".sous-nav").forEach(n => { n.hidden = n.dataset.rubrique !== (RUBRIQUE_DE[nom] || nom); if (!n.hidden) sousNav = n; });
     document.body.classList.toggle("avec-sous-nav", !!sousNav);
-    document.querySelectorAll(".bande [data-aller], .sous-nav [data-aller]").forEach(a => {
+    document.querySelectorAll(".bande [data-aller], .sous-nav [data-aller], .onglets-bas [data-aller]").forEach(a => {
       const cible = a.closest(".sous-bande, .sous-nav") ? SOUS_RUBRIQUE_DE[nom] || nom : RUBRIQUE_DE[nom] || nom;
       if (a.dataset.aller === cible) a.setAttribute("aria-current", "page");
       else a.removeAttribute("aria-current");
@@ -3710,6 +3758,8 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
 
   // ----- filtres -----
   const filtres = { recherche: "", marque: "", categorie: "", teinte: "", repere: "" };
+  // Les catégories repliées : sur téléphone, toutes au départ (la page reste courte) ; sur ordinateur, aucune.
+  const categoriesRepliees = new Set(matchMedia("(max-width: 719px)").matches ? Object.keys(NOM_CATEGORIE) : []);
   const filtreActif = () => Object.values(filtres).some(Boolean);
   function piecesFiltrees() {
     const q = sansAccents(filtres.recherche.trim());
@@ -3818,16 +3868,23 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     } else {
       const groupes = new Map();
       liste.forEach(x => { if (!groupes.has(x.categorie)) groupes.set(x.categorie, []); groupes.get(x.categorie).push(x); });
+      // Chaque catégorie se replie ; avec une recherche ou un filtre, tout est ouvert.
       grille.replaceChildren(...[...groupes].map(([cat, xs]) => {
-        const s = element("section", "groupe-pieces");
+        const s = element("details", "groupe-pieces"), resume = element("summary");
+        s.dataset.categorie = cat;
+        s.open = filtreActif() || !categoriesRepliees.has(cat);
         const h = element("h2", null, NOM_CATEGORIE[cat]);
         h.append(element("span", "nombre", String(xs.length)));
+        resume.append(h);
         const g = element("div", "grille-pieces");
         g.append(...xs.map(cartePiece));
-        s.append(h, g);
+        s.append(resume, g);
         return s;
       }));
     }
+    $("gr-replier").hidden = !!filtres.categorie || filtreActif() || !liste.length;
+    const nFiltres = ["marque", "categorie", "teinte", "repere"].filter(k => filtres[k]).length;
+    $("gr-filtres-bouton").textContent = nFiltres ? `Filtres (${nFiltres})` : "Filtres";
     const vide = $("gr-vide");
     vide.hidden = liste.length > 0;
     vide.textContent = toutes.length ? "Aucune pièce ne correspond à ces filtres."
@@ -3862,6 +3919,18 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
   }
 
   // La carte de la page Travail : six photos, et ce que contient la garde-robe.
+  $("gr-grille").addEventListener("toggle", e => {
+    const d = e.target.closest("details.groupe-pieces");
+    if (!d || filtreActif()) return;
+    if (d.open) categoriesRepliees.delete(d.dataset.categorie); else categoriesRepliees.add(d.dataset.categorie);
+  }, true);
+  const toutReplier = replier => { $("gr-grille").querySelectorAll("details.groupe-pieces").forEach(d => { d.open = !replier; if (replier) categoriesRepliees.add(d.dataset.categorie); else categoriesRepliees.delete(d.dataset.categorie); }); };
+  $("gr-tout-deplier").addEventListener("click", () => toutReplier(false));
+  $("gr-tout-replier").addEventListener("click", () => toutReplier(true));
+  $("gr-filtres-bouton").addEventListener("click", () => {
+    const ouverts = $("gr-filtres").classList.toggle("ouverts");
+    $("gr-filtres-bouton").setAttribute("aria-expanded", String(ouverts));
+  });
   function rendreCarteGardeRobe() {
     const toutes = Object.values(pieces);
     const nT = Object.keys(tenues.docs).length, nD = Object.values(demandes.docs).filter(d => d.statut !== "refuse").length;
@@ -7381,6 +7450,13 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     l.append(r, element("span", null, nom));
     return l;
   }));
+  $("de-noter").addEventListener("click", () => {
+    if (!peutModifierArgent()) return;
+    $("de-montant").value = ""; $("de-libelle").value = ""; $("de-date").value = "";
+    $("de-montant").classList.remove("en-erreur");
+    ouvrir($("fenetre-depense"));
+    $("de-montant").focus();
+  });
   $("de-form").addEventListener("submit", async e => {
     e.preventDefault();
     if (!peutModifierArgent()) return;
@@ -7392,7 +7468,9 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     try {
       await operations.ecrire(cle, { ops: { ...((operations.docs[cle] || {}).ops || {}), ["s" + Date.now().toString(36)]: op }, modifieLe: new Date().toISOString() });
       $("de-montant").value = ""; $("de-libelle").value = "";
+      fermer($("fenetre-depense"));
       moisArgent = periodeDe(d);
+      rendreBudget(); rendreDepenses();
       toast(`${eur(montant)} noté${c === "revenus" ? "s en rentrée" : ""}.`);
     } catch (err) { echecArgent(err); }
   });
