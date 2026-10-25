@@ -242,8 +242,10 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 .saisie { width: 100%; border-collapse: collapse; }
 .saisie thead th { position: sticky; top: 0; z-index: 1; padding: 12px 6px 6px; background: var(--fond); font: 600 .72rem/1.2 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--gris); text-align: left; }
 .saisie .tete-jour { padding: 16px 0 6px; }
-.jour-tete { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--trait); }
-.jour-titre { font-family: var(--f-display); font-weight: 750; font-size: 1.1rem; line-height: 1.2; color: var(--marine); }
+.saisie .tete-jour { text-align: left; }
+/* Sur téléphone, les pastilles passent sous le nom du jour quand elles n'ont plus la place à côté. */
+.jour-tete { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 12px; padding-bottom: 8px; border-bottom: 1px solid var(--trait); }
+.jour-titre { flex: 1 1 8em; min-width: 0; font-family: var(--f-display); font-weight: 750; font-size: 1.1rem; line-height: 1.2; color: var(--marine); }
 .saisie th[scope="row"] { width: 1%; padding: 6px 10px 6px 0; font-weight: 600; font-size: .95rem; text-align: left; white-space: nowrap; vertical-align: top; line-height: 42px; }
 .saisie td { padding: 6px; vertical-align: top; }
 .champ { display: grid; gap: 6px; }
@@ -255,7 +257,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 .en-repos .repos-texte { display: flex; align-items: center; justify-content: center; min-height: 42px; border-radius: 8px; background: repeating-linear-gradient(135deg, var(--repos-doux) 0 8px, var(--repos-raie) 8px 16px); color: var(--repos); font: 600 .8rem/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; }
 .en-repos[data-statut="conge"] .repos-texte { background: repeating-linear-gradient(135deg, var(--conge-doux) 0 8px, var(--conge-raie) 8px 16px); color: var(--conge); }
 .en-repos[data-statut="ferie"] .repos-texte { background: repeating-linear-gradient(135deg, var(--ferie-doux) 0 8px, var(--ferie-raie) 8px 16px); color: var(--ferie); }
-.statuts-jour { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+.statuts-jour { display: flex; justify-content: flex-end; gap: 6px; }
 .repos-choix { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 10px; border: 1.5px solid var(--trait); border-radius: 999px; color: var(--gris); font-weight: 600; font-size: .95rem; cursor: pointer; }
 .repos-choix input { width: 18px; height: 18px; margin: 0; accent-color: var(--repos); }
 .repos-choix.statut-conge input { accent-color: var(--conge); }
@@ -439,6 +441,11 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 .frise-evt { position: absolute; top: 4px; bottom: 4px; min-width: 6px; padding: 0 6px; overflow: hidden; border: 0; border-radius: 6px; background: var(--marine); color: var(--sur-marine); font-weight: 700; font-size: .78rem; line-height: 26px; text-align: left; white-space: nowrap; text-overflow: ellipsis; cursor: pointer; }
 .frise-evt.normale { background: var(--marine-doux); color: var(--marine); box-shadow: inset 0 0 0 1.5px var(--marine); }
 .frise-evt:hover, .frise-evt:focus-visible { outline: 2px solid var(--encre); outline-offset: 1px; }
+.frise-evt.dehors { display: flex; align-items: stretch; gap: 6px; padding: 0; overflow: visible; background: none; color: var(--encre); }
+.frise-evt.dehors.avant { flex-direction: row-reverse; }
+.frise-barre { flex: 0 0 auto; min-width: 6px; border-radius: 6px; background: var(--marine); }
+.frise-barre.normale { background: var(--marine-doux); box-shadow: inset 0 0 0 1.5px var(--marine); }
+.frise-nom { white-space: nowrap; }
 .frise-conge { position: absolute; top: 5px; bottom: 5px; min-width: 4px; border-radius: 4px; background: var(--conge); }
 .frise-aujourdhui { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--rouge); pointer-events: none; }
 .frise-etiquette { position: absolute; left: 4px; top: 3px; font: 600 .64rem/1 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--conge); pointer-events: none; }
@@ -476,6 +483,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 .periodes-obj { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 3px; border: 1.5px solid var(--trait); border-radius: 10px; }
 .periodes-obj button { padding: 7px 12px; border: 0; border-radius: 7px; background: none; color: var(--gris); font-weight: 600; }
 .periodes-obj button[aria-pressed="true"] { background: var(--marine); color: var(--sur-marine); }
+@media (max-width: 479px) { .periodes-obj { display: grid; grid-template-columns: 1fr 1fr; width: 100%; } }
 .part-ligne { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; }
 .part-chiffre { font-family: var(--f-display); font-weight: 850; font-size: clamp(3rem, 10vw, 4.8rem); line-height: .95; color: var(--marine); font-variant-numeric: tabular-nums; }
 .part-etat { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; font-weight: 700; }
@@ -832,7 +840,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
           <a class="carte-rubrique" href="#travail">
             <span class="numero" aria-hidden="true">1</span>
             <span class="carte-titre">Travail</span>
-            <span class="carte-texte">Mon planning, ma to-do list et la garde-robe du magasin.</span>
+            <span class="carte-texte">Mon planning, ma to-do list, la garde-robe du magasin, le calendrier commercial et mes objectifs.</span>
             <span class="carte-pied"><span id="resume-travail">Planning de la semaine</span><span class="fleche">Ouvrir →</span></span>
           </a>
         </li>
@@ -1522,7 +1530,8 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     document.querySelectorAll(".onglets-gr a").forEach(a => {
       if (a.dataset.onglet === nom) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
-    if (nom === "objectifs") requestAnimationFrame(rendreGraphe);   // la courbe a besoin de sa largeur
+    if (nom === "objectifs") requestAnimationFrame(rendreGraphe);   // la courbe et la frise ont besoin de leur largeur
+    if (nom === "calendrier") requestAnimationFrame(rendreFrise);
     if (!opts.garderDefilement) window.scrollTo(0, 0);
     if (opts.focus) {
       const titre = document.querySelector(`[data-vue="${nom}"] h1`);
@@ -1946,7 +1955,9 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     const zone = $("mini-planning"), ligne = $("aujourdhui-planning");
     const cpt = calculerCompteur();
     $("compteur-planning").hidden = !cpt.semaines.length && cpt.reste == null;
-    $("compteur-planning").textContent = [cpt.semaines.length ? (cpt.recup >= 0 ? `${formatDuree(cpt.recup)} à récupérer` : `${formatDuree(-cpt.recup)} à rattraper`) : "",
+    const heures = cpt.recup > 0 ? `${formatDuree(cpt.recup)} à récupérer` : cpt.recup < 0 ? `${formatDuree(-cpt.recup)} à rattraper`
+      : cpt.payeesMois > 0 ? `${formatDuree(cpt.payeesMois)} payées en ${MOIS[new Date(aujourdhui()).getUTCMonth()]}` : "rien à récupérer";
+    $("compteur-planning").textContent = [cpt.semaines.length ? heures : "",
       cpt.reste != null ? `${nombreFr(cpt.reste)} j de congés` : ""].filter(Boolean).join(" · ");
     if (estVide(s)) {
       zone.hidden = ligne.hidden = true;
@@ -4628,6 +4639,12 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     if (curseur < fin) libres.push([curseur, fin]);
     return libres.filter(([a, b]) => b >= a && b - a >= 6 * JOUR_MS && a < fin);
   }
+  let mesureur = null;
+  function largeurTexte(texte, police) {
+    mesureur = mesureur || document.createElement("canvas").getContext("2d");
+    mesureur.font = police;
+    return mesureur.measureText(texte).width;
+  }
   function rendreFrise() {
     const auj = new Date(aujourdhui());
     const t0 = Date.UTC(auj.getUTCFullYear(), auj.getUTCMonth(), 1), t1 = Date.UTC(auj.getUTCFullYear(), auj.getUTCMonth() + 12, 1);
@@ -4638,24 +4655,35 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
       const d = new Date(Date.UTC(auj.getUTCFullYear(), auj.getUTCMonth() + k, 1));
       mois.append(element("span", null, MOIS_COURTS[d.getUTCMonth()] + (d.getUTCMonth() === 0 || k === 0 ? ` ${String(d.getUTCFullYear()).slice(2)}` : "")));
     }
-    // Chaque temps fort sur la première piste où il ne chevauche rien.
+    // Un nom trop long pour sa barre s'écrit juste après elle (juste avant, en bout de frise). Chaque temps
+    // fort va sur la première piste où ni sa barre ni son nom ne chevauchent rien. Les largeurs sont en %.
+    const largeur = frise.clientWidth || 720;   // vue cachée : refait à l'ouverture
+    const enPc = px => px / largeur * 100, ecart = enPc(6);
+    const police = `700 ${parseFloat(getComputedStyle(document.documentElement).fontSize) * .78}px ${getComputedStyle(frise).fontFamily}`;
     const pistes = [];
     evenementsTries().filter(e => finDe(e) >= t0 && depuisIso(e.debut) < t1).forEach(e => {
-      const a = depuisIso(e.debut);
-      let i = pistes.findIndex(p => p.fin < a);
-      if (i < 0) { pistes.push({ fin: 0, evts: [] }); i = pistes.length - 1; }
-      pistes[i].fin = finDe(e) + 3 * JOUR_MS;
-      pistes[i].evts.push(e);
+      const g = pos(depuisIso(e.debut)), d = pos(finDe(e) + JOUR_MS), texte = enPc(largeurTexte(e.nom, police) + 2);
+      const cote = d - g >= texte + enPc(12) ? null : d + ecart + texte <= 100 ? "apres" : "avant";
+      const debut = cote === "avant" ? g - ecart - texte : g, fin = cote === "apres" ? d + ecart + texte : d;
+      let i = pistes.findIndex(p => p.fin + ecart <= debut);
+      if (i < 0) { pistes.push({ fin: -Infinity, evts: [] }); i = pistes.length - 1; }
+      pistes[i].fin = fin;
+      pistes[i].evts.push({ e, g, d, debut, fin, cote });
     });
     const zone = element("div", "frise-pistes");
     pistes.forEach(p => {
       const piste = element("div", "frise-piste");
-      p.evts.forEach(e => {
-        const b = element("button", "frise-evt " + e.affluence, e.nom);
+      p.evts.forEach(({ e, g, d, debut, fin, cote }) => {
+        const b = element("button", "frise-evt " + (cote ? "dehors " + cote : e.affluence), cote ? null : e.nom);
+        if (cote) {
+          const barre = element("span", "frise-barre " + e.affluence);
+          barre.style.width = `${(d - g) / (fin - debut) * 100}%`;
+          b.append(barre, element("span", "frise-nom", e.nom));
+        }
         b.type = "button";
         b.dataset.evenement = e.id;
-        b.style.left = `${pos(depuisIso(e.debut))}%`;
-        b.style.width = `${pos(finDe(e) + JOUR_MS) - pos(depuisIso(e.debut))}%`;
+        b.style.left = `${debut}%`;
+        b.style.width = `${fin - debut}%`;
         b.title = `${e.nom} · ${datesCourtes(e)}`;
         b.setAttribute("aria-label", `${e.nom}, ${datesCourtes(e)}, ${e.affluence === "forte" ? "temps fort" : "affluence normale"}`);
         piste.append(b);
@@ -5011,7 +5039,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     zone.replaceChildren(svg, bulle);
   }
   let minuterieGraphe = 0;
-  window.addEventListener("resize", () => { clearTimeout(minuterieGraphe); minuterieGraphe = setTimeout(() => { if (vueActive === "objectifs") rendreGraphe(); }, 150); });
+  window.addEventListener("resize", () => { clearTimeout(minuterieGraphe); minuterieGraphe = setTimeout(() => { if (vueActive === "objectifs") rendreGraphe(); if (vueActive === "calendrier") rendreFrise(); }, 150); });
   const lireMontant = v => { const n = Number(String(v).replace(/\s|€/g, "").replace(",", ".")); return v.trim() && isFinite(n) && n >= 0 && n < 1e7 ? Math.round(n * 100) / 100 : null; };
   $("ob-form").addEventListener("submit", async e => {
     e.preventDefault();
