@@ -656,6 +656,10 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
 .rp-nom { display: grid; gap: 1px; font-weight: 600; }
 .rp-indice { color: var(--gris); font-size: .85rem; font-weight: 400; }
 .rp-ligne input { width: 100%; text-align: right; font-variant-numeric: tabular-nums; }
+.rp-placements { display: grid; gap: 6px; margin: -2px 0 4px 14px; padding-left: 12px; border-left: 2px solid var(--argent-doux); }
+.rp-placements .rp-nom { font-weight: 500; }
+.rp-placement-reste { margin: 0; min-height: 40px; }
+.rp-support { color: var(--gris); font-size: .85rem; text-align: right; }
 .rp-total { flex: 1 1 100%; margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
 .rp-total.negatif { color: var(--erreur); }
 .recherche-ops input { width: 100%; min-height: 44px; padding: 8px 14px; border: 1.5px solid var(--trait); border-radius: 10px; background: var(--fond); font: inherit; }
@@ -1610,6 +1614,7 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
         <p class="eyebrow">Pour commencer</p>
         <h2 id="bu-vide-titre"></h2>
         <p id="bu-vide-texte"></p>
+        <p id="bu-vide-plan" hidden></p>
         <button class="bouton-principal" type="button" data-repartir>Ma paie est arrivée</button>
       </section>
       <div class="page-argent-bloc" id="bu-plein" hidden>
@@ -6357,7 +6362,7 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
   }
 
   // ----- lecture des documents -----
-  const lireCompte = (id, d) => (d && texteArgent(d.nom, 40) ? { id, nom: texteArgent(d.nom, 40), groupe: d.groupe === "epargne" ? "epargne" : "investissement", ordre: nombreValide(d.ordre) ? d.ordre : 99 } : null);
+  const lireCompte = (id, d) => (d && texteArgent(d.nom, 40) ? { id, nom: texteArgent(d.nom, 40), groupe: d.groupe === "epargne" ? "epargne" : "investissement", ordre: nombreValide(d.ordre) ? d.ordre : 99, support: texteArgent(d.support, 60) } : null);
   const lireSolde = (id, d) => (MOIS_RE.test(id) && d && d.valeurs && typeof d.valeurs === "object"
     ? { id, le: ISO_RE.test(d.le) ? d.le : id + "-01", valeurs: Object.fromEntries(Object.entries(d.valeurs).filter(([, v]) => nombreValide(v))) } : null);
   function lireProjet(id, d) {
@@ -6387,8 +6392,11 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     ? { id, ops: Object.fromEntries(Object.entries(d.ops).map(([k, o]) => [k, lireOp(o)]).filter(([k, o]) => o && /^[\w-]{1,40}$/.test(k))) } : null);
   const montantsDe = (m, ok) => Object.fromEntries(Object.entries(m && typeof m === "object" ? m : {}).filter(([k, v]) => ok(k) && nombreValide(v) && v > 0).map(([k, v]) => [k, arrondi2(v)]));
   // Un budget : le solde du compte noté le jour de la paie, et sa répartition (épargne par objectif, enveloppes).
-  const lireBudget = (id, d) => (MOIS_RE.test(id) && d && nombreValide(d.solde) && ISO_RE.test(d.le)
-    ? { id, solde: arrondi2(d.solde), le: d.le, enveloppes: montantsDe(d.enveloppes, c => NOM_CAT[c] && !HORS_DEPENSES.has(c)), epargne: montantsDe(d.epargne, k => /^[\w-]{1,40}$/.test(k)) } : null);
+  const idValide = k => /^[\w-]{1,40}$/.test(k);
+  // Une répartition : les enveloppes, l'épargne par objectif, et les placements (le montant pour chaque compte
+  // d'investissement, sauf le premier qui reçoit le reste).
+  const lireRepartition = d => ({ enveloppes: montantsDe(d.enveloppes, c => NOM_CAT[c] && !HORS_DEPENSES.has(c)), epargne: montantsDe(d.epargne, idValide), placements: montantsDe(d.placements, idValide) });
+  const lireBudget = (id, d) => (MOIS_RE.test(id) && d && nombreValide(d.solde) && ISO_RE.test(d.le) ? { id, solde: arrondi2(d.solde), le: d.le, ...lireRepartition(d) } : null);
   const lirePaie = (id, d) => (MOIS_RE.test(id) && d && nombreValide(d.net) && d.net > 0
     ? { id, net: arrondi2(d.net), brut: nombreValide(d.brut) && d.brut > 0 ? arrondi2(d.brut) : null, heuresSup: nombreValide(d.heuresSup) && d.heuresSup >= 0 ? d.heuresSup : null, payeLe: ISO_RE.test(d.payeLe) ? d.payeLe : null } : null);
 
@@ -6408,6 +6416,9 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
       heures: nombreValide(d.heuresMois) && d.heuresMois > 0 ? d.heuresMois : 151.67,
       regles: d.regles && typeof d.regles === "object" ? d.regles : {},
       titulaire: texteArgent(d.titulaire, 60),   // mon nom : un virement à mon nom va d'un de mes comptes à l'autre
+      // Le plan des prochaines paies (une répartition par budget), et l'objectif qui reçoit ce qui n'est pas réparti.
+      plan: Object.fromEntries(Object.entries(d.plan && typeof d.plan === "object" ? d.plan : {}).filter(([k, v]) => MOIS_RE.test(k) && v && typeof v === "object").map(([k, v]) => [k, lireRepartition(v)])),
+      resteVers: texteArgent(d.resteVers, 40),
     };
   }
   function ecrireReglagesArgent(patch) {
@@ -6425,17 +6436,25 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
   }
   const dernierSolde = id => { const s = soldesTries().reverse().find(x => id in x.valeurs); return s ? s.valeurs[id] : null; };
   const projetsTries = () => Object.values(projets.docs).sort((a, b) => (a.type === b.type ? 0 : a.type === "comptes" ? -1 : 1) || a.ordre - b.ordre || (a.date || "9").localeCompare(b.date || "9"));
-  // Où en est un projet : le total, ce qu'il reste, les mois jusqu'à la date, ce qu'il faut mettre par mois, et
+  // Les paies entre deux jours : celles qui tombent après « apres » (le dernier solde noté, où ce qui a déjà été
+  // versé se voit) et avant « avant » (la date de l'objectif).
+  function paiesEntre(apres, avant) {
+    let n = 0;
+    for (let m = apres.slice(0, 7), k = 0; m <= avant.slice(0, 7) && k < 600; m = moisDecale(m, 1), k++) { const d = debutPeriode(moisDecale(m, 1)); if (d > apres && d < avant) n++; }
+    return n;
+  }
+  // Où en est un projet : le total, ce qu'il reste, les paies jusqu'à la date, ce qu'il faut mettre par paie, et
   // à quel mois on y arrive au rythme des trois derniers mois.
   function avancee(p) {
     const pts = p.type === "comptes" ? totauxDu(p.groupe) : [];
     const total = p.type === "comptes" ? (pts.length ? pts[pts.length - 1].total : 0) : p.misDeCote;
-    const reste = Math.max(0, arrondi2(p.cible - total)), maintenant = cleMois(aujourdhui());
-    const moisRestants = p.date ? Math.max(0, ecartMois(maintenant, cleMois(depuisIso(p.date) - JOUR_MS))) : null;
+    const reste = Math.max(0, arrondi2(p.cible - total)), depuis = pts.length ? pts[pts.length - 1].le : versIso(aujourdhui());
+    const moisRestants = p.date ? paiesEntre(depuis, p.date) : null;   // des paies : une par mois
     const sansRendement = reste && moisRestants != null ? reste / Math.max(1, moisRestants) : null;
-    // Avec un rendement, ce qui est déjà là grossit aussi : il faut verser moins chaque mois.
+    // Avec un rendement, ce qui est déjà là grossit aussi (jusqu'au mois de l'objectif) : il faut verser moins.
     const r = p.rendement ? Math.pow(1 + p.rendement / 100, 1 / 12) - 1 : 0, n = Math.max(1, moisRestants || 0);
-    const parMois = r && sansRendement != null ? Math.max(0, (p.cible - total * Math.pow(1 + r, n)) * r / (Math.pow(1 + r, n) - 1)) : sansRendement;
+    const g = p.date ? Math.max(0, ecartMois(depuis.slice(0, 7), cleMois(depuisIso(p.date) - JOUR_MS))) : 0;
+    const parMois = r && sansRendement != null ? Math.max(0, (p.cible - total * Math.pow(1 + r, g)) * r / (Math.pow(1 + r, n) - 1)) : sansRendement;
     let rythme = null, arrivee = null;
     if (pts.length >= 2) {
       const a = pts[Math.max(0, pts.length - 4)], b = pts[pts.length - 1], n = ecartMois(a.cle, b.cle);
@@ -6607,8 +6626,12 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     for (let k = 0; k <= n; k += pas) { const cle = moisDecale(debut, k); svg.append(svgEl("text", { class: "axe-texte", x: x(cle), y: H - 6, "text-anchor": "middle" }, `${MOIS_COURTS[Number(cle.slice(5)) - 1].replace(".", "")} ${cle.slice(2, 4)}`)); }
     if (av.r && av.parMois != null && ecartMois(av.pts[av.pts.length - 1].cle, fin) > 0) {
       // Le plan : chaque mois, le versement et le rendement (ce qui est déjà là grossit aussi).
-      const depart = av.pts[av.pts.length - 1], k = ecartMois(depart.cle, fin), plan = [];
-      for (let i = 0, v = depart.total; i <= k; i++, v = v * (1 + av.r) + av.parMois) plan.push(`${x(moisDecale(depart.cle, i))},${y(Math.min(v, hi))}`);
+      const depart = av.pts[av.pts.length - 1], k = ecartMois(depart.cle, fin), plan = [`${x(depart.cle)},${y(depart.total)}`];
+      for (let i = 0, v = depart.total; i <= k; i++) {
+        if (i) v *= 1 + av.r;
+        if (debutPeriode(moisDecale(depart.cle, i + 1)) > depart.le) v += av.parMois;   // la paie de ce mois-là
+        plan.push(`${x(moisDecale(depart.cle, i))},${y(Math.min(v, hi))}`);
+      }
       svg.append(svgEl("polyline", { class: "trajectoire", points: plan.join(" "), fill: "none" }));
     } else svg.append(svgEl("line", { class: "trajectoire", x1: x(debut), y1: y(av.pts[0].total), x2: x(fin), y2: y(p.cible) }));
     svg.append(svgEl("text", { class: "etiquette-trajectoire", x: x(fin), y: y(p.cible) - 8, "text-anchor": "end" }, `objectif ${kEur(p.cible)}`));
@@ -6643,8 +6666,9 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     if (!av.reste) return "Objectif atteint !";
     const morceaux = [];
     const avec = av.r ? ` avec ${nombreFr(p.rendement)} % par an (${eur(av.sansRendement, 0)} sans rendement)` : "";
-    if (av.moisRestants != null && av.moisRestants && av.r && !av.parMois) morceaux.push(`il reste ${eur(av.reste, 0)} en ${av.moisRestants} mois : à ${nombreFr(p.rendement)} % par an, le rendement seul y suffit`);
-    else if (av.moisRestants != null) morceaux.push(av.moisRestants ? `il reste ${eur(av.reste, 0)} en ${av.moisRestants} mois : ${eur(av.parMois, 0)} par mois${avec}` : `il reste ${eur(av.reste, 0)} ce mois-ci`);
+    const paies = n => `${n} paie${n > 1 ? "s" : ""}`;
+    if (av.moisRestants != null && av.moisRestants && av.r && !av.parMois) morceaux.push(`il reste ${eur(av.reste, 0)} en ${paies(av.moisRestants)} : à ${nombreFr(p.rendement)} % par an, le rendement seul y suffit`);
+    else if (av.moisRestants != null) morceaux.push(av.moisRestants ? `il reste ${eur(av.reste, 0)} en ${paies(av.moisRestants)} : ${eur(av.parMois, 0)} par paie${avec}` : `il reste ${eur(av.reste, 0)}, et plus de paie avant la date`);
     else morceaux.push(`il reste ${eur(av.reste, 0)}`);
     if (av.arrivee) morceaux.push(`à ton rythme, tu y es en ${nomMois(av.arrivee).toLowerCase()}`);
     return majuscule(morceaux.join(" · ")) + ".";
@@ -6708,6 +6732,13 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
       $("bu-vide-titre").textContent = `Le budget ${deMois(cle)} commence à ta paie`;
       $("bu-vide-texte").textContent = `Ta paie ${deMois(avant)}${paie ? ` (${eur(paie.net)}${paie.recue ? "" : " attendus"})` : ""} ${tombee ? "est tombée vers" : "arrive vers"} le ${jourMois(jour)}. `
         + "Ce jour-là, note le solde de ton compte et répartis-le entre tes charges fixes, ton épargne et tes enveloppes. Ensuite, il suffit d'importer le relevé à partir de cette date.";
+      const r = reglagesArgent(), plan = r.plan[cle], env = plan ? Object.entries(plan.enveloppes) : [];
+      $("bu-vide-plan").hidden = !plan;
+      if (plan) $("bu-vide-plan").textContent = "Le plan pour cette paie, déjà prérempli : " + [
+        ...Object.entries(plan.epargne).filter(([id]) => projets.docs[id]).map(([id, v]) => `${eur(v, 0)} pour ${projets.docs[id].nom}`),
+        env.length ? `${eur(env.reduce((t, [, v]) => t + v, 0), 0)} d'enveloppes (${env.map(([c, v]) => `${NOM_CAT[c].toLowerCase()} ${eur(v, 0)}`).join(", ")})` : "",
+        projets.docs[r.resteVers] ? `et le reste pour ${projets.docs[r.resteVers].nom}${texteDePlacements(projets.docs[r.resteVers], plan.placements, null)}` : "",
+      ].filter(Boolean).join(", ") + ".";
     } else {
       $("bu-reste").textContent = eur(b.reste);
       $("bu-reste").classList.toggle("negatif", b.reste < 0);
@@ -6736,7 +6767,8 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
       if (!env.length) env.push(element("li", "liste-vide", "Aucune enveloppe : touche « Modifier la répartition » pour en prévoir."));
       $("bu-enveloppes").replaceChildren(...env);
       const libre = arrondi2(b.reste - b.dansEnveloppes);
-      $("bu-env-aide").textContent = b.reste < 0 ? "" : libre >= 0.5 ? `${eur(b.dansEnveloppes)} encore dans tes enveloppes, ${eur(libre)} qui ne sont dans aucune.`
+      const versReste = projets.docs[reglagesArgent().resteVers];
+      $("bu-env-aide").textContent = b.reste < 0 ? "" : libre >= 0.5 ? `${eur(b.dansEnveloppes)} encore dans tes enveloppes, ${eur(libre)} qui ne sont dans aucune${versReste ? ` : ils peuvent partir sur ${versReste.nom}` : ""}.`
         : libre <= -0.5 ? `Tes enveloppes prévoient ${eur(-libre)} de plus que ce qu'il te reste : quelque chose a dépassé.` : "Tout ce qui reste est dans tes enveloppes.";
       // Le point de départ.
       const dep = [ligneArgent("Solde après la paie", `le ${jourMois(b.doc.le)}`, eur(b.doc.solde))];
@@ -6744,7 +6776,7 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
       dep.push(ligneArgent("Total", "", eur(b.depart), null, "total"));
       $("bu-revenus").replaceChildren(...dep);
       // L'épargne : prévue par objectif, versée depuis la paie.
-      const ep = projetsTries().filter(p => b.doc.epargne[p.id]).map(p => ligneArgent(p.nom, "prévu", eur(b.doc.epargne[p.id])));
+      const ep = projetsTries().filter(p => b.doc.epargne[p.id]).map(p => ligneArgent(p.nom, "prévu" + texteDePlacements(p, b.doc.placements, b.doc.epargne[p.id]), eur(b.doc.epargne[p.id])));
       ep.push(ligneArgent("Versé depuis la paie", `vers Trade Republic, tes livrets et tes autres comptes${b.prevu ? ` · ${b.verse >= b.prevu ? "tout est versé" : `${eur(b.prevu - b.verse)} à verser`}` : ""}`, eur(b.verse), null, "total"));
       $("bu-epargne").replaceChildren(...ep);
       $("bu-interne").hidden = !b.repris;
@@ -6762,6 +6794,14 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     const annuelles = Object.values(charges.docs).filter(c => c.frequence === "an"), parAn = annuelles.reduce((t, c) => t + c.montant, 0);
     $("bu-charges-aide").textContent = annuelles.length ? `Les abonnements annuels comptent le mois où ils sont prélevés (${annuelles.map(c => `${c.nom} en ${MOIS[c.mois - 1]}`).join(", ")}) : ${eur(parAn)} par an, soit ${eur(parAn / 12)} à garder de côté chaque mois.` : "";
     $("bu-ajouter-charge").hidden = !modifiable;
+  }
+  // Les placements d'un objectif d'investissement : un montant par compte, le premier compte reçoit le reste.
+  function texteDePlacements(p, placements, montant) {
+    const comptes = p.groupe === "investissement" ? comptesDu("investissement") : [];
+    if (comptes.length < 2 || !Object.keys(placements || {}).length) return "";
+    const autres = comptes.slice(1).filter(c => placements[c.id]), somme = autres.reduce((t, c) => t + placements[c.id], 0);
+    const nom = c => c.support ? `${c.nom} (${c.support})` : c.nom;
+    return ` : ${[...autres.map(c => `${eur(placements[c.id], 0)} sur ${nom(c)}`), montant != null ? `${eur(Math.max(0, montant - somme), 0)} sur ${nom(comptes[0])}` : `le reste sur ${nom(comptes[0])}`].join(", ")}`;
   }
   function ligneArgent(titre, detail, montant, lien, classe) {
     const li = element("li", "ligne-argent" + (classe ? " " + classe : ""));
@@ -6837,7 +6877,7 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     const lignes = ["investissement", "epargne"].flatMap(g => comptesDu(g).map(c => {
       const v = dernierSolde(c.id), prec = avantDernier && c.id in avantDernier.valeurs ? avantDernier.valeurs[c.id] : null;
       const ecart = v != null && prec != null && dernier && c.id in dernier.valeurs ? v - prec : null;
-      return ligneArgent(c.nom, `${g === "investissement" ? "Investissement" : "Épargne"}${ecart ? ` · ${ecart > 0 ? "+" : "−"}${eur(Math.abs(ecart), 0)} sur un mois` : ""}`, v == null ? "—" : eur(v));
+      return ligneArgent(c.nom, `${c.support || (g === "investissement" ? "Investissement" : "Épargne")}${ecart ? ` · ${ecart > 0 ? "+" : "−"}${eur(Math.abs(ecart), 0)} sur un mois` : ""}`, v == null ? "—" : eur(v));
     }));
     $("ep-comptes").replaceChildren(...lignes);
     $("ep-maj").textContent = dernier ? `Dernière mise à jour : ${dateLongue(dernier.le)}.` : "Pas encore de solde : mets à jour tes comptes.";
@@ -7094,7 +7134,7 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
   });
 
   // ----- répartir ma paie : le solde du jour de paie, l'épargne, les enveloppes -----
-  let budgetEdite = null;
+  let budgetEdite = null, resteAuto = null;
   const montantChamp = v => { const t = String(v).replace(/\s|€/g, "").replace(",", ".").replace(/^[−–]/, "-"); const n = Number(t); return t && Number.isFinite(n) && Math.abs(n) < 1e7 ? arrondi2(n) : null; };
   const versChamp = n => (n ? String(n).replace(".", ",") : "");
   // Le budget d'avant (le plus récent avant celui-ci) : sa répartition sert de point de départ.
@@ -7123,23 +7163,48 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
   function totalRepartition() {
     const solde = montantChamp($("rp-solde").value), cle = cleRepartition();
     const fixes = chargesDuMois(cle).filter(c => !c.variable).reduce((t, c) => t + c.montant, 0);
-    const parts = [...$("rp-form").querySelectorAll("[data-env], [data-ep]")].reduce((t, c) => t + (lireMontant(c.value) || 0), 0);
-    const reste = solde == null ? null : arrondi2(solde - fixes - parts), t = $("rp-total");
+    // L'objectif qui reçoit le reste se remplit tout seul, tant qu'il n'a pas été tapé à la main.
+    const auto = resteAuto && $("rp-form").querySelector(`[data-ep="${resteAuto}"]`);
+    const parts = [...$("rp-form").querySelectorAll("[data-env], [data-ep]")].filter(c => c !== auto).reduce((t, c) => t + (lireMontant(c.value) || 0), 0);
+    let reste = solde == null ? null : arrondi2(solde - fixes - parts);
+    if (auto) { const v = reste == null ? 0 : Math.max(0, reste); auto.value = versChamp(v); if (reste != null) reste = arrondi2(reste - v); }
+    // Le premier compte d'investissement reçoit ce que l'objectif reçoit, moins les autres placements.
+    const pr = $("rp-form").querySelector("[data-pl-reste]");
+    if (pr) {
+      const objectif = lireMontant(($("rp-form").querySelector(`[data-ep="${pr.dataset.plReste}"]`) || {}).value || "") || 0;
+      const autres = [...$("rp-form").querySelectorAll("[data-pl]")].reduce((t, c) => t + (lireMontant(c.value) || 0), 0);
+      pr.querySelector(".rp-indice").textContent = objectif - autres >= 0 ? `le reste : ${eur(objectif - autres)}` : `⚠ ${eur(autres - objectif)} de plus que ce que reçoit l'objectif`;
+    }
+    const t = $("rp-total");
     t.classList.toggle("negatif", reste != null && reste < 0);
     t.textContent = reste == null ? "Indique ton solde pour voir ce qu'il reste à répartir." : reste < 0 ? `Tu répartis ${eur(-reste)} de plus que ton solde.` : `Reste à répartir : ${eur(reste)}`;
   }
   function ouvrirRepartition() {
-    const cle = moisVu(), doc = budgets.docs[cle] || null, avant = doc ? null : budgetAvant(cle), auj = versIso(aujourdhui());
+    const cle = moisVu(), doc = budgets.docs[cle] || null, r = reglagesArgent(), plan = doc ? null : r.plan[cle] || null, auj = versIso(aujourdhui());
     budgetEdite = doc ? cle : null;
+    resteAuto = !doc && projets.docs[r.resteVers] ? r.resteVers : null;
     $("rp-solde").value = doc ? versChamp(doc.solde) : "";
     $("rp-date").value = doc ? doc.le : moisDeBudget(auj) === cle ? auj : jourPaie(moisDecale(cle, -1));
-    const ep = doc ? doc.epargne : avant ? avant.epargne : {};
-    const objectifs = projetsTries().filter(p => p.type === "comptes");
-    $("rp-epargne").replaceChildren(...(objectifs.length ? objectifs.map(p => { const av = avancee(p); return ligneRepartition(p.nom, av.parMois ? `${eur(av.parMois, 0)} par mois pour tenir la date` : "", "ep", p.id, ep[p.id]); })
-      : [element("p", "aide", "Pas encore d'objectif d'épargne.")]));
-    // Les enveloppes : celles du budget d'avant, sinon les charges qui varient (l'essence).
+    // Le point de départ : le budget lui-même, sinon le plan de cette paie, sinon le budget d'avant (sans les
+    // objectifs déjà atteints), sinon les charges qui varient (l'essence).
+    const avant = doc || plan ? null : budgetAvant(cle);
     const variables = Object.fromEntries(Object.values(charges.docs).filter(c => c.variable).map(c => [c.categorie, c.montant]));
-    const env = doc ? doc.enveloppes : avant ? avant.enveloppes : variables;
+    const source = doc || plan || (avant && { ...avant, epargne: Object.fromEntries(Object.entries(avant.epargne).filter(([id]) => projets.docs[id] && avancee(projets.docs[id]).reste > 0)) })
+      || { enveloppes: variables, epargne: {}, placements: {} };
+    const ep = source.epargne, env = source.enveloppes;
+    const objectifs = projetsTries().filter(p => p.type === "comptes"), placements = comptesDu("investissement");
+    $("rp-epargne").replaceChildren(...(objectifs.length ? objectifs.flatMap(p => {
+      const av = avancee(p), ligne = ligneRepartition(p.nom, p.id === resteAuto ? "le reste, calculé tout seul" : av.parMois ? `${eur(av.parMois, 0)} par paie pour tenir la date` : "", "ep", p.id, p.id === resteAuto ? 0 : ep[p.id]);
+      if (p.groupe !== "investissement" || placements.length < 2) return [ligne];
+      // Les placements : un montant pour chaque compte, le premier reçoit le reste.
+      const bloc = element("div", "rp-placements"), premier = element("p", "rp-ligne rp-placement-reste");
+      premier.dataset.plReste = p.id;
+      const nom = element("span", "rp-nom", placements[0].nom);
+      nom.append(element("span", "rp-indice", ""));
+      premier.append(nom, element("span", "rp-support", placements[0].support));
+      bloc.append(premier, ...placements.slice(1).map(c => ligneRepartition(c.nom, c.support, "pl", c.id, source.placements[c.id])));
+      return [ligne, bloc];
+    }) : [element("p", "aide", "Pas encore d'objectif d'épargne.")]));
     $("rp-enveloppes").replaceChildren(...CATS_DEPENSES.map(([c, nom]) => ligneRepartition(nom, " ", "env", c, env[c])));
     $("rp-supprimer").hidden = !doc;
     desarmer($("rp-supprimer"), "Supprimer");
@@ -7150,7 +7215,12 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
     $("rp-solde").focus();
   }
   document.querySelectorAll("[data-repartir]").forEach(b => b.addEventListener("click", () => { if (peutModifierArgent()) ouvrirRepartition(); }));
-  $("rp-form").addEventListener("input", e => { if (e.target.id === "rp-date") rendreRepartitionPeriode(); else { e.target.classList.remove("en-erreur"); totalRepartition(); } });
+  $("rp-form").addEventListener("input", e => {
+    if (e.target.id === "rp-date") { rendreRepartitionPeriode(); return; }
+    if (resteAuto && e.target.dataset.ep === resteAuto) { resteAuto = null; const i = e.target.closest(".rp-ligne").querySelector(".rp-indice"); if (i) i.textContent = "tapé à la main"; }
+    e.target.classList.remove("en-erreur");
+    totalRepartition();
+  });
   $("rp-form").addEventListener("submit", e => e.preventDefault());
   $("rp-enregistrer").addEventListener("click", async () => {
     const erreur = (t, champ) => { $("rp-erreur").textContent = t; $("rp-erreur").hidden = false; if (champ) { champ.classList.add("en-erreur"); champ.focus(); } };
@@ -7167,11 +7237,11 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
       }
       return m;
     };
-    const enveloppes = lire("env"), epargne = enveloppes && lire("ep");
-    if (!enveloppes || !epargne) return;
+    const enveloppes = lire("env"), epargne = enveloppes && lire("ep"), placements = epargne && lire("pl");
+    if (!enveloppes || !epargne || !placements) return;
     const cle = moisDeBudget(le);
     try {
-      await budgets.ecrire(cle, { solde, le, enveloppes, epargne, modifieLe: new Date().toISOString() });
+      await budgets.ecrire(cle, { solde, le, enveloppes, epargne, placements, modifieLe: new Date().toISOString() });
       if (budgetEdite && budgetEdite !== cle) await budgets.ecrire(budgetEdite, null);
       moisArgent = cle;
       fermer($("fenetre-repartition"));
