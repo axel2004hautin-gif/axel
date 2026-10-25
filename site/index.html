@@ -3641,7 +3641,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
         + (exemples.length ? `\n\nPièces déjà enregistrées, pour écrire dans le même style :\n${exemples.join("\n")}` : "")
         + `\n\nRéponds seulement avec un objet JSON : {"marque": "", "categorie": "", "modele": "", "couleur": "", "coupe": "", "matiere": "", "remarque": ""}.`
         + `\n- categorie : un de ces identifiants : ${CATEGORIES.map(([id]) => id).join(", ")}. Gilets et cardigans : pulls ; surchemises et blazers : vestes ; doudounes : blousons ; chinos : pantalons.`
-        + `\n- couleur : la couleur principale de l'article, écrite exactement comme une de ces nuances : ${NUANCES.map(n => n[0]).join(", ")}. Un petit imprimé sur un fond uni : la couleur du fond.`
+        + `\n- couleur : la couleur principale de l'article, écrite exactement comme une de ces nuances : ${NUANCES.map(n => n[0]).join(", ")}. Un petit imprimé sur un fond uni : la couleur du fond. Un motif : le motif puis sa couleur principale (« Carreaux camel »). Une maille chinée : la nuance puis « chiné » (« Noir chiné »).`
         + `\n- coupe : un ou deux mots (Slim, Regular, Ample, Oversize, Droite, Fuselée, Large…), seulement si elle se voit ou si le lien la donne.`
         + `\n- matiere : seulement si une étiquette la montre ou si elle se voit sans doute possible (jean, cuir, daim, maille, velours côtelé), sinon "".`
         + `\n- modele : le nom du modèle, comme sur le site de la marque si le lien le donne.`
@@ -4025,11 +4025,12 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
           + (liens.length ? `\n\nLes liens des articles à ajouter. L'adresse donne souvent le modèle et la couleur : « horva00000000ml262coffee », c'est le modèle Orva, couleur coffee.\n${liens.map(l => "- " + l).join("\n")}` : "")
           + (marques.length ? `\n\nMarques déjà dans la garde-robe, à écrire pareil si c'est l'une d'elles : ${marques.join(", ")}.` : "")
           + `\n\nRéponds seulement avec un objet JSON : {"lien": "", "marque": "", "categorie": "", "modele": "", "couleur": "", "coupe": "", "matiere": "", "prix": null, "cadre": {"x": 0, "y": 0, "l": 100, "h": 100}, "remarque": ""}.`
-          + (liens.length ? `\n- lien : celui de la liste qui correspond à cet article, recopié exactement ; "" si aucun ne correspond sans doute possible.` : `\n- lien : "".`)
+          + (liens.length ? `\n- lien : celui de la liste qui correspond à cet article, recopié exactement ; "" si aucun ne correspond sans doute possible. Le modèle et la couleur écrits dans la fiche doivent être ceux de ce lien : deux modèles proches (Nardi, Nitor) se distinguent par le nom, la coupe des manches et le prix.` : `\n- lien : "".`)
           + `\n- marque : celle de la capture ou du lien.`
           + `\n- categorie : un de ces identifiants : ${CATEGORIES.map(([id]) => id).join(", ")}. Gilets et cardigans : pulls ; surchemises et blazers : vestes ; doudounes : blousons ; chinos : pantalons.`
           + `\n- modele : le nom de l'article tel qu'il est écrit sur la capture (par exemple « Pull Orva »), sinon celui du lien.`
-          + `\n- couleur : la couleur principale de l'article, écrite exactement comme une de ces nuances : ${NUANCES.map(n => n[0]).join(", ")}. Un petit imprimé sur un fond uni : la couleur du fond.`
+          + `\n- couleur : la couleur principale de l'article, écrite exactement comme une de ces nuances : ${NUANCES.map(n => n[0]).join(", ")}. Un petit imprimé sur un fond uni : la couleur du fond. Un motif : le motif puis sa couleur principale (« Carreaux camel », « Rayé bleu ciel »). Une maille chinée : la nuance puis « chiné » (« Noir chiné »). Le nom de couleur de la marque (coffee, fog, moss…) se traduit vers la nuance la plus proche de la photo.`
+          + `\n- categorie : un sweat zippé reste dans sweats ; une parka longue va dans manteaux, une courte dans blousons.`
           + `\n- coupe, matiere : seulement si la capture les donne (par exemple « Slim », « 100 % coton »), sinon "".`
           + `\n- prix : le prix en euros, un nombre (79.99). Si un prix barré est affiché, le prix barré : les promos du site ne valent pas en magasin. null s'il ne se voit pas.`
           + `\n- cadre : le rectangle de la photo principale du vêtement dans la capture, en pourcentage de la largeur (x, l) et de la hauteur (y, h) de l'image, sans le texte ni les boutons. Toute l'image si la capture n'est que la photo.`
