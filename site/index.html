@@ -624,6 +624,37 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
 .photo-boutons { display: flex; flex-wrap: wrap; gap: 4px 14px; }
 .nombre-photos { position: absolute; right: 6px; bottom: 6px; padding: 1px 6px; border-radius: 999px; background: rgba(255, 255, 255, .92); border: 1px solid var(--trait); color: var(--marine); font: 700 .66rem/1.5 var(--f-mono); }
 .bouton-fichier { position: relative; display: inline-flex; align-items: center; cursor: pointer; }
+/* Ajouter en lot : une carte par capture, la photo recadrée à gauche, les champs à vérifier à droite. */
+.lot { display: grid; gap: 14px; padding-top: 16px; }
+.lot-liens summary { cursor: pointer; font-weight: 700; color: var(--marine); }
+.lot-liens .aide { margin-top: 6px; }
+.lot-liens textarea { width: 100%; margin-top: 8px; font: 500 .82rem/1.5 var(--f-mono); }
+.lot-ajout { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.lot-liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.lot-carte { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; padding: 10px; border: 1.5px solid var(--trait); border-radius: 12px; }
+.lot-carte.erreur, .lot-carte.a-completer { border-color: var(--erreur); }
+.lot-carte.a-completer { background: var(--erreur-doux); }
+.lot-carte.ecartee .lot-photo img, .lot-carte.ecartee .lot-champs > :not(.lot-tete) { opacity: .45; }
+.lot-photo { display: grid; align-content: start; justify-items: center; gap: 4px; }
+.lot-photo img { width: 96px; height: 128px; object-fit: contain; border-radius: 8px; background: var(--trait-doux); }
+.lot-photo .lien-discret { font-size: .8rem; }
+.lot-champs { display: grid; align-content: start; gap: 8px; min-width: 0; }
+.lot-tete { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.lot-garder { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; cursor: pointer; }
+.lot-garder input { width: 18px; height: 18px; margin: 0; accent-color: var(--marine); }
+.lot-marque { font: 600 .72rem/1.2 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--gris); }
+.lot-retirer { display: grid; place-items: center; width: 32px; height: 32px; margin-left: auto; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--gris); font-size: 1.3rem; line-height: 1; }
+.lot-retirer:hover { background: var(--marine-doux); color: var(--encre); }
+.lot-ligne { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.3fr) minmax(0, .7fr); gap: 8px; }
+.lot-champs input, .lot-champs select { width: 100%; min-width: 0; }
+.lot-remarque { color: var(--gris); font-size: .88rem; line-height: 1.35; }
+.lot-carte .remplissage { align-self: start; }
+@media (max-width: 559px) {
+  .lot-carte { grid-template-columns: 72px minmax(0, 1fr); gap: 10px; }
+  .lot-photo img { width: 72px; height: 96px; }
+  .lot-ligne { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .lot-ligne > :first-child { grid-column: 1 / -1; }
+}
 .aide { color: var(--gris); font-size: .88rem; line-height: 1.35; }
 .champs-grille { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; min-width: 0; }
 .champs-grille .large { grid-column: 1 / -1; }
@@ -1066,6 +1097,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
         <div class="page-tete-actions">
           <p class="todo-compte" id="gr-compte"></p>
           <button class="bouton-second" type="button" id="gr-selectionner" hidden>Sélectionner</button>
+          <button class="bouton-second" type="button" id="gr-lot" disabled>Ajouter en lot</button>
           <button class="bouton-principal" type="button" id="gr-ajouter" disabled>Ajouter une pièce</button>
         </div>
       </div>
@@ -1535,6 +1567,36 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     <button class="bouton-principal" type="button" id="pi-enregistrer">Enregistrer</button>
   </div>
 </dialog>
+
+<dialog class="fenetre fenetre-piece" id="fenetre-lot" aria-labelledby="lot-titre">
+  <div class="fenetre-tete">
+    <div>
+      <h2 id="lot-titre">Ajouter en lot</h2>
+      <p class="fenetre-sous">Une capture par article : Claude prépare les fiches, tu vérifies, tout s'ajoute d'un coup.</p>
+    </div>
+    <button class="fermer" type="button" data-fermer aria-label="Fermer (les fiches préparées restent)">×</button>
+  </div>
+  <div class="fenetre-corps champs-tache lot">
+    <details class="lot-liens" id="lot-liens-bloc">
+      <summary>Liens des articles <span class="nombre" id="lot-nb-liens"></span></summary>
+      <p class="aide">Un lien par ligne. Claude associe chaque capture à son lien : le modèle et la couleur sont dans l'adresse.</p>
+      <textarea id="lot-liens" rows="6" spellcheck="false" placeholder="https://www.letempsdescerises.com/…"></textarea>
+    </details>
+    <div class="lot-ajout">
+      <label class="bouton-principal bouton-fichier"><span>Choisir les captures</span><input class="invisible" type="file" id="lot-fichiers" accept="image/*" multiple></label>
+      <p class="aide">Une capture par article, avec la photo, le nom et le prix. Tu peux en choisir plusieurs à la fois.</p>
+    </div>
+    <p class="remplissage" id="lot-etat" hidden><span class="remplissage-texte" id="lot-etat-texte"></span></p>
+    <ol class="lot-liste" id="lot-liste"></ol>
+  </div>
+  <div class="fenetre-pied">
+    <p class="fenetre-erreur" id="lot-erreur" role="alert" hidden></p>
+    <button class="bouton-danger" type="button" id="lot-effacer" hidden>Tout effacer</button>
+    <button class="bouton-second" type="button" data-fermer>Fermer</button>
+    <button class="bouton-principal" type="button" id="lot-creer" disabled>Ajouter les pièces</button>
+  </div>
+</dialog>
+<datalist id="lot-nuances"></datalist>
 
 <dialog class="fenetre fenetre-piece" id="fenetre-choix" aria-labelledby="fc-titre">
   <div class="fenetre-tete">
@@ -3155,8 +3217,8 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     toutes.forEach(x => { if (x.matiere && !matieres.has(sansAccents(x.matiere))) matieres.set(sansAccents(x.matiere), x.matiere); });
     $("matieres").replaceChildren(...[...matieres.values()].sort((a, b) => a.localeCompare(b, "fr")).map(m => new Option(m)));
 
-    $("gr-ajouter").hidden = mode === "lecture" || (mode === "base" && !assets);
-    $("gr-ajouter").disabled = mode === "attente";
+    $("gr-ajouter").hidden = $("gr-lot").hidden = mode === "lecture" || (mode === "base" && !assets);
+    $("gr-ajouter").disabled = $("gr-lot").disabled = mode === "attente";
     $("gr-selectionner").hidden = !peutModifierPieces() || !toutes.length || modeSelection;
 
     // Mode sélection : la barre en bas de l'écran
@@ -3417,6 +3479,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
     [/tommy-?jeans/, "Tommy Jeans"], [/tommy|hilfiger/, "Tommy Hilfiger"], [/teddy-?smith/, "Teddy Smith"], [/levi/, "Levi's"],
     [/calvin-?klein/, "Calvin Klein"], [/jack-?(and-?)?jones/, "Jack & Jones"], [/pepe-?jeans/, "Pepe Jeans"], [/g-?star/, "G-Star Raw"],
     [/ralph-?lauren/, "Ralph Lauren"], [/hugo-?boss/, "BOSS"], [/new-?balance/, "New Balance"], [/the-?north-?face/, "The North Face"],
+    [/le-?temps-?des-?cerises/, "Le Temps des Cerises"],
   ];
   const COULEURS_ANGLAIS = {
     "black": "Noir", "white": "Blanc", "middle white": "Blanc", "optic white": "Blanc", "off white": "Blanc cassé", "offwhite": "Blanc cassé", "ivory": "Ivoire",
@@ -3857,6 +3920,364 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
       fermer($("fenetre-piece"));
       toast("Pièce supprimée.");
     } catch (err) { erreurPiece(messagePiece(err)); }
+  });
+
+  // ----- ajouter en lot -----
+  // Pour les marques dont le site refuse les robots : une capture de chaque fiche du site. Claude lit chacune
+  // (nom, catégorie, couleur, prix, le lien qui va avec, où est la photo du vêtement), la page recadre la
+  // photo ; on vérifie la liste, puis tout s'ajoute d'un coup. Les liens en attente restent dans reglages/lot.
+  const lot = [];   // { cle, fichier, etat: attente | analyse | pret | erreur, photos: { entiere, recadree }, recadrer, url, champs, lien, garder, remarque, erreur }
+  let cleLot = 0, analysesLot = 0, ajoutLot = false;
+  const ctlLot = new Set();
+  const LIEN_RE = /^https?:\/\/[^\s"<>]+\.[^\s"<>]+$/i;
+  const liensDuLot = () => [...new Set($("lot-liens").value.split(/\s+/).filter(x => LIEN_RE.test(x)))];
+  const nomLien = l => { try { return decodeURIComponent(new URL(l).pathname.split("/").filter(Boolean).pop() || l).replace(/\.html?$/, ""); } catch (_) { return l; } };
+  const lienPris = (l, sauf) => lot.some(b => b !== sauf && b.lien === l);
+  const dansGardeRobe = l => !!l && Object.values(pieces).some(x => x.lien === l);
+  $("lot-nuances").replaceChildren(...NUANCES.map(n => new Option(n[0])));
+
+  // Une image en JPEG de « max » px au plus, recadrée sur « cadre » (en % de l'image) s'il y en a un.
+  function versJpeg(source, max, cadre) {
+    return new Promise((ok, ko) => {
+      const url = URL.createObjectURL(source), img = new Image();
+      img.onload = () => {
+        const W = img.naturalWidth, H = img.naturalHeight, c = cadre || { x: 0, y: 0, l: 100, h: 100 };
+        const sx = Math.round(W * c.x / 100), sy = Math.round(H * c.y / 100);
+        const sw = Math.max(1, Math.round(W * c.l / 100)), sh = Math.max(1, Math.round(H * c.h / 100));
+        const r = Math.min(1, max / Math.max(sw, sh)), cv = document.createElement("canvas");
+        cv.width = Math.max(1, Math.round(sw * r));
+        cv.height = Math.max(1, Math.round(sh * r));
+        const ctx = cv.getContext("2d");
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, cv.width, cv.height);
+        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, cv.width, cv.height);
+        URL.revokeObjectURL(url);
+        cv.toBlob(b => (b ? ok(b) : ko(new Error("export"))), "image/jpeg", 0.86);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); ko({ code: "illisible" }); };
+      img.src = url;
+    });
+  }
+  // Le cadre donné par Claude, avec une petite marge pour ne pas couper le vêtement ; rien s'il est douteux.
+  function cadreValide(c) {
+    if (!c || typeof c !== "object") return null;
+    let [x, y, l, h] = ["x", "y", "l", "h"].map(k => Number(c[k]));
+    if (![x, y, l, h].every(Number.isFinite) || l < 15 || h < 15) return null;
+    x = Math.max(0, x - 1); y = Math.max(0, y - 1);
+    l = Math.min(100 - x, l + 2); h = Math.min(100 - y, h + 2);
+    return l > 97 && h > 97 ? null : { x, y, l, h };
+  }
+  function majUrlLot(b) {
+    if (b.url) URL.revokeObjectURL(b.url);
+    const photo = b.recadrer && b.photos.recadree ? b.photos.recadree : b.photos.entiere;
+    b.url = photo ? URL.createObjectURL(photo) : null;
+  }
+  function retirerDuLot(b) {
+    const i = lot.indexOf(b);
+    if (i >= 0) lot.splice(i, 1);
+    if (b.url) URL.revokeObjectURL(b.url);
+  }
+
+  // Ce que Claude a lu, vérifié ; le lien complète la marque, la catégorie et la référence.
+  function appliquerLot(b, r, liens) {
+    const texte = (v, max) => (typeof v === "string" ? v.trim().slice(0, max) : "");
+    const lien = liens.includes(texte(r.lien, 500)) && !lienPris(texte(r.lien, 500), b) ? texte(r.lien, 500) : "";
+    const duLien = (lien && lireLien(lien)) || {};
+    const marques = [...new Set(Object.values(pieces).map(x => x.marque).filter(Boolean))];
+    // La marque : écrite comme dans la garde-robe, ou comme le site connu du lien (« le temps des cerises »).
+    const compact = v => sansAccents(v).replace(/[^a-z0-9]/g, "");
+    const lue = texte(r.marque, 60), marque = !lue || compact(lue) === compact(duLien.marque || "") ? duLien.marque || lue : lue;
+    const couleur = texte(r.couleur, 60);
+    b.champs = {
+      marque: marques.find(m => sansAccents(m) === sansAccents(marque)) || marque,
+      categorie: NOM_CATEGORIE[r.categorie] ? r.categorie : duLien.categorie || "",
+      modele: texte(r.modele, 120) || duLien.modele || "",
+      couleur: (NUANCE.get(sansAccents(couleur)) || {}).nom || couleur || duLien.couleur || "",
+      coupe: texte(r.coupe, 120) || duLien.coupe || "",
+      matiere: texte(r.matiere, 120),
+      prix: typeof r.prix === "number" && Number.isFinite(r.prix) && r.prix > 0 && r.prix < 100000 ? String(Math.round(r.prix * 100) / 100).replace(".", ",") : "",
+      ref: duLien.ref || "",
+    };
+    b.lien = lien;
+    b.garder = !dansGardeRobe(lien);
+    b.remarque = texte(r.remarque, 200);
+  }
+  async function analyserLot(b) {
+    b.etat = "analyse";
+    b.erreur = "";
+    majCarteLot(b);
+    const ctl = new AbortController();
+    ctlLot.add(ctl);
+    try {
+      if (!b.photos.entiere) b.photos.entiere = await versJpeg(b.fichier, 900);
+      if (!sampleNs) {
+        b.champs = b.champs || { marque: "", categorie: "", modele: "", couleur: "", coupe: "", matiere: "", prix: "", ref: "" };
+        b.garder = true;
+        b.remarque = "Claude n'est pas disponible ici : complète la fiche à la main.";
+      } else {
+        const limites = await sampleNs.limits();
+        if (!limites.images) throw { code: "images_unavailable" };
+        const image = await versJpeg(b.fichier, 1568);
+        if (image.size > limites.images.maxInputBytes) throw { code: "too_large" };
+        const liens = liensDuLot().filter(l => !lienPris(l, b) && !dansGardeRobe(l));
+        const marques = [...new Set(Object.values(pieces).map(x => x.marque).filter(Boolean))];
+        const consigne = `Tu aides un vendeur du magasin de vêtements Blue Box (rayon homme) à créer la fiche d'un article à partir d'une capture d'écran de sa fiche sur le site de la marque.`
+          + (liens.length ? `\n\nLes liens des articles à ajouter. L'adresse donne souvent le modèle et la couleur : « horva00000000ml262coffee », c'est le modèle Orva, couleur coffee.\n${liens.map(l => "- " + l).join("\n")}` : "")
+          + (marques.length ? `\n\nMarques déjà dans la garde-robe, à écrire pareil si c'est l'une d'elles : ${marques.join(", ")}.` : "")
+          + `\n\nRéponds seulement avec un objet JSON : {"lien": "", "marque": "", "categorie": "", "modele": "", "couleur": "", "coupe": "", "matiere": "", "prix": null, "cadre": {"x": 0, "y": 0, "l": 100, "h": 100}, "remarque": ""}.`
+          + (liens.length ? `\n- lien : celui de la liste qui correspond à cet article, recopié exactement ; "" si aucun ne correspond sans doute possible.` : `\n- lien : "".`)
+          + `\n- marque : celle de la capture ou du lien.`
+          + `\n- categorie : un de ces identifiants : ${CATEGORIES.map(([id]) => id).join(", ")}. Gilets et cardigans : pulls ; surchemises et blazers : vestes ; doudounes : blousons ; chinos : pantalons.`
+          + `\n- modele : le nom de l'article tel qu'il est écrit sur la capture (par exemple « Pull Orva »), sinon celui du lien.`
+          + `\n- couleur : la couleur principale de l'article, écrite exactement comme une de ces nuances : ${NUANCES.map(n => n[0]).join(", ")}. Un petit imprimé sur un fond uni : la couleur du fond.`
+          + `\n- coupe, matiere : seulement si la capture les donne (par exemple « Slim », « 100 % coton »), sinon "".`
+          + `\n- prix : le prix en euros, un nombre (79.99). Si un prix barré est affiché, le prix barré : les promos du site ne valent pas en magasin. null s'il ne se voit pas.`
+          + `\n- cadre : le rectangle de la photo principale du vêtement dans la capture, en pourcentage de la largeur (x, l) et de la hauteur (y, h) de l'image, sans le texte ni les boutons. Toute l'image si la capture n'est que la photo.`
+          + `\n- remarque : une phrase courte sur ce qui reste à vérifier, ou "".`
+          + `\nN'invente rien : un champ incertain reste "".`;
+        const r = await sampleNs.json(consigne, { images: [image], signal: ctl.signal });
+        if (!lot.includes(b)) return;
+        appliquerLot(b, r && typeof r === "object" ? r : {}, liens);
+        const cadre = cadreValide(r && r.cadre);
+        b.photos.recadree = cadre ? await versJpeg(b.fichier, 900, cadre) : null;
+        b.recadrer = !!b.photos.recadree;
+      }
+      b.etat = "pret";
+    } catch (e) {
+      if (!lot.includes(b)) return;
+      const code = e && e.code;
+      b.etat = "erreur";
+      if (["not_granted", "sampling_disabled", "not_declared", "capability_disabled", "capability_removed"].includes(code)) { sampleNs = null; b.erreur = "Claude n'est pas disponible ici."; }
+      else if (code === "illisible") b.erreur = "Cette image ne s'ouvre pas.";
+      else if (code === "cancelled") b.erreur = "Arrêté.";
+      else if (code === "rate_limited") b.erreur = "Trop de demandes d'un coup : réessaie dans un moment.";
+      else if (code === "too_large") b.erreur = "Capture trop lourde pour Claude.";
+      else if (code === "images_unavailable") b.erreur = "Claude ne peut pas regarder les images ici.";
+      else b.erreur = "Claude n'a pas pu lire cette capture.";
+    } finally {
+      ctlLot.delete(ctl);
+      if (lot.includes(b)) { majUrlLot(b); majCarteLot(b); }
+      majPiedLot();
+    }
+  }
+  // Deux captures à la fois.
+  function lancerLot() {
+    while (analysesLot < 2) {
+      const b = lot.find(x => x.etat === "attente");
+      if (!b) break;
+      analysesLot++;
+      analyserLot(b).finally(() => { analysesLot--; lancerLot(); });
+    }
+    majPiedLot();
+  }
+
+  // ----- affichage -----
+  function carteLot(b) {
+    const li = element("li", "lot-carte");
+    li.dataset.cle = b.cle;
+    remplirCarteLot(li, b);
+    return li;
+  }
+  function champLot(tag, champ, valeur, attributs) {
+    const el = element(tag);
+    if (tag === "input") el.type = "text";
+    el.dataset.champ = champ;
+    Object.entries(attributs || {}).forEach(([k, v]) => el.setAttribute(k, v));
+    if (tag === "input") el.value = valeur || "";
+    return el;
+  }
+  function remplirCarteLot(li, b) {
+    li.className = "lot-carte" + (b.etat === "erreur" ? " erreur" : "") + (b.champs && !b.garder ? " ecartee" : "");
+    const photo = element("div", "lot-photo"), img = element("img");
+    img.alt = "";
+    if (b.url) img.src = b.url;
+    photo.append(img);
+    if (b.photos.recadree) {
+      const t = element("button", "lien-discret", b.recadrer ? "Photo entière" : "Recadrer");
+      t.type = "button";
+      t.dataset.action = "recadrer";
+      photo.append(t);
+    }
+    const corps = element("div", "lot-champs");
+    const retirer = element("button", "lot-retirer", "×");
+    retirer.type = "button";
+    retirer.dataset.action = "retirer";
+    retirer.setAttribute("aria-label", "Retirer cette capture");
+    if (!b.champs) {
+      const etat = element("p", "remplissage" + (b.etat === "erreur" ? " erreur" : " en-cours"));
+      etat.append(element("span", "remplissage-texte", b.etat === "erreur" ? b.erreur : b.etat === "analyse" ? "Claude lit la capture…" : "En attente…"));
+      if (b.etat === "erreur") { const r = element("button", "lien-discret", "Réessayer"); r.type = "button"; r.dataset.action = "reessayer"; etat.append(r); }
+      const tete = element("div", "lot-tete");
+      tete.append(etat, retirer);
+      corps.append(tete);
+      li.replaceChildren(photo, corps);
+      return;
+    }
+    const tete = element("div", "lot-tete"), garder = element("label", "lot-garder");
+    const cb = element("input");
+    cb.type = "checkbox";
+    cb.checked = b.garder;
+    cb.dataset.champ = "garder";
+    garder.append(cb, element("span", null, "Ajouter"));
+    tete.append(garder, element("span", "lot-marque", b.champs.marque || "Marque ?"));
+    if (dansGardeRobe(b.lien)) tete.append(element("span", "puce", "Déjà dans la garde-robe"));
+    tete.append(retirer);
+    const modele = champLot("input", "modele", b.champs.modele, { placeholder: "Modèle", "aria-label": "Modèle", maxlength: "120" });
+    const categorie = champLot("select", "categorie", null, { "aria-label": "Catégorie" });
+    categorie.append(new Option("Catégorie ?", ""), ...CATEGORIES.map(([id, nom]) => new Option(nom, id)));
+    categorie.value = b.champs.categorie;
+    const couleur = element("span", "champ-couleur");
+    couleur.append(pastille(cssCouleur(b.champs.couleur) || "transparent"),
+      champLot("input", "couleur", b.champs.couleur, { list: "lot-nuances", placeholder: "Couleur", "aria-label": "Couleur", maxlength: "60" }));
+    const prix = champLot("input", "prix", b.champs.prix, { inputmode: "decimal", placeholder: "Prix €", "aria-label": "Prix en euros" });
+    const ligne = element("div", "lot-ligne");
+    ligne.append(categorie, couleur, prix);
+    const lien = champLot("select", "lien", null, { "aria-label": "Lien de l'article" });
+    lien.append(new Option("Sans lien", ""), ...liensDuLot().map(l => { const o = new Option(nomLien(l), l); o.disabled = lienPris(l, b); return o; }));
+    if (b.lien && ![...lien.options].some(o => o.value === b.lien)) lien.append(new Option(nomLien(b.lien), b.lien));
+    lien.value = b.lien;
+    corps.append(tete, modele, ligne, lien);
+    if (b.remarque || b.erreur) corps.append(element("p", "lot-remarque", b.erreur || b.remarque));
+    li.replaceChildren(photo, corps);
+  }
+  function majCarteLot(b) {
+    const li = $("lot-liste").querySelector(`[data-cle="${b.cle}"]`);
+    if (li) remplirCarteLot(li, b);
+  }
+  function rendreLot() {
+    $("lot-liste").replaceChildren(...lot.map(carteLot));
+    majPiedLot();
+  }
+  const aAjouter = () => lot.filter(b => b.champs && b.garder && b.etat !== "analyse" && b.etat !== "attente");
+  function majPiedLot() {
+    const n = liensDuLot().length, enCours = lot.filter(b => b.etat === "attente" || b.etat === "analyse").length, choisies = aAjouter().length;
+    $("lot-nb-liens").textContent = n ? String(n) : "";
+    $("lot-etat").hidden = !lot.length;
+    $("lot-etat").className = "remplissage" + (enCours ? " en-cours" : "");
+    $("lot-etat-texte").textContent = enCours ? `Claude lit les captures : ${lot.length - enCours} sur ${lot.length}…`
+      : `${lot.length} fiche${lot.length > 1 ? "s" : ""} préparée${lot.length > 1 ? "s" : ""}. Vérifie surtout la catégorie, la couleur et le prix, puis ajoute.`;
+    $("lot-effacer").hidden = !lot.length || ajoutLot;
+    $("lot-creer").disabled = ajoutLot || !!enCours || !choisies;
+    if (!ajoutLot) $("lot-creer").textContent = choisies ? `Ajouter ${choisies > 1 ? `les ${choisies} pièces` : "la pièce"}` : "Ajouter les pièces";
+  }
+
+  // ----- ouvrir, choisir les captures, modifier -----
+  $("gr-lot").addEventListener("click", () => {
+    if (!peutModifierPieces()) return;
+    const attente = reglagesCollection.docs.lot;
+    if (!$("lot-liens").value.trim() && attente && Array.isArray(attente.liens)) $("lot-liens").value = attente.liens.filter(l => typeof l === "string" && LIEN_RE.test(l)).join("\n");
+    $("lot-liens-bloc").open = !lot.length && !!$("lot-liens").value.trim();
+    $("lot-erreur").hidden = true;
+    rendreLot();
+    ouvrir($("fenetre-lot"));
+  });
+  // Les liens collés sont gardés : ils servent pour les captures suivantes, sur le téléphone comme sur l'ordinateur.
+  const sauverLiensLot = liens => reglagesCollection.ecrire("lot", { liens, modifieLe: new Date().toISOString() }).catch(() => {});
+  $("lot-liens").addEventListener("change", () => { sauverLiensLot(liensDuLot()); rendreLot(); });
+  $("lot-fichiers").addEventListener("change", e => {
+    const fichiers = [...e.target.files].filter(f => /^image\//.test(f.type) || /\.(png|jpe?g|webp|heic|heif)$/i.test(f.name));
+    e.target.value = "";
+    fichiers.forEach(fichier => lot.push({ cle: ++cleLot, fichier, etat: "attente", photos: {}, recadrer: false, url: null, champs: null, lien: "", garder: true, remarque: "", erreur: "" }));
+    $("lot-liens-bloc").open = false;
+    rendreLot();
+    lancerLot();
+  });
+  const brouillonDe = el => lot.find(b => String(b.cle) === el.closest(".lot-carte")?.dataset.cle);
+  $("lot-liste").addEventListener("input", e => {
+    const b = brouillonDe(e.target), champ = e.target.dataset.champ;
+    if (!b || !b.champs || !champ || champ === "garder" || champ === "lien") return;
+    b.champs[champ] = e.target.value;
+    e.target.closest(".lot-carte").classList.remove("a-completer");
+    if (champ === "couleur") e.target.previousElementSibling.style.setProperty("--teinte", cssCouleur(e.target.value) || "transparent");
+  });
+  $("lot-liste").addEventListener("change", e => {
+    const b = brouillonDe(e.target), champ = e.target.dataset.champ;
+    if (!b || !b.champs) return;
+    if (champ === "garder") { b.garder = e.target.checked; majCarteLot(b); majPiedLot(); }
+    else if (champ === "lien") {
+      b.lien = e.target.value;
+      const duLien = (b.lien && lireLien(b.lien)) || {};
+      if (duLien.ref) b.champs.ref = duLien.ref;
+      if (!b.champs.marque && duLien.marque) b.champs.marque = duLien.marque;
+      rendreLot();   // un lien pris ne se propose plus ailleurs
+    } else if (champ === "categorie") e.target.closest(".lot-carte").classList.remove("a-completer");
+  });
+  $("lot-liste").addEventListener("click", e => {
+    const a = e.target.closest("[data-action]"), b = a && brouillonDe(a);
+    if (!b) return;
+    if (a.dataset.action === "recadrer") { b.recadrer = !b.recadrer; majUrlLot(b); majCarteLot(b); }
+    else if (a.dataset.action === "reessayer") { b.etat = "attente"; lancerLot(); majCarteLot(b); }
+    else if (a.dataset.action === "retirer") { retirerDuLot(b); rendreLot(); }
+  });
+  $("lot-effacer").addEventListener("click", e => {
+    const bouton = e.currentTarget;
+    if (!bouton.classList.contains("arme")) { armer(bouton, "Confirmer : tout effacer", "Tout effacer"); return; }
+    desarmer(bouton, "Tout effacer");
+    ctlLot.forEach(c => c.abort());
+    [...lot].forEach(retirerDuLot);
+    rendreLot();
+  });
+
+  // ----- tout ajouter -----
+  const prixDuLot = v => {
+    const t = String(v || "").replace(/\s|€/g, "").replace(",", ".");
+    if (!t) return null;
+    const n = Number(t);
+    return Number.isFinite(n) && n >= 0 && n < 100000 ? Math.round(n * 100) / 100 : undefined;
+  };
+  $("lot-creer").addEventListener("click", async () => {
+    if (ajoutLot || !peutModifierPieces()) return;
+    $("lot-erreur").hidden = true;
+    const choisies = aAjouter();
+    const incompletes = choisies.filter(b => !NOM_CATEGORIE[b.champs.categorie] || !(b.champs.marque.trim() || b.champs.modele.trim()) || prixDuLot(b.champs.prix) === undefined || !b.photos.entiere);
+    if (incompletes.length) {
+      incompletes.forEach(b => $("lot-liste").querySelector(`[data-cle="${b.cle}"]`)?.classList.add("a-completer"));
+      $("lot-erreur").textContent = `${incompletes.length > 1 ? `${incompletes.length} fiches sont` : "Une fiche est"} à compléter (en rouge) : la catégorie, le modèle ou un prix écrit comme 79,99.`;
+      $("lot-erreur").hidden = false;
+      $("lot-liste").querySelector(".a-completer")?.scrollIntoView({ block: "center", behavior: "smooth" });
+      return;
+    }
+    ajoutLot = true;
+    majPiedLot();
+    const liensPris = [];
+    let faites = 0;
+    try {
+      for (const b of choisies) {
+        $("lot-creer").textContent = `Ajout ${faites + 1} sur ${choisies.length}…`;
+        const photo = b.recadrer && b.photos.recadree ? b.photos.recadree : b.photos.entiere;
+        const v = mode === "base" ? (await assets.upload(photo, { type: "image/jpeg" })).id : await enDataUrl(photo);
+        const c = b.champs;
+        try {
+          await ecrirePiece(nouvelIdPiece(), {
+            marque: c.marque.trim().slice(0, 60) || null, categorie: c.categorie, modele: c.modele.trim().slice(0, 120) || null,
+            coupe: c.coupe.trim().slice(0, 120) || null, couleur: c.couleur.trim().slice(0, 60) || null, matiere: c.matiere.trim().slice(0, 120) || null,
+            rayon: "homme", prix: prixDuLot(c.prix), ref: c.ref.slice(0, 60) || null, lien: b.lien || null,
+            reperes: Object.fromEntries(REPERES_PIECE.map(([k]) => [k, false])), note: null,
+            photos: [v], photo: v, creeLe: new Date().toISOString(),
+          });
+        } catch (err) {
+          if (mode === "base" && assets) assets.delete(v).catch(() => {});
+          throw err;
+        }
+        if (b.lien) liensPris.push(b.lien);
+        retirerDuLot(b);
+        faites++;
+      }
+    } catch (err) {
+      $("lot-erreur").textContent = (faites ? `${faites} pièce${faites > 1 ? "s" : ""} ajoutée${faites > 1 ? "s" : ""}, puis : ` : "") + messagePiece(err);
+      $("lot-erreur").hidden = false;
+    } finally {
+      ajoutLot = false;
+      // Les liens utilisés quittent la liste d'attente.
+      if (liensPris.length) {
+        const restants = liensDuLot().filter(l => !liensPris.includes(l));
+        $("lot-liens").value = restants.join("\n");
+        sauverLiensLot(restants);
+      }
+      rendreLot();
+    }
+    if (faites) toast(`${faites} pièce${faites > 1 ? "s" : ""} ajoutée${faites > 1 ? "s" : ""} à la garde-robe.`);
+    if (faites && !lot.length) fermer($("fenetre-lot"));
   });
 
   // ---------- garde-robe : onglets, collections, tenues, comparateur, ce qu'il manque ----------
