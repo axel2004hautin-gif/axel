@@ -134,7 +134,24 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }
   .sous-nav .nom-court { display: inline; }
 }
 
-/* Accueil */
+/* Accueil : la maquette. Le titre dans un cadre, puis les trois rubriques en grands cadres qui remplissent
+   l'écran (empilés sur téléphone). Sur ordinateur, la barre du haut s'efface : les cadres mènent aux rubriques. */
+.accueil-maquette:not([hidden]) { display: flex; flex-direction: column; }
+.maquette { flex: 1 0 auto; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 30px; padding-block: 32px; }
+.maquette-titre, .maquette-case { border: 2px solid var(--encre); border-radius: 12px; color: var(--encre); font: 700 clamp(1.2rem, 2.2vw, 1.6rem)/1.2 var(--f-body); letter-spacing: .03em; text-transform: uppercase; text-align: center; }
+.maquette-titre { padding: 20px 16px; }
+.maquette-rubriques { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 30px; }
+.maquette-case { display: grid; place-items: center; min-height: 340px; padding: 16px; text-decoration: none; transition: background-color .15s ease; }
+.maquette-case:hover { background: var(--trait-doux); }
+.maquette-case:focus-visible { outline: 3px solid var(--encre); outline-offset: 3px; }
+body.sur-accueil .bande { display: none; }
+@media (max-width: 599px) {
+  .maquette { gap: 16px; padding-block: 20px; }
+  .maquette-rubriques { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .maquette-case { min-height: 120px; }
+}
+
+/* Ma journée (#journee) : la to-do du jour et la journée en un coup d'œil, en attendant leur place sur l'accueil */
 .accueil { display: grid; gap: 20px; padding-block: 24px 48px; }
 .accueil-tete { display: grid; gap: 6px; }
 .accueil-tete h1 { font-family: var(--f-display); font-weight: 850; font-stretch: 110%; font-size: clamp(1.6rem, 3.6vw, 2.4rem); line-height: 1.05; letter-spacing: -.015em; color: var(--marine); }
@@ -1178,11 +1195,22 @@ details.groupe-pieces { display: block; }
 </header>
 
 <main>
-  <section data-vue="accueil" aria-labelledby="titre-accueil">
+  <section class="accueil-maquette" data-vue="accueil" aria-labelledby="titre-accueil">
+    <div class="cadre maquette">
+      <h1 class="maquette-titre" id="titre-accueil" tabindex="-1">Tableau de bord</h1>
+      <nav class="maquette-rubriques" aria-label="Rubriques">
+        <a class="maquette-case" href="#travail">Travail</a>
+        <a class="maquette-case" href="#argent">Argent</a>
+        <a class="maquette-case" href="#sport">Sport</a>
+      </nav>
+    </div>
+  </section>
+
+  <section data-vue="journee" aria-labelledby="titre-journee" hidden>
     <div class="cadre accueil">
       <div class="accueil-tete">
         <p class="eyebrow" id="aujourdhui">Aujourd'hui</p>
-        <h1 id="titre-accueil" tabindex="-1">Ma journée</h1>
+        <h1 id="titre-journee" tabindex="-1">Ma journée</h1>
         <p class="accueil-resume" id="accueil-resume"></p>
       </div>
       <div class="accueil-grille" id="accueil-grille" hidden>
@@ -2292,7 +2320,7 @@ details.groupe-pieces { display: block; }
   // rend la page introuvable) ; un lien direct ouvre sa page : une rubrique (#travail, #argent,
   // #sport), une sous-rubrique (#planning, #todo, #garde-robe) ou un onglet de la garde-robe (#tenues,
   // #comparer, #manque).
-  const VUES = ["accueil", "travail", "planning", "todo", "garde-robe", "tenues", "comparer", "manque", "calendrier", "objectifs", "argent", "budget", "depenses", "epargne", "paie", "sport"];
+  const VUES = ["accueil", "journee", "travail", "planning", "todo", "garde-robe", "tenues", "comparer", "manque", "calendrier", "objectifs", "argent", "budget", "depenses", "epargne", "paie", "sport"];
   const RUBRIQUE_DE = { planning: "travail", todo: "travail", "garde-robe": "travail", tenues: "travail", comparer: "travail", manque: "travail", calendrier: "travail", objectifs: "travail", budget: "argent", depenses: "argent", epargne: "argent", paie: "argent" };
   // Les onglets de la garde-robe restent sous la sous-rubrique « Garde-robe Blue Box ».
   const SOUS_RUBRIQUE_DE = { tenues: "garde-robe", comparer: "garde-robe", manque: "garde-robe" };
@@ -2307,6 +2335,7 @@ details.groupe-pieces { display: block; }
     let sousNav = null;
     document.querySelectorAll(".sous-nav").forEach(n => { n.hidden = n.dataset.rubrique !== (RUBRIQUE_DE[nom] || nom); if (!n.hidden) sousNav = n; });
     document.body.classList.toggle("avec-sous-nav", !!sousNav);
+    document.body.classList.toggle("sur-accueil", nom === "accueil");
     document.querySelectorAll(".bande [data-aller], .sous-nav [data-aller], .onglets-bas [data-aller]").forEach(a => {
       const cible = a.closest(".sous-bande, .sous-nav") ? SOUS_RUBRIQUE_DE[nom] || nom : RUBRIQUE_DE[nom] || nom;
       if (a.dataset.aller === cible) a.setAttribute("aria-current", "page");
@@ -3384,7 +3413,7 @@ details.groupe-pieces { display: block; }
     catch (err) { cb.checked = !cb.checked; echecEcriture(err); }
   }
   document.querySelector('[data-vue="todo"]').addEventListener("change", cocherTache);
-  document.querySelector('[data-vue="accueil"]').addEventListener("change", cocherTache);
+  document.querySelector('[data-vue="journee"]').addEventListener("change", cocherTache);
 
   // ----- modifier, supprimer -----
   let tacheEditee = null;
@@ -3408,7 +3437,7 @@ details.groupe-pieces { display: block; }
     ouvrir($("fenetre-tache"));
     $("e-texte").focus();
   }
-  ['[data-vue="todo"]', '[data-vue="accueil"]'].forEach(v => document.querySelector(v).addEventListener("click", e => {
+  ['[data-vue="todo"]', '[data-vue="journee"]'].forEach(v => document.querySelector(v).addEventListener("click", e => {
     const b = e.target.closest(".tache-modifier");
     if (b) ouvrirEdition(b.dataset.id);
   }));
@@ -6442,12 +6471,12 @@ details.groupe-pieces { display: block; }
       reste ? `${reste} chose${reste > 1 ? "s" : ""} à faire` : total ? "Tout est fait" : ""].filter(Boolean).join(" · ") + ".";
   }
   // Cocher un rappel ; « Répartir », « Mettre à jour » ouvrent la bonne fenêtre, la page du budget ouvre le bon mois.
-  document.querySelector('[data-vue="accueil"]').addEventListener("change", async e => {
+  document.querySelector('[data-vue="journee"]').addEventListener("change", async e => {
     const cb = e.target.closest("[data-rappel]");
     if (!cb || !peutModifierTodo()) return;
     try { await cocherRappel(cb.dataset.rappel, cb.checked); } catch (err) { cb.checked = !cb.checked; echecEcriture(err); }
   });
-  document.querySelector('[data-vue="accueil"]').addEventListener("click", e => {
+  document.querySelector('[data-vue="journee"]').addEventListener("click", e => {
     const a = e.target.closest(".rappel-aller");
     if (!a) return;
     if (a.dataset.budget) { moisArgent = a.dataset.budget; filtreCat = null; rendreBudget(); rendreDepenses(); }
