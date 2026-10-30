@@ -9,20 +9,20 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:wght@400;600;700&display=swap">
 <style>
-/* Layout : fond blanc, titre marine, bandeau marine des rubriques ; au survol d'une rubrique, ses
-   sous-rubriques s'affichent dessous, et sur les pages de Travail elles restent affichées. L'accueil :
-   « Ma journée » en blocs, puis les rubriques. Une rubrique ouvre la page de ses sous-rubriques. « Mon planning »
+/* Layout : fond blanc ; la vie est une succession de choix. L'accueil propose Travail, Argent, Sport ; chaque
+   rubrique propose ses pages (la garde-robe aussi), en grands cadres dans la couleur de la rubrique : le bleu de
+   Blue Box, le vert d'un billet, l'orange d'un ballon de basket. Un fil, en haut, revient en arrière. « Mon planning »
    tient dans l'écran : semaine, frise (une colonne par jour, une ligne par heure, elle prend toute la
    place qui reste), bilan. « To-do list » : ajout rapide en haut, puis deux colonnes, « À faire » et
-   « À dire » (par personne), et ce qui est fait en bas. « Garde-robe Blue Box » : quatre onglets (pièces,
+   « À dire » (par personne), et ce qui est fait en bas. « Garde-robe Blue Box » : quatre choix (pièces,
    tenues, comparateur, ce qu'il manque) ; les pièces en photo, rangées par catégorie ; une tenue est six
    cases côte à côte, jamais superposées. Un seul thème, clair. */
 :root {
   color-scheme: light;
   --fond: #ffffff;
-  --marine: #172a55;
-  --marine-2: #253d73;
-  --marine-doux: #edf0f7;
+  --marine: #002252;   /* le bleu de Blue Box : Travail, et les boutons du site */
+  --marine-2: #0b3473;
+  --marine-doux: #e8edf5;
   --encre: #172033;
   --gris: #5b6478;
   --trait: #dce1ea;
@@ -46,10 +46,10 @@
   --ferie-raie: #dcd6ee;
   --erreur: #b3261e;
   --erreur-doux: #fbe6e4;
-  --argent: #1d6b52;
-  --argent-doux: #dcefe6;
-  --sport: #b5421a;
-  --sport-doux: #f8e3d8;
+  --argent: #1f7a3f;   /* le vert d'un billet */
+  --argent-doux: #e2f1e6;
+  --sport: #c4501a;    /* l'orange d'un ballon de basket */
+  --sport-doux: #fbe9de;
   --c: var(--marine);
   --c-doux: var(--marine-doux);
   --f-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
@@ -84,71 +84,45 @@ h1:focus { outline: none; }
 main { flex: 1 0 auto; display: flex; flex-direction: column; }
 [data-vue] { flex: 1 0 auto; }
 
-/* En-tête : une barre marine fine (le nom, l'accueil, les rubriques), puis les sous-rubriques de la page.
-   Sur téléphone, les rubriques passent dans une barre d'onglets en bas de l'écran. */
-.titre-site { align-self: center; margin-right: 14px; padding: 6px 0; font-family: var(--f-display); font-weight: 850; font-stretch: 112%; font-size: 1.45rem; line-height: 1; letter-spacing: -.015em; color: var(--sur-marine); text-decoration: none; }
-.bande { position: relative; z-index: 15; background: var(--marine); }
-.bande-dedans { display: flex; gap: 4px; }
-.rubrique-menu { display: flex; }
-.bande a { position: relative; padding: 15px 20px; color: var(--sur-marine-2); font: 600 1.02rem/1 var(--f-body); text-decoration: none; }
-.bande a.titre-site { padding: 6px 0; color: var(--sur-marine); font: 850 1.45rem/1 var(--f-display); font-stretch: 112%; }
-.bande a:hover { color: var(--sur-marine); }
-.bande a[aria-current="page"] { background: var(--marine-2); color: var(--sur-marine); }
-.bande a[aria-current="page"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: var(--sur-marine); }
-.bande a:focus-visible { outline-color: var(--sur-marine); outline-offset: -4px; }
-.onglets-bas { display: none; }
-@media (max-width: 719px) {
-  .bande { display: none; }
-  .onglets-bas { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding-bottom: env(safe-area-inset-bottom, 0px); border-top: 1px solid var(--trait); background: var(--fond); box-shadow: 0 -6px 18px rgba(15, 25, 50, .08); }
-  .onglets-bas a { position: relative; display: grid; justify-items: center; gap: 3px; padding: 8px 4px 7px; color: var(--gris); font: 600 .78rem/1.1 var(--f-body); text-decoration: none; }
-  .onglets-bas a[aria-current="page"] { color: var(--c); }
-  .onglets-bas a[aria-current="page"]::before { content: ""; position: absolute; top: 0; left: 28%; right: 28%; height: 3px; border-radius: 0 0 3px 3px; background: currentColor; }
-  .onglets-bas svg { width: 25px; height: 25px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-  .app { padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px)); }
-}
-/* Sous-rubriques : un bandeau clair sous le bandeau marine, au survol (ou au clavier) de la rubrique */
-.sous-bande { position: absolute; left: 0; right: 0; top: 100%; display: none; background: var(--c-doux); border-bottom: 1px solid var(--trait); box-shadow: 0 10px 24px rgba(15, 25, 50, .14); }
-@media (hover: hover) { .rubrique-menu:hover .sous-bande { display: block; } }
-.rubrique-menu:has(:focus-visible) .sous-bande { display: block; }
-.rubrique-menu.replie .sous-bande { display: none; }
-.sous-bande-dedans { display: flex; flex-wrap: wrap; gap: 4px; }
-.bande .sous-bande a { flex: 0 0 auto; padding: 13px 20px; color: var(--c); font-size: 1rem; text-align: left; }
-.bande .sous-bande a:hover, .bande .sous-bande a[aria-current="page"] { background: var(--fond); color: var(--marine); }
-.bande .sous-bande a[aria-current="page"]::after { height: 3px; background: var(--marine); }
-.bande .sous-bande a:focus-visible { outline-color: var(--marine); }
-/* Sur une page de Travail, ses sous-rubriques restent affichées sous le bandeau (le menu au survol se
-   tait alors) ; sur téléphone, elles défilent au doigt. */
-.sous-nav { background: var(--c-doux); border-bottom: 1px solid var(--trait); }
-.sous-nav-dedans { position: relative; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
-.sous-nav-dedans::-webkit-scrollbar { display: none; }
-.sous-nav a { position: relative; flex: none; padding: clamp(10px, 1.6vh, 13px) 18px; color: var(--c); font: 600 1rem/1 var(--f-body); text-decoration: none; white-space: nowrap; }
-.sous-nav a:hover, .sous-nav a[aria-current="page"] { background: var(--fond); }
-.sous-nav a[aria-current="page"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--c); }
-.sous-nav a:focus-visible { outline-offset: -3px; }
-.sous-nav .nom-court { display: none; }
-.avec-sous-nav .sous-bande { display: none !important; }
-@media (max-width: 719px) {
-  .sous-nav-dedans { gap: 0; }
-  .sous-nav a { padding-inline: 12px; font-size: .95rem; }
-  .sous-nav .nom-long { display: none; }
-  .sous-nav .nom-court { display: inline; }
-}
+/* En-tête : un fil fin, pour revenir au choix d'avant (la flèche) ou plus haut (le chemin), dans la couleur de la
+   rubrique. Sur téléphone, seulement la flèche et le choix d'avant. Rien sur l'accueil. */
+.fil { position: relative; z-index: 15; border-bottom: 1px solid var(--trait); background: var(--fond); }
+.fil-dedans { display: flex; align-items: center; gap: 6px; min-height: 52px; }
+.fil-retour { display: grid; place-items: center; flex: none; width: 40px; height: 40px; margin-left: -8px; border-radius: 50%; color: var(--c); }
+.fil-retour:hover { background: var(--c-doux); }
+.fil-chemin { display: flex; flex-wrap: wrap; align-items: center; margin: 0; padding: 0; list-style: none; }
+.fil-chemin li { display: flex; align-items: center; }
+.fil-chemin li + li::before { content: "/"; margin: 0 10px; color: var(--trait-heure); }
+.fil-chemin a { color: var(--c); font: 700 .85rem/1.2 var(--f-body); letter-spacing: .04em; text-decoration: none; text-transform: uppercase; }
+.fil-chemin a:hover { text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 719px) { .fil-chemin li:not(:last-child) { display: none; } .fil-chemin li + li::before { content: none; } }
 
-/* Accueil : la maquette. Le titre dans un cadre, puis les trois rubriques en grands cadres qui remplissent
-   l'écran (empilés sur téléphone). Sur ordinateur, la barre du haut s'efface : les cadres mènent aux rubriques. */
-.accueil-maquette:not([hidden]) { display: flex; flex-direction: column; }
-.maquette { flex: 1 0 auto; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 30px; padding-block: 32px; }
-.maquette-titre, .maquette-case { border: 2px solid var(--encre); border-radius: 12px; color: var(--encre); font: 700 clamp(1.2rem, 2.2vw, 1.6rem)/1.2 var(--f-body); letter-spacing: .03em; text-transform: uppercase; text-align: center; }
-.maquette-titre { padding: 20px 16px; }
-.maquette-rubriques { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 30px; }
-.maquette-case { display: grid; place-items: center; min-height: 340px; padding: 16px; text-decoration: none; transition: background-color .15s ease; }
-.maquette-case:hover { background: var(--trait-doux); }
-.maquette-case:focus-visible { outline: 3px solid var(--encre); outline-offset: 3px; }
-body.sur-accueil .bande { display: none; }
+/* Les pages de choix : l'accueil, chaque rubrique et la garde-robe. Le titre dans un cadre, puis un grand cadre par
+   choix ; ils remplissent l'écran (empilés sur téléphone), dans la couleur de la rubrique (sur l'accueil, en noir). */
+.page-choix:not([hidden]) { display: flex; flex-direction: column; }
+.choix { flex: 1 0 auto; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 30px; padding-block: 32px; }
+.choix.neutre { --c: var(--encre); --c-doux: var(--trait-doux); }
+.choix-titre, .choix-case { border: 2px solid var(--c); border-radius: 12px; color: var(--c); font: 700 clamp(1.2rem, 2.2vw, 1.6rem)/1.2 var(--f-body); letter-spacing: .03em; text-transform: uppercase; text-align: center; }
+.choix-titre { padding: 20px 16px; }
+.choix-cases { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 30px; margin: 0; padding: 0; list-style: none; }
+.choix-cases[data-n="4"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.choix-cases[data-n="5"] { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.choix-case { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px; height: 100%; min-height: 300px; padding: 20px 14px; text-decoration: none; transition: background-color .15s ease; }
+a.choix-case:hover { background: var(--c-doux); }
+.choix-case:focus-visible { outline: 3px solid var(--c); outline-offset: 3px; }
+.choix-info { display: grid; gap: 4px; max-width: 24em; color: var(--gris); font: 500 .95rem/1.4 var(--f-body); letter-spacing: 0; text-transform: none; }
+.choix-info > span:empty { display: none; }
+.choix-case.a-venir { border-style: dashed; color: var(--gris); }
+@media (max-width: 1099px) {
+  .choix-cases[data-n="5"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .choix-cases[data-n="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .choix-case { min-height: 180px; }
+}
 @media (max-width: 599px) {
-  .maquette { gap: 16px; padding-block: 20px; }
-  .maquette-rubriques { grid-template-columns: minmax(0, 1fr); gap: 16px; }
-  .maquette-case { min-height: 120px; }
+  .choix { gap: 16px; padding-block: 20px; }
+  .choix-cases, .choix-cases[data-n] { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .choix-case { min-height: 84px; padding-block: 14px; }
+  .choix-info { font-size: .88rem; }
 }
 
 /* Ma journée (#journee) : la to-do du jour et la journée en un coup d'œil, en attendant leur place sur l'accueil */
@@ -310,7 +284,6 @@ body.sur-accueil .bande { display: none; }
 }
 /* Petit écran : l'en-tête se resserre pour laisser la place au planning */
 @media (max-width: 699px) and (max-height: 660px) {
-  .sous-nav a { padding-block: 7px; }
   .planning { grid-template-rows: auto minmax(calc(var(--creneaux, 18) * 12px), 1fr); }
   .bilan .valeur { font-size: 1.2rem; }
   .bilan .bouton-principal, .bilan .bouton-second { min-height: 40px; }
@@ -407,38 +380,10 @@ body.sur-accueil .bande { display: none; }
 .legende .point { display: inline-block; width: 6px; height: 6px; margin-right: 6px; border-radius: 50%; background: var(--marine); vertical-align: middle; }
 .legende .cadre-actuel { display: inline-block; width: 12px; height: 12px; margin-right: 6px; border: 2px solid var(--marine); border-radius: 3px; vertical-align: -1px; }
 
-/* Page d'une rubrique : ses sous-rubriques en cartes */
-/* Les pages des rubriques : une grille serrée ; chaque carte montre l'essentiel de sa sous-rubrique. */
-.sous-rubriques { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 12px; }
-.carte-sous { display: flex; flex-direction: column; gap: 10px; height: 100%; padding: 16px 18px 14px; border: 1.5px solid transparent; border-radius: 12px; background: var(--c-doux); text-decoration: none; transition: border-color .15s ease; }
-.carte-sous:hover { border-color: var(--c); }
-.carte-sous-titre { font-family: var(--f-display); font-weight: 800; font-stretch: 108%; font-size: 1.25rem; line-height: 1.1; color: var(--c); }
-.carte-sous-texte { display: none; }
-.carte-sous-ligne { font-weight: 600; }
-.carte-sous-pied { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 12px; margin-top: auto; padding-top: 10px; border-top: 1px solid var(--trait); border-top-color: color-mix(in srgb, var(--c) 28%, transparent); font: 500 .8rem/1.4 var(--f-mono); color: var(--gris); }
-.carte-sous:hover .fleche { transform: translateX(3px); }
-/* La semaine en miniature dans la carte « Mon planning » */
-.mini { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
-.mini-jour { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.mini-col { position: relative; display: block; width: 100%; height: 60px; border: 1px solid var(--trait); border-radius: 4px; overflow: hidden; background: var(--fond); }
-.mini-col.repos { background: repeating-linear-gradient(135deg, var(--repos-doux) 0 6px, var(--repos-raie) 6px 12px); }
-.mini-col.conge { background: repeating-linear-gradient(135deg, var(--conge-doux) 0 6px, var(--conge-raie) 6px 12px); }
-.mini-col.ferie { background: repeating-linear-gradient(135deg, var(--ferie-doux) 0 6px, var(--ferie-raie) 6px 12px); }
-.mini-col.aujourdhui { border-color: var(--marine); box-shadow: 0 0 0 1px var(--marine); }
-.mini-bloc { position: absolute; left: 0; right: 0; background: var(--bleu); }
-.mini-repere { position: absolute; left: 0; right: 0; height: 1px; background: var(--rouge); }
-.mini-lettre { font: 600 .7rem/1 var(--f-mono); color: var(--gris); }
-
-/* Aperçu de la to-do list dans sa carte */
-.apercu { display: grid; gap: 6px; }
-.apercu-ligne { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.apercu-ligne::before { content: ""; flex: none; width: 13px; height: 13px; border: 1.5px solid var(--gris); border-radius: 3px; background: var(--fond); }
-.apercu-texte { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
 /* To-do list */
 .todo { display: grid; gap: 20px; padding-block: 28px 56px; }
 .todo-tete, .page-tete { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 8px 24px; }
-.todo-tete h1, .page-tete h1, .rubrique-tete h1 { font-family: var(--f-display); font-weight: 850; font-stretch: 110%; font-size: clamp(1.6rem, 3.6vw, 2.4rem); line-height: 1.05; letter-spacing: -.015em; color: var(--marine); }
+.todo-tete h1, .page-tete h1 { font-family: var(--f-display); font-weight: 850; font-stretch: 110%; font-size: clamp(1.6rem, 3.6vw, 2.4rem); line-height: 1.05; letter-spacing: -.015em; color: var(--marine); }
 .todo-compte { font: 600 .85rem/1.4 var(--f-mono); color: var(--gris); }
 .todo-compte .rouge { color: var(--rouge); }
 
@@ -628,7 +573,7 @@ body.sur-accueil .bande { display: none; }
 /* Argent : vert, très visuel. Road to 50k en tête (barre, répartition, courbe), puis l'épargne et le mois.
    Une seule teinte quand la longueur dit le montant ; trois couleurs validées (et toujours leur nom et leur
    montant à côté) quand des parts se partagent un tout. */
-:root { --seg-1: #2a78d6; --seg-2: #eb6834; --seg-3: #1baf7a; --seg-reste: #e3e6ec; --argent-clair: #9cc9b6; }
+:root { --seg-1: #2a78d6; --seg-2: #eb6834; --seg-3: #1baf7a; --seg-reste: #e3e6ec; --argent-clair: #9fd0ad; }
 .r-argent .page-tete h1 { color: var(--c); }
 .argent { gap: 20px; }
 .road { display: grid; gap: 14px; padding: 20px; border: 1.5px solid var(--argent); border-radius: 14px; background: linear-gradient(180deg, var(--argent-doux), var(--fond) 70%); }
@@ -640,7 +585,6 @@ body.sur-accueil .bande { display: none; }
 .carte-argent-chiffre > span:first-child { font-size: clamp(1.7rem, 5vw, 2.3rem); }
 .carte-argent-chiffre .negatif, .budget-reste.negatif { color: var(--erreur) !important; }
 .road-sur { color: var(--gris); font-weight: 600; }
-.road-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
 .road-pourcent { font-family: var(--f-display); font-weight: 850; font-size: 1.6rem; color: var(--argent); font-variant-numeric: tabular-nums; }
 .road-detail { font-weight: 600; }
 .progression { position: relative; height: 14px; overflow: hidden; border-radius: 999px; background: var(--trait-doux); box-shadow: inset 0 0 0 1px var(--trait); }
@@ -668,12 +612,8 @@ body.sur-accueil .bande { display: none; }
 .graphe-zone .etiquette-serie { font: 700 12px var(--f-body); fill: var(--argent); }
 .r-argent .graphe-zone .trace { stroke: var(--argent); }
 .r-argent .graphe-zone .point { fill: var(--argent); }
-.argent-duo { display: grid; gap: 16px; }
-@media (min-width: 760px) { .argent-duo { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
 .carte-argent { display: grid; align-content: start; gap: 10px; min-width: 0; padding: 18px 20px; border: 1.5px solid var(--trait); border-radius: 14px; background: var(--fond); color: var(--encre); }
 .carte-argent .eyebrow { color: var(--argent); font-weight: 700; }
-.carte-lien { text-decoration: none; transition: border-color .15s ease; }
-.carte-lien:hover { border-color: var(--argent); }
 .page-argent { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; padding-block: 28px 56px; }
 .mois-nav { display: inline-flex; align-items: center; gap: 6px; }
 .mois-nav button { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 1.5px solid var(--trait); border-radius: 50%; background: var(--fond); color: var(--c); }
@@ -798,11 +738,10 @@ a.enveloppe-nom:hover { color: var(--argent); text-decoration: underline; text-u
 .legende-courbe .l-trajectoire::before { border-top: 1.5px dashed var(--gris); }
 .legende-segments.petite { display: flex; flex-wrap: wrap; gap: 4px 14px; color: var(--gris); font-size: .82rem; }
 .legende-segments.petite > span { display: inline-flex; align-items: center; gap: 6px; }
-.argent .sous-rubriques { grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr)); }
 .r-argent .section-tete-ligne { border-bottom-color: var(--c); }
 .r-argent .section-tete-ligne h2 { color: var(--c); }
 .r-argent .bouton-principal { background: var(--c); }
-.r-argent .bouton-principal:hover { background: #17573f; }
+.r-argent .bouton-principal:hover { background: #175f31; }
 .barre-v { max-width: 120px; }
 @media (min-width: 700px) { .op-corps { grid-template-columns: minmax(0, 1fr) minmax(0, 15em); align-items: center; gap: 12px; } }
 .co-groupe { display: grid; gap: 10px; margin: 6px 0 0; padding: 12px 14px; border: 1px solid var(--trait); border-radius: 10px; }
@@ -852,7 +791,6 @@ details.groupe-pieces { display: block; }
   .catalogue .piece-marque { margin-top: 4px; font-size: .6rem; }
   .catalogue .piece-modele { font-size: .85rem; }
   .catalogue .piece-ligne { font-size: .78rem; }
-  .barre-selection { bottom: calc(60px + env(safe-area-inset-bottom, 0px)); padding-bottom: 0; }
 }
 .filtres-plus { display: grid; gap: 10px; min-width: 0; }
 .groupe-pieces h2 { display: flex; align-items: baseline; gap: 10px; padding-bottom: 8px; border-bottom: 2px solid var(--marine); font-family: var(--f-display); font-weight: 800; font-size: 1.3rem; line-height: 1.2; color: var(--marine); }
@@ -873,9 +811,6 @@ details.groupe-pieces { display: block; }
 .rep-promo { background: var(--rouge); color: var(--sur-marine); }
 .rep-vitrine { background: var(--repos-doux); color: var(--repos); box-shadow: inset 0 0 0 1px var(--repos-raie); }
 .rep-reseaux { background: var(--bleu); color: var(--sur-marine); }
-.mosaique { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
-.mosaique-case { display: block; max-width: 100%; aspect-ratio: 4 / 5; overflow: hidden; border: 1px solid var(--trait); border-radius: 6px; background: var(--fond); }
-.mosaique-case img { display: block; width: 100%; height: 100%; object-fit: contain; }
 
 .fenetre-piece { width: min(880px, calc(100vw - 24px)); }
 .piece-form { display: grid; gap: 18px; padding-top: 16px; }
@@ -959,12 +894,6 @@ details.groupe-pieces { display: block; }
 .repere-choix.coche { border-color: var(--marine); background: var(--marine-doux); color: var(--marine); }
 .lien-fiche { color: var(--marine); font-weight: 600; }
 
-/* Onglets de la garde-robe */
-.onglets-gr { display: flex; gap: 4px 24px; overflow-x: auto; border-bottom: 1px solid var(--trait); scrollbar-width: none; }
-.onglets-gr::-webkit-scrollbar { display: none; }
-.onglets-gr a { position: relative; flex: none; padding: 10px 2px 12px; color: var(--gris); font-weight: 600; text-decoration: none; white-space: nowrap; }
-.onglets-gr a:hover, .onglets-gr a[aria-current="page"] { color: var(--marine); }
-.onglets-gr a[aria-current="page"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 3px; border-radius: 3px 3px 0 0; background: var(--marine); }
 
 /* Sélection de plusieurs pièces */
 .coche-piece { position: absolute; top: 8px; right: 8px; display: grid; place-items: center; width: 26px; height: 26px; border: 2px solid var(--trait-heure); border-radius: 50%; background: var(--fond); color: transparent; }
@@ -1120,23 +1049,6 @@ details.groupe-pieces { display: block; }
 @media (max-width: 699px) { .demande { grid-template-columns: auto minmax(0, 1fr); } .demande-actions { grid-column: 1 / -1; justify-content: flex-start; } }
 .rayons-vides { display: grid; gap: 10px; }
 
-/* Argent et Sport : rubriques encore à construire */
-.rubrique { display: grid; gap: 18px; padding-block: 24px 48px; }
-.rubrique-tete { display: grid; gap: 4px; }
-.rubrique-tete h1 { color: var(--c); }
-.chapo { max-width: 40em; color: var(--gris); }
-@media (max-width: 719px) { .rubrique .chapo { display: none; } }
-.section-tete { display: grid; gap: 4px; }
-.section-tete h2 { font-family: var(--f-display); font-weight: 750; font-size: 1.4rem; line-height: 1.15; }
-.section-tete p { color: var(--gris); }
-.emplacements { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
-@media (min-width: 560px) { .emplacements { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (min-width: 1000px) { .emplacements { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-.emplacement { display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 20px; border: 1.5px dashed var(--trait); border-radius: 8px; }
-.emplacement h3 { font-family: var(--f-display); font-weight: 700; font-size: 1.2rem; line-height: 1.2; }
-.emplacement p { color: var(--gris); font-size: 1rem; }
-.statut { align-self: flex-start; padding: 4px 8px; border: 1px dashed var(--c); border-radius: 999px; font: 600 .7rem/1.2 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--c); }
-
 .toast { position: fixed; left: 50%; top: calc(12px + env(safe-area-inset-top, 0px)); z-index: 50; max-width: calc(100% - 32px); padding: 12px 18px; border-radius: 10px; background: var(--encre); color: var(--sur-marine); font-weight: 600; box-shadow: 0 10px 30px rgba(15, 25, 50, .25); transform: translateX(-50%); }
 .toast.erreur { background: var(--erreur); }
 </style>
@@ -1144,65 +1056,22 @@ details.groupe-pieces { display: block; }
 <body>
 <div class="app">
 
-<header>
-  <nav class="bande" aria-label="Rubriques">
-    <div class="cadre bande-dedans">
-      <a class="titre-site" href="#accueil" aria-label="Tableau de bord Axel : l'accueil">Axel</a>
-      <a href="#accueil" data-aller="accueil">Accueil</a>
-      <div class="rubrique-menu">
-        <a href="#travail" data-aller="travail">Travail</a>
-        <div class="sous-bande" role="group" aria-label="Sous-rubriques de Travail">
-          <div class="cadre sous-bande-dedans">
-            <a href="#planning" data-aller="planning">Mon planning</a>
-            <a href="#todo" data-aller="todo">To-do list</a>
-            <a href="#garde-robe" data-aller="garde-robe">Garde-robe Blue Box</a>
-            <a href="#calendrier" data-aller="calendrier">Calendrier commercial</a>
-            <a href="#objectifs" data-aller="objectifs">Objectifs</a>
-          </div>
-        </div>
-      </div>
-      <div class="rubrique-menu">
-        <a href="#argent" data-aller="argent">Argent</a>
-        <div class="sous-bande r-argent" role="group" aria-label="Sous-rubriques d'Argent">
-          <div class="cadre sous-bande-dedans">
-            <a href="#budget" data-aller="budget">Budget du mois</a>
-            <a href="#depenses" data-aller="depenses">Dépenses</a>
-            <a href="#epargne" data-aller="epargne">Épargne et projets</a>
-            <a href="#paie" data-aller="paie">Ma paie</a>
-          </div>
-        </div>
-      </div>
-      <a href="#sport" data-aller="sport">Sport</a>
-    </div>
-  </nav>
-  <nav class="sous-nav r-travail" id="sous-nav-travail" data-rubrique="travail" aria-label="Sous-rubriques de Travail" hidden>
-    <div class="cadre sous-nav-dedans">
-      <a href="#planning" data-aller="planning"><span class="nom-long">Mon planning</span><span class="nom-court">Planning</span></a>
-      <a href="#todo" data-aller="todo"><span class="nom-long">To-do list</span><span class="nom-court">To-do</span></a>
-      <a href="#garde-robe" data-aller="garde-robe"><span class="nom-long">Garde-robe Blue Box</span><span class="nom-court">Garde-robe</span></a>
-      <a href="#calendrier" data-aller="calendrier"><span class="nom-long">Calendrier commercial</span><span class="nom-court">Calendrier</span></a>
-      <a href="#objectifs" data-aller="objectifs">Objectifs</a>
-    </div>
-  </nav>
-  <nav class="sous-nav r-argent" id="sous-nav-argent" data-rubrique="argent" aria-label="Sous-rubriques d'Argent" hidden>
-    <div class="cadre sous-nav-dedans">
-      <a href="#budget" data-aller="budget"><span class="nom-long">Budget du mois</span><span class="nom-court">Budget</span></a>
-      <a href="#depenses" data-aller="depenses">Dépenses</a>
-      <a href="#epargne" data-aller="epargne"><span class="nom-long">Épargne et projets</span><span class="nom-court">Épargne</span></a>
-      <a href="#paie" data-aller="paie">Ma paie</a>
-    </div>
-  </nav>
+<header class="fil" id="fil" hidden>
+  <div class="cadre fil-dedans">
+    <a class="fil-retour" id="fil-retour" href="#accueil"><svg class="picto" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6l-6 6 6 6"/></svg><span class="invisible" id="fil-retour-nom">Revenir</span></a>
+    <nav aria-label="Où je suis"><ol class="fil-chemin" id="fil-chemin"></ol></nav>
+  </div>
 </header>
 
 <main>
-  <section class="accueil-maquette" data-vue="accueil" aria-labelledby="titre-accueil">
-    <div class="cadre maquette">
-      <h1 class="maquette-titre" id="titre-accueil" tabindex="-1">Tableau de bord</h1>
-      <nav class="maquette-rubriques" aria-label="Rubriques">
-        <a class="maquette-case" href="#travail">Travail</a>
-        <a class="maquette-case" href="#argent">Argent</a>
-        <a class="maquette-case" href="#sport">Sport</a>
-      </nav>
+  <section class="page-choix" data-vue="accueil" aria-labelledby="titre-accueil">
+    <div class="cadre choix neutre">
+      <h1 class="choix-titre" id="titre-accueil" tabindex="-1">Tableau de bord</h1>
+      <ul class="choix-cases" data-n="3">
+        <li><a class="choix-case" href="#travail"><span class="choix-nom">Travail</span></a></li>
+        <li><a class="choix-case" href="#argent"><span class="choix-nom">Argent</span></a></li>
+        <li><a class="choix-case" href="#sport"><span class="choix-nom">Sport</span></a></li>
+      </ul>
     </div>
   </section>
 
@@ -1272,55 +1141,27 @@ details.groupe-pieces { display: block; }
     </div>
   </section>
 
-  <section class="r-travail" data-vue="travail" aria-labelledby="titre-travail" hidden>
-    <div class="cadre rubrique">
-      <div class="rubrique-tete">
-        <h1 id="titre-travail" tabindex="-1">Travail</h1>
-        <p class="chapo">Tout ce qui touche à mon boulot chez Blue Box.</p>
-      </div>
-      <ul class="sous-rubriques">
-        <li>
-          <a class="carte-sous" href="#planning">
-            <span class="carte-sous-titre">Mon planning</span>
-            <span class="carte-sous-texte">Mes horaires de la semaine, mes heures en plus et mes congés.</span>
-            <span class="mini" id="mini-planning" aria-hidden="true" hidden></span>
-            <span class="carte-sous-ligne" id="aujourdhui-planning" hidden></span>
-            <span class="carte-sous-ligne" id="compteur-planning" hidden></span>
-            <span class="carte-sous-pied"><span id="resume-planning">Planning de la semaine</span><span class="fleche">Ouvrir →</span></span>
-          </a>
-        </li>
-        <li>
-          <a class="carte-sous" href="#todo">
-            <span class="carte-sous-titre">To-do list</span>
-            <span class="carte-sous-texte">Ce que je dois faire au magasin et ce que je dois dire à quelqu'un.</span>
-            <span class="apercu" id="apercu-todo" hidden></span>
-            <span class="carte-sous-pied"><span id="resume-todo">Rien à faire pour l'instant</span><span class="fleche">Ouvrir →</span></span>
-          </a>
-        </li>
-        <li>
-          <a class="carte-sous" href="#garde-robe">
-            <span class="carte-sous-titre">Garde-robe Blue Box</span>
-            <span class="carte-sous-texte">Les pièces du magasin, les tenues, le comparateur et ce qu'il manque.</span>
-            <span class="mosaique" id="mosaique-pieces" aria-hidden="true" hidden></span>
-            <span class="carte-sous-pied"><span id="resume-pieces">Aucune pièce pour l'instant</span><span class="fleche">Ouvrir →</span></span>
-          </a>
-        </li>
-        <li>
-          <a class="carte-sous" href="#calendrier">
-            <span class="carte-sous-titre">Calendrier commercial</span>
-            <span class="carte-sous-texte">Les temps forts de l'année, les vitrines à préparer et les bons moments pour poser des congés.</span>
-            <span class="carte-sous-ligne" id="ligne-calendrier" hidden></span>
-            <span class="carte-sous-pied"><span id="resume-calendrier">Aucun temps fort pour l'instant</span><span class="fleche">Ouvrir →</span></span>
-          </a>
-        </li>
-        <li>
-          <a class="carte-sous" href="#objectifs">
-            <span class="carte-sous-titre">Objectifs</span>
-            <span class="carte-sous-texte">La part homme du chiffre d'affaires du magasin, par rapport à mon objectif.</span>
-            <span class="carte-sous-ligne" id="ligne-objectifs" hidden></span>
-            <span class="carte-sous-pied"><span id="resume-objectifs">Rien de saisi pour l'instant</span><span class="fleche">Ouvrir →</span></span>
-          </a>
-        </li>
+  <section class="r-travail page-choix" data-vue="travail" aria-labelledby="titre-travail" hidden>
+    <div class="cadre choix">
+      <h1 class="choix-titre" id="titre-travail" tabindex="-1">Travail</h1>
+      <ul class="choix-cases" data-n="5">
+        <li><a class="choix-case" href="#planning"><span class="choix-nom">Mon planning</span><span class="choix-info"><span id="aujourdhui-planning"></span><span id="resume-planning"></span></span></a></li>
+        <li><a class="choix-case" href="#todo"><span class="choix-nom">To-do list</span><span class="choix-info"><span id="resume-todo"></span></span></a></li>
+        <li><a class="choix-case" href="#garde-robe"><span class="choix-nom">Garde-robe Blue Box</span><span class="choix-info"><span id="resume-pieces"></span></span></a></li>
+        <li><a class="choix-case" href="#calendrier"><span class="choix-nom">Calendrier commercial</span><span class="choix-info"><span id="ligne-calendrier"></span><span id="resume-calendrier"></span></span></a></li>
+        <li><a class="choix-case" href="#objectifs"><span class="choix-nom">Objectifs</span><span class="choix-info"><span id="ligne-objectifs"></span><span id="resume-objectifs"></span></span></a></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="r-travail page-choix" data-vue="garde-robe" aria-labelledby="titre-garde-robe" hidden>
+    <div class="cadre choix">
+      <h1 class="choix-titre" id="titre-garde-robe" tabindex="-1">Garde-robe Blue Box</h1>
+      <ul class="choix-cases" data-n="4">
+        <li><a class="choix-case" href="#pieces"><span class="choix-nom">Pièces</span><span class="choix-info"><span id="gc-pieces"></span></span></a></li>
+        <li><a class="choix-case" href="#tenues"><span class="choix-nom">Tenues</span><span class="choix-info"><span id="gc-tenues"></span></span></a></li>
+        <li><a class="choix-case" href="#comparer"><span class="choix-nom">Comparer</span><span class="choix-info"><span id="gc-comparer"></span></span></a></li>
+        <li><a class="choix-case" href="#manque"><span class="choix-nom">Ce qu'il manque</span><span class="choix-info"><span id="gc-manque"></span></span></a></li>
       </ul>
     </div>
   </section>
@@ -1413,11 +1254,11 @@ details.groupe-pieces { display: block; }
     </div>
   </section>
 
-  <section class="r-travail" data-vue="garde-robe" aria-labelledby="titre-garde-robe" hidden>
+  <section class="r-travail" data-vue="pieces" aria-labelledby="titre-pieces" hidden>
     <div class="cadre catalogue">
       <div class="page-tete">
         <div>
-          <h1 id="titre-garde-robe" tabindex="-1">Garde-robe Blue Box</h1>
+          <h1 id="titre-pieces" tabindex="-1">Pièces</h1>
         </div>
         <div class="page-tete-actions">
           <p class="todo-compte" id="gr-compte"></p>
@@ -1426,7 +1267,6 @@ details.groupe-pieces { display: block; }
           <button class="bouton-principal" type="button" id="gr-ajouter" disabled>Ajouter une pièce</button>
         </div>
       </div>
-      <nav class="onglets-gr" aria-label="Garde-robe"></nav>
 
       <div class="filtres champs-tache" id="gr-filtres" role="search">
         <div class="filtres-ligne">
@@ -1471,7 +1311,6 @@ details.groupe-pieces { display: block; }
           <button class="bouton-second" type="button" id="te-nouvelle">Nouvelle tenue</button>
         </div>
       </div>
-      <nav class="onglets-gr" aria-label="Garde-robe"></nav>
       <div class="atelier">
         <div class="cases-tenue" id="te-cases"></div>
         <p class="total-tenue" id="te-total"></p>
@@ -1520,7 +1359,6 @@ details.groupe-pieces { display: block; }
           <button class="bouton-second" type="button" id="co-nouvelle">Nouvelle comparaison</button>
         </div>
       </div>
-      <nav class="onglets-gr" aria-label="Garde-robe"></nav>
       <div class="comparer-zone">
         <div class="type-tache" role="radiogroup" aria-label="Que comparer ?">
           <label><input type="radio" name="co-type" value="pieces" checked><span>Des pièces</span></label>
@@ -1559,7 +1397,6 @@ details.groupe-pieces { display: block; }
           <p class="todo-compte" id="ma-compte"></p>
         </div>
       </div>
-      <nav class="onglets-gr" aria-label="Garde-robe"></nav>
       <form class="ajout-tache champs-tache" id="ma-form" autocomplete="off" novalidate>
         <input class="champ-texte" type="text" id="ma-quoi" maxlength="200" placeholder="Ce qu'un client a demandé, ex. : chemise en lin blanche" aria-label="Ce qu'un client a demandé">
         <select class="champ-pour" id="ma-categorie" aria-label="Catégorie (facultatif)"></select>
@@ -1658,81 +1495,14 @@ details.groupe-pieces { display: block; }
     </div>
   </section>
 
-  <section class="r-argent" data-vue="argent" aria-labelledby="titre-argent" hidden>
-    <div class="cadre rubrique argent">
-      <div class="rubrique-tete">
-        <h1 id="titre-argent" tabindex="-1">Argent</h1>
-        <p class="chapo">Mon budget, mes dépenses, ma paie et mon épargne, au même endroit.</p>
-      </div>
-      <section class="road" id="ar-road" aria-labelledby="ar-road-titre" hidden>
-        <div class="road-tete">
-          <div>
-            <p class="eyebrow" id="ar-road-titre">Road to 50k</p>
-            <p class="road-total"><span id="ar-road-total">0 €</span> <span class="road-sur" id="ar-road-sur"></span></p>
-          </div>
-          <div class="road-actions">
-            <span class="road-pourcent" id="ar-road-pourcent"></span>
-            <button class="bouton-second" type="button" data-maj-comptes>Mettre à jour mes comptes</button>
-          </div>
-        </div>
-        <div class="progression grande" id="ar-road-barre"></div>
-        <p class="road-detail" id="ar-road-detail"></p>
-        <div class="repartition" id="ar-road-repartition" hidden>
-          <div class="segments" id="ar-road-segments"></div>
-          <ul class="legende-segments" id="ar-road-legende"></ul>
-        </div>
-        <ul class="legende-courbe" id="ar-road-legende-courbe" aria-hidden="true"><li class="l-total">Mon total</li><li class="l-trajectoire" id="ar-road-l-trajectoire">Trajectoire jusqu'à l'objectif</li></ul>
-        <div class="graphe-zone" id="ar-road-graphe" hidden></div>
-        <p class="aide" id="ar-road-vide" hidden>La courbe apparaît dès le premier mois enregistré.</p>
-      </section>
-      <div class="argent-duo">
-        <section class="carte-argent" id="ar-epargne" aria-labelledby="ar-ep-titre" hidden>
-          <p class="eyebrow" id="ar-ep-titre">Épargne</p>
-          <p class="carte-argent-chiffre"><span id="ar-ep-total"></span> <span class="road-sur" id="ar-ep-sur"></span></p>
-          <div class="progression" id="ar-ep-barre"></div>
-          <p class="aide" id="ar-ep-detail"></p>
-        </section>
-        <a class="carte-argent carte-lien" href="#budget">
-          <span class="eyebrow" id="ar-mois-titre">Ce mois-ci</span>
-          <span class="carte-argent-chiffre"><span id="ar-mois-reste"></span> <span class="road-sur" id="ar-mois-sur">à dépenser</span></span>
-          <span class="segments" id="ar-mois-barre"></span>
-          <span class="legende-segments petite"><span><span class="pastille-seg seg-1"></span>Charges fixes</span><span><span class="pastille-seg seg-2"></span>Dépensé</span><span><span class="pastille-seg seg-3"></span>Épargne</span></span>
-          <span class="aide" id="ar-mois-detail"></span>
-        </a>
-      </div>
-      <ul class="sous-rubriques">
-        <li>
-          <a class="carte-sous" href="#budget">
-            <span class="carte-sous-titre">Budget du mois</span>
-            <span class="carte-sous-texte">Mon solde le jour de la paie, réparti entre charges fixes, épargne et enveloppes.</span>
-            <span class="carte-sous-ligne" id="carte-budget-ligne"></span>
-            <span class="carte-sous-pied"><span>Mois par mois</span><span class="fleche">Ouvrir →</span></span>
-          </a>
-        </li>
-        <li>
-          <a class="carte-sous" href="#depenses">
-            <span class="carte-sous-titre">Dépenses</span>
-            <span class="carte-sous-texte">Le relevé de la Caisse d'Épargne importé et rangé par catégorie, et ce que je note à la main.</span>
-            <span class="carte-sous-ligne" id="carte-depenses-ligne"></span>
-            <span class="carte-sous-pied"><span>Par catégorie</span><span class="fleche">Ouvrir →</span></span>
-          </a>
-        </li>
-        <li>
-          <a class="carte-sous" href="#epargne">
-            <span class="carte-sous-titre">Épargne et projets</span>
-            <span class="carte-sous-texte">Mes comptes Trade Republic et mes livrets, mes objectifs et mes achats prévus.</span>
-            <span class="carte-sous-ligne" id="carte-epargne-ligne"></span>
-            <span class="carte-sous-pied"><span>Mes objectifs</span><span class="fleche">Ouvrir →</span></span>
-          </a>
-        </li>
-        <li>
-          <a class="carte-sous" href="#paie">
-            <span class="carte-sous-titre">Ma paie</span>
-            <span class="carte-sous-texte">La paie attendue d'après mon compteur d'heures, et mes fiches de paie.</span>
-            <span class="carte-sous-ligne" id="carte-paie-ligne"></span>
-            <span class="carte-sous-pied"><span>Calcul et historique</span><span class="fleche">Ouvrir →</span></span>
-          </a>
-        </li>
+  <section class="r-argent page-choix" data-vue="argent" aria-labelledby="titre-argent" hidden>
+    <div class="cadre choix">
+      <h1 class="choix-titre" id="titre-argent" tabindex="-1">Argent</h1>
+      <ul class="choix-cases" data-n="4">
+        <li><a class="choix-case" href="#budget"><span class="choix-nom">Budget du mois</span><span class="choix-info"><span id="carte-budget-ligne"></span></span></a></li>
+        <li><a class="choix-case" href="#depenses"><span class="choix-nom">Dépenses</span><span class="choix-info"><span id="carte-depenses-ligne"></span></span></a></li>
+        <li><a class="choix-case" href="#epargne"><span class="choix-nom">Épargne et projets</span><span class="choix-info"><span id="carte-epargne-ligne"></span></span></a></li>
+        <li><a class="choix-case" href="#paie"><span class="choix-nom">Ma paie</span><span class="choix-info"><span id="carte-paie-ligne"></span></span></a></li>
       </ul>
     </div>
   </section>
@@ -1828,6 +1598,24 @@ details.groupe-pieces { display: block; }
         </div>
         <button class="bouton-principal" type="button" data-maj-comptes>Mettre à jour mes comptes</button>
       </div>
+      <section class="road" id="ar-road" aria-labelledby="ar-road-titre" hidden>
+        <div class="road-tete">
+          <div>
+            <p class="eyebrow" id="ar-road-titre">Road to 50k</p>
+            <p class="road-total"><span id="ar-road-total">0 €</span> <span class="road-sur" id="ar-road-sur"></span></p>
+          </div>
+          <span class="road-pourcent" id="ar-road-pourcent"></span>
+        </div>
+        <div class="progression grande" id="ar-road-barre"></div>
+        <p class="road-detail" id="ar-road-detail"></p>
+        <div class="repartition" id="ar-road-repartition" hidden>
+          <div class="segments" id="ar-road-segments"></div>
+          <ul class="legende-segments" id="ar-road-legende"></ul>
+        </div>
+        <ul class="legende-courbe" id="ar-road-legende-courbe" aria-hidden="true"><li class="l-total">Mon total</li><li class="l-trajectoire" id="ar-road-l-trajectoire">Trajectoire jusqu'à l'objectif</li></ul>
+        <div class="graphe-zone" id="ar-road-graphe" hidden></div>
+        <p class="aide" id="ar-road-vide" hidden>La courbe apparaît dès le premier mois enregistré.</p>
+      </section>
       <section aria-labelledby="ep-comptes-titre">
         <div class="section-tete-ligne"><h2 id="ep-comptes-titre">Mes comptes</h2></div>
         <ul class="lignes-argent" id="ep-comptes"></ul>
@@ -1892,32 +1680,19 @@ details.groupe-pieces { display: block; }
     </div>
   </section>
 
-  <section class="r-sport" data-vue="sport" aria-labelledby="titre-sport" hidden>
-    <div class="cadre rubrique">
-      <div class="rubrique-tete">
-        <h1 id="titre-sport" tabindex="-1">Sport</h1>
-        <p class="chapo">Mes entraînements, du programme aux résultats.</p>
-      </div>
-      <div class="section-tete">
-        <h2>À construire</h2>
-        <p>Des pistes pour démarrer. Rien n'est décidé : on garde, on change ou on enlève.</p>
-      </div>
-      <ul class="emplacements">
-        <li class="emplacement"><span class="statut">Idée</span><h3>Mes séances</h3><p>Ce que j'ai fait, quand et combien de temps.</p></li>
-        <li class="emplacement"><span class="statut">Idée</span><h3>Mon programme</h3><p>Les séances prévues dans la semaine.</p></li>
-        <li class="emplacement"><span class="statut">Idée</span><h3>Mes progrès</h3><p>Mes charges, mes temps et mes distances, pour voir l'évolution.</p></li>
-        <li class="emplacement"><span class="statut">Idée</span><h3>Ma forme</h3><p>Poids, sommeil et énergie, d'une semaine à l'autre.</p></li>
+  <section class="r-sport page-choix" data-vue="sport" aria-labelledby="titre-sport" hidden>
+    <div class="cadre choix">
+      <h1 class="choix-titre" id="titre-sport" tabindex="-1">Sport</h1>
+      <ul class="choix-cases" data-n="4">
+        <li><div class="choix-case a-venir"><span class="choix-nom">Mes séances</span><span class="choix-info"><span>Bientôt</span></span></div></li>
+        <li><div class="choix-case a-venir"><span class="choix-nom">Mon programme</span><span class="choix-info"><span>Bientôt</span></span></div></li>
+        <li><div class="choix-case a-venir"><span class="choix-nom">Mes progrès</span><span class="choix-info"><span>Bientôt</span></span></div></li>
+        <li><div class="choix-case a-venir"><span class="choix-nom">Ma forme</span><span class="choix-info"><span>Bientôt</span></span></div></li>
       </ul>
     </div>
   </section>
 </main>
 
-<nav class="onglets-bas" aria-label="Rubriques">
-  <a href="#accueil" data-aller="accueil"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1z"/></svg><span>Accueil</span></a>
-  <a class="r-travail" href="#travail" data-aller="travail"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="7.5" width="17" height="12" rx="2"/><path d="M9 7.5V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v1.5M3.5 12.5h17"/></svg><span>Travail</span></a>
-  <a class="r-argent" href="#argent" data-aller="argent"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.5 7.2A6.5 6.5 0 1 0 17.5 16.8M5 10.5h8M5 13.5h8"/></svg><span>Argent</span></a>
-  <a class="r-sport" href="#sport" data-aller="sport"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 8v8M17.5 8v8M4 10v4M20 10v4M6.5 12h11"/></svg><span>Sport</span></a>
-</nav>
 </div>
 
 <dialog class="fenetre" id="fenetre-planning" aria-labelledby="fp-titre">
@@ -2318,12 +2093,19 @@ details.groupe-pieces { display: block; }
   // ---------- vues : une rubrique à la fois ----------
   // La page ne modifie jamais son adresse (dans le cadre de claude.ai, une adresse réécrite
   // rend la page introuvable) ; un lien direct ouvre sa page : une rubrique (#travail, #argent,
-  // #sport), une sous-rubrique (#planning, #todo, #garde-robe) ou un onglet de la garde-robe (#tenues,
-  // #comparer, #manque).
-  const VUES = ["accueil", "journee", "travail", "planning", "todo", "garde-robe", "tenues", "comparer", "manque", "calendrier", "objectifs", "argent", "budget", "depenses", "epargne", "paie", "sport"];
-  const RUBRIQUE_DE = { planning: "travail", todo: "travail", "garde-robe": "travail", tenues: "travail", comparer: "travail", manque: "travail", calendrier: "travail", objectifs: "travail", budget: "argent", depenses: "argent", epargne: "argent", paie: "argent" };
-  // Les onglets de la garde-robe restent sous la sous-rubrique « Garde-robe Blue Box ».
-  const SOUS_RUBRIQUE_DE = { tenues: "garde-robe", comparer: "garde-robe", manque: "garde-robe" };
+  // #sport), un choix de rubrique (#planning, #todo, #garde-robe…) ou un choix de la garde-robe (#pieces,
+  // #tenues, #comparer, #manque).
+  const VUES = ["accueil", "journee", "travail", "planning", "todo", "garde-robe", "pieces", "tenues", "comparer", "manque", "calendrier", "objectifs", "argent", "budget", "depenses", "epargne", "paie", "sport"];
+  const RUBRIQUE_DE = { travail: "travail", argent: "argent", sport: "sport", planning: "travail", todo: "travail", "garde-robe": "travail", pieces: "travail", tenues: "travail", comparer: "travail", manque: "travail", calendrier: "travail", objectifs: "travail", budget: "argent", depenses: "argent", epargne: "argent", paie: "argent" };
+  // La vie est une succession de choix : chaque page vient d'un choix fait sur la page d'avant.
+  const PARENT = { journee: "accueil", travail: "accueil", argent: "accueil", sport: "accueil",
+    planning: "travail", todo: "travail", "garde-robe": "travail", calendrier: "travail", objectifs: "travail",
+    pieces: "garde-robe", tenues: "garde-robe", comparer: "garde-robe", manque: "garde-robe",
+    budget: "argent", depenses: "argent", epargne: "argent", paie: "argent" };
+  const NOM_VUE = { accueil: "Tableau de bord", journee: "Ma journée", travail: "Travail", argent: "Argent", sport: "Sport",
+    planning: "Mon planning", todo: "To-do list", "garde-robe": "Garde-robe Blue Box", calendrier: "Calendrier commercial", objectifs: "Objectifs",
+    pieces: "Pièces", tenues: "Tenues", comparer: "Comparer", manque: "Ce qu'il manque",
+    budget: "Budget du mois", depenses: "Dépenses", epargne: "Épargne et projets", paie: "Ma paie" };
   let vueActive = "accueil";
   let journeePrete = false;   // « Ma journée » attend que toutes les données soient en place
 
@@ -2331,25 +2113,19 @@ details.groupe-pieces { display: block; }
     if (!VUES.includes(nom)) return false;
     vueActive = nom;
     document.querySelectorAll("[data-vue]").forEach(v => { v.hidden = v.dataset.vue !== nom; });
-    // Dans le bandeau, la rubrique reste marquée quand une de ses sous-rubriques est ouverte.
-    let sousNav = null;
-    document.querySelectorAll(".sous-nav").forEach(n => { n.hidden = n.dataset.rubrique !== (RUBRIQUE_DE[nom] || nom); if (!n.hidden) sousNav = n; });
-    document.body.classList.toggle("avec-sous-nav", !!sousNav);
-    document.body.classList.toggle("sur-accueil", nom === "accueil");
-    document.querySelectorAll(".bande [data-aller], .sous-nav [data-aller], .onglets-bas [data-aller]").forEach(a => {
-      const cible = a.closest(".sous-bande, .sous-nav") ? SOUS_RUBRIQUE_DE[nom] || nom : RUBRIQUE_DE[nom] || nom;
-      if (a.dataset.aller === cible) a.setAttribute("aria-current", "page");
-      else a.removeAttribute("aria-current");
-    });
-    document.querySelectorAll(".onglets-gr a").forEach(a => {
-      if (a.dataset.onglet === nom) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
-    });
-    // Sur téléphone, la sous-rubrique ouverte se place au milieu de sa barre.
-    const courante = sousNav && sousNav.querySelector('[aria-current="page"]'), barre = sousNav && sousNav.firstElementChild;
-    if (courante) barre.scrollLeft = courante.offsetLeft - (barre.clientWidth - courante.offsetWidth) / 2;
+    // Le fil : la flèche revient au choix d'avant, le chemin remonte plus haut (rien sur l'accueil).
+    const chemin = [];
+    for (let v = PARENT[nom]; v; v = PARENT[v]) chemin.unshift(v);
+    $("fil").hidden = !chemin.length;
+    $("fil").className = "fil" + (RUBRIQUE_DE[nom] ? ` r-${RUBRIQUE_DE[nom]}` : "");
+    if (chemin.length) {
+      $("fil-retour").href = "#" + PARENT[nom];
+      $("fil-retour-nom").textContent = `Revenir à ${NOM_VUE[PARENT[nom]]}`;
+      $("fil-chemin").replaceChildren(...chemin.map(v => { const li = element("li"), a = element("a", null, NOM_VUE[v]); a.href = "#" + v; li.append(a); return li; }));
+    }
     if (nom === "objectifs") requestAnimationFrame(rendreGraphe);   // la courbe et la frise ont besoin de leur largeur
     if (nom === "calendrier") requestAnimationFrame(rendreFrise);
-    if (nom === "argent") requestAnimationFrame(rendreHubArgent);
+    if (nom === "epargne") requestAnimationFrame(rendreHubArgent);   // la courbe de Road to 50k a besoin de sa largeur
     if (!opts.garderDefilement) window.scrollTo(0, 0);
     if (opts.focus) {
       const titre = document.querySelector(`[data-vue="${nom}"] h1`);
@@ -2361,10 +2137,7 @@ details.groupe-pieces { display: block; }
     const a = e.target.closest('a[href^="#"]');
     if (!a || !montrer(a.getAttribute("href").slice(1), { focus: true })) return;
     e.preventDefault();
-    // Une sous-rubrique choisie : le bandeau se replie jusqu'à ce que la souris quitte la rubrique.
-    if (a.closest(".sous-bande")) a.closest(".rubrique-menu").classList.add("replie");
   });
-  document.querySelectorAll(".rubrique-menu").forEach(m => m.addEventListener("mouseleave", () => m.classList.remove("replie")));
   const cibleAdresse = () => { try { return decodeURIComponent(location.hash.slice(1)); } catch (_) { return ""; } };
   window.addEventListener("hashchange", () => { if (cibleAdresse()) montrer(cibleAdresse()); });
 
@@ -2772,53 +2545,15 @@ details.groupe-pieces { display: block; }
   }
 
   // La semaine en cours en miniature, le total, le repos et les horaires d'aujourd'hui.
+  // Le choix « Mon planning » : les horaires d'aujourd'hui, et la semaine.
   function rendreCartePlanning() {
-    const info = infoSemaine(lundiDe(aujourdhui()));
-    const s = semaines[info.cle];
-    const zone = $("mini-planning"), ligne = $("aujourdhui-planning");
-    const cpt = calculerCompteur();
-    $("compteur-planning").hidden = !cpt.semaines.length && cpt.reste == null;
-    const heures = cpt.recup > 0 ? `${formatDuree(cpt.recup)} à récupérer` : cpt.recup < 0 ? `${formatDuree(-cpt.recup)} à rattraper`
-      : cpt.payeesMois > 0 ? `${formatDuree(cpt.payeesMois)} payées en ${MOIS[new Date(aujourdhui()).getUTCMonth()]}` : "rien à récupérer";
-    $("compteur-planning").textContent = [cpt.semaines.length ? heures : "",
-      cpt.reste != null ? `${nombreFr(cpt.reste)} j de congés` : ""].filter(Boolean).join(" · ");
-    if (estVide(s)) {
-      zone.hidden = ligne.hidden = true;
-      $("resume-planning").textContent = `Semaine ${info.num} : planning à remplir`;
-      return;
-    }
-    const b = bornesFrise(s);
-    const iAujourdhui = (new Date(aujourdhui()).getUTCDay() || 7) - 1;
-    const f = document.createDocumentFragment();
-    JOURS.forEach((j, i) => {
-      const jour = s.jours[j];
-      const col = element("span", "mini-col" + (statutDe(jour) ? " " + statutDe(jour) : "") + (i === iAujourdhui ? " aujourdhui" : ""));
-      periodesTravaillees(jour).forEach(x => {
-        const bloc = element("span", "mini-bloc");
-        bloc.style.top = `${position(x.de, b)}%`;
-        bloc.style.height = `${position(x.a, b) - position(x.de, b)}%`;
-        col.append(bloc);
-      });
-      REPERES.filter(t => t > b.de && t < b.a).forEach(t => {
-        const r = element("span", "mini-repere");
-        r.style.top = `${position(t, b)}%`;
-        col.append(r);
-      });
-      const cellule = element("span", "mini-jour");
-      cellule.append(col, element("span", "mini-lettre", JOURS_COURTS[i]));
-      f.append(cellule);
-    });
-    zone.replaceChildren(f);
-    zone.hidden = false;
-    const repos = joursDeRepos(s);
+    const info = infoSemaine(lundiDe(aujourdhui())), s = semaines[info.cle], ligne = $("aujourdhui-planning");
+    if (estVide(s)) { ligne.textContent = ""; $("resume-planning").textContent = `Semaine ${info.num} : planning à remplir`; return; }
+    const repos = joursDeRepos(s), i = (new Date(aujourdhui()).getUTCDay() || 7) - 1;
     $("resume-planning").textContent = `Semaine ${info.num} : ${formatDuree(dureeSemaine(s))}` + (repos.length ? ` · repos ${listeFr(repos)}` : "");
-    ligne.hidden = iAujourdhui > 5;
-    if (iAujourdhui <= 5) {
-      const jour = s.jours[JOURS[iAujourdhui]];
-      const travail = periodesTravaillees(jour);
-      ligne.textContent = "Aujourd'hui : " + (statutDe(jour) ? NOM_STATUT[statutDe(jour)].toLowerCase()
-        : travail.length ? travail.map(x => `${formatHeure(x.debut)} – ${formatHeure(x.fin)}`).join(" et ") : "rien de prévu");
-    }
+    const jour = i <= 5 ? s.jours[JOURS[i]] : null, travail = jour ? periodesTravaillees(jour) : [];
+    ligne.textContent = !jour ? "" : "Aujourd'hui : " + (statutDe(jour) ? NOM_STATUT[statutDe(jour)].toLowerCase()
+      : travail.length ? travail.map(x => `${formatHeure(x.debut)} – ${formatHeure(x.fin)}`).join(" et ") : "rien de prévu");
   }
 
   function rendreDate() {
@@ -3575,15 +3310,6 @@ details.groupe-pieces { display: block; }
     $("resume-todo").textContent = enCours.length
       ? `${nFaire} à faire · ${nDire} à dire` + (urgentes ? ` · ${urgentes} urgente${urgentes > 1 ? "s" : ""}` : "")
       : "Rien à faire pour l'instant";
-    const apercu = $("apercu-todo");
-    apercu.hidden = !enCours.length;
-    apercu.replaceChildren(...enCours.slice(0, 3).map(t => {
-      const l = element("span", "apercu-ligne");
-      l.append(element("span", "apercu-texte", t.type === "dire" ? `Dire à ${t.personne} : ${t.texte}` : t.texte));
-      if (t.urgent) l.append(element("span", "puce urgente", "Urgent"));
-      else if (t.pour) { const e = echeance(t.pour); l.append(element("span", "puce " + e.classe, e.texte)); }
-      return l;
-    }));
   }
 
   // ---------- garde-robe Blue Box : les pièces du magasin ----------
@@ -3947,43 +3673,22 @@ details.groupe-pieces { display: block; }
     rendreCarteGardeRobe();
   }
 
-  // La carte de la page Travail : six photos, et ce que contient la garde-robe.
-  $("gr-grille").addEventListener("toggle", e => {
-    const d = e.target.closest("details.groupe-pieces");
-    if (!d || filtreActif()) return;
-    if (d.open) categoriesRepliees.delete(d.dataset.categorie); else categoriesRepliees.add(d.dataset.categorie);
-  }, true);
-  const toutReplier = replier => { $("gr-grille").querySelectorAll("details.groupe-pieces").forEach(d => { d.open = !replier; if (replier) categoriesRepliees.add(d.dataset.categorie); else categoriesRepliees.delete(d.dataset.categorie); }); };
-  $("gr-tout-deplier").addEventListener("click", () => toutReplier(false));
-  $("gr-tout-replier").addEventListener("click", () => toutReplier(true));
-  $("gr-filtres-bouton").addEventListener("click", () => {
-    const ouverts = $("gr-filtres").classList.toggle("ouverts");
-    $("gr-filtres-bouton").setAttribute("aria-expanded", String(ouverts));
-  });
+  // Les choix « Garde-robe Blue Box » (sur la page Travail) et ceux de la garde-robe : ce qu'il y a dans chacun.
   function rendreCarteGardeRobe() {
-    const toutes = Object.values(pieces);
-    const nT = Object.keys(tenues.docs).length, nD = Object.values(demandes.docs).filter(d => d.statut !== "refuse").length;
-    $("resume-pieces").textContent = toutes.length || nT || nD
-      ? [`${toutes.length} pièce${toutes.length > 1 ? "s" : ""}`, nT ? `${nT} tenue${nT > 1 ? "s" : ""}` : "", nD ? `${nD} demande${nD > 1 ? "s" : ""}` : ""].filter(Boolean).join(" · ")
-      : "Aucune pièce pour l'instant";
-    const mosaique = $("mosaique-pieces");
-    const avecPhoto = toutes.filter(x => x.photo).sort(trierPieces).slice(0, 6);
-    mosaique.hidden = !avecPhoto.length;
-    mosaique.replaceChildren(...avecPhoto.map(x => {
-      const c = element("span", "mosaique-case");
-      const img = element("img");
-      img.alt = "";
-      img.loading = "lazy";
-      img.src = srcPhoto(x.photo);
-      c.append(img);
-      return c;
-    }));
+    const toutes = Object.values(pieces), marques = new Set(toutes.map(x => x.marque).filter(Boolean));
+    const nT = Object.keys(tenues.docs).length, nC = Object.keys(comparaisons.docs).length, nD = Object.values(demandes.docs).filter(d => d.statut !== "refuse").length;
+    const pluriel = (n, mot) => `${n} ${mot}${n > 1 ? "s" : ""}`;
+    $("resume-pieces").textContent = toutes.length || nT || nD ? [pluriel(toutes.length, "pièce"), nT ? pluriel(nT, "tenue") : "", nD ? pluriel(nD, "demande") : ""].filter(Boolean).join(" · ") : "Aucune pièce pour l'instant";
+    $("gc-pieces").textContent = toutes.length ? `${pluriel(toutes.length, "pièce")} · ${pluriel(marques.size, "marque")}` : "Aucune pièce pour l'instant";
+    $("gc-tenues").textContent = nT ? pluriel(nT, "tenue") : "Aucune tenue pour l'instant";
+    $("gc-comparer").textContent = nC ? pluriel(nC, "comparaison") + " gardée" + (nC > 1 ? "s" : "") : "Des pièces ou des tenues côte à côte";
+    $("gc-manque").textContent = nD ? pluriel(nD, "demande") : "Les catégories sans pièce, les demandes";
   }
 
   // Filtres : recherche, marque, rayon, puces
   $("gr-recherche").addEventListener("input", e => { filtres.recherche = e.target.value; rendreGardeRobe(); });
   $("gr-marque").addEventListener("change", e => { filtres.marque = e.target.value; rendreGardeRobe(); });
-  document.querySelector('[data-vue="garde-robe"]').addEventListener("click", e => {
+  document.querySelector('[data-vue="pieces"]').addEventListener("click", e => {
     const puce = e.target.closest(".puce-filtre");
     if (puce) {
       filtres[puce.dataset.filtre] = filtres[puce.dataset.filtre] === puce.dataset.valeur ? "" : puce.dataset.valeur;
@@ -5031,14 +4736,7 @@ details.groupe-pieces { display: block; }
     if (faites && !lot.length) fermer($("fenetre-lot"));
   });
 
-  // ---------- garde-robe : onglets, collections, tenues, comparateur, ce qu'il manque ----------
-  const ONGLETS_GR = [["garde-robe", "Pièces"], ["tenues", "Tenues"], ["comparer", "Comparer"], ["manque", "Ce qu'il manque"]];
-  document.querySelectorAll(".onglets-gr").forEach(nav => nav.replaceChildren(...ONGLETS_GR.map(([vue, nom]) => {
-    const a = element("a", null, nom);
-    a.href = "#" + vue;
-    a.dataset.onglet = vue;
-    return a;
-  })));
+  // ---------- garde-robe : collections, tenues, comparateur, ce qu'il manque ----------
   const peutModifierGr = () => mode === "base" || mode === "local";
   let sampleNs = null;   // Claude, pour proposer une description de tenue
   const maintenant = () => new Date().toISOString();
@@ -6991,7 +6689,7 @@ details.groupe-pieces { display: block; }
     const zone = $("ar-road-graphe");
     $("ar-road-legende-courbe").hidden = !p || !av.pts.length;
     $("ar-road-l-trajectoire").textContent = p && av.r ? `Le plan, avec ${nombreFr(p.rendement)} % par an` : "Trajectoire jusqu'à l'objectif";
-    if (!p || !av.pts.length || vueActive !== "argent") { zone.replaceChildren(); zone.hidden = !p || !av.pts.length; $("ar-road-vide").hidden = !p || !!av.pts.length; return; }
+    if (!p || !av.pts.length || vueActive !== "epargne") { zone.replaceChildren(); zone.hidden = !p || !av.pts.length; $("ar-road-vide").hidden = !p || !!av.pts.length; return; }
     zone.hidden = false;
     $("ar-road-vide").hidden = true;
     const W = Math.max(300, zone.clientWidth || 640), H = 240, g = { haut: 26, bas: 26, gauche: 46, droite: 16 };
@@ -7055,6 +6753,7 @@ details.groupe-pieces { display: block; }
     if (av.arrivee) morceaux.push(`à ton rythme, tu y es en ${nomMois(av.arrivee).toLowerCase()}`);
     return majuscule(morceaux.join(" · ")) + ".";
   }
+  // Road to 50k (en tête de la page Épargne) et les lignes des choix de la page Argent.
   function rendreHubArgent() {
     const road = projetRoad(), epargne = projetEpargne();
     $("ar-road").hidden = !road;
@@ -7071,24 +6770,8 @@ details.groupe-pieces { display: block; }
       if (der) barreSegments($("ar-road-segments"), $("ar-road-legende"), comptes.map((c, i) => ({ nom: c.nom, valeur: der.valeurs[c.id] || 0, classe: SEGMENTS[i] || "seg-autre", detail: av.total ? `${Math.round((der.valeurs[c.id] || 0) / av.total * 100)} %` : "" })), av.total);
       rendreCourbeRoad(road, av);
     }
-    $("ar-epargne").hidden = !epargne;
-    if (epargne) {
-      const av = avancee(epargne);
-      $("ar-ep-titre").textContent = epargne.nom;
-      $("ar-ep-total").textContent = eur(av.total, 0);
-      $("ar-ep-sur").textContent = `sur ${eur(epargne.cible, 0)}` + (epargne.date ? ` · ${dateLongue(epargne.date)}` : "");
-      barreProgression($("ar-ep-barre"), av.part, `${epargne.nom} : ${eur(av.total, 0)} sur ${eur(epargne.cible, 0)}`);
-      $("ar-ep-detail").textContent = av.pts.length ? texteProjet(epargne, av) : "Mets à jour tes comptes pour lancer la barre.";
-    }
+    // Les lignes des quatre choix de la page Argent.
     const b = budgetDu(periodeParDefaut());
-    $("ar-mois-titre").textContent = `${majuscule(moisMin(b.cle))} · budget`;
-    $("ar-mois-reste").textContent = b.doc ? eur(b.reste, 0) : "À lancer";
-    $("ar-mois-reste").classList.toggle("negatif", !!b.doc && b.reste < 0);
-    $("ar-mois-sur").hidden = !b.doc;
-    barreSegments($("ar-mois-barre"), null, b.doc ? segmentsBudget(b) : [], b.depart || 0);
-    $("ar-mois-detail").textContent = !b.doc ? `Le jour de ta paie, note ton solde et répartis-le : le budget ${deMois(b.cle)} part de là.`
-      : `${b.reste < 0 ? "Dépassement" : "À dépenser"}${b.joursRestants && b.reste > 0 ? ` · ${eur(b.reste / b.joursRestants, 0)} par jour jusqu'au ${jourMois(b.fin)}` : ""} · ${eur(b.depense, 0)} dépensés`;
-    // Les cartes des pages.
     $("carte-budget-ligne").textContent = b.doc ? `${eur(b.reste, 0)} à dépenser en ${moisMin(b.cle)}` : "Budget à lancer le jour de ta paie";
     const ops = b.ops, top = CATS_DEPENSES.map(([c, nom]) => ({ nom, v: depenseDe(ops.filter(o => o.c === c)) })).sort((x, y) => y.v - x.v)[0];
     $("carte-depenses-ligne").textContent = ops.length ? `${eur(depenseDe(ops), 0)} en ${moisMin(b.cle)}` + (top && top.v > 0 ? ` · surtout ${top.nom.toLowerCase()}` : "") : "Importe un relevé ou note une dépense";
@@ -7844,7 +7527,7 @@ details.groupe-pieces { display: block; }
   ["pa-recu", "pa-taux"].forEach(id => $(id).addEventListener("input", () => $(id).classList.remove("en-erreur")));
 
   let minuterieRoad = 0;
-  window.addEventListener("resize", () => { clearTimeout(minuterieRoad); minuterieRoad = setTimeout(() => { if (vueActive === "argent") rendreHubArgent(); }, 150); });
+  window.addEventListener("resize", () => { clearTimeout(minuterieRoad); minuterieRoad = setTimeout(() => { if (vueActive === "epargne") rendreHubArgent(); }, 150); });
 
   // ---------- démarrage ----------
   construireSaisie();
