@@ -84,24 +84,32 @@ h1:focus { outline: none; }
 main { flex: 1 0 auto; display: flex; flex-direction: column; }
 [data-vue] { flex: 1 0 auto; }
 
-/* En-tête : un fil fin, pour revenir au choix d'avant (la flèche) ou plus haut (le chemin), dans la couleur de la
-   rubrique. Sur téléphone, seulement la flèche et le choix d'avant. Rien sur l'accueil. */
-.fil { position: relative; z-index: 15; border-bottom: 1px solid var(--trait); background: var(--fond); }
-.fil-dedans { display: flex; align-items: center; gap: 6px; min-height: 52px; }
-.fil-retour { display: grid; place-items: center; flex: none; width: 40px; height: 40px; margin-left: -8px; border-radius: 50%; color: var(--c); }
-.fil-retour:hover { background: var(--c-doux); }
-.fil-chemin { display: flex; flex-wrap: wrap; align-items: center; margin: 0; padding: 0; list-style: none; }
-.fil-chemin li { display: flex; align-items: center; }
-.fil-chemin li + li::before { content: "/"; margin: 0 10px; color: var(--trait-heure); }
-.fil-chemin a { color: var(--c); font: 700 .85rem/1.2 var(--f-body); letter-spacing: .04em; text-decoration: none; text-transform: uppercase; }
-.fil-chemin a:hover { text-decoration: underline; text-underline-offset: 3px; }
-@media (max-width: 719px) { .fil-chemin li:not(:last-child) { display: none; } .fil-chemin li + li::before { content: none; } }
+/* En haut de chaque page (sauf l'accueil) : une ligne de cadres, du tableau de bord jusqu'à la page ouverte. Chacun
+   ramène à son choix ; le dernier est la page elle-même. */
+.fil { padding-top: 24px; }
+.fil-cases { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 360px); justify-content: center; gap: 30px; margin: 0; padding: 0; list-style: none; }
+.fil-case { display: grid; place-items: center; height: 100%; min-height: 68px; padding: 12px 10px; border: 2px solid var(--c); border-radius: 12px; color: var(--c); font: 700 clamp(.95rem, 1.7vw, 1.35rem)/1.2 var(--f-body); letter-spacing: .03em; text-transform: uppercase; text-align: center; text-decoration: none; overflow-wrap: anywhere; transition: background-color .15s ease; }
+a.fil-case:hover { background: var(--c-doux); }
+a.fil-case:focus-visible { outline: 3px solid var(--c); outline-offset: 3px; }
+@media (max-width: 599px) {
+  .fil { padding-top: 16px; }
+  .fil-cases { grid-auto-columns: minmax(0, 1fr); gap: 8px; }
+  .fil-case { min-height: 54px; padding: 8px 6px; border-radius: 10px; font-size: .74rem; letter-spacing: .02em; }
+}
+/* Travail : le bleu de Blue Box en fond, les cadres en blanc ; chaque page s'ouvre dans un grand cadre blanc. */
+body.fond-travail { background: var(--marine); }
+.fond-travail .fil, .fond-travail .choix { --c: var(--sur-marine); --c-doux: rgba(255, 255, 255, .12); }
+.fond-travail .choix-info { color: var(--sur-marine-2); }
+.fond-travail [data-vue]:not(.page-choix) > .cadre { width: min(1256px, calc(100% - 64px)); margin: 24px auto 30px; padding: 22px 26px; border: 2px solid var(--sur-marine); border-radius: 12px; background: var(--fond); }
+.fond-travail .page-tete h1, .fond-travail .todo-tete h1 { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (max-width: 719px) { .fond-travail [data-vue]:not(.page-choix) > .cadre { width: calc(100% - 24px); margin: 12px auto 20px; padding: 14px 12px; } }
 
 /* Les pages de choix : l'accueil, chaque rubrique et la garde-robe. Le titre dans un cadre, puis un grand cadre par
    choix ; ils remplissent l'écran (empilés sur téléphone), dans la couleur de la rubrique (sur l'accueil, en noir). */
 .page-choix:not([hidden]) { display: flex; flex-direction: column; }
 .choix { flex: 1 0 auto; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 30px; padding-block: 32px; }
 .choix.neutre { --c: var(--encre); --c-doux: var(--trait-doux); }
+.choix.sous-choix { grid-template-rows: minmax(0, 1fr); padding-top: 30px; }
 .choix-titre, .choix-case { border: 2px solid var(--c); border-radius: 12px; color: var(--c); font: 700 clamp(1.2rem, 2.2vw, 1.6rem)/1.2 var(--f-body); letter-spacing: .03em; text-transform: uppercase; text-align: center; }
 .choix-titre { padding: 20px 16px; }
 .choix-cases { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 30px; margin: 0; padding: 0; list-style: none; }
@@ -120,6 +128,7 @@ a.choix-case:hover { background: var(--c-doux); }
 }
 @media (max-width: 599px) {
   .choix { gap: 16px; padding-block: 20px; }
+  .choix.sous-choix { padding-top: 16px; }
   .choix-cases, .choix-cases[data-n] { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .choix-case { min-height: 84px; padding-block: 14px; }
   .choix-info { font-size: .88rem; }
@@ -1057,10 +1066,7 @@ details.groupe-pieces { display: block; }
 <div class="app">
 
 <header class="fil" id="fil" hidden>
-  <div class="cadre fil-dedans">
-    <a class="fil-retour" id="fil-retour" href="#accueil"><svg class="picto" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6l-6 6 6 6"/></svg><span class="invisible" id="fil-retour-nom">Revenir</span></a>
-    <nav aria-label="Où je suis"><ol class="fil-chemin" id="fil-chemin"></ol></nav>
-  </div>
+  <nav class="cadre" aria-label="Où je suis"><ol class="fil-cases" id="fil-cases"></ol></nav>
 </header>
 
 <main>
@@ -1142,21 +1148,21 @@ details.groupe-pieces { display: block; }
   </section>
 
   <section class="r-travail page-choix" data-vue="travail" aria-labelledby="titre-travail" hidden>
-    <div class="cadre choix">
-      <h1 class="choix-titre" id="titre-travail" tabindex="-1">Travail</h1>
+    <div class="cadre choix sous-choix">
+      <h1 class="invisible" id="titre-travail" tabindex="-1">Travail</h1>
       <ul class="choix-cases" data-n="5">
-        <li><a class="choix-case" href="#planning"><span class="choix-nom">Mon planning</span><span class="choix-info"><span id="aujourdhui-planning"></span><span id="resume-planning"></span></span></a></li>
-        <li><a class="choix-case" href="#todo"><span class="choix-nom">To-do list</span><span class="choix-info"><span id="resume-todo"></span></span></a></li>
-        <li><a class="choix-case" href="#garde-robe"><span class="choix-nom">Garde-robe Blue Box</span><span class="choix-info"><span id="resume-pieces"></span></span></a></li>
-        <li><a class="choix-case" href="#calendrier"><span class="choix-nom">Calendrier commercial</span><span class="choix-info"><span id="ligne-calendrier"></span><span id="resume-calendrier"></span></span></a></li>
+        <li><a class="choix-case" href="#planning"><span class="choix-nom">Planning</span><span class="choix-info"><span id="aujourdhui-planning"></span><span id="resume-planning"></span></span></a></li>
+        <li><a class="choix-case" href="#todo"><span class="choix-nom">To do list</span><span class="choix-info"><span id="resume-todo"></span></span></a></li>
+        <li><a class="choix-case" href="#garde-robe"><span class="choix-nom">Dressing</span><span class="choix-info"><span id="resume-pieces"></span></span></a></li>
         <li><a class="choix-case" href="#objectifs"><span class="choix-nom">Objectifs</span><span class="choix-info"><span id="ligne-objectifs"></span><span id="resume-objectifs"></span></span></a></li>
+        <li><a class="choix-case" href="#calendrier"><span class="choix-nom">Calendrier</span><span class="choix-info"><span id="ligne-calendrier"></span><span id="resume-calendrier"></span></span></a></li>
       </ul>
     </div>
   </section>
 
   <section class="r-travail page-choix" data-vue="garde-robe" aria-labelledby="titre-garde-robe" hidden>
-    <div class="cadre choix">
-      <h1 class="choix-titre" id="titre-garde-robe" tabindex="-1">Garde-robe Blue Box</h1>
+    <div class="cadre choix sous-choix">
+      <h1 class="invisible" id="titre-garde-robe" tabindex="-1">Dressing</h1>
       <ul class="choix-cases" data-n="4">
         <li><a class="choix-case" href="#pieces"><span class="choix-nom">Pièces</span><span class="choix-info"><span id="gc-pieces"></span></span></a></li>
         <li><a class="choix-case" href="#tenues"><span class="choix-nom">Tenues</span><span class="choix-info"><span id="gc-tenues"></span></span></a></li>
@@ -1496,8 +1502,8 @@ details.groupe-pieces { display: block; }
   </section>
 
   <section class="r-argent page-choix" data-vue="argent" aria-labelledby="titre-argent" hidden>
-    <div class="cadre choix">
-      <h1 class="choix-titre" id="titre-argent" tabindex="-1">Argent</h1>
+    <div class="cadre choix sous-choix">
+      <h1 class="invisible" id="titre-argent" tabindex="-1">Argent</h1>
       <ul class="choix-cases" data-n="4">
         <li><a class="choix-case" href="#budget"><span class="choix-nom">Budget du mois</span><span class="choix-info"><span id="carte-budget-ligne"></span></span></a></li>
         <li><a class="choix-case" href="#depenses"><span class="choix-nom">Dépenses</span><span class="choix-info"><span id="carte-depenses-ligne"></span></span></a></li>
@@ -1681,8 +1687,8 @@ details.groupe-pieces { display: block; }
   </section>
 
   <section class="r-sport page-choix" data-vue="sport" aria-labelledby="titre-sport" hidden>
-    <div class="cadre choix">
-      <h1 class="choix-titre" id="titre-sport" tabindex="-1">Sport</h1>
+    <div class="cadre choix sous-choix">
+      <h1 class="invisible" id="titre-sport" tabindex="-1">Sport</h1>
       <ul class="choix-cases" data-n="4">
         <li><div class="choix-case a-venir"><span class="choix-nom">Mes séances</span><span class="choix-info"><span>Bientôt</span></span></div></li>
         <li><div class="choix-case a-venir"><span class="choix-nom">Mon programme</span><span class="choix-info"><span>Bientôt</span></span></div></li>
@@ -2103,7 +2109,7 @@ details.groupe-pieces { display: block; }
     pieces: "garde-robe", tenues: "garde-robe", comparer: "garde-robe", manque: "garde-robe",
     budget: "argent", depenses: "argent", epargne: "argent", paie: "argent" };
   const NOM_VUE = { accueil: "Tableau de bord", journee: "Ma journée", travail: "Travail", argent: "Argent", sport: "Sport",
-    planning: "Mon planning", todo: "To-do list", "garde-robe": "Garde-robe Blue Box", calendrier: "Calendrier commercial", objectifs: "Objectifs",
+    planning: "Planning", todo: "To do list", "garde-robe": "Dressing", calendrier: "Calendrier", objectifs: "Objectifs",
     pieces: "Pièces", tenues: "Tenues", comparer: "Comparer", manque: "Ce qu'il manque",
     budget: "Budget du mois", depenses: "Dépenses", epargne: "Épargne et projets", paie: "Ma paie" };
   let vueActive = "accueil";
@@ -2113,16 +2119,18 @@ details.groupe-pieces { display: block; }
     if (!VUES.includes(nom)) return false;
     vueActive = nom;
     document.querySelectorAll("[data-vue]").forEach(v => { v.hidden = v.dataset.vue !== nom; });
-    // Le fil : la flèche revient au choix d'avant, le chemin remonte plus haut (rien sur l'accueil).
+    // En haut, une ligne de cadres : chacun ramène à son choix, le dernier est la page ouverte (rien sur l'accueil).
     const chemin = [];
     for (let v = PARENT[nom]; v; v = PARENT[v]) chemin.unshift(v);
     $("fil").hidden = !chemin.length;
     $("fil").className = "fil" + (RUBRIQUE_DE[nom] ? ` r-${RUBRIQUE_DE[nom]}` : "");
-    if (chemin.length) {
-      $("fil-retour").href = "#" + PARENT[nom];
-      $("fil-retour-nom").textContent = `Revenir à ${NOM_VUE[PARENT[nom]]}`;
-      $("fil-chemin").replaceChildren(...chemin.map(v => { const li = element("li"), a = element("a", null, NOM_VUE[v]); a.href = "#" + v; li.append(a); return li; }));
-    }
+    $("fil-cases").replaceChildren(...[...chemin, nom].map(v => {
+      const li = element("li"), c = element(v === nom ? "span" : "a", "fil-case", NOM_VUE[v]);
+      if (v === nom) c.setAttribute("aria-current", "page"); else c.href = "#" + v;
+      li.append(c);
+      return li;
+    }));
+    document.body.classList.toggle("fond-travail", RUBRIQUE_DE[nom] === "travail");
     if (nom === "objectifs") requestAnimationFrame(rendreGraphe);   // la courbe et la frise ont besoin de leur largeur
     if (nom === "calendrier") requestAnimationFrame(rendreFrise);
     if (nom === "epargne") requestAnimationFrame(rendreHubArgent);   // la courbe de Road to 50k a besoin de sa largeur

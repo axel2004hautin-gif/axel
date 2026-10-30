@@ -4,7 +4,7 @@ Mon tableau de bord, publié sur claude.ai : https://claude.ai/artifact/QcoRPH8Y
 
 Ouvre `index.html` dans un navigateur pour le voir en local (rien à installer). En local, le planning, la to-do list et la garde-robe sont gardés dans le navigateur.
 
-Fond blanc. La vie est une succession de choix : chaque page propose les choix suivants, en grands cadres arrondis (le titre dans un cadre, puis un cadre par choix, qui remplissent l'écran ; empilés sur téléphone). L'accueil propose Travail, Argent, Sport (en noir). Travail propose Mon planning, To-do list, Garde-robe Blue Box, Calendrier commercial, Objectifs ; la garde-robe propose Pièces, Tenues, Comparer, Ce qu'il manque ; Argent propose Budget du mois, Dépenses, Épargne et projets, Ma paie ; Sport propose Mes séances, Mon programme, Mes progrès, Ma forme (en pointillés : bientôt). Chaque cadre montre une ligne de ce qu'il contient (les horaires d'aujourd'hui, le nombre de tâches, de pièces, le prochain temps fort, le budget du jour…). Chaque rubrique a sa couleur : le bleu de Blue Box (#002252) pour Travail, le vert d'un billet pour Argent, l'orange d'un ballon de basket pour Sport. En haut de chaque page (sauf l'accueil), un fil dans la couleur de la rubrique : la flèche revient au choix d'avant, le chemin (Tableau de bord / Travail / Garde-robe Blue Box) remonte plus haut ; sur téléphone, la flèche et le choix d'avant.
+Fond blanc. La vie est une succession de choix : chaque page propose les choix suivants, en grands cadres arrondis (le titre dans un cadre, puis un cadre par choix, qui remplissent l'écran ; empilés sur téléphone). L'accueil propose Travail, Argent, Sport (en noir). Travail propose Planning, To do list, Dressing, Objectifs, Calendrier ; le dressing propose Pièces, Tenues, Comparer, Ce qu'il manque ; Argent propose Budget du mois, Dépenses, Épargne et projets, Ma paie ; Sport propose Mes séances, Mon programme, Mes progrès, Ma forme (en pointillés : bientôt). Chaque cadre montre une ligne de ce qu'il contient (les horaires d'aujourd'hui, le nombre de tâches, de pièces, le prochain temps fort, le budget du jour…). Chaque rubrique a sa couleur : le bleu de Blue Box (#002252) pour Travail, le vert d'un billet pour Argent, l'orange d'un ballon de basket pour Sport. En haut de chaque page (sauf l'accueil), une ligne de cadres, du tableau de bord jusqu'à la page ouverte (Tableau de bord, Travail, Planning) : chacun ramène à son choix, le dernier est la page elle-même. Sur les pages de choix, cette ligne fait le titre. Dans Travail, le fond est le bleu de Blue Box, les cadres et leur texte en blanc, et chaque page s'ouvre dans un grand cadre blanc (son titre est dans la ligne du haut).
 
 Sur ordinateur, l'accueil et les pages de choix tiennent dans l'écran, sans défiler.
 
@@ -14,7 +14,7 @@ Une adresse qui finit par `#travail`, `#argent` ou `#sport` ouvre directement la
 
 ## Travail
 
-La page Travail propose ses cinq choix. « Mon planning » montre les horaires d'aujourd'hui et le total de la semaine ; « To-do list », les compteurs ; « Garde-robe Blue Box », le nombre de pièces ; « Calendrier commercial », le prochain temps fort et sa vitrine ; « Objectifs », la part homme du mois.
+La page Travail propose ses cinq choix. « Planning » montre les horaires d'aujourd'hui et le total de la semaine ; « To do list », les compteurs ; « Dressing » (la garde-robe Blue Box), le nombre de pièces ; « Objectifs », la part homme du mois ; « Calendrier », le prochain temps fort et sa vitrine.
 
 ### Mon planning
 
