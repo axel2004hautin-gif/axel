@@ -13,8 +13,8 @@
    rubrique propose ses pages (la garde-robe aussi), en grands cadres dans la couleur de la rubrique : le bleu de
    Blue Box, le vert d'un billet, l'orange d'un ballon de basket. Un fil, en haut, revient en arrière. « Mon planning »
    tient dans l'écran : semaine, frise (une colonne par jour, une ligne par heure, elle prend toute la
-   place qui reste), bilan. « To-do list » : ajout rapide en haut, puis deux colonnes, « À faire » et
-   « À dire » (par personne), et ce qui est fait en bas. « Garde-robe Blue Box » : quatre choix (pièces,
+   place qui reste), bilan. « To-do list » : ajout rapide en haut, puis deux colonnes, « On m'a demandé » et
+   « À faire », puis « À dire » (par personne), et ce qui est fait en bas. « Garde-robe Blue Box » : quatre choix (pièces,
    tenues, comparateur, ce qu'il manque) ; les pièces en photo, rangées par catégorie ; une tenue est six
    cases côte à côte, jamais superposées. Un seul thème, clair. */
 :root {
@@ -478,6 +478,33 @@ a.choix-case:hover { background: var(--c-doux); }
 .personne:first-child .personne-nom { padding-top: 8px; }
 .initiale { display: grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--bleu); color: var(--sur-marine); font: 700 .85rem/1 var(--f-display); }
 .liste-vide { padding: 14px 0; color: var(--gris); }
+/* La colonne de gauche : « On m'a demandé » au-dessus de « À faire » ; les tâches lointaines repliées dans « Plus tard ». */
+.liste-colonne { display: grid; gap: 28px; min-width: 0; }
+.plus-tard-taches { border-bottom: 1px solid var(--trait); }
+.plus-tard-taches > details > summary { padding: 12px 0; color: var(--gris); font-weight: 700; cursor: pointer; }
+.plus-tard-taches > details > summary .nombre { margin-left: 6px; }
+.plus-tard-taches .taches .tache:last-child { border-bottom: 0; }
+/* Trois priorités : urgent (trait rouge), normale, pas pressé (en gris). */
+.tache.basse .tache-texte { color: var(--gris); }
+.puce.bas { background: none; box-shadow: inset 0 0 0 1px var(--trait); color: var(--gris); }
+.puce.de { background: var(--bleu); color: var(--sur-marine); }
+.bas-choix input { accent-color: var(--gris); }
+.bas-choix:has(input:checked) { border-color: var(--gris); background: var(--trait-doux); color: var(--encre); }
+.lien-piece { border: 0; cursor: pointer; }
+.lien-piece:hover { background: var(--marine); color: var(--sur-marine); }
+/* Le rétroplanning d'un temps fort, dans sa fenêtre. */
+.retro-etapes { display: grid; gap: 6px; margin-top: 4px; }
+.retro-etape { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 44px; padding: 6px 12px; border: 1.5px solid var(--trait); border-radius: 10px; font-weight: 600; cursor: pointer; }
+.retro-etape input { width: 18px; height: 18px; margin: 0; accent-color: var(--marine); }
+.retro-etape:has(input:checked) { border-color: var(--marine); background: var(--marine-doux); }
+.retro-etape.faite .retro-nom { color: var(--gris); text-decoration: line-through; }
+.retro-date { font: 600 .78rem/1.3 var(--f-mono); color: var(--gris); white-space: nowrap; }
+.rep-reassort { background: var(--or-doux); color: var(--or); box-shadow: inset 0 0 0 1px var(--or); }
+#pi-reassort.fait { border-color: var(--or); color: var(--or); }
+@media (max-width: 599px) {
+  .ajout-tache .type-tache label { flex: 1 1 auto; }
+  .type-tache span { padding-inline: 9px; }
+}
 .faites { border-top: 1px solid var(--trait); }
 .faites summary { padding: 14px 0 8px; color: var(--gris); font-weight: 700; cursor: pointer; }
 .faites .bouton-second { margin-top: 12px; }
@@ -1240,6 +1267,7 @@ details.groupe-pieces { display: block; }
       <form class="ajout-tache champs-tache" id="ajout-tache" autocomplete="off" novalidate>
         <div class="type-tache" role="radiogroup" aria-label="Type de tâche">
           <label><input type="radio" name="a-type" value="faire" checked><span>À faire</span></label>
+          <label><input type="radio" name="a-type" value="demande"><span>On m'a demandé</span></label>
           <label><input type="radio" name="a-type" value="dire"><span>À dire</span></label>
         </div>
         <input class="champ-texte" id="a-texte" type="text" maxlength="300" placeholder="Ex. : refaire la table des pulls" aria-label="Quoi ?">
@@ -1247,6 +1275,7 @@ details.groupe-pieces { display: block; }
         <select class="champ-pour" id="a-pour" aria-label="Pour quand ?"></select>
         <input class="champ-date" id="a-date" type="date" aria-label="Date" hidden>
         <label class="urgent-choix"><input type="checkbox" id="a-urgent"><span>Urgent</span></label>
+        <label class="urgent-choix bas-choix"><input type="checkbox" id="a-bas"><span>Pas pressé</span></label>
         <label class="urgent-choix repete-choix"><input type="checkbox" id="a-repete"><span>Chaque semaine</span></label>
         <button class="bouton-principal" type="submit">Ajouter</button>
         <p class="erreur-tache" id="a-erreur" role="alert" hidden></p>
@@ -1254,11 +1283,18 @@ details.groupe-pieces { display: block; }
       <p class="note-lecture" id="todo-lecture" hidden>Seul le propriétaire du tableau peut modifier la to-do list.</p>
 
       <div class="listes">
-        <section class="liste" aria-labelledby="titre-faire">
-          <h2 id="titre-faire">À faire au magasin <span class="nombre" id="nombre-faire"></span></h2>
-          <ul class="taches" id="liste-faire"></ul>
-          <p class="liste-vide" id="vide-faire">Rien à faire pour l'instant.</p>
-        </section>
+        <div class="liste-colonne">
+          <section class="liste" aria-labelledby="titre-demande">
+            <h2 id="titre-demande">On m'a demandé <span class="nombre" id="nombre-demande"></span></h2>
+            <ul class="taches" id="liste-demande"></ul>
+            <p class="liste-vide" id="vide-demande">Personne ne t'a rien demandé pour l'instant.</p>
+          </section>
+          <section class="liste" aria-labelledby="titre-faire">
+            <h2 id="titre-faire">À faire au magasin <span class="nombre" id="nombre-faire"></span></h2>
+            <ul class="taches" id="liste-faire"></ul>
+            <p class="liste-vide" id="vide-faire">Rien à faire pour l'instant.</p>
+          </section>
+        </div>
         <section class="liste" aria-labelledby="titre-dire">
           <h2 id="titre-dire">À dire <span class="nombre" id="nombre-dire"></span></h2>
           <div id="liste-dire"></div>
@@ -1423,7 +1459,7 @@ details.groupe-pieces { display: block; }
         <button class="bouton-principal" type="submit">Ajouter la demande</button>
         <p class="erreur-tache" id="ma-erreur" role="alert" hidden></p>
       </form>
-      <p class="aide">Si la même demande revient, elle compte une fois de plus. Les plus demandées passent en premier : ce sont les idées à proposer à Maxime.</p>
+      <p class="aide">Si la même demande revient, elle compte une fois de plus. Les plus demandées passent en premier : ce sont les idées à faire remonter (« À dire » les ajoute à ta to-do, pour la personne de l'équipe dont le rôle est responsable).</p>
       <ul class="demandes" id="ma-liste"></ul>
       <p class="liste-vide" id="ma-vide" hidden>Aucune demande pour l'instant. Note ici ce que les clients cherchent et que le magasin n'a pas.</p>
       <div class="rayons-vides" id="ma-rayons" hidden>
@@ -1719,7 +1755,7 @@ details.groupe-pieces { display: block; }
             <label class="titre-champ">Majoration du dimanche (%)<input type="text" inputmode="decimal" id="pa-maj-dimanche" placeholder="100"></label>
             <label class="titre-champ">Majoration d'un jour férié travaillé (%)<input type="text" inputmode="decimal" id="pa-maj-ferie" placeholder="0"></label>
           </div>
-          <p class="aide">Les heures sup sont majorées de 25 %. Un dimanche d'ouverture exceptionnelle est payé au moins le double (+100 %) ; un jour férié travaillé, selon ta convention (vérifie sur ta fiche), et le 1er mai toujours le double. Les cotisations suivent ta fiche de septembre 2026.</p>
+          <p class="aide">Les heures sup sont majorées de 25 %. Un dimanche d'ouverture exceptionnelle est payé au moins le double (+100 %) ; un jour férié travaillé, selon la convention écrite en haut de ta fiche de paie (commerce de détail de l'habillement, IDCC 1483 : +100 %) ; le 1er mai, toujours le double. Les cotisations suivent ta fiche de septembre 2026.</p>
           <button class="bouton-second" type="submit">Enregistrer</button>
         </form>
       </details>
@@ -1828,6 +1864,10 @@ details.groupe-pieces { display: block; }
     <label class="urgent-choix repete-choix"><input type="checkbox" id="ev-ouverture"><span>Le magasin ouvre exceptionnellement (un dimanche)</span></label>
     <label class="titre-champ">Thème et idées de vitrine<textarea id="ev-theme" maxlength="600" rows="3" placeholder="Ex. : idées cadeaux, tons chauds, pulls et sweats"></textarea></label>
     <label class="titre-champ">Monter la vitrine le<input type="date" id="ev-vitrine"></label>
+    <div class="titre-champ">Rétroplanning dans la to-do
+      <div class="retro-etapes" id="ev-retro"></div>
+      <p class="aide">Chaque étape arrive dans ta to-do à sa date, et suit le temps fort si ses dates changent.</p>
+    </div>
     <div class="titre-champ">Tenues pour la vitrine<div class="choix-tenues" id="ev-tenues"></div></div>
     <label class="titre-champ">Note<textarea id="ev-note" maxlength="500" rows="2" placeholder="Ex. : prévoir les étiquettes de prix"></textarea></label>
   </form>
@@ -1906,6 +1946,7 @@ details.groupe-pieces { display: block; }
   <form class="fenetre-corps champs-tache edition" id="edition-tache" autocomplete="off" novalidate>
     <div class="type-tache" role="radiogroup" aria-label="Type de tâche">
       <label><input type="radio" name="e-type" value="faire"><span>À faire</span></label>
+      <label><input type="radio" name="e-type" value="demande"><span>On m'a demandé</span></label>
       <label><input type="radio" name="e-type" value="dire"><span>À dire</span></label>
     </div>
     <label class="titre-champ">Quoi ?<input class="champ-texte" id="e-texte" type="text" maxlength="300"></label>
@@ -1917,7 +1958,7 @@ details.groupe-pieces { display: block; }
         <label class="r-perso"><input type="radio" name="e-rubrique" value="perso"><span>Perso</span></label>
       </div>
     </div>
-    <label class="titre-champ" id="e-personne-bloc">À qui ?<input class="champ-personne" id="e-personne" type="text" maxlength="60" list="personnes"></label>
+    <label class="titre-champ" id="e-personne-bloc"><span id="e-personne-titre">À qui ?</span><input class="champ-personne" id="e-personne" type="text" maxlength="60" list="personnes"></label>
     <div class="titre-champ">Pour quand ?
       <div class="ligne-champs">
         <select class="champ-pour" id="e-pour" aria-label="Pour quand ?"></select>
@@ -1926,8 +1967,10 @@ details.groupe-pieces { display: block; }
     </div>
     <div class="ligne-pastilles">
       <label class="urgent-choix"><input type="checkbox" id="e-urgent"><span>Urgent</span></label>
+      <label class="urgent-choix bas-choix"><input type="checkbox" id="e-bas"><span>Pas pressé</span></label>
       <label class="urgent-choix repete-choix"><input type="checkbox" id="e-repete"><span>Chaque semaine</span></label>
     </div>
+    <label class="titre-champ" id="e-piece-bloc">Pièce du Dressing<select id="e-piece"></select></label>
   </form>
   <div class="fenetre-pied">
     <p class="fenetre-erreur" id="e-erreur" role="alert" hidden></p>
@@ -2119,6 +2162,7 @@ details.groupe-pieces { display: block; }
   <div class="fenetre-pied">
     <p class="fenetre-erreur" id="pi-erreur" role="alert" hidden></p>
     <button class="bouton-danger" type="button" id="pi-supprimer" hidden>Supprimer</button>
+    <button class="bouton-second" type="button" id="pi-reassort" hidden>À réassortir</button>
     <button class="bouton-second" type="button" data-fermer>Annuler</button>
     <button class="bouton-second" type="button" id="pi-encore" hidden>Enregistrer et ajouter une autre</button>
     <button class="bouton-principal" type="button" id="pi-enregistrer">Enregistrer</button>
@@ -3157,8 +3201,9 @@ details.groupe-pieces { display: block; }
   });
 
   // ---------- to-do list : à faire au magasin, à dire à quelqu'un ----------
-  // Un document par tâche dans « todo » : { texte, type: "faire" | "dire", personne, pour (AAAA-MM-JJ),
-  // urgent, fait, faitLe, creeLe }. Hors de claude.ai, la liste est gardée dans le navigateur.
+  // Un document par tâche dans « todo » : { texte, type: "faire" | "demande" | "dire", personne (à qui le dire,
+  // ou qui me l'a demandé), pour (AAAA-MM-JJ), priorite ("haute" | "basse" | null) et urgent, fait, faitLe, creeLe,
+  // piece (une pièce du Dressing), evenement et etape (le rétroplanning d'un temps fort, ou "reassort") }. Hors de claude.ai, la liste est gardée dans le navigateur.
   const CLE_LOCALE_TODO = "tableau-de-bord-axel:todo";
   const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
   const JOURS_SEMAINE = ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."];
@@ -3172,23 +3217,33 @@ details.groupe-pieces { display: block; }
     if (!d || typeof d !== "object") return null;
     const texte = texteBorne(d.texte, 300);
     if (!texte) return null;
-    const type = d.type === "dire" ? "dire" : "faire";
+    const type = d.type === "dire" || d.type === "demande" ? d.type : "faire";
+    // Trois priorités : haute (urgent), normale, basse (pas pressé) ; « urgent » reste écrit pour les anciennes tâches.
+    const priorite = d.priorite === "basse" ? "basse" : d.priorite === "haute" || d.urgent === true ? "haute" : "normale";
     return {
       id, texte, type, rubrique: RUBRIQUES_TACHE.some(([r]) => r === d.rubrique) ? d.rubrique : "travail",
-      personne: type === "dire" ? texteBorne(d.personne, 60) || "Quelqu'un" : "",
+      personne: type !== "faire" ? texteBorne(d.personne, 60) || "Quelqu'un" : "",
       pour: typeof d.pour === "string" && ISO_RE.test(d.pour) ? d.pour : null,
-      urgent: d.urgent === true,
+      priorite, urgent: priorite === "haute",
       repete: d.repete === true,
       suivante: texteBorne(d.suivante, 40) || null,
       fait: d.fait === true,
       faitLe: texteBorne(d.faitLe, 40) || null,
       creeLe: texteBorne(d.creeLe, 40),
+      piece: texteBorne(d.piece, 60) || null,
+      evenement: texteBorne(d.evenement, 60) || null,
+      etape: texteBorne(d.etape, 20) || null,
     };
   }
   // repete : la tâche revient chaque semaine, le jour de « pour » ; suivante : la copie déjà créée
   // pour la semaine d'après, quand elle a été cochée.
-  const corpsDe = t => ({ texte: t.texte, type: t.type, rubrique: t.rubrique, personne: t.type === "dire" ? t.personne : null, pour: t.pour, urgent: t.urgent,
-    repete: t.repete, suivante: t.suivante, fait: t.fait, faitLe: t.faitLe, creeLe: t.creeLe });
+  const corpsDe = t => ({ texte: t.texte, type: t.type, rubrique: t.rubrique, personne: t.type !== "faire" ? t.personne : null, pour: t.pour,
+    urgent: t.priorite === "haute", priorite: t.priorite === "haute" || t.priorite === "basse" ? t.priorite : null,
+    repete: t.repete, suivante: t.suivante, fait: t.fait, faitLe: t.faitLe, creeLe: t.creeLe,
+    piece: t.piece || null, evenement: t.evenement || null, etape: t.etape || null });
+  // Le corps d'une nouvelle tâche du travail, à faire, sans date.
+  const nouvelleTache = champs => ({ texte: "", type: "faire", rubrique: "travail", personne: null, pour: null, urgent: false, priorite: null, repete: false,
+    suivante: null, fait: false, faitLe: null, creeLe: new Date().toISOString(), piece: null, evenement: null, etape: null, ...champs });
   // La prochaine fois d'une tâche qui revient : même jour de la semaine, pas avant aujourd'hui.
   function prochaineFois(pour) {
     let t = depuisIso(pour) + 7 * JOUR_MS;
@@ -3252,14 +3307,16 @@ details.groupe-pieces { display: block; }
     return { texte: majuscule(dateCourte(t)), classe: "" };
   }
   const rangEcheance = t => (t.pour ? depuisIso(t.pour) : Infinity);
-  const trierTaches = (a, b) => (b.urgent - a.urgent) || (rangEcheance(a) - rangEcheance(b)) || a.creeLe.localeCompare(b.creeLe);
+  const trierTaches = (a, b) => (b.urgent - a.urgent) || ((a.priorite === "basse") - (b.priorite === "basse")) || (rangEcheance(a) - rangEcheance(b)) || a.creeLe.localeCompare(b.creeLe);
 
   // ----- les deux formulaires (ajout en haut, modification dans la fenêtre) partagent leurs champs -----
   const typeChoisi = prefixe => (document.querySelector(`input[name="${prefixe}-type"]:checked`) || {}).value || "faire";
   function majChamps(prefixe) {
-    const dire = typeChoisi(prefixe) === "dire";
-    ($(prefixe + "-personne-bloc") || $(prefixe + "-personne")).hidden = !dire;
-    $(prefixe + "-texte").placeholder = dire ? "Ex. : le réassort des 502 arrive mardi" : "Ex. : refaire la table des pulls";
+    const type = typeChoisi(prefixe), dire = type === "dire", demande = type === "demande";
+    ($(prefixe + "-personne-bloc") || $(prefixe + "-personne")).hidden = !dire && !demande;
+    if ($(prefixe + "-personne-titre")) $(prefixe + "-personne-titre").textContent = demande ? "Qui te l'a demandé ?" : "À qui ?";
+    else { $(prefixe + "-personne").placeholder = demande ? "Qui ?" : "À qui ?"; $(prefixe + "-personne").setAttribute("aria-label", demande ? "Qui te l'a demandé ?" : "À qui ?"); }
+    $(prefixe + "-texte").placeholder = dire ? "Ex. : le réassort des 502 arrive mardi" : demande ? "Ex. : ranger la réserve avant samedi" : "Ex. : refaire la table des pulls";
     $(prefixe + "-date").hidden = $(prefixe + "-pour").value !== "autre";
     $(prefixe + "-urgent").closest(".urgent-choix").classList.toggle("coche", $(prefixe + "-urgent").checked);
   }
@@ -3284,6 +3341,7 @@ details.groupe-pieces { display: block; }
     const personne = $(prefixe + "-personne").value.trim();
     if (!texte) return { erreur: type === "dire" ? "Écris ce que tu dois dire." : "Écris ce que tu dois faire.", champ: $(prefixe + "-texte") };
     if (type === "dire" && !personne) return { erreur: "Dis à qui.", champ: $(prefixe + "-personne") };
+    if (type === "demande" && !personne) return { erreur: "Dis qui te l'a demandé.", champ: $(prefixe + "-personne") };
     const choix = $(prefixe + "-pour").value;
     let pour = null;
     if (choix === "aujourdhui") pour = versIso(aujourdhui());
@@ -3295,7 +3353,8 @@ details.groupe-pieces { display: block; }
     }
     const repete = $(prefixe + "-repete").checked;
     if (repete && !pour) return { erreur: "Choisis un jour : la tâche reviendra ce jour-là chaque semaine.", champ: $(prefixe + "-pour") };
-    return { tache: { texte: texte.slice(0, 300), type, personne: type === "dire" ? personne.slice(0, 60) : "", pour, urgent: $(prefixe + "-urgent").checked, repete } };
+    const priorite = $(prefixe + "-urgent").checked ? "haute" : $(prefixe + "-bas").checked ? "basse" : null;
+    return { tache: { texte: texte.slice(0, 300), type, personne: type !== "faire" ? personne.slice(0, 60) : "", pour, urgent: priorite === "haute", priorite, repete } };
   }
   function signalerTache(prefixe, lu) {
     $(prefixe + "-erreur").textContent = lu.erreur;
@@ -3305,7 +3364,13 @@ details.groupe-pieces { display: block; }
   }
   ["a", "e"].forEach(prefixe => {
     const form = prefixe === "a" ? $("ajout-tache") : $("edition-tache");
-    form.addEventListener("change", () => { majChamps(prefixe); effacerErreurTache(prefixe); });
+    form.addEventListener("change", e => {
+      // Urgent et Pas pressé : l'un ou l'autre.
+      if (e.target.id === prefixe + "-urgent" && e.target.checked) $(prefixe + "-bas").checked = false;
+      if (e.target.id === prefixe + "-bas" && e.target.checked) $(prefixe + "-urgent").checked = false;
+      majChamps(prefixe);
+      effacerErreurTache(prefixe);
+    });
     form.addEventListener("input", () => effacerErreurTache(prefixe));
   });
 
@@ -3316,11 +3381,12 @@ details.groupe-pieces { display: block; }
     effacerErreurTache("a");
     const lu = lireChamps("a");
     if (lu.erreur) { signalerTache("a", lu); return; }
-    const corps = { ...lu.tache, rubrique: "travail", personne: lu.tache.type === "dire" ? lu.tache.personne : null, suivante: null, fait: false, faitLe: null, creeLe: new Date().toISOString() };
+    const corps = nouvelleTache({ ...lu.tache, personne: lu.tache.type !== "faire" ? lu.tache.personne : null });
     // On vide tout de suite pour enchaîner ; le type et la personne restent pour la tâche suivante.
     $("a-texte").value = "";
     $("a-pour").value = "";
     $("a-urgent").checked = false;
+    $("a-bas").checked = false;
     $("a-repete").checked = false;
     majChamps("a");
     $("a-texte").focus();
@@ -3345,7 +3411,10 @@ details.groupe-pieces { display: block; }
         await ecrireTache(t.id, { ...corpsDe(t), suivante: null, fait: false, faitLe: null });
       } else {
         await ecrireTache(t.id, { ...corpsDe(t), fait: cb.checked, faitLe: cb.checked ? maintenant : null });
+        if (cb.checked && t.type === "demande") toast(`Fait. Pense à le dire à ${t.personne}.`);
       }
+      // « Monter la vitrine » d'un temps fort : cochée, la vitrine est prête.
+      if (t.evenement && t.etape === "vitrine") vitrineDepuisTache(t.evenement, cb.checked);
     }
     catch (err) { cb.checked = !cb.checked; echecEcriture(err); }
   }
@@ -3366,8 +3435,10 @@ details.groupe-pieces { display: block; }
     const auj = versIso(aujourdhui()), demain = versIso(aujourdhui() + JOUR_MS);
     $("e-pour").value = !t.pour ? "" : t.pour === auj ? "aujourdhui" : t.pour === demain ? "demain" : "autre";
     $("e-date").value = $("e-pour").value === "autre" ? t.pour : "";
-    $("e-urgent").checked = t.urgent;
+    $("e-urgent").checked = t.priorite === "haute";
+    $("e-bas").checked = t.priorite === "basse";
     $("e-repete").checked = t.repete;
+    remplirChoixPiece(t.piece);
     effacerErreurTache("e");
     desarmer($("ft-supprimer"), "Supprimer");
     majChamps("e");
@@ -3375,9 +3446,26 @@ details.groupe-pieces { display: block; }
     $("e-texte").focus();
   }
   ['[data-vue="todo"]', '[data-vue="journee"]'].forEach(v => document.querySelector(v).addEventListener("click", e => {
+    const p = e.target.closest("[data-ouvrir-piece]");
+    if (p) { ouvrirPiece(p.dataset.ouvrirPiece); return; }
     const b = e.target.closest(".tache-modifier");
     if (b) ouvrirEdition(b.dataset.id);
   }));
+  // La pièce du Dressing liée à une tâche (un réassort) : par catégorie, comme dans le Dressing.
+  const nomPiece = x => [x.marque, x.modele || NOM_CATEGORIE[x.categorie], x.couleur].filter(Boolean).join(" · ");
+  function remplirChoixPiece(id) {
+    const groupes = CATEGORIES.map(([cat, nom]) => [nom, Object.values(pieces).filter(x => x.categorie === cat).sort(trierPieces)]).filter(([, xs]) => xs.length);
+    $("e-piece").replaceChildren(new Option("Aucune", ""), ...groupes.map(([nom, xs]) => {
+      const g = element("optgroup");
+      g.label = nom;
+      g.append(...xs.map(x => new Option(nomPiece(x), x.id)));
+      return g;
+    }));
+    $("e-piece").value = id && pieces[id] ? id : "";
+    $("e-piece-bloc").hidden = !groupes.length;
+  }
+  // Les pièces qui ont un réassort en cours dans la to-do.
+  const piecesAReassortir = () => new Set(Object.values(taches).filter(t => !t.fait && t.piece && t.etape === "reassort").map(t => t.piece));
   $("ft-enregistrer").addEventListener("click", async () => {
     const t = taches[tacheEditee];
     if (!t) { fermer($("fenetre-tache")); return; }
@@ -3386,7 +3474,9 @@ details.groupe-pieces { display: block; }
     if (lu.erreur) { signalerTache("e", lu); return; }
     fermer($("fenetre-tache"));
     const rubrique = (document.querySelector('input[name="e-rubrique"]:checked') || {}).value || t.rubrique;
-    try { await ecrireTache(t.id, { ...corpsDe(t), ...lu.tache, rubrique, personne: lu.tache.type === "dire" ? lu.tache.personne : null }); }
+    const piece = $("e-piece-bloc").hidden ? t.piece : $("e-piece").value || null;
+    const etape = t.evenement ? t.etape : piece && piece === t.piece ? t.etape : null;
+    try { await ecrireTache(t.id, { ...corpsDe(t), ...lu.tache, rubrique, personne: lu.tache.type !== "faire" ? lu.tache.personne : null, piece, etape }); }
     catch (err) { echecEcriture(err); }
   });
 
@@ -3405,7 +3495,7 @@ details.groupe-pieces { display: block; }
     if (!b.classList.contains("arme")) { armer(b, "Confirmer la suppression", "Supprimer"); return; }
     desarmer(b, "Supprimer");
     fermer($("fenetre-tache"));
-    try { await ecrireTache(t.id, null); toast("Tâche supprimée."); } catch (err) { echecEcriture(err); }
+    try { await ecrireTache(t.id, null); toast("Tâche supprimée."); oublierEtape(t); } catch (err) { echecEcriture(err); }
   });
   $("effacer-faites").addEventListener("click", async e => {
     const b = e.currentTarget;
@@ -3420,21 +3510,33 @@ details.groupe-pieces { display: block; }
   // ----- affichage -----
   const PICTO_CRAYON = '<svg class="picto" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"/></svg>';
   function ligneTache(t, avecPersonne) {
-    const li = element("li", "tache" + (t.urgent && !t.fait ? " urgente" : "") + (t.fait ? " faite" : ""));
+    const li = element("li", "tache" + (t.urgent && !t.fait ? " urgente" : "") + (t.priorite === "basse" && !t.fait ? " basse" : "") + (t.fait ? " faite" : ""));
     const label = element("label", "tache-case");
     const cb = element("input");
     cb.type = "checkbox";
     cb.checked = t.fait;
     cb.dataset.id = t.id;
     cb.disabled = !peutModifierTodo();
-    label.append(cb, element("span", "tache-texte", avecPersonne && t.type === "dire" ? `Dire à ${t.personne} : ${t.texte}` : t.texte));
+    const texte = !avecPersonne ? t.texte : t.type === "dire" ? `Dire à ${t.personne} : ${t.texte}` : t.type === "demande" ? `${t.personne} m'a demandé : ${t.texte}` : t.texte;
+    label.append(cb, element("span", "tache-texte", texte));
     const meta = element("span", "tache-meta");
     if (t.fait) {
       if (t.faitLe && !isNaN(Date.parse(t.faitLe))) { const d = new Date(t.faitLe); meta.append(element("span", "puce fait", `Fait le ${d.getDate()} ${MOIS_COURTS[d.getMonth()]}`)); }
     } else {
+      if (t.type === "demande" && !avecPersonne) meta.append(element("span", "puce de", t.personne));
       if (t.urgent) meta.append(element("span", "puce urgente", "Urgent"));
+      if (t.priorite === "basse") meta.append(element("span", "puce bas", "Pas pressé"));
       if (t.pour) { const e = echeance(t.pour); meta.append(element("span", "puce " + e.classe, e.texte)); }
       if (t.repete && t.pour) meta.append(element("span", "puce repete", `↻ Chaque ${JOURS_SEMAINE[new Date(depuisIso(t.pour)).getUTCDay()]}`));
+      // La pièce du Dressing : un appui ouvre sa fiche.
+      const p = t.piece && pieces[t.piece];
+      if (p) {
+        const b = element("button", "puce lien-piece", p.modele && !t.texte.includes(p.modele) ? `↗ ${p.modele}` : "↗ Voir la pièce");
+        b.type = "button";
+        b.dataset.ouvrirPiece = p.id;
+        b.title = `Voir la pièce : ${nomPiece(p)}`;
+        meta.append(b);
+      }
     }
     li.append(label, meta);
     if (peutModifierTodo()) {
@@ -3453,18 +3555,22 @@ details.groupe-pieces { display: block; }
     const toutes = Object.values(taches).filter(t => t.rubrique === "travail");
     const enCours = toutes.filter(t => !t.fait).sort(trierTaches);
     const faire = enCours.filter(t => t.type === "faire");
+    const demandes = enCours.filter(t => t.type === "demande");
     const dire = enCours.filter(t => t.type === "dire");
     const urgentes = enCours.filter(t => t.urgent).length;
 
     // En-tête et compteurs
     const compte = $("todo-compte");
-    compte.replaceChildren(document.createTextNode(`${faire.length} à faire · ${dire.length} à dire`));
+    compte.replaceChildren(document.createTextNode(resumeTodo(faire.length, demandes.length, dire.length)));
     if (urgentes) compte.append(document.createTextNode(" · "), element("span", "rouge", `${urgentes} urgente${urgentes > 1 ? "s" : ""}`));
     $("nombre-faire").textContent = faire.length ? String(faire.length) : "";
+    $("nombre-demande").textContent = demandes.length ? String(demandes.length) : "";
     $("nombre-dire").textContent = dire.length ? String(dire.length) : "";
 
-    // À faire
-    $("liste-faire").replaceChildren(...faire.map(t => ligneTache(t, false)));
+    // On m'a demandé, puis à faire
+    listeTaches($("liste-demande"), demandes);
+    $("vide-demande").hidden = demandes.length > 0;
+    listeTaches($("liste-faire"), faire);
     $("vide-faire").hidden = faire.length > 0;
 
     // À dire, regroupé par personne (dans l'ordre de leur tâche la plus pressante)
@@ -3492,9 +3598,10 @@ details.groupe-pieces { display: block; }
     $("liste-faites").replaceChildren(...faites.map(t => ligneTache(t, true)));
     $("effacer-faites").hidden = !peutModifierTodo();
 
-    // Prénoms déjà utilisés, proposés dans « À qui ? »
+    // L'équipe et les prénoms déjà utilisés, proposés dans « À qui ? » et « Qui te l'a demandé ? »
     const noms = new Map();
-    toutes.filter(t => t.type === "dire").forEach(t => { const k = t.personne.toLocaleLowerCase("fr"); if (!noms.has(k)) noms.set(k, t.personne); });
+    collegues().forEach(c => noms.set(c.prenom.toLocaleLowerCase("fr"), c.prenom));
+    toutes.filter(t => t.type !== "faire").forEach(t => { const k = t.personne.toLocaleLowerCase("fr"); if (!noms.has(k)) noms.set(k, t.personne); });
     $("personnes").replaceChildren(...[...noms.values()].sort((a, b) => a.localeCompare(b, "fr")).map(n => new Option(n)));
 
     // Formulaire d'ajout selon qui regarde
@@ -3504,13 +3611,38 @@ details.groupe-pieces { display: block; }
     [...$("ajout-tache").elements].forEach(el => { el.disabled = mode === "attente"; });
     $("todo-lecture").hidden = mode !== "lecture";
 
-    rendreCarteTodo(enCours, faire.length, dire.length, urgentes);
+    rendreCarteTodo(enCours, resumeTodo(faire.length, demandes.length, dire.length), urgentes);
+
+    // Ce qui dépend des tâches ailleurs : les réassorts du Dressing, le rétroplanning des temps forts.
+    const sig = [...piecesAReassortir()].sort().join(",");
+    if (sig !== sigReassort) { sigReassort = sig; if (Object.keys(pieces).length) rendreGardeRobe(); }
+    if ($("fenetre-piece").open) majBoutonReassort();
+    rendreCalendrier();
+  }
+  let sigReassort = "";
+  const resumeTodo = (nFaire, nDemande, nDire) => `${nFaire} à faire` + (nDemande ? ` · ${nDemande} demande${nDemande > 1 ? "s" : ""}` : "") + ` · ${nDire} à dire`;
+  // Une liste de tâches : ce qui arrive dans les deux semaines (ou sans date), puis le reste replié dans « Plus tard ».
+  const plusTardOuverts = new Set();
+  function listeTaches(ul, liste) {
+    const limite = aujourdhui() + 14 * JOUR_MS, loin = liste.filter(t => t.pour && depuisIso(t.pour) > limite);
+    const lignes = liste.filter(t => !loin.includes(t)).map(t => ligneTache(t, false));
+    if (loin.length) {
+      const li = element("li", "plus-tard-taches"), d = element("details"), s = element("summary"), sous = element("ul", "taches");
+      s.append(document.createTextNode("Plus tard"), element("span", "nombre", String(loin.length)));
+      sous.append(...loin.map(t => ligneTache(t, false)));
+      d.append(s, sous);
+      d.open = plusTardOuverts.has(ul.id);
+      d.addEventListener("toggle", () => { if (d.open) plusTardOuverts.add(ul.id); else plusTardOuverts.delete(ul.id); });
+      li.append(d);
+      lignes.push(li);
+    }
+    ul.replaceChildren(...lignes);
   }
 
-  // La carte de la page Travail : les compteurs et les trois tâches les plus pressantes.
-  function rendreCarteTodo(enCours, nFaire, nDire, urgentes) {
+  // La carte de la page Travail : les compteurs.
+  function rendreCarteTodo(enCours, resume, urgentes) {
     $("resume-todo").textContent = enCours.length
-      ? `${nFaire} à faire · ${nDire} à dire` + (urgentes ? ` · ${urgentes} urgente${urgentes > 1 ? "s" : ""}` : "")
+      ? resume + (urgentes ? ` · ${urgentes} urgente${urgentes > 1 ? "s" : ""}` : "")
       : "Rien à faire pour l'instant";
   }
 
@@ -3719,12 +3851,12 @@ details.groupe-pieces { display: block; }
   const categoriesRepliees = new Set(matchMedia("(max-width: 719px)").matches ? Object.keys(NOM_CATEGORIE) : []);
   const filtreActif = () => Object.values(filtres).some(Boolean);
   function piecesFiltrees() {
-    const q = sansAccents(filtres.recherche.trim());
+    const q = sansAccents(filtres.recherche.trim()), ra = piecesAReassortir();
     return Object.values(pieces).filter(x =>
       (!filtres.marque || x.marque === filtres.marque) &&
       (!filtres.categorie || x.categorie === filtres.categorie) &&
       (!filtres.teinte || teinteDe(x.couleur) === filtres.teinte) &&
-      (!filtres.repere || x.reperes[filtres.repere]) &&
+      (!filtres.repere || (filtres.repere === "reassort" ? ra.has(x.id) : x.reperes[filtres.repere])) &&
       (!q || sansAccents([x.marque, x.modele, x.coupe, x.couleur, x.matiere, x.ref, x.note, NOM_CATEGORIE[x.categorie]].join(" ")).includes(q))
     ).sort(trierPieces);
   }
@@ -3756,8 +3888,11 @@ details.groupe-pieces { display: block; }
     $("gr-teintes").replaceChildren(element("span", "etiquette-filtre", "Couleur"),
       ...TEINTES.filter(([id]) => teintes.has(id)).map(([id, nom]) => puceFiltre("teinte", id, nom, teintes.get(id), id)));
     $("gr-teintes").hidden = !teintes.size;
+    const ra = piecesAReassortir(), nRa = toutes.filter(x => ra.has(x.id)).length;
+    if (filtres.repere === "reassort" && !nRa) filtres.repere = "";
     $("gr-reperes").replaceChildren(element("span", "etiquette-filtre", "Repères"),
-      ...REPERES_PIECE.map(([k, nom]) => puceFiltre("repere", k, nom, toutes.filter(x => x.reperes[k]).length)));
+      ...REPERES_PIECE.map(([k, nom]) => puceFiltre("repere", k, nom, toutes.filter(x => x.reperes[k]).length)),
+      ...(nRa ? [puceFiltre("repere", "reassort", "À réassortir", nRa)] : []));
     $("gr-categories").hidden = !cats.size;
   }
 
@@ -3778,8 +3913,13 @@ details.groupe-pieces { display: block; }
       img.src = src;
       cadre.append(img);
     } else cadre.append(sansPhoto);
-    const reps = REPERES_PIECE.filter(([k]) => x.reperes[k]);
-    if (reps.length) { const r = element("span", "piece-reperes"); r.append(...reps.map(([k, nom]) => element("span", "rep rep-" + k, nom))); cadre.append(r); }
+    const reps = REPERES_PIECE.filter(([k]) => x.reperes[k]), reassort = piecesAReassortir().has(x.id);
+    if (reps.length || reassort) {
+      const r = element("span", "piece-reperes");
+      if (reassort) r.append(element("span", "rep rep-reassort", "À réassortir"));
+      r.append(...reps.map(([k, nom]) => element("span", "rep rep-" + k, nom)));
+      cadre.append(r);
+    }
     if (modeSelection) { const c = element("span", "coche-piece"); c.setAttribute("aria-hidden", "true"); c.innerHTML = PICTO_COCHE; cadre.append(c); }
     if (src && x.photos.length > 1) cadre.append(element("span", "nombre-photos", `${x.photos.length} photos`));
     b.append(cadre);
@@ -3793,7 +3933,7 @@ details.groupe-pieces { display: block; }
     }
     if (x.prix != null) ligne.append(element("span", null, (x.couleur ? "· " : "") + formatPrix(x.prix)));
     b.append(ligne);
-    b.setAttribute("aria-label", [x.marque, x.modele, x.couleur, x.prix != null ? formatPrix(x.prix) : "", ...reps.map(r => r[1])].filter(Boolean).join(", "));
+    b.setAttribute("aria-label", [x.marque, x.modele, x.couleur, x.prix != null ? formatPrix(x.prix) : "", reassort ? "à réassortir" : "", ...reps.map(r => r[1])].filter(Boolean).join(", "));
     return b;
   }
 
@@ -3874,6 +4014,20 @@ details.groupe-pieces { display: block; }
     }
     rendreCarteGardeRobe();
   }
+
+  // Les catégories repliées ou dépliées restent comme on les a laissées ; « Filtres » ouvre les filtres sur téléphone.
+  $("gr-grille").addEventListener("toggle", e => {
+    const d = e.target.closest("details.groupe-pieces");
+    if (!d || filtreActif()) return;
+    if (d.open) categoriesRepliees.delete(d.dataset.categorie); else categoriesRepliees.add(d.dataset.categorie);
+  }, true);
+  const toutReplier = replier => { $("gr-grille").querySelectorAll("details.groupe-pieces").forEach(d => { d.open = !replier; if (replier) categoriesRepliees.add(d.dataset.categorie); else categoriesRepliees.delete(d.dataset.categorie); }); };
+  $("gr-tout-deplier").addEventListener("click", () => toutReplier(false));
+  $("gr-tout-replier").addEventListener("click", () => toutReplier(true));
+  $("gr-filtres-bouton").addEventListener("click", () => {
+    const ouverts = $("gr-filtres").classList.toggle("ouverts");
+    $("gr-filtres-bouton").setAttribute("aria-expanded", String(ouverts));
+  });
 
   // Les choix « Garde-robe Blue Box » (sur la page Travail) et ceux de la garde-robe : ce qu'il y a dans chacun.
   function rendreCarteGardeRobe() {
@@ -4398,10 +4552,31 @@ details.groupe-pieces { display: block; }
     desarmer($("pi-supprimer"), "Supprimer");
     effacerErreurPiece();
     majFormulairePiece();
+    majBoutonReassort();
     ouvrir($("fenetre-piece"));
     $("fenetre-piece").querySelector(".fenetre-corps").scrollTop = 0;
   }
   $("gr-ajouter").addEventListener("click", () => ouvrirPiece(null));
+  // « À réassortir » : la tâche arrive dans la to-do, reliée à la pièce (un appui sur la tâche rouvre la fiche).
+  function majBoutonReassort() {
+    const b = $("pi-reassort"), x = pieceEditee;
+    b.hidden = !(x && pieces[x.id] && peutModifierTodo());
+    if (b.hidden) return;
+    const deja = piecesAReassortir().has(x.id);
+    b.textContent = deja ? "Dans la to-do ✓" : "À réassortir";
+    b.classList.toggle("fait", deja);
+    b.title = deja ? "Le réassort est dans ta to-do" : "Ajoute le réassort de cette pièce à ta to-do";
+  }
+  $("pi-reassort").addEventListener("click", async () => {
+    const x = pieceEditee;
+    if (!x || !pieces[x.id] || !peutModifierTodo()) return;
+    if (piecesAReassortir().has(x.id)) { toast("Le réassort est déjà dans ta to-do."); return; }
+    try {
+      await ecrireTache(nouvelId(), nouvelleTache({ texte: `Réassort : ${nomPiece(pieces[x.id])}`.slice(0, 300), piece: x.id, etape: "reassort" }));
+      majBoutonReassort();
+      toast("Ajouté à ta to-do : à réassortir.");
+    } catch (err) { echecEcriture(err); }
+  });
   $("fenetre-piece").addEventListener("close", () => {
     libererPhotosFiche();
     clearTimeout(minuterieClaude);
@@ -5685,8 +5860,9 @@ details.groupe-pieces { display: block; }
 
   // ----- ce qu'il manque : les demandes des clients -----
   // Un document par demande dans « demandes » : { quoi, categorie, nombre, derniereLe, statut, creeLe }.
-  const RESPONSABLE = "Maxime";   // à qui proposer ce qui manque
-  const STATUTS = [["a-proposer", "À proposer"], ["propose", `Proposé à ${RESPONSABLE}`], ["commande", "Commandé"], ["refuse", "Pas retenu"]];
+  // À qui proposer ce qui manque : la personne de l'équipe dont le rôle dit responsable (ou gérant, directeur…).
+  const responsable = () => (collegues().find(c => /respons|g[ée]rant|direct|manag|chef/i.test(c.role)) || {}).prenom || "";
+  const STATUTS = [["a-proposer", "À proposer"], ["propose", "Proposé"], ["commande", "Commandé"], ["refuse", "Pas retenu"]];
   function lireDemande(id, d) {
     if (!d || typeof d !== "object") return null;
     const quoi = texteBorne(d.quoi, 200);
@@ -5744,9 +5920,9 @@ details.groupe-pieces { display: block; }
         const statut = element("select");
         statut.dataset.statut = x.id;
         statut.setAttribute("aria-label", `Où en est la demande : ${x.quoi}`);
-        STATUTS.forEach(([k, nom]) => statut.append(new Option(nom, k)));
+        STATUTS.forEach(([k, nom]) => statut.append(new Option(k === "propose" && responsable() ? `Proposé à ${responsable()}` : nom, k)));
         statut.value = x.statut;
-        const dire = element("button", "bouton-second bouton-petit", `À dire à ${RESPONSABLE}`);
+        const dire = element("button", "bouton-second bouton-petit", responsable() ? `À dire à ${responsable()}` : "À dire");
         dire.type = "button";
         dire.dataset.dire = x.id;
         dire.title = "L'ajoute à ta to-do, dans « À dire »";
@@ -5776,8 +5952,9 @@ details.groupe-pieces { display: block; }
     if (t.dataset.dire) {
       const texte = `Des clients demandent : ${x.quoi}` + (x.nombre > 1 ? ` (${x.nombre} demandes)` : "");
       try {
-        await ecrireTache(nouvelId(), { texte: texte.slice(0, 300), type: "dire", personne: RESPONSABLE, pour: null, urgent: false, fait: false, faitLe: null, creeLe: maintenant() });
-        toast(`Ajouté à ta to-do : à dire à ${RESPONSABLE}.`);
+        const qui = responsable() || "Responsable";
+        await ecrireTache(nouvelId(), nouvelleTache({ texte: texte.slice(0, 300), type: "dire", personne: qui }));
+        toast(`Ajouté à ta to-do : à dire à ${qui}.`);
       } catch (err) { echecEcriture(err); }
       return;
     }
@@ -5808,12 +5985,84 @@ details.groupe-pieces { display: block; }
       tenues: Array.isArray(d.tenues) ? d.tenues.filter(x => typeof x === "string").slice(0, 6) : [],
       note: texteBorne(d.note, 500), creeLe: texteBorne(d.creeLe, 40),
       ouverture: d.ouverture === true,   // le magasin ouvre exceptionnellement (un dimanche)
+      // Les étapes du rétroplanning choisies ; null : pas encore décidé (un temps fort proche les reçoit tout seul).
+      retro: Array.isArray(d.retro) ? ETAPES_RETRO.map(x => x.cle).filter(k => d.retro.includes(k)) : null,
     };
   }
   const corpsEvenement = e => ({ nom: e.nom, debut: e.debut, fin: e.fin, affluence: e.affluence, theme: e.theme || null, vitrineLe: e.vitrineLe,
-    vitrinePrete: e.vitrinePrete, tenues: [...e.tenues], note: e.note || null, creeLe: e.creeLe || maintenant(), ...(e.ouverture ? { ouverture: true } : {}) });
+    vitrinePrete: e.vitrinePrete, tenues: [...e.tenues], note: e.note || null, creeLe: e.creeLe || maintenant(), ...(e.ouverture ? { ouverture: true } : {}),
+    ...(Array.isArray(e.retro) ? { retro: [...e.retro] } : {}) });
   const calendrier = creerCollection("calendrier", "tableau-de-bord-axel:calendrier", lireEvenement, () => { rendreCalendrier(); rendrePlanning(); });
   const evenementsTries = () => Object.values(calendrier.docs).sort((a, b) => a.debut.localeCompare(b.debut) || a.fin.localeCompare(b.fin));
+
+  // ----- le rétroplanning d'un temps fort : ses étapes arrivent dans la to-do, à leur date -----
+  const ETAPES_RETRO = [
+    { cle: "commande", jours: 21, nom: "Passer la commande", texte: n => `Passer la commande pour « ${n} »` },
+    { cle: "idees", jours: 10, nom: "Penser la vitrine", texte: n => `Penser la vitrine « ${n} »` },
+    { cle: "vitrine", jours: 3, nom: "Monter la vitrine", texte: n => `Monter la vitrine « ${n} »` },
+    { cle: "etiquettes", jours: 1, nom: "Préparer les étiquettes", texte: n => `Préparer les étiquettes « ${n} »` },
+  ];
+  // J-21, J-10, J-3 (ou le jour choisi pour monter la vitrine), J-1.
+  const dateEtape = (e, x) => (x.cle === "vitrine" && e.vitrineLe ? e.vitrineLe : versIso(depuisIso(e.debut) - x.jours * JOUR_MS));
+  // Par défaut, pour un temps fort : les étapes encore à venir.
+  const retroParDefaut = e => (e.affluence === "forte" && ISO_RE.test(e.debut || "") ? ETAPES_RETRO.filter(x => dateEtape(e, x) >= versIso(aujourdhui())).map(x => x.cle) : []);
+  const tachesDuTempsFort = id => Object.values(taches).filter(t => t.evenement === id);
+  // Met la to-do d'accord avec les étapes choisies : ajoute, déplace (dates, nom), retire ce qui n'est pas fait.
+  async function synchroniserRetro(e) {
+    if (!peutModifierTodo()) return 0;
+    const voulues = e.retro || [], auj = versIso(aujourdhui()), liees = tachesDuTempsFort(e.id);
+    let ajoutees = 0;
+    for (const x of ETAPES_RETRO) {
+      const texte = x.texte(e.nom).slice(0, 300);
+      let t = liees.find(y => y.etape === x.cle);
+      // Une « Monter la vitrine » ajoutée avant, sans lien : on la reprend plutôt que de la doubler.
+      if (!t && x.cle === "vitrine") t = Object.values(taches).find(y => !y.evenement && !y.fait && y.texte === texte) || null;
+      if (!voulues.includes(x.cle)) { if (t && t.evenement && !t.fait) await ecrireTache(t.id, null); continue; }
+      if (t && t.fait) continue;
+      const date = dateEtape(e, x), pour = date < auj ? auj : date;
+      if (t && t.texte === texte && t.pour === pour && t.evenement === e.id && t.etape === x.cle) continue;
+      if (t) await ecrireTache(t.id, { ...corpsDe(t), texte, pour, evenement: e.id, etape: x.cle });
+      else { await ecrireTache(nouvelId(), nouvelleTache({ texte, pour, evenement: e.id, etape: x.cle })); ajoutees++; }
+    }
+    return ajoutees;
+  }
+  // Un temps fort supprimé : ses étapes pas encore faites partent de la to-do.
+  async function retirerRetro(id) {
+    for (const t of tachesDuTempsFort(id)) if (!t.fait) await ecrireTache(t.id, null);
+  }
+  // Une étape supprimée de la to-do n'est plus voulue : elle ne revient pas.
+  function oublierEtape(t) {
+    const ev = t.evenement && calendrier.docs[t.evenement];
+    if (ev && Array.isArray(ev.retro) && ev.retro.includes(t.etape) && peutModifierGr())
+      calendrier.ecrire(ev.id, corpsEvenement({ ...ev, retro: ev.retro.filter(k => k !== t.etape) })).catch(() => {});
+  }
+  function vitrineDepuisTache(id, prete) {
+    const ev = calendrier.docs[id];
+    if (ev && ev.vitrinePrete !== prete && peutModifierGr()) calendrier.ecrire(ev.id, corpsEvenement({ ...ev, vitrinePrete: prete })).catch(() => {});
+  }
+  // Tout seul : un temps fort dans les 30 jours, pas encore décidé, reçoit ses étapes à venir.
+  let retroEnCours = false, minuterieRetro = 0;
+  const retroTraites = new Set();
+  const planifierRetro = () => { clearTimeout(minuterieRetro); minuterieRetro = setTimeout(retroAuto, 400); };
+  async function retroAuto() {
+    if (retroEnCours || !peutModifierTodo() || !peutModifierGr()) return;
+    if (mode !== "local" && !(calendrier.recu && todoRecu)) return;
+    const t = aujourdhui();
+    const proches = evenementsTries().filter(e => !retroTraites.has(e.id) && e.retro == null && e.affluence === "forte"
+      && depuisIso(e.debut) > t && depuisIso(e.debut) - t <= 30 * JOUR_MS);
+    if (!proches.length) return;
+    retroEnCours = true;
+    try {
+      for (const e of proches) {
+        retroTraites.add(e.id);
+        const retro = retroParDefaut(e);
+        await calendrier.ecrire(e.id, corpsEvenement({ ...e, retro }));
+        const n = await synchroniserRetro({ ...e, retro });
+        if (n) toast(`Rétroplanning de « ${e.nom} » : ${n} étape${n > 1 ? "s" : ""} dans ta to-do.`);
+      }
+    } catch (_) { /* on réessaiera au prochain chargement */ }
+    finally { retroEnCours = false; }
+  }
   const finDe = e => depuisIso(e.fin);
   const datesCourtes = e => {
     const a = new Date(depuisIso(e.debut)), b = new Date(depuisIso(e.fin));
@@ -5923,6 +6172,13 @@ details.groupe-pieces { display: block; }
       ts.forEach(x => { const c = element("a", "carte-tenue-mini"); c.href = "#tenues"; c.dataset.ouvrirTenue = x.id; c.title = x.nom || "Tenue"; c.append(apercuTenue(x.pieces)); l.append(c); });
       zone.append(l);
     }
+    const liees = tachesDuTempsFort(e.id);
+    if (liees.length) {
+      const faites = liees.filter(x => x.fait).length, suite = liees.filter(x => !x.fait && x.pour).sort((a, b) => a.pour.localeCompare(b.pour))[0];
+      const etape = suite && ETAPES_RETRO.find(x => x.cle === suite.etape);
+      zone.append(element("p", "part-detail", `Rétroplanning : ${faites} étape${faites > 1 ? "s" : ""} faite${faites > 1 ? "s" : ""} sur ${liees.length}`
+        + (etape ? ` · ensuite : ${etape.nom.toLowerCase()}, ${dateCourte(depuisIso(suite.pour))}` : "")));
+    }
     const actions = element("div", "prochain-actions");
     if (modifiable) {
       const choix = element("label", "vitrine-choix");
@@ -5932,10 +6188,11 @@ details.groupe-pieces { display: block; }
       c.dataset.vitrinePrete = e.id;
       choix.append(c, element("span", null, "Vitrine prête"));
       actions.append(choix);
-      if (!e.vitrinePrete) {
-        const b = element("button", "bouton-second", "Ajouter à la to-do");
+      if (!liees.length && peutModifierTodo()) {
+        const b = element("button", "bouton-second", "Préparer dans la to-do");
         b.type = "button";
-        b.dataset.versTodo = e.id;
+        b.dataset.retro = e.id;
+        b.title = "Le rétroplanning : la commande, la vitrine, les étiquettes";
         actions.append(b);
       }
       const m = element("button", "lien-discret", "Modifier");
@@ -5975,6 +6232,8 @@ details.groupe-pieces { display: block; }
       if (e.vitrinePrete) puces.append(element("span", "puce prete", "Vitrine prête"));
       else if (e.vitrineLe) puces.append(element("span", "puce", `Vitrine le ${dateCourte(depuisIso(e.vitrineLe))}`));
       if (e.tenues.length) puces.append(element("span", "puce", `${e.tenues.length} tenue${e.tenues.length > 1 ? "s" : ""}`));
+      const liees = tachesDuTempsFort(e.id);
+      if (liees.length) puces.append(element("span", "puce", `Rétro ${liees.filter(x => x.fait).length}/${liees.length}`));
       b.append(element("span", "evt-dates", datesCourtes(e)), milieu, puces);
       li.append(b);
       f.append(li);
@@ -5983,6 +6242,7 @@ details.groupe-pieces { display: block; }
     $("ca-vide").hidden = tout.length > 0;
     $("ca-ajouter").hidden = !peutModifierGr();
     rendreCarteCalendrier();
+    planifierRetro();
   }
   function rendreCarteCalendrier() {
     const e = prochainEvenement();
@@ -5994,7 +6254,34 @@ details.groupe-pieces { display: block; }
   }
 
   // La fenêtre d'un temps fort.
-  let evenementEdite = null, tenuesChoisies = [];
+  let evenementEdite = null, tenuesChoisies = [], retroChoisies = null;
+  // Le temps fort tel que la fenêtre le décrit (pour les dates des étapes).
+  const evenementDeFenetre = () => ({ id: evenementEdite ? evenementEdite.id : null, debut: $("ev-debut").value, vitrineLe: $("ev-vitrine").value || null,
+    affluence: (document.querySelector('input[name="ev-affluence"]:checked') || {}).value === "normale" ? "normale" : "forte" });
+  function rendreRetroFenetre() {
+    const e = evenementDeFenetre(), zone = $("ev-retro");
+    if (!ISO_RE.test(e.debut)) { zone.replaceChildren(element("p", "aide", "Choisis d'abord les dates.")); return; }
+    const choisies = retroChoisies || new Set(retroParDefaut(e)), liees = e.id ? tachesDuTempsFort(e.id) : [], auj = versIso(aujourdhui());
+    zone.replaceChildren(...ETAPES_RETRO.map(x => {
+      const t = liees.find(y => y.etape === x.cle), fait = !!(t && t.fait), date = dateEtape(e, x);
+      const l = element("label", "retro-etape" + (fait ? " faite" : "")), c = element("input");
+      c.type = "checkbox";
+      c.dataset.etape = x.cle;
+      c.checked = fait || choisies.has(x.cle);
+      c.disabled = fait || !peutModifierGr();
+      const quand = x.cle === "vitrine" && e.vitrineLe ? "jour de la vitrine" : `J-${x.jours}`;
+      l.append(c, element("span", "retro-nom", x.nom), element("span", "retro-date", fait ? "Fait" : `${dateCourte(depuisIso(date))} · ${date < auj ? "passé" : quand}`));
+      return l;
+    }));
+  }
+  $("ev-retro").addEventListener("change", e => {
+    const c = e.target.closest("[data-etape]");
+    if (!c) return;
+    if (!retroChoisies) retroChoisies = new Set(retroParDefaut(evenementDeFenetre()));
+    if (c.checked) retroChoisies.add(c.dataset.etape); else retroChoisies.delete(c.dataset.etape);
+  });
+  ["ev-debut", "ev-vitrine"].forEach(id => $(id).addEventListener("input", rendreRetroFenetre));
+  $("ev-form").addEventListener("change", e => { if (!e.target.closest("#ev-retro")) rendreRetroFenetre(); });
   function rendreChoixTenues() {
     const ts = Object.values(tenues.docs).sort((a, b) => (b.vitrine - a.vitrine) || (b.modifieLe || b.creeLe || "").localeCompare(a.modifieLe || a.creeLe || ""));
     $("ev-tenues").replaceChildren(...(ts.length ? ts.map(t => {
@@ -6021,6 +6308,8 @@ details.groupe-pieces { display: block; }
     $("ev-vitrine").value = e && e.vitrineLe ? e.vitrineLe : "";
     $("ev-note").value = e ? e.note : "";
     $("ev-ouverture").checked = !!(e && e.ouverture);
+    retroChoisies = e && Array.isArray(e.retro) ? new Set(e.retro) : null;
+    rendreRetroFenetre();
     rendreChoixTenues();
     [...$("ev-form").elements].forEach(el => { el.disabled = !modifiable; });
     $("ev-enregistrer").hidden = !modifiable;
@@ -6048,12 +6337,19 @@ details.groupe-pieces { display: block; }
     if (!ISO_RE.test(fin) || fin < debut) return erreur("La fin doit être le même jour ou après le début.", $("ev-fin"));
     const avant = evenementEdite, id = avant ? avant.id : calendrier.nouvelId();
     const affluence = (document.querySelector('input[name="ev-affluence"]:checked') || {}).value === "normale" ? "normale" : "forte";
+    const vitrine = vitrineLe && ISO_RE.test(vitrineLe) ? vitrineLe : null;
+    // Les étapes : celles cochées ; sans y toucher, celles déjà choisies, ou par défaut celles à venir.
+    const retro = retroChoisies ? ETAPES_RETRO.map(x => x.cle).filter(k => retroChoisies.has(k))
+      : avant && Array.isArray(avant.retro) ? avant.retro : retroParDefaut({ debut, vitrineLe: vitrine, affluence });
     try {
-      await calendrier.ecrire(id, corpsEvenement({ nom: nom.slice(0, 80), debut, fin, affluence, theme: $("ev-theme").value.trim().slice(0, 600),
-        vitrineLe: vitrineLe && ISO_RE.test(vitrineLe) ? vitrineLe : null, vitrinePrete: avant ? avant.vitrinePrete : false, tenues: tenuesChoisies,
-        note: $("ev-note").value.trim().slice(0, 500), creeLe: avant ? avant.creeLe : maintenant(), ouverture: $("ev-ouverture").checked }));
+      const corps = corpsEvenement({ nom: nom.slice(0, 80), debut, fin, affluence, theme: $("ev-theme").value.trim().slice(0, 600),
+        vitrineLe: vitrine, vitrinePrete: avant ? avant.vitrinePrete : false, tenues: tenuesChoisies,
+        note: $("ev-note").value.trim().slice(0, 500), creeLe: avant ? avant.creeLe : maintenant(), ouverture: $("ev-ouverture").checked, retro });
+      await calendrier.ecrire(id, corps);
       fermer($("fenetre-evenement"));
-      toast(avant ? "Temps fort enregistré." : "Temps fort ajouté.");
+      let n = 0;
+      try { n = await synchroniserRetro({ ...corps, id }); } catch (err) { echecEcriture(err); }
+      toast((avant ? "Temps fort enregistré." : "Temps fort ajouté.") + (n ? ` ${n} étape${n > 1 ? "s" : ""} dans ta to-do.` : ""));
     } catch (err) { erreur(messageEcriture(err)); }
   });
   $("ev-supprimer").addEventListener("click", async e => {
@@ -6061,20 +6357,20 @@ details.groupe-pieces { display: block; }
     if (!x || !peutModifierGr()) return;
     if (!b.classList.contains("arme")) { armer(b, "Confirmer la suppression", "Supprimer"); return; }
     desarmer(b, "Supprimer");
-    try { await calendrier.ecrire(x.id, null); fermer($("fenetre-evenement")); toast("Temps fort supprimé."); }
+    try { await calendrier.ecrire(x.id, null); fermer($("fenetre-evenement")); await retirerRetro(x.id); toast("Temps fort supprimé."); }
     catch (err) { $("ev-erreur").textContent = messageEcriture(err); $("ev-erreur").hidden = false; }
   });
   document.querySelector('[data-vue="calendrier"]').addEventListener("click", async e => {
-    const todo = e.target.closest("[data-vers-todo]");
-    if (todo) {
-      const ev = calendrier.docs[todo.dataset.versTodo];
-      if (!ev || !peutModifierTodo()) return;
-      const texte = `Monter la vitrine « ${ev.nom} »`;
-      if (Object.values(taches).some(t => !t.fait && t.texte === texte)) { toast("C'est déjà dans la to-do."); return; }
-      const veille = versIso(Math.max(aujourdhui(), depuisIso(ev.debut) - JOUR_MS));
+    const retroB = e.target.closest("[data-retro]");
+    if (retroB) {
+      const ev = calendrier.docs[retroB.dataset.retro];
+      if (!ev || !peutModifierTodo() || !peutModifierGr()) return;
+      const retro = retroParDefaut({ ...ev, affluence: "forte" });
+      if (!retro.length) { toast("Trop tard pour un rétroplanning : ajoute ce qu'il reste à faire à la main."); return; }
       try {
-        await ecrireTache(nouvelId(), { texte, type: "faire", personne: null, pour: ev.vitrineLe || veille, urgent: false, fait: false, faitLe: null, creeLe: maintenant() });
-        toast("Ajouté à la to-do.");
+        await calendrier.ecrire(ev.id, corpsEvenement({ ...ev, retro }));
+        const n = await synchroniserRetro({ ...ev, retro });
+        toast(`${n || retro.length} étape${(n || retro.length) > 1 ? "s" : ""} dans ta to-do.`);
       } catch (err) { echecEcriture(err); }
       return;
     }
@@ -6088,7 +6384,13 @@ details.groupe-pieces { display: block; }
     if (!c) return;
     const ev = calendrier.docs[c.dataset.vitrinePrete];
     if (!ev) return;
-    try { await calendrier.ecrire(ev.id, corpsEvenement({ ...ev, vitrinePrete: c.checked })); toast(c.checked ? "Vitrine prête." : "Vitrine à refaire."); }
+    try {
+      await calendrier.ecrire(ev.id, corpsEvenement({ ...ev, vitrinePrete: c.checked }));
+      toast(c.checked ? "Vitrine prête." : "Vitrine à refaire.");
+      // L'étape « Monter la vitrine » du rétroplanning suit.
+      const t = tachesDuTempsFort(ev.id).find(x => x.etape === "vitrine");
+      if (t && t.fait !== c.checked && peutModifierTodo()) await ecrireTache(t.id, { ...corpsDe(t), fait: c.checked, faitLe: c.checked ? maintenant() : null });
+    }
     catch (err) { c.checked = !c.checked; toast(messageEcriture(err), "erreur"); }
   });
 
@@ -6209,7 +6511,7 @@ details.groupe-pieces { display: block; }
     JOURS.forEach(j => { const x = d.jours[j]; jours[j] = x && typeof x === "object" ? Object.fromEntries(Object.entries(x).filter(([k, v]) => /^[\w-]{1,40}$/.test(k) && typeof v === "string" && v.trim()).map(([k, v]) => [k, v.trim().slice(0, 24)])) : {}; });
     return { id, jours };
   };
-  const equipe = creerCollection("equipe", "tableau-de-bord-axel:equipe", lireCollegue, () => { rendreEquipe(); rendrePlanning(); });
+  const equipe = creerCollection("equipe", "tableau-de-bord-axel:equipe", lireCollegue, () => { rendreEquipe(); rendrePlanning(); rendreManque(); rendreTodo(); });
   const equipeSemaines = creerCollection("equipe-semaines", "tableau-de-bord-axel:equipe-semaines", lireSemaineEquipe, () => { rendreEquipe(); rendrePlanning(); });
   const collegues = () => Object.values(equipe.docs).sort((a, b) => a.ordre - b.ordre || a.prenom.localeCompare(b.prenom, "fr"));
   const estRepos = v => /^repos$|^r$/i.test(v.trim());
@@ -6475,7 +6777,7 @@ details.groupe-pieces { display: block; }
     const j = jourDuPlanning(t), statut = j && statutDe(j), ferie = ferieDe(t);
     const principal = estVide(semaines[infoSemaine(lundiDe(t)).cle]) && new Date(t).getUTCDay() !== 0 ? "Planning de la semaine à remplir"
       : statut ? NOM_STATUT[statut] + (statut === "ferie" && ferie ? ` · ${ferie}` : "")
-      : j && dureeJour(j) > 0 ? `${horairesDe(j)} (${formatDuree(dureeJour(j))})` : "Pas de service aujourd'hui";
+      : j && dureeJour(j) > 0 ? `${horairesDe(j)} (${formatDuree(dureeJour(j))})` + (ferie ? ` · ${ferie}` : "") : ferie ? `Férié · ${ferie}` : "Pas de service aujourd'hui";
     const service = prochainService();
     const suite = service ? `${service === demain ? "Demain" : majuscule(dateCourte(service))} : ${horairesDe(jourDuPlanning(service))}` : "Prochain service : planning à remplir";
     blocs.push(blocJour("planning", "Mes horaires", principal, suite));
@@ -6503,9 +6805,9 @@ details.groupe-pieces { display: block; }
     // La phrase sous le titre, et le cadre « Aujourd'hui » de l'accueil : la journée de travail, ce qu'il reste à faire.
     const reste = total - faits;
     $("resume-aujourdhui").textContent = reste ? `${reste} chose${reste > 1 ? "s" : ""} à faire` : total ? "Tout est fait" : "Rien de prévu";
-    const jd = jourDuPlanning(demain), plagesDemain = jd ? periodesTravaillees(jd) : [];
-    $("demain-aujourdhui").textContent = !jd ? "" : statutDe(jd) ? `Demain : ${NOM_STATUT[statutDe(jd)].toLowerCase()}`
-      : plagesDemain.length ? `Demain : ${plagesDemain.map(x => `${formatHeure(x.debut)} – ${formatHeure(x.fin)}`).join(", ")}` : "Demain : pas de service";
+    const jd = jourDuPlanning(demain), plagesDemain = jd ? periodesTravaillees(jd) : [], fd = ferieDe(demain);
+    $("demain-aujourdhui").textContent = !jd ? (fd ? `Demain : férié (${fd})` : "") : statutDe(jd) ? `Demain : ${NOM_STATUT[statutDe(jd)].toLowerCase()}` + (statutDe(jd) === "ferie" && fd ? ` (${fd})` : "")
+      : plagesDemain.length ? `Demain${fd ? ` (${fd})` : ""} : ${plagesDemain.map(x => `${formatHeure(x.debut)} – ${formatHeure(x.fin)}`).join(", ")}` : fd ? `Demain : férié (${fd})` : "Demain : pas de service";
     const plages = j && dureeJour(j) > 0 ? [j.matin, j.apresMidi].filter(x => dureePeriode(x) > 0).map(x => `de ${formatHeure(x.debut)} à ${formatHeure(x.fin)}`).join(", puis ") : "";
     $("accueil-resume").textContent = [plages ? `Tu travailles ${plages}` : principal,
       reste ? `${reste} chose${reste > 1 ? "s" : ""} à faire` : total ? "Tout est fait" : ""].filter(Boolean).join(" · ") + ".";
@@ -6644,6 +6946,7 @@ details.groupe-pieces { display: block; }
   });
 
   function rendreAutourDesPieces() {
+    if (Object.values(taches).some(t => t.piece)) rendreTodo();   // les liens vers les pièces
     rendreGardeRobe();
     rendreTenues();
     rendreComparateur();
