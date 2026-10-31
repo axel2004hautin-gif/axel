@@ -7,7 +7,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:wght@400;600;700;800;900&display=swap">
 <style>
 /* Layout : fond blanc ; la vie est une succession de choix. L'accueil propose Travail, Argent, Sport ; chaque
    rubrique propose ses pages (la garde-robe aussi), en grands cadres dans la couleur de la rubrique : le bleu de
@@ -52,7 +52,7 @@
   --sport-doux: #fbe9de;
   --c: var(--marine);
   --c-doux: var(--marine-doux);
-  --f-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --f-display: "Source Sans 3", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;   /* une seule police, celle des cadres */
   --f-body: "Source Sans 3", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 }
@@ -77,7 +77,7 @@ h1:focus { outline: none; }
 .cadre { width: 100%; max-width: 1320px; margin-inline: auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 @media (min-width: 720px) { .cadre { padding-left: max(32px, env(safe-area-inset-left, 0px)); padding-right: max(32px, env(safe-area-inset-right, 0px)); } }
 
-.eyebrow { font: 500 .75rem/1.3 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--gris); }
+.eyebrow { font: 700 .78rem/1.3 var(--f-body); letter-spacing: .07em; text-transform: uppercase; color: var(--gris); }
 
 /* Cadre de page : tout l'écran, la vue ouverte prend la hauteur qui reste */
 .app { display: flex; flex-direction: column; min-height: 100%; }
@@ -100,9 +100,12 @@ a.fil-case:focus-visible { outline: 3px solid var(--c); outline-offset: 3px; }
 body.fond-travail { background: var(--marine); }
 .fond-travail .fil, .fond-travail .choix { --c: var(--sur-marine); --c-doux: rgba(255, 255, 255, .12); }
 .fond-travail .choix-info { color: var(--sur-marine-2); }
-.fond-travail [data-vue]:not(.page-choix) > .cadre { width: min(1256px, calc(100% - 64px)); margin: 24px auto 30px; padding: 22px 26px; border: 2px solid var(--sur-marine); border-radius: 12px; background: var(--fond); }
-.fond-travail .page-tete h1, .fond-travail .todo-tete h1 { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-@media (max-width: 719px) { .fond-travail [data-vue]:not(.page-choix) > .cadre { width: calc(100% - 24px); margin: 12px auto 20px; padding: 14px 12px; } }
+/* Chaque page (sauf les choix) s'ouvre dans un grand cadre, de la couleur de la rubrique (blanc sur le bleu de
+   Travail) ; son titre est le dernier cadre de la ligne du haut. Dedans, les blocs ont le même trait, plus clair. */
+[data-vue]:not(.page-choix) > .cadre { --c-cadre: color-mix(in srgb, var(--c) 32%, var(--fond)); width: min(1256px, calc(100% - 64px)); margin: 24px auto 30px; padding: 22px 26px; border: 2px solid var(--c); border-radius: 12px; background: var(--fond); }
+.fond-travail [data-vue]:not(.page-choix) > .cadre { border-color: var(--sur-marine); }
+[data-vue]:not(.page-choix) .page-tete h1, [data-vue]:not(.page-choix) .todo-tete h1, [data-vue="journee"] .accueil-tete h1 { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (max-width: 719px) { [data-vue]:not(.page-choix) > .cadre { width: calc(100% - 24px); margin: 12px auto 20px; padding: 14px 12px; } }
 
 /* Les pages de choix : l'accueil, chaque rubrique et la garde-robe. Le titre dans un cadre, puis un grand cadre par
    choix ; ils remplissent l'écran (empilés sur téléphone), dans la couleur de la rubrique (sur l'accueil, en noir). */
@@ -134,11 +137,10 @@ a.choix-case:hover { background: var(--c-doux); }
   .choix-info { font-size: .88rem; }
 }
 
-/* Ma journée (#journee) : la to-do du jour et la journée en un coup d'œil, en attendant leur place sur l'accueil */
+/* Aujourd'hui (#journee, le quatrième cadre de l'accueil) : la to-do du jour et la journée en un coup d'œil */
 .accueil { display: grid; gap: 20px; padding-block: 24px 48px; }
 .accueil-tete { display: grid; gap: 6px; }
 .accueil-tete h1 { font-family: var(--f-display); font-weight: 850; font-stretch: 110%; font-size: clamp(1.6rem, 3.6vw, 2.4rem); line-height: 1.05; letter-spacing: -.015em; color: var(--marine); }
-.titre-rubriques { margin-top: 8px; font-family: var(--f-display); font-weight: 800; font-size: clamp(1.25rem, 2.6vw, 1.5rem); line-height: 1.1; }
 .r-perso { --c: var(--ferie); --c-doux: var(--ferie-doux); }
 .accueil-resume { color: var(--gris); font-size: 1.05rem; }
 /* L'accueil : la to-do du jour (toutes rubriques) à gauche, la journée en un coup d'œil à droite. */
@@ -173,11 +175,6 @@ a.choix-case:hover { background: var(--c-doux); }
 .jour-infos .journee { grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 600px) and (max-width: 899px) { .jour-infos .journee { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .bloc-jour .progression { margin-top: 6px; height: 10px; }
-/* Les rubriques, en bas de l'accueil : une ligne par rubrique. */
-.rubriques.compactes .numero, .rubriques.compactes .carte-texte { display: none; }
-.rubriques.compactes .carte-rubrique { min-height: 0; gap: 6px; padding: 16px 18px 14px; }
-.rubriques.compactes .carte-titre { font-size: 1.45rem; }
-.rubriques.compactes .carte-pied { padding-top: 10px; }
 /* Ma journée : horaires, budget, prochain temps fort, Road to 50k ; un bloc à traiter est marqué. */
 .journee { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 12px; }
 .bloc-jour { display: grid; align-content: start; gap: 4px; height: 100%; padding: 14px 16px; border: 1.5px solid var(--trait); border-radius: 12px; color: var(--encre); text-decoration: none; transition: border-color .15s ease; }
@@ -186,20 +183,6 @@ a.choix-case:hover { background: var(--c-doux); }
 .bloc-principal { font-family: var(--f-display); font-weight: 750; font-size: 1.15rem; line-height: 1.25; color: var(--marine); }
 .bloc-jour.retard .bloc-principal { color: var(--rouge); }
 .bloc-detail { display: -webkit-box; overflow: hidden; color: var(--gris); font-size: .95rem; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-.rubriques { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
-@media (min-width: 820px) { .rubriques { grid-template-columns: repeat(3, 1fr); } }
-.carte-rubrique { display: flex; flex-direction: column; gap: 10px; height: 100%; padding: 22px 22px 18px; border: 1.5px solid transparent; border-radius: 12px; background: var(--c-doux); text-decoration: none; transition: border-color .15s ease; }
-.carte-rubrique:hover { border-color: var(--c); }
-.numero { font-family: var(--f-display); font-weight: 800; font-stretch: 62%; font-size: 3.5rem; line-height: .85; color: var(--c); font-variant-numeric: tabular-nums; }
-.carte-titre { font-family: var(--f-display); font-weight: 800; font-stretch: 112%; font-size: 2rem; line-height: 1; letter-spacing: -.01em; }
-.carte-texte { color: var(--gris); }
-.carte-pied { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: auto; padding-top: 14px; border-top: 1px solid var(--trait); border-top-color: color-mix(in srgb, var(--c) 28%, transparent); font: 500 .8rem/1.3 var(--f-mono); color: var(--gris); }
-.fleche { color: var(--c); font-weight: 600; white-space: nowrap; }
-@media (min-width: 820px) { .carte-rubrique { min-height: 240px; padding: 26px 26px 20px; } .numero { font-size: 4.5rem; } }
-@media (prefers-reduced-motion: no-preference) {
-  .fleche { display: inline-block; transition: transform .15s ease; }
-  .carte-rubrique:hover .fleche { transform: translateX(3px); }
-}
 
 /* Travail : semaine, planning, bilan, sans faire défiler */
 .vue-travail { display: flex; flex-direction: column; }
@@ -1058,6 +1041,23 @@ details.groupe-pieces { display: block; }
 @media (max-width: 699px) { .demande { grid-template-columns: auto minmax(0, 1fr); } .demande-actions { grid-column: 1 / -1; justify-content: flex-start; } }
 .rayons-vides { display: grid; gap: 10px; }
 
+/* Dans les pages : les titres de section en capitales, comme les cadres ; les blocs au même trait (2 px, coins de
+   12 px), dans une teinte de la couleur de la rubrique ; les boutons aux mêmes coins. */
+.jt-tete h2, .liste h2, .objectif-tete h2, .groupe-pieces h2, .note-tete h2, .section-tete-ligne h2, .budget-vide h2 { font: 700 1.05rem/1.25 var(--f-body); letter-spacing: .05em; text-transform: uppercase; color: var(--c); }
+.jt-tete, .liste h2, .groupe-pieces h2, .section-tete-ligne { border-bottom-color: var(--c); }
+.jour-todo, .bloc-jour, .bilan, .prochain, .objectif-carte, .carte-argent, .road, .note-tenue, .comparer-zone, .compteur-chiffres .chiffre, .ajout-tache, .filtres, .saisie-ca, .jt-ajout, .reprendre {
+  border: 2px solid var(--c-cadre, var(--trait)); border-radius: 12px; background: var(--fond); }
+.bloc-jour:hover, .bloc-jour.a-traiter { border-color: var(--c); }
+.bloc-jour.a-traiter { background: var(--c-doux); }
+.budget-vide { border-color: var(--c); background: var(--c-doux); }
+.bouton-principal, .bouton-second { border-radius: 12px; }
+.bouton-second { border-width: 2px; border-color: var(--c-cadre, var(--trait)); font-weight: 700; }
+.bouton-second:hover { border-color: var(--c); }
+.fleche-semaine, .mois-nav button { border-width: 2px; border-color: var(--c-cadre, var(--trait)); }
+.semaine-num { text-transform: uppercase; letter-spacing: .03em; }
+.bloc-principal, .carte-argent-chiffre > span:first-child, .budget-reste, .road-total > span:first-child, .road-pourcent { font-weight: 800; }
+.puce, .puce-rubrique, .jt-compte, .todo-compte, .nombre, .compte-selection { font-family: var(--f-body); font-weight: 700; letter-spacing: .02em; }
+
 .toast { position: fixed; left: 50%; top: calc(12px + env(safe-area-inset-top, 0px)); z-index: 50; max-width: calc(100% - 32px); padding: 12px 18px; border-radius: 10px; background: var(--encre); color: var(--sur-marine); font-weight: 600; box-shadow: 0 10px 30px rgba(15, 25, 50, .25); transform: translateX(-50%); }
 .toast.erreur { background: var(--erreur); }
 </style>
@@ -1073,10 +1073,11 @@ details.groupe-pieces { display: block; }
   <section class="page-choix" data-vue="accueil" aria-labelledby="titre-accueil">
     <div class="cadre choix neutre">
       <h1 class="choix-titre" id="titre-accueil" tabindex="-1">Tableau de bord</h1>
-      <ul class="choix-cases" data-n="3">
+      <ul class="choix-cases" data-n="4">
         <li><a class="choix-case" href="#travail"><span class="choix-nom">Travail</span></a></li>
         <li><a class="choix-case" href="#argent"><span class="choix-nom">Argent</span></a></li>
         <li><a class="choix-case" href="#sport"><span class="choix-nom">Sport</span></a></li>
+        <li><a class="choix-case" href="#journee"><span class="choix-nom">Aujourd'hui</span><span class="choix-info"><span id="resume-aujourdhui"></span></span></a></li>
       </ul>
     </div>
   </section>
@@ -1114,36 +1115,9 @@ details.groupe-pieces { display: block; }
           <div class="jt-ensuite" id="jt-ensuite"></div>
         </section>
         <aside class="jour-infos" aria-label="Ma journée en un coup d'œil">
-          <ul class="journee" id="journee"></ul>
+          <ul class="journee" id="journee-infos"></ul>
         </aside>
       </div>
-      <h2 class="titre-rubriques">Mes rubriques</h2>
-      <ol class="rubriques compactes">
-        <li class="r-travail">
-          <a class="carte-rubrique" href="#travail">
-            <span class="numero" aria-hidden="true">1</span>
-            <span class="carte-titre">Travail</span>
-            <span class="carte-texte">Mon planning, ma to-do list, la garde-robe du magasin, le calendrier commercial et mes objectifs.</span>
-            <span class="carte-pied"><span id="resume-travail">Planning de la semaine</span><span class="fleche">Ouvrir →</span></span>
-          </a>
-        </li>
-        <li class="r-argent">
-          <a class="carte-rubrique" href="#argent">
-            <span class="numero" aria-hidden="true">2</span>
-            <span class="carte-titre">Argent</span>
-            <span class="carte-texte">Mon budget, mes dépenses, ma paie et Road to 50k.</span>
-            <span class="carte-pied"><span id="resume-argent">Budget, dépenses, épargne</span><span class="fleche">Ouvrir →</span></span>
-          </a>
-        </li>
-        <li class="r-sport">
-          <a class="carte-rubrique" href="#sport">
-            <span class="numero" aria-hidden="true">3</span>
-            <span class="carte-titre">Sport</span>
-            <span class="carte-texte">Mes séances, mon programme et mes progrès.</span>
-            <span class="carte-pied"><span>4 idées</span><span class="fleche">Ouvrir →</span></span>
-          </a>
-        </li>
-      </ol>
     </div>
   </section>
 
@@ -1193,7 +1167,7 @@ details.groupe-pieces { display: block; }
         </button>
       </div>
 
-      <div class="planning" id="planning" aria-label="Planning de la semaine, demi-heure par demi-heure"></div>
+      <div class="planning" id="planning-grille" aria-label="Planning de la semaine, demi-heure par demi-heure"></div>
 
       <div class="bilan">
         <div class="chiffre" id="bilan-heures-bloc">
@@ -2108,7 +2082,7 @@ details.groupe-pieces { display: block; }
     planning: "travail", todo: "travail", "garde-robe": "travail", calendrier: "travail", objectifs: "travail",
     pieces: "garde-robe", tenues: "garde-robe", comparer: "garde-robe", manque: "garde-robe",
     budget: "argent", depenses: "argent", epargne: "argent", paie: "argent" };
-  const NOM_VUE = { accueil: "Tableau de bord", journee: "Ma journée", travail: "Travail", argent: "Argent", sport: "Sport",
+  const NOM_VUE = { accueil: "Tableau de bord", journee: "Aujourd'hui", travail: "Travail", argent: "Argent", sport: "Sport",
     planning: "Planning", todo: "To do list", "garde-robe": "Dressing", calendrier: "Calendrier", objectifs: "Objectifs",
     pieces: "Pièces", tenues: "Tenues", comparer: "Comparer", manque: "Ce qu'il manque",
     budget: "Budget du mois", depenses: "Dépenses", epargne: "Épargne et projets", paie: "Ma paie" };
@@ -2497,7 +2471,7 @@ details.groupe-pieces { display: block; }
     $("semaine-dates").textContent = libelleDates(lundiAffiche);
     $("puce-actuelle").hidden = lundiAffiche !== lundiActuel;
 
-    const grille = $("planning");
+    const grille = $("planning-grille");
     const b = bornesFrise(sem);
     grille.style.setProperty("--creneaux", String(b.n));
     const f = document.createDocumentFragment();
@@ -2545,14 +2519,7 @@ details.groupe-pieces { display: block; }
     $("note-lecture").hidden = mode !== "lecture";
   }
 
-  function rendreResume() {
-    const s = semaines[infoSemaine(lundiDe(aujourdhui())).cle];
-    if (estVide(s)) { $("resume-travail").textContent = "Planning de la semaine à remplir"; return; }
-    const repos = joursDeRepos(s);
-    $("resume-travail").textContent = `Cette semaine : ${formatDuree(dureeSemaine(s))}` + (repos.length ? ` · repos ${listeFr(repos)}` : "");
-  }
 
-  // La semaine en cours en miniature, le total, le repos et les horaires d'aujourd'hui.
   // Le choix « Mon planning » : les horaires d'aujourd'hui, et la semaine.
   function rendreCartePlanning() {
     const info = infoSemaine(lundiDe(aujourdhui())), s = semaines[info.cle], ligne = $("aujourdhui-planning");
@@ -2574,7 +2541,6 @@ details.groupe-pieces { display: block; }
 
   function rendreTout() {
     rendrePlanning();
-    rendreResume();
     rendreCartePlanning();
     rendreTodo();
     rendreAutourDesPieces();
@@ -6042,8 +6008,10 @@ details.groupe-pieces { display: block; }
     const cle = periodeDe(auj), doc = budgets.docs[cle];
     if (doc) {
       const b = budgetDu(cle), r = reglagesArgent(), somme = l => -arrondi2(l.reduce((x, o) => x + o.m, 0));
-      const versTR = somme(b.ops.filter(o => o.m < 0 && o.c === "epargne" && /trade ?republic/.test(texteOp(o))));
-      const versLivrets = somme(b.ops.filter(o => o.m < 0 && (o.c === "interne" || (o.c === "epargne" && !/trade ?republic/.test(texteOp(o))))));
+      // Vers Trade Republic : le libellé du relevé, ou ce qui est écrit à la main (« Investissement PEA »).
+      const versInvest = o => /trade ?republic|\bpea\b|invest|compte.?titres|\bcto\b|bitcoin|crypto/.test(texteOp(o));
+      const versTR = somme(b.ops.filter(o => o.m < 0 && o.c === "epargne" && versInvest(o)));
+      const versLivrets = somme(b.ops.filter(o => o.m < 0 && (o.c === "interne" || (o.c === "epargne" && !versInvest(o)))));
       const attente = arrondi2(doc.attendu + doc.primes.filter(x => !x.tombee).reduce((x, y) => x + y.montant, 0));
       // Les livrets d'abord, puis l'investissement.
       projetsTries().filter(p => doc.epargne[p.id]).sort((x, y) => (x.groupe === "investissement") - (y.groupe === "investissement")).forEach(p => {
@@ -6169,9 +6137,10 @@ details.groupe-pieces { display: block; }
       blocs.push(blocJour("objectifs", "Objectifs", discret || r.part == null ? "À jour" : `Part homme : ${pourcent(r.part)} cette semaine`,
         discret || r.part == null ? `Dernière journée saisie : ${dateCourte(veille)}` : etat === "dans" ? "Dans l'objectif" : etat === "sous" ? "En dessous de l'objectif" : "Au-dessus de l'objectif"));
     }
-    $("journee").replaceChildren(...blocs);
-    // La phrase sous le titre : la journée de travail et ce qu'il reste à faire.
+    $("journee-infos").replaceChildren(...blocs);
+    // La phrase sous le titre, et le cadre « Aujourd'hui » de l'accueil : la journée de travail, ce qu'il reste à faire.
     const reste = total - faits;
+    $("resume-aujourdhui").textContent = reste ? `${reste} chose${reste > 1 ? "s" : ""} à faire` : total ? "Tout est fait" : "Rien de prévu";
     const plages = j && dureeJour(j) > 0 ? [j.matin, j.apresMidi].filter(x => dureePeriode(x) > 0).map(x => `de ${formatHeure(x.debut)} à ${formatHeure(x.fin)}`).join(", puis ") : "";
     $("accueil-resume").textContent = [plages ? `Tu travailles ${plages}` : principal,
       reste ? `${reste} chose${reste > 1 ? "s" : ""} à faire` : total ? "Tout est fait" : ""].filter(Boolean).join(" · ") + ".";
@@ -7026,10 +6995,6 @@ details.groupe-pieces { display: block; }
     $("pa-form").hidden = $("pa-reglages").hidden = !peutModifierArgent();
   }
 
-  function rendreCarteAccueilArgent() {
-    const road = projetRoad(), b = budgetDu(periodeParDefaut());
-    $("resume-argent").textContent = [road && `${road.nom} : ${nombreFr(Math.floor(avancee(road).part * 1000) / 10)} %`, b.doc && `${eur(b.reste, 0)} à dépenser`].filter(Boolean).join(" · ") || "Budget, dépenses, épargne";
-  }
   function rendreArgent() {
     if (!journeePrete) return;
     rendreHubArgent();
@@ -7037,7 +7002,6 @@ details.groupe-pieces { display: block; }
     rendreDepenses();
     rendreEpargne();
     rendrePaie();
-    rendreCarteAccueilArgent();
     rendreJournee();
   }
 
