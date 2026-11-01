@@ -117,6 +117,25 @@ def lire_shopify(adresse):
     prix, barre = d.get("price"), d.get("compare_at_price")
     promo = isinstance(barre, int) and isinstance(prix, int) and barre > prix
     images = [("https:" + i) if i.startswith("//") else i for i in d.get("images", [])]
+    # Certaines fiches n'ont ni « Coupe : » ni « Matière : » dans leur description (« Gilet coupe confortable »,
+    # la composition seulement sur la page de l'article) : la coupe vient alors de la phrase, la matière de la page.
+    if not champs.get("coupe"):
+        texte = sans_accents(html.unescape(re.sub(r"<[^>]+>", " ", d.get("description") or "")))
+        m = re.search(r"coupe (confortable|decontractee|ample|oversize|droite|reguliere|ajustee|slim)", texte)
+        if m:
+            champs["coupe"] = {"confortable": "Décontractée (Relaxed Fit)", "decontractee": "Décontractée (Relaxed Fit)", "ample": "Ample (Loose Fit)",
+                               "oversize": "Ample (Oversized Fit)", "droite": "Droite (Regular Fit)", "reguliere": "Droite (Regular Fit)",
+                               "ajustee": "Ajustée (Slim Fit)", "slim": "Ajustée (Slim Fit)"}[m.group(1)]
+    if not champs.get("matiere"):
+        try:
+            with urllib.request.urlopen(urllib.request.Request(adresse, headers=NAVIGATEUR), timeout=30) as r:
+                page = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", r.read().decode("utf-8", "replace"))))
+            m = re.search(r"\d{1,3} ?% ?[A-Za-zÀ-ÿ]+(?:[ ,]+\d{1,3} ?% ?[A-Za-zÀ-ÿ]+)+|100 ?% ?[A-Za-zÀ-ÿ]+", page)
+            if m:
+                parts = re.findall(r"(\d{1,3}) ?% ?([A-Za-zÀ-ÿ]+)", m.group(0))
+                champs["matiere"] = ", ".join(f"{n} % {m_.lower().replace('elasthanne', 'élasthanne')}" for n, m_ in parts)
+        except OSError:
+            pass
     return {
         "marque": d.get("vendor") or "",
         "textes": [d.get("type", ""), d.get("title", ""), d.get("handle", "").replace("-", " ")],
