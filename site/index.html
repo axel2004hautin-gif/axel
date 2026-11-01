@@ -1583,6 +1583,45 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
   .mb-pile-nom { font-size: .64rem; }
   .mu-presse { margin-left: 0; }
 }
+
+/* La 3D, les alertes, les exceptions voulues, le presse-papiers d'un mur. */
+.type-tache span.me-onglet-n { display: inline; padding: 0; border-radius: 0; background: none; color: inherit; font-weight: 800; }
+.me-3d-zone { position: relative; min-height: 320px; overflow: hidden; border: 1.5px solid var(--trait); border-radius: 12px; background: #e9edf3; }
+.me-3d-canvas { display: block; width: 100%; touch-action: none; cursor: grab; }
+.me-3d-canvas:active { cursor: grabbing; }
+.me-3d-etat { position: absolute; inset: 0; display: grid; place-items: center; padding: 20px; color: var(--gris); font-weight: 600; text-align: center; }
+.me-3d-info { position: absolute; left: 10px; top: 10px; right: 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; width: max-content; max-width: calc(100% - 20px); padding: 8px 10px; border-radius: 10px; background: rgba(255, 255, 255, .94); box-shadow: 0 6px 18px rgba(15, 25, 50, .14); }
+.me-3d-info b { color: var(--marine); }
+.me-vue3d label span { padding-inline: 12px; }
+.me-alertes { display: grid; gap: 18px; margin-top: 14px; }
+.al-bloc { display: grid; gap: 8px; }
+.al-bloc h3 { padding-bottom: 6px; border-bottom: 2px solid var(--marine); font-size: 1.05rem; color: var(--marine); }
+.al-liste { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.al-ligne { display: grid; gap: 8px; padding: 10px 12px; border: 1.5px solid var(--trait); border-radius: 10px; }
+.al-tete { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.al-tete .mu-ref { font-size: .9rem; }
+.al-texte { display: grid; gap: 2px; min-width: 0; }
+.al-ou { font-weight: 600; }
+.al-depuis { color: var(--gris); font-size: .88rem; }
+.al-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; }
+.al-idees { display: grid; gap: 6px; margin: 0; padding: 8px; border-radius: 8px; background: var(--marine-doux); list-style: none; }
+.al-idee { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; padding: 6px 8px; border-radius: 8px; background: var(--fond); }
+.al-regle { padding: 8px 12px; border-radius: 8px; background: var(--erreur-doux); color: var(--erreur); font-weight: 600; font-size: .92rem; }
+.al-regle.exception { background: var(--repos-doux); color: var(--repos); }
+.al-exposer { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+.mu-ref-ok { flex: none; display: grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; background: none; color: #c9ced8; font-size: .95rem; line-height: 1; }
+.mu-ref-ok:hover { color: var(--or); }
+.mu-ref-ok[aria-pressed="true"] { color: #d9a400; }
+.mu-alerte-ligne { display: block; }
+.mu-voulus { display: grid; gap: 2px; }
+.mu-presse-mur { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-right: auto; }
+.rf-masquees { margin-top: 10px; }
+@media (max-width: 599px) {
+  .me-onglets { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .me-onglets span { padding: 8px 2px; font-size: .86rem; }
+  .al-exposer { grid-template-columns: minmax(0, 1fr); }
+  .mu-presse-mur { width: 100%; }
+}
 </style>
 </head>
 <body>
@@ -1984,8 +2023,10 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
         <div class="me-onglets-ligne">
           <div class="type-tache me-onglets" role="radiogroup" aria-label="Afficher">
             <label><input type="radio" name="me-onglet" value="plan" checked><span>Plan</span></label>
+            <label><input type="radio" name="me-onglet" value="3d"><span>3D</span></label>
             <label><input type="radio" name="me-onglet" value="liste"><span>Liste</span></label>
-            <label><input type="radio" name="me-onglet" value="regles"><span>Mes règles</span></label>
+            <label><input type="radio" name="me-onglet" value="alertes"><span>Alertes<span class="me-onglet-n" id="me-al-n"></span></span></label>
+            <label><input type="radio" name="me-onglet" value="regles"><span>Règles</span></label>
           </div>
           <select class="me-ajouter" id="me-ajouter" aria-label="Ajouter un meuble au plan"></select>
         </div>
@@ -2013,6 +2054,27 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
                 <span class="zone-pastille z-chaude">Chaude</span><span class="zone-pastille z-tiede">Tiède</span><span class="zone-pastille z-froide">Froide</span>
                 <span class="aide">Calculées depuis l'entrée (en bas) et la gauche, où le client va d'abord. Chaque meuble peut forcer la sienne : le mur du centre est froid.</span>
               </div>
+            </div>
+            <div class="me-principal" id="me-volet-3d" hidden>
+              <div class="me-outils">
+                <div class="type-tache me-vue3d" role="radiogroup" aria-label="La vue en 3D">
+                  <label><input type="radio" name="me-vue3d" value="ensemble" checked><span>Vue d'ensemble</span></label>
+                  <label><input type="radio" name="me-vue3d" value="promenade"><span>Se promener</span></label>
+                </div>
+                <div class="me-calques" role="group" aria-label="Afficher en 3D">
+                  <button class="puce-filtre" type="button" data-calque3d="noms" aria-pressed="true">Noms</button>
+                  <button class="puce-filtre" type="button" data-calque3d="photos" aria-pressed="true">Photos</button>
+                </div>
+              </div>
+              <div class="me-3d-zone" id="me-3d-zone">
+                <p class="me-3d-etat" id="me-3d-etat">Chargement de la 3D…</p>
+                <div class="me-3d-info" id="me-3d-info" hidden>
+                  <b id="me-3d-nom"></b>
+                  <button class="bouton-principal bouton-petit" type="button" id="me-3d-ouvrir"></button>
+                  <button class="bouton-second bouton-petit" type="button" id="me-3d-retour">Revenir</button>
+                </div>
+              </div>
+              <p class="aide" id="me-3d-aide">Glisse pour faire tourner le magasin, zoome avec deux doigts ou la molette ; touche un meuble pour t'en approcher.</p>
             </div>
             <div id="me-volet-liste" hidden>
               <div id="me-liste"></div>
@@ -2060,6 +2122,39 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
               <div class="me-actions" id="me-actions"><button class="bouton-second bouton-petit" type="button" id="me-dupliquer">Dupliquer</button><button class="bouton-danger" type="button" id="me-supprimer">Supprimer</button></div>
             </form>
           </aside>
+        </div>
+        <div class="me-alertes" id="me-volet-alertes" hidden>
+          <p class="aide alerte" id="me-al-plan" hidden></p>
+          <section class="al-bloc">
+            <h3 id="me-al-seuil">Au même endroit depuis 14 jours ou plus</h3>
+            <p class="aide">Ce qui ne bouge pas doit bouger : d'un facing à un pressing, d'un pressing à une étagère… « Où la mettre ? » propose des places libres, avec les autres couleurs du modèle d'abord. « Se vend bien ici » la laisse où elle est. Le délai se règle dans Réglages.</p>
+            <ul class="al-liste" id="me-al-immobiles"></ul>
+            <p class="liste-vide" id="me-al-immobiles-vide">Rien d'immobile : tout a bougé depuis moins longtemps.</p>
+          </section>
+          <section class="al-bloc" id="me-al-regles-bloc" hidden>
+            <h3>Les règles à revoir</h3>
+            <ul class="al-liste" id="me-al-regles"></ul>
+          </section>
+          <section class="al-bloc" id="me-al-perdues-bloc" hidden>
+            <h3>Des réfs qui ne sont plus au Dressing</h3>
+            <ul class="al-liste" id="me-al-perdues"></ul>
+          </section>
+          <section class="al-bloc" id="me-al-exposer-bloc" hidden>
+            <h3>À exposer : nouveautés et meilleures ventes</h3>
+            <ul class="al-liste" id="me-al-exposer"></ul>
+          </section>
+          <section class="al-bloc" id="me-al-reassort-bloc" hidden>
+            <h3>À réassortir, et exposées</h3>
+            <ul class="al-liste" id="me-al-reassort"></ul>
+          </section>
+          <section class="al-bloc" id="me-al-exceptions-bloc" hidden>
+            <h3>Des exceptions plié ou cintre, à vérifier</h3>
+            <ul class="al-liste" id="me-al-exceptions"></ul>
+          </section>
+          <section class="al-bloc" id="me-al-bien-bloc" hidden>
+            <h3>Se vend bien ici</h3>
+            <ul class="al-liste" id="me-al-bien"></ul>
+          </section>
         </div>
         <div id="me-volet-regles" hidden>
           <p class="aide">Les règles du merch du magasin, avec tes précisions. « Ma règle » : celles que tu m'as données. L'outil les vérifie peu à peu : deux facings côte à côte, c'est déjà fait.</p>
@@ -2924,6 +3019,7 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
   </div>
   <div class="fenetre-corps mu-corps">
     <p class="me-alerte" id="mu-alerte" role="status" hidden></p>
+    <p class="aide mu-voulus" id="mu-voulus" hidden></p>
     <div class="mu-scene" id="mu-scene"><svg id="mu-svg" role="group" aria-label="Le mur vu de face, de gauche à droite"></svg></div>
     <section class="mu-detail" aria-labelledby="mu-uv-titre">
       <div class="mu-detail-tete">
@@ -2932,6 +3028,7 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
         <span class="mu-presse">
           <button class="bouton-second bouton-petit" type="button" id="mu-copier">Copier l'UV</button>
           <button class="bouton-second bouton-petit" type="button" id="mu-coller" hidden>Coller ici</button>
+          <button class="bouton-second bouton-petit" type="button" id="mu-coller-refs" hidden>Coller avec les réfs</button>
         </span>
         <select class="mu-remplacer" id="mu-remplacer" aria-label="Remplacer l'UV par un modèle"></select>
       </div>
@@ -2945,6 +3042,11 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     <details class="mu-aide" id="mu-aide"><summary>Les équipements et les crans</summary><ul class="mu-legende" id="mu-legende"></ul></details>
   </div>
   <div class="fenetre-pied">
+    <span class="mu-presse-mur">
+      <button class="lien-discret" type="button" id="mu-copier-mur">Copier le mur</button>
+      <button class="bouton-second bouton-petit" type="button" id="mu-coller-mur" hidden>Coller le mur ici</button>
+      <button class="bouton-second bouton-petit" type="button" id="mu-coller-mur-refs" hidden>… avec les réfs</button>
+    </span>
     <button class="bouton-second" type="button" id="mu-moins">Retirer la dernière UV</button>
     <button class="bouton-second" type="button" id="mu-plus">Ajouter une UV</button>
     <button class="bouton-principal" type="button" data-fermer>Terminé</button>
@@ -2968,6 +3070,7 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     </div>
     <div class="rf-liste" id="rf-liste"></div>
     <p class="liste-vide" id="rf-vide" hidden>Aucune pièce ne correspond.</p>
+    <p class="aide rf-masquees" id="rf-masquees" hidden><span id="rf-masquees-texte"></span> <button class="lien-discret" type="button" id="rf-montrer">Les montrer quand même</button></p>
   </div>
   <div class="fenetre-pied">
     <button class="bouton-danger" type="button" id="rf-vider" hidden>Vider la pile</button>
@@ -10466,6 +10569,7 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
         };
       });
       if (!e.uvs.length) e.uvs = [{ eq: [], miroir: false, condamne: false }];
+      e.voulus = (Array.isArray(d.voulus) ? d.voulus : []).filter(x => typeof x === "string" && x.length <= 40).slice(0, 20);
       e.l = e.uvs.length * e.uvL;
       e.p = t.p;
     } else {
@@ -10495,6 +10599,7 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     if (t.porte === "uv") {
       c.uvL = e.uvL;
       c.crans = e.crans || CRANS_MUR;
+      c.voulus = e.voulus || [];
       c.uvs = e.uvs.map(u => ({ ...(u.miroir ? { miroir: true, condamne: !!u.condamne } : {}),
         eq: u.eq.map(q => ({ id: q.id, type: q.type, cran: q.cran, ...(q.type === "etagere" ? { refs: q.refs, ferme: !!q.ferme } : {}), articles: corpsArticles(q.articles) })) }));
     }
@@ -10558,9 +10663,16 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
   const duNomEq = (u, q) => (q.type === "coudee" ? "de la barre coudée" : `du ${nomEq(u, q).toLowerCase()}`);
   // Ce qui cloche sur un mur : deux facings côte à côte (aussi avec le mur d'à côté), des vêtements qui descendent sur
   // ce qu'il y a dessous, une case trop basse pour une pile.
+  // La clé d'une paire d'UV voisines avec un facing chacune : les identifiants de leurs facings.
+  const cleFacings = (e, i) => [e.uvs[i], e.uvs[i + 1]].map(u => (u.eq.find(q => estFacing(q.type)) || {}).id || "").join("+");
   function alertesMur(e) {
-    const uvs = new Set(), facings = [], hauteurs = [];
-    e.uvs.forEach((u, i) => { if (i && aUnFacing(u) && aUnFacing(e.uvs[i - 1])) { uvs.add(i - 1); uvs.add(i); facings.push(`UV ${i} et ${i + 1}`); } });
+    const uvs = new Set(), facings = [], voulus = [], hauteurs = [];
+    e.uvs.forEach((u, i) => {
+      if (!i || !aUnFacing(u) || !aUnFacing(e.uvs[i - 1])) return;
+      const cle = cleFacings(e, i - 1), texte = `UV ${i} et ${i + 1}`;
+      if ((e.voulus || []).includes(cle)) voulus.push({ texte, cle });
+      else { uvs.add(i - 1); uvs.add(i); facings.push({ texte, cle }); }
+    });
     e.uvs.forEach((u, i) => {
       if (estMiroir(u)) return;
       u.eq.forEach((q, k) => {
@@ -10572,7 +10684,7 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
         hauteurs.push({ uv: i, haut: q, bas: b, texte });
       });
     });
-    return { uvs, facings, hauteurs };
+    return { uvs, facings, voulus, hauteurs };
   }
   function resumeUvs(e) {
     const n = {}, miroirs = e.uvs.filter(estMiroir).length;
@@ -10903,7 +11015,7 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     }
     poser("me-note", e.note);
     const al = mur ? alertesMur(e) : { facings: [], hauteurs: [] };
-    const alertes = [...(al.facings.length ? [`Deux facings côte à côte : ${listeFr(al.facings)}.`] : []), ...al.hauteurs.map(h => `UV ${h.uv + 1} : ${h.texte}.`)];
+    const alertes = [...(al.facings.length ? [`Deux facings côte à côte : ${listeFr(al.facings.map(f => f.texte))}.`] : []), ...al.hauteurs.map(h => `UV ${h.uv + 1} : ${h.texte}.`)];
     $("me-alerte").hidden = !alertes.length;
     $("me-alerte").textContent = alertes.join(" ");
     $("me-info").textContent = mur ? resumeUvs(e) : "";
@@ -11199,12 +11311,21 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     $("mu-suiv").hidden = !d;
     if (g) { $("mu-prec").textContent = `← ${nomMeuble(g)}`; $("mu-prec").dataset.id = g.id; }
     if (d) { $("mu-suiv").textContent = `${nomMeuble(d)} →`; $("mu-suiv").dataset.id = d.id; }
-    const al = alertesMur(e);
-    const textes = [];
-    if (al.facings.length) textes.push(`Deux facings côte à côte : ${listeFr(al.facings)}.`);
-    al.hauteurs.forEach(h => textes.push(`UV ${h.uv + 1} : ${h.texte}.`));
-    $("mu-alerte").hidden = !textes.length;
-    $("mu-alerte").replaceChildren(...textes.map(t => element("span", null, t)));
+    const al = alertesMur(e), modifiableMur = peutModifierMerch();
+    const lignes = al.facings.map(f => {
+      const l = element("span", "mu-alerte-ligne", `Deux facings côte à côte : ${f.texte}.`);
+      if (modifiableMur) { const b = element("button", "lien-discret", "C'est voulu"); b.type = "button"; b.dataset.voulu = f.cle; l.append(" ", b); }
+      return l;
+    });
+    al.hauteurs.forEach(h => lignes.push(element("span", null, `UV ${h.uv + 1} : ${h.texte}.`)));
+    $("mu-alerte").hidden = !lignes.length;
+    $("mu-alerte").replaceChildren(...lignes);
+    $("mu-voulus").hidden = !al.voulus.length;
+    $("mu-voulus").replaceChildren(...al.voulus.map(f => {
+      const l = element("span", null, `Deux facings côte à côte, voulus : ${f.texte}.`);
+      if (modifiableMur) { const b = element("button", "lien-discret", "Ne plus l'accepter"); b.type = "button"; b.dataset.plusVoulu = f.cle; l.append(" ", b); }
+      return l;
+    }));
     // Le mur, en centimètres.
     const w = e.uvL * 100, H = e.crans * CRAN_CM, n = e.uvs.length;
     const vbW = G_MUR + n * w + 24, vbH = HAUT_MUR + H + BAS_MUR, plancher = HAUT_MUR + H;
@@ -11317,7 +11438,7 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     const place = (pos, nomP) => {
       const ligne = element("div", "mu-place"), a = q.articles.find(x => x.pos === pos);
       ligne.append(element("span", "mu-place-nom", nomP));
-      if (a) ligne.append(puceRef(a, modifiable ? { retirer: pos, eq: q.id } : null));
+      if (a) ligne.append(puceRef(a, modifiable ? { retirer: pos, eq: q.id } : null, modifiable ? { okPos: pos, eq: q.id } : null));
       else if (modifiable) { const b = element("button", "lien-discret mu-choisir", "+ Choisir la réf."); b.type = "button"; b.dataset.choisir = pos; b.dataset.eq = q.id; ligne.append(b); }
       else ligne.append(element("span", "aide", "—"));
       refs.append(ligne);
@@ -11353,7 +11474,7 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     } else if (q.type === "coudee") POSITIONS_COUDEE.forEach(([pos, nomP]) => place(pos, nomP));
     else {
       const liste = element("div", "mu-liste-refs");
-      liste.append(...q.articles.map((a, k) => puceRef(a, modifiable ? { retirerIndex: String(k), eq: q.id } : null)));
+      liste.append(...q.articles.map((a, k) => puceRef(a, modifiable ? { retirerIndex: String(k), eq: q.id } : null, modifiable ? { okIndex: String(k), eq: q.id } : null)));
       if (!q.articles.length) liste.append(element("span", "aide", "Aucune réf. pour l'instant."));
       refs.append(liste);
       if (modifiable) { const b = element("button", "lien-discret mu-choisir", "+ Ajouter des réfs"); b.type = "button"; b.dataset.choisir = "liste"; b.dataset.eq = q.id; refs.append(b); }
@@ -11373,8 +11494,12 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     $("mu-condamner").hidden = !modifiable;
     $("mu-condamner").classList.remove("arme");
     $("mu-copier").hidden = estMiroir(u) || !u.eq.length;
-    $("mu-coller").hidden = !modifiable || !pressePapiersUv || estMiroir(u);
-    if (pressePapiersUv) $("mu-coller").title = `Coller : ${pressePapiersUv.de}`;
+    const pp = pressePapiersUv;
+    $("mu-coller").hidden = !modifiable || !pp || pp.genre !== "uv" || estMiroir(u);
+    $("mu-coller-refs").hidden = $("mu-coller").hidden || !presseAvecRefs(pp);
+    if (pp) [$("mu-coller"), $("mu-coller-refs"), $("mu-coller-mur"), $("mu-coller-mur-refs")].forEach(b => { b.title = `Coller : ${pp.de}`; });
+    $("mu-coller-mur").hidden = !modifiable || !pp || pp.genre !== "mur" || pp.id === e.id;
+    $("mu-coller-mur-refs").hidden = $("mu-coller-mur").hidden || !presseAvecRefs(pp);
     const actif = document.activeElement && document.activeElement.classList.contains("mu-cm") ? document.activeElement.dataset.id : null;
     $("mu-eqs").replaceChildren(...u.eq.map(q => carteEqMur(e, u, q, modifiable)));
     if (actif) { const c = $("mu-eqs").querySelector(`.mu-cm[data-id="${actif}"]`); if (c) c.focus(); }
@@ -11396,31 +11521,62 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     return null;
   }
   const DESCENTE_TYPE = [35, 30, 25, 20, 15, 10];   // de 1,75 m à 50 cm, une case de 5 crans (25 cm)
-  // Le presse-papiers des UV : une UV copiée se colle sur une autre, de ce mur ou d'un autre (sans ses articles).
+  // Le presse-papiers : une UV ou tout un mur, avec ses réfs ; on le colle avec ou sans elles, sur ce mur ou un autre.
   const CLE_PRESSE_UV = "tableau-de-bord-axel:merch-uv-copiee";
   let pressePapiersUv = null;
-  try { const v = JSON.parse(localStorage.getItem(CLE_PRESSE_UV) || "null"); if (v && Array.isArray(v.eq)) pressePapiersUv = v; } catch (_) { /* rien */ }
+  try {
+    const v = JSON.parse(localStorage.getItem(CLE_PRESSE_UV) || "null");
+    if (v && Array.isArray(v.uvs)) pressePapiersUv = v;
+    else if (v && Array.isArray(v.eq)) pressePapiersUv = { genre: "uv", de: v.de, uvs: [{ eq: v.eq }] };
+  } catch (_) { /* rien */ }
+  const copieEqs = eq => eq.map(q => ({ type: q.type, cran: q.cran, refs: q.refs, ferme: q.ferme, articles: q.articles.map(a => ({ p: a.p, pos: a.pos || null })) }));
+  const copieUvPresse = u => ({ miroir: !!u.miroir, condamne: !!u.condamne, eq: copieEqs(u.eq) });
+  const presseAvecRefs = pp => !!pp && pp.uvs.some(u => u.eq.some(q => (q.articles || []).length));
+  const aDesRefs = uvs => uvs.some(u => u.eq.some(q => q.articles.length));
+  function copierDans(pp) {
+    pressePapiersUv = pp;
+    try { localStorage.setItem(CLE_PRESSE_UV, JSON.stringify(pp)); } catch (_) { /* rien */ }
+    rendreMurMerch();
+  }
+  // Une UV du presse-papiers, prête à coller (nouveaux identifiants ; les réfs reposées aujourd'hui, si on les garde).
+  const uvCollee = (u, crans, avecRefs) => ({ miroir: !!u.miroir, condamne: !!u.condamne,
+    eq: u.eq.map(x => ({ ...nouvelEq(x.type, Math.max(1, Math.min(crans - 1, x.cran))), ...(x.type === "etagere" ? { refs: [0, 1, 2].includes(x.refs) ? x.refs : 1, ferme: !!x.ferme } : {}),
+      articles: avecRefs ? (x.articles || []).filter(a => pieces[a.p]).map(a => nouvelArticle(a.p, a.pos)) : [] })) });
   $("mu-copier").addEventListener("click", () => {
     const e = merchElements.docs[murOuvert];
     if (!e) return;
-    const u = e.uvs[uvMur];
-    pressePapiersUv = { de: `${nomMeuble(e)}, UV ${uvMur + 1}`, eq: u.eq.map(q => ({ type: q.type, cran: q.cran, refs: q.refs, ferme: q.ferme })) };
-    try { localStorage.setItem(CLE_PRESSE_UV, JSON.stringify(pressePapiersUv)); } catch (_) { /* rien */ }
-    rendreMurMerch();
+    copierDans({ genre: "uv", de: `${nomMeuble(e)}, UV ${uvMur + 1}`, uvs: [copieUvPresse(e.uvs[uvMur])] });
     toast("UV copiée : choisis une autre UV (de ce mur ou d'un autre), puis « Coller ici ».");
   });
-  $("mu-coller").addEventListener("click", ev => {
-    const e = merchElements.docs[murOuvert], b = ev.currentTarget;
-    if (!e || !pressePapiersUv || !peutModifierMerch()) return;
-    const u = e.uvs[uvMur];
-    if (u.eq.some(q => q.articles.length) && !b.classList.contains("arme")) { armer(b, "Confirmer : ses réfs partent", "Coller ici"); return; }
-    desarmer(b, "Coller ici");
+  function collerUv(b, avecRefs, texteBouton) {
+    const e = merchElements.docs[murOuvert], pp = pressePapiersUv;
+    if (!e || !pp || pp.genre !== "uv" || !peutModifierMerch()) return;
+    if (aDesRefs([e.uvs[uvMur]]) && !b.classList.contains("arme")) { armer(b, "Confirmer : ses réfs partent", texteBouton); return; }
+    desarmer(b, texteBouton);
     eqMur = null;
-    changerUvs(e, uvs => {
-      uvs[uvMur].eq = pressePapiersUv.eq.map(x => ({ ...nouvelEq(x.type, Math.max(1, Math.min(e.crans - 1, x.cran))), ...(x.type === "etagere" ? { refs: x.refs, ferme: !!x.ferme } : {}) }));
-    });
-    toast(`Collée depuis ${pressePapiersUv.de}, sans les réfs.`);
+    changerUvs(e, uvs => { uvs[uvMur] = uvCollee(pp.uvs[0], e.crans, avecRefs); });
+    toast(`Collée depuis ${pp.de}${avecRefs ? ", avec ses réfs" : ", sans les réfs"}.`);
+  }
+  $("mu-coller").addEventListener("click", ev => collerUv(ev.currentTarget, false, "Coller ici"));
+  $("mu-coller-refs").addEventListener("click", ev => collerUv(ev.currentTarget, true, "Coller avec les réfs"));
+  $("mu-copier-mur").addEventListener("click", () => {
+    const e = merchElements.docs[murOuvert];
+    if (!e) return;
+    copierDans({ genre: "mur", de: nomMeuble(e), id: e.id, uvs: e.uvs.map(copieUvPresse) });
+    toast("Mur copié : ouvre un autre mur, puis « Coller le mur ici ».");
   });
+  function collerMur(b, avecRefs, texteBouton) {
+    const e = merchElements.docs[murOuvert], pp = pressePapiersUv;
+    if (!e || !pp || pp.genre !== "mur" || !peutModifierMerch()) return;
+    if (aDesRefs(e.uvs) && !b.classList.contains("arme")) { armer(b, "Confirmer : tout le mur est remplacé", texteBouton); return; }
+    desarmer(b, texteBouton);
+    eqMur = null;
+    uvMur = 0;
+    modifierElementMerch(e.id, { uvs: pp.uvs.map(u => uvCollee(u, e.crans, avecRefs)) });
+    toast(`${pp.de} collé ici${avecRefs ? " avec ses réfs : pense à vider l'ancien mur si tu l'as déplacé" : ", sans les réfs"}.`);
+  }
+  $("mu-coller-mur").addEventListener("click", ev => collerMur(ev.currentTarget, false, "Coller le mur ici"));
+  $("mu-coller-mur-refs").addEventListener("click", ev => collerMur(ev.currentTarget, true, "… avec les réfs"));
   $("mu-fermer").addEventListener("click", () => {
     const e = merchElements.docs[murOuvert];
     if (!e || !peutModifierMerch()) return;
@@ -11505,7 +11661,17 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     if (!e) return;
     const u = e.uvs[uvMur];
     const nb = ev.target.closest("[data-nb]"), choisir = ev.target.closest("[data-choisir]"), retirer = ev.target.closest("[data-retirer], [data-retirer-index]");
-    if ((nb || choisir || retirer) && !peutModifierMerch()) return;
+    const ok = ev.target.closest("[data-ok-pos], [data-ok-index]");
+    if ((nb || choisir || retirer || ok) && !peutModifierMerch()) return;
+    if (ok) {
+      changerUvs(e, uvs => {
+        const z = uvs[uvMur].eq.find(x => x.id === ok.dataset.eq);
+        const a = z && (ok.dataset.okIndex != null ? z.articles[Number(ok.dataset.okIndex)] : z.articles.find(x => x.pos === ok.dataset.okPos));
+        if (!a) return false;
+        if (a.ok) { a.ok = null; a.d = versIso(aujourdhui()); } else a.ok = versIso(aujourdhui());
+      });
+      return;
+    }
     if (nb) {
       const n = Number(nb.dataset.nb);
       changerUvs(e, uvs => {
@@ -11597,6 +11763,14 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     if (u.condamne && u.eq.length && !b.classList.contains("arme")) { b.classList.add("arme"); b.textContent = u.eq.length > 1 ? `Confirmer : ses ${u.eq.length} équipements partent` : "Confirmer : son équipement part"; return; }
     eqMur = null;
     changerUvs(e, uvs => { uvs[uvMur] = { miroir: true, condamne: !u.condamne, eq: [] }; });
+  });
+  $("mu-alerte").addEventListener("click", ev => {
+    const b = ev.target.closest("[data-voulu]"), e = merchElements.docs[murOuvert];
+    if (b && e && peutModifierMerch()) modifierElementMerch(e.id, { voulus: [...(e.voulus || []).filter(x => x !== b.dataset.voulu), b.dataset.voulu].slice(-20) });
+  });
+  $("mu-voulus").addEventListener("click", ev => {
+    const b = ev.target.closest("[data-plus-voulu]"), e = merchElements.docs[murOuvert];
+    if (b && e && peutModifierMerch()) modifierElementMerch(e.id, { voulus: (e.voulus || []).filter(x => x !== b.dataset.plusVoulu) });
   });
   $("mu-prec").addEventListener("click", () => { const id = $("mu-prec").dataset.id, g = merchElements.docs[id]; if (g) { choixMerch = id; ouvrirMurMerch(id, g.uvs.length - 1, -1); marquerChoixMerch(); } });
   $("mu-suiv").addEventListener("click", () => { const id = $("mu-suiv").dataset.id; if (merchElements.docs[id]) { choixMerch = id; ouvrirMurMerch(id, 0, 1); marquerChoixMerch(); } });
@@ -11702,12 +11876,13 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     });
     return m;
   }
-  function puceRef(a, retirer) {
+  function puceRef(a, retirer, ok) {
     const x = pieces[a.p], s = element("span", "mu-ref" + (x ? "" : " absente"));
     const pastille = element("span", "mu-ref-photo"), src = x && srcPhoto(x.photo);
     pastille.style.background = couleurPiece(x) || "#c9ced8";
     if (src) { const img = element("img"); img.alt = ""; img.loading = "lazy"; img.addEventListener("error", () => img.remove(), { once: true }); img.src = src; pastille.append(img); }
     s.append(pastille, element("span", "mu-ref-nom", nomRef(x)));
+    if (ok) { const b = element("button", "mu-ref-ok", "★"); b.type = "button"; Object.assign(b.dataset, ok); b.setAttribute("aria-pressed", String(!!a.ok)); b.title = a.ok ? `Se vend bien ici (depuis le ${dateLongue(a.ok)})` : "Se vend bien ici ?"; b.setAttribute("aria-label", `Se vend bien ici : ${nomRef(x)}`); s.append(b); }
     if (retirer) { const b = element("button", "mu-ref-retirer", "×"); b.type = "button"; Object.assign(b.dataset, retirer); b.setAttribute("aria-label", `Retirer : ${nomRef(x)}`); s.append(b); }
     return s;
   }
@@ -11780,11 +11955,17 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
       return s;
     }));
     $("rf-vide").hidden = groupes.size > 0;
+    // Ce que le filtre plié ou cintre cache : on peut quand même le choisir (une exception).
+    const masquees = filtre ? piecesEnMagasin().filter(x => !vaIci(x, o.besoin) && (!cat || x.categorie === cat) && (!marque || x.marque === marque)
+      && (!q || sansAccents([x.marque, x.modele, x.couleur, x.ref, NOM_CATEGORIE[x.categorie]].join(" ")).includes(q))).length : 0;
+    $("rf-masquees").hidden = !masquees;
+    $("rf-masquees-texte").textContent = `${masquees} pièce${masquees > 1 ? "s" : ""} « ${o.besoin === "cintre" ? "plié seulement" : "cintre seulement"} » ${masquees > 1 ? "sont cachées" : "est cachée"}.`;
     $("rf-compte").textContent = o.multiple ? (o.choisies.size ? `${o.choisies.size} choisie${o.choisies.size > 1 ? "s" : ""}` : "") : "";
     $("rf-valider").disabled = !o.choisies.size;
     $("rf-valider").textContent = o.choisies.size ? `Ajouter (${o.choisies.size})` : "Ajouter";
   }
   ["rf-recherche", "rf-categorie", "rf-marque", "rf-compatible"].forEach(id => $(id).addEventListener(id === "rf-recherche" ? "input" : "change", rendreChoixRefs));
+  $("rf-montrer").addEventListener("click", () => { $("rf-compatible").checked = false; rendreChoixRefs(); });
   $("rf-liste").addEventListener("click", ev => {
     const o = choixRefs;
     if (!o) return;
@@ -11860,7 +12041,7 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
       $("mb-sous").textContent = `${t.nom} · ${arts.length} réf.${t.porte === "tenue" ? " · ce que porte le mannequin" : ""}`;
       $("mb-refs").replaceChildren(...arts.map((a, k) => {
         const li = element("li", "mb-ref");
-        li.append(puceRef(a, modifiable ? { retirerIndex: String(k) } : null));
+        li.append(puceRef(a, modifiable ? { retirerIndex: String(k) } : null, modifiable ? { okIndex: String(k) } : null));
         if (modifiable) {
           const act = element("span", "mu-eq-actions");
           [["haut", "↑", "Monter", k === 0], ["bas", "↓", "Descendre", k === arts.length - 1]].forEach(([d, s, nomA, off]) => {
@@ -11921,8 +12102,13 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     const e = merchElements.docs[meubleOuvert];
     if (!e || !peutModifierMerch()) return;
     const arts = [...(e.articles || [])];
-    const r = ev.target.closest("[data-retirer-index]"), d = ev.target.closest("[data-deplacer]");
-    if (r) { arts.splice(Number(r.dataset.retirerIndex), 1); modifierElementMerch(e.id, { articles: arts }); }
+    const r = ev.target.closest("[data-retirer-index]"), d = ev.target.closest("[data-deplacer]"), ok = ev.target.closest("[data-ok-index]");
+    if (ok) {
+      const a = arts[Number(ok.dataset.okIndex)];
+      if (!a) return;
+      arts[Number(ok.dataset.okIndex)] = a.ok ? { ...a, ok: null, d: versIso(aujourdhui()) } : { ...a, ok: versIso(aujourdhui()) };
+      modifierElementMerch(e.id, { articles: arts });
+    } else if (r) { arts.splice(Number(r.dataset.retirerIndex), 1); modifierElementMerch(e.id, { articles: arts }); }
     else if (d) {
       const k = Number(d.dataset.index), j = d.dataset.deplacer === "haut" ? k - 1 : k + 1;
       if (j < 0 || j >= arts.length) return;
@@ -12003,20 +12189,8 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
   });
   // Poser une pièce à une place d'un meuble (la place d'une seule réf. est remplacée).
   function placerPiece(e, p, o) {
-    const t = TYPES_MERCH[e.type];
-    if (t.porte === "uv") {
-      const u0 = e.uvs[o.uv], q0 = u0 && u0.eq.find(q => q.id === o.eq);
-      if (!q0) return Promise.resolve();
-      const uvs = copieUvs(e.uvs), q = uvs[o.uv].eq.find(x => x.id === o.eq);
-      if (o.pos) {
-        q.articles = q.articles.filter(a => a.pos !== o.pos);
-        if (q.type === "etagere" && !q.refs) q.refs = 1;
-      }
-      q.articles.push(nouvelArticle(p, o.pos));
-      return modifierElementMerch(e.id, { uvs });
-    }
-    if (t.porte === "niveaux") return modifierElementMerch(e.id, tableEnRegle(e, { articles: [...e.niveaux[0].articles.filter(a => a.pos !== o.pos), nouvelArticle(p, o.pos)] }));
-    return modifierElementMerch(e.id, { articles: [...(e.articles || []), nouvelArticle(p)] });
+    const b = brouillonMeuble(e);
+    return poserDans(b, p, o) ? modifierElementMerch(e.id, b) : Promise.resolve();
   }
   $("pl-ou").addEventListener("click", async ev => {
     const b = ev.target.closest("[data-k]"), x = pieceAPlacer, plan = planEnPlace() || planAffiche();
@@ -12036,6 +12210,681 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     rendrePlacer();
   });
   $("fenetre-placer").addEventListener("close", () => { pieceAPlacer = null; });
+
+  // ----- les poses : chaque réf. posée sur le plan, où elle est, depuis quand -----
+  // Une pose : { e, a (l'article), uv, eq, q, niveau, type (facing, pressing, etagere, coudee, table, portant…), besoin, zone, texte }.
+  function posesDuPlan(plan) {
+    const r = [];
+    elementsDuPlan(plan.id).forEach(e => {
+      const t = TYPES_MERCH[e.type];
+      if (t.porte === "uv") e.uvs.forEach((u, i) => u.eq.forEach(q => q.articles.forEach(a => r.push({ e, a, uv: i, eq: q.id, q, type: q.type, besoin: BESOIN_EQ[q.type], zone: zoneUv(plan, e, i),
+        texte: `${nomMeuble(e)} · UV ${i + 1} · ${nomEq(u, q).toLowerCase()} à ${hauteurEq(q)}` }))));
+      else if (t.porte === "niveaux") e.niveaux.forEach((n, niv) => n.articles.forEach(a => r.push({ e, a, niveau: niv, type: "table", besoin: "plie", zone: zoneElement(plan, e),
+        texte: `${nomMeuble(e)}${niv ? ` · ${niv + 1}e hauteur` : a.pos ? ` · ${libellePile(e, a.pos).toLowerCase()}` : ""}` })));
+      else (e.articles || []).forEach(a => r.push({ e, a, type: t.famille, besoin: besoinMeuble(e), zone: t.famille === "repere" ? null : zoneElement(plan, e), texte: nomMeuble(e) }));
+    });
+    return r;
+  }
+  // Un brouillon d'un meuble : on y retire, on y pose, on y change des réfs, puis on l'écrit d'un coup.
+  function brouillonMeuble(e) {
+    const t = TYPES_MERCH[e.type];
+    if (t.porte === "uv") return { uvs: copieUvs(e.uvs) };
+    if (t.porte === "niveaux") return { niveaux: e.niveaux.map(n => ({ articles: n.articles.map(a => ({ ...a })) })) };
+    return { articles: (e.articles || []).map(a => ({ ...a })) };
+  }
+  function trouverDansBrouillon(b, pose) {
+    const l = b.uvs ? ((b.uvs[pose.uv] && b.uvs[pose.uv].eq.find(x => x.id === pose.eq)) || {}).articles : b.niveaux ? (b.niveaux[pose.niveau] || {}).articles : b.articles;
+    return l ? [l, l.findIndex(a => a.p === pose.a.p && (a.pos || null) === (pose.a.pos || null))] : [null, -1];
+  }
+  // Changer une réf. posée (faire renvoie false pour la retirer).
+  function changerPose(pose, faire) {
+    const e = merchElements.docs[pose.e.id];
+    if (!e) return Promise.resolve();
+    const b = brouillonMeuble(e), [l, k] = trouverDansBrouillon(b, pose);
+    if (!l || k < 0) return Promise.resolve();
+    if (faire(l[k]) === false) l.splice(k, 1);
+    return modifierElementMerch(e.id, b);
+  }
+  // Poser dans un brouillon : o = { uv, eq, pos } (un mur), { pos } (une table), {} (une liste).
+  function poserDans(b, p, o) {
+    if (b.uvs) {
+      const q = b.uvs[o.uv] && b.uvs[o.uv].eq.find(x => x.id === o.eq);
+      if (!q) return false;
+      if (o.pos) { q.articles = q.articles.filter(a => a.pos !== o.pos); if (q.type === "etagere" && !q.refs) q.refs = 1; }
+      q.articles.push(nouvelArticle(p, o.pos));
+      return true;
+    }
+    if (b.niveaux) { b.niveaux[0].articles = b.niveaux[0].articles.filter(a => a.pos !== o.pos); b.niveaux[0].articles.push(nouvelArticle(p, o.pos)); return true; }
+    b.articles.push(nouvelArticle(p));
+    return true;
+  }
+  // Déplacer une réf. (un seul enregistrement si elle reste sur le même meuble).
+  async function deplacerPose(pose, cible) {
+    if (cible.e.id === pose.e.id) {
+      const e = merchElements.docs[pose.e.id], b = brouillonMeuble(e), [l, k] = trouverDansBrouillon(b, pose);
+      if (l && k >= 0) l.splice(k, 1);
+      poserDans(b, pose.a.p, cible.o);
+      return modifierElementMerch(e.id, b);
+    }
+    await changerPose(pose, () => false);
+    const c = merchElements.docs[cible.e.id];
+    if (c) await placerPiece(c, pose.a.p, cible.o);
+  }
+  const joursDepuis = iso => Math.max(0, Math.round((aujourdhui() - depuisIso(iso)) / JOUR_MS));
+  const CHALEUR_ZONE = { chaude: 2, tiede: 1, froide: 0 };
+  const DU_GENRE = { facing: "du facing", pressing: "du pressing", coudee: "de la barre coudée", etagere: "de l'étagère", table: "de la table", portant: "du portant", presentoir: "du présentoir", buste: "du mannequin", repere: "de la vitrine" };
+  const AU_GENRE = { facing: "au facing", pressing: "au pressing", coudee: "à la barre coudée", etagere: "à l'étagère", table: "à la table", portant: "au portant", presentoir: "au présentoir" };
+  // Les places libres d'un plan pour une pièce (ce qui va ici : plié ou cintre), avec ce qu'il y a autour.
+  function placesLibres(plan, x) {
+    const r = [];
+    elementsDuPlan(plan.id).forEach(e => {
+      const t = TYPES_MERCH[e.type];
+      if (t.porte === "uv") e.uvs.forEach((u, i) => {
+        if (estMiroir(u)) return;
+        const voisins = [i - 1, i, i + 1].flatMap(k => (e.uvs[k] && !estMiroir(e.uvs[k]) ? e.uvs[k].eq.flatMap(q => q.articles.map(a => pieces[a.p])) : [])).filter(Boolean);
+        u.eq.forEach(q => {
+          if (!vaIci(x, BESOIN_EQ[q.type])) return;
+          const base = { e, genre: q.type, zone: zoneUv(plan, e, i), voisins, ferme: q.ferme }, nom = `${nomMeuble(e)} · UV ${i + 1} · ${nomEq(u, q).toLowerCase()} à ${hauteurEq(q)}`;
+          const libre = pos => !q.articles.some(a => a.pos === pos);
+          if (q.type === "etagere") {
+            if (!q.refs && !q.articles.length) r.push({ ...base, o: { uv: i, eq: q.id, pos: "1" }, texte: nom });
+            else ["1", "2"].slice(0, q.refs).filter(libre).forEach(pos => r.push({ ...base, o: { uv: i, eq: q.id, pos }, texte: nom + (q.refs === 2 ? (pos === "1" ? ", pile de gauche" : ", pile de droite") : "") }));
+          } else if (q.type === "facing") { if (libre("1")) r.push({ ...base, o: { uv: i, eq: q.id, pos: "1" }, texte: nom }); }
+          else if (q.type === "coudee") POSITIONS_COUDEE.filter(([pos]) => libre(pos)).forEach(([pos, nomP]) => r.push({ ...base, o: { uv: i, eq: q.id, pos }, texte: `${nom}, ${nomP.toLowerCase()}` }));
+          else if (q.articles.length < Math.max(3, Math.round(e.uvL * 10))) r.push({ ...base, o: { uv: i, eq: q.id }, texte: nom });
+        });
+      });
+      else if (t.porte === "niveaux") {
+        if (!vaIci(x, "plie")) return;
+        const voisins = e.niveaux[0].articles.map(a => pieces[a.p]).filter(Boolean);
+        ["a", "b"].forEach(c => { for (let k = 1; k <= e.piles; k++) if (!e.niveaux[0].articles.some(a => a.pos === c + k)) r.push({ e, o: { pos: c + k }, genre: "table", zone: zoneElement(plan, e), voisins, texte: `${nomMeuble(e)} · ${libellePile(e, c + k).toLowerCase()}` }); });
+      } else if (t.porte === "articles" && t.famille !== "repere") {
+        if (!vaIci(x, besoinMeuble(e))) return;
+        const pour = { bac: ["calecons", "chaussettes", "accessoires", "bonnets"], casquettes: ["casquettes", "bonnets"], ceintures: ["ceintures"] }[e.type];
+        if (pour && !pour.includes(x.categorie)) return;
+        const cap = t.famille === "portant" ? Math.max(4, Math.round(e.l * (e.type === "tourniquet" ? 10 : 8))) : 12;
+        if ((e.articles || []).length < cap) r.push({ e, o: {}, genre: t.famille, zone: zoneElement(plan, e), voisins: (e.articles || []).map(a => pieces[a.p]).filter(Boolean), texte: nomMeuble(e) });
+      }
+    });
+    return r;
+  }
+  // Où mettre une réf. qui ne bouge pas : avec les autres couleurs de son modèle (ta règle), en changeant de présentation
+  // (facing ↔ pressing ↔ étagère ↔ table), plus au chaud ; l'ancienne collection vers le froid ; les marques en avant au chaud.
+  function suggestionsPour(pose, plan) {
+    const x = pieces[pose.a.p];
+    if (!x) return [];
+    const r = reglagesMerch(), horsSaison = r.horsSaison.includes(x.categorie), prioritaire = rangMarque(x.marque) <= 2, cle = cleModele(x);
+    const ici = pose.zone ? CHALEUR_ZONE[pose.zone] : 1, vus = new Set();
+    return placesLibres(plan, x).filter(c => !(c.e.id === pose.e.id && c.genre === pose.type)).map(c => {
+      let score = 0;
+      const raisons = [];
+      if (c.voisins.some(y => y.id !== x.id && cleModele(y) === cle)) { score += 4; raisons.push("avec les autres couleurs du modèle"); }
+      else if (c.voisins.some(y => y.categorie === x.categorie)) { score += 1.5; raisons.push(`avec les ${NOM_CATEGORIE[x.categorie].toLowerCase()}`); }
+      if (c.genre !== pose.type && DU_GENRE[pose.type] && AU_GENRE[c.genre]) { score += 2; raisons.push(`passe ${DU_GENRE[pose.type]} ${AU_GENRE[c.genre]}`); }
+      const z = c.zone ? CHALEUR_ZONE[c.zone] : 1;
+      if (horsSaison) { if (c.zone === "froide") { score += 2; raisons.push("hors saison : au froid"); } else score -= 1; }
+      else {
+        score += (z - ici) * 1.5;
+        if (z > ici) raisons.push(`plus au chaud (${NOM_ZONE[c.zone].toLowerCase()})`);
+        if (prioritaire && c.zone === "chaude") { score += 1; raisons.push("une marque à mettre en avant"); }
+      }
+      if (c.ferme) score -= 1;
+      return { ...c, score, raisons };
+    }).sort((a, b) => b.score - a.score).filter(c => {
+      const k = `${c.e.id}|${c.o.uv ?? ""}|${c.o.eq || ""}|${c.genre === "table" ? "" : c.o.pos || ""}`;
+      if (vus.has(k)) return false;
+      vus.add(k);
+      return true;
+    }).slice(0, 3);
+  }
+  // Toutes les alertes d'un plan.
+  function alertesDuPlan(plan) {
+    const seuil = reglagesMerch().seuil, poses = posesDuPlan(plan);
+    const immobiles = poses.filter(p => p.a.d && !p.a.ok && pieces[p.a.p] && joursDepuis(p.a.d) >= seuil).sort((a, b) => joursDepuis(b.a.d) - joursDepuis(a.a.d));
+    const bien = poses.filter(p => p.a.ok && pieces[p.a.p]);
+    const regles = [];
+    elementsDuPlan(plan.id).filter(e => TYPES_MERCH[e.type].porte === "uv").forEach(e => {
+      const al = alertesMur(e);
+      al.facings.forEach(f => regles.push({ e, texte: `${nomMeuble(e)} : deux facings côte à côte, ${f.texte}` }));
+      al.hauteurs.forEach(h => regles.push({ e, texte: `${nomMeuble(e)}, UV ${h.uv + 1} : ${h.texte}` }));
+    });
+    poses.forEach(p => { const x = pieces[p.a.p]; if (x && p.besoin && !vaIci(x, p.besoin)) regles.push({ e: p.e, exception: true, texte: `${nomRef(x)} (${NOM_PRESENTATION[presentationDe(x)].toLowerCase()}) : ${p.texte}` }); });
+    const exposees = new Set(poses.map(p => p.a.p));
+    const aExposer = piecesEnMagasin().filter(x => (x.reperes.nouveaute || x.reperes.meilleure) && !exposees.has(x.id));
+    const ra = piecesAReassortir(), reassort = poses.filter(p => ra.has(p.a.p));
+    const perdues = poses.filter(p => !pieces[p.a.p] || pieces[p.a.p].archive);
+    return { seuil, immobiles, bien, regles, aExposer, reassort, perdues };
+  }
+  let posesAffichees = [];
+  const suggestionsOuvertes = new Set();
+  const clePose = p => `${p.e.id}|${p.uv ?? ""}|${p.eq || ""}|${p.niveau ?? ""}|${p.a.p}|${p.a.pos || ""}`;
+  function rendreAlertesMerch() {
+    const plan = planEnPlace() || planAffiche(), modifiable = peutModifierMerch();
+    if (!plan) return;
+    const al = alertesDuPlan(plan);
+    posesAffichees = [];
+    const indexPose = p => { posesAffichees.push(p); return String(posesAffichees.length - 1); };
+    $("me-al-plan").textContent = plan.actif ? "" : `Les alertes du plan « ${plan.nom} » (pas encore en place).`;
+    $("me-al-plan").hidden = plan.actif;
+    // Au même endroit depuis trop longtemps.
+    $("me-al-seuil").textContent = `Au même endroit depuis ${al.seuil} jours ou plus`;
+    $("me-al-immobiles").replaceChildren(...al.immobiles.map(p => {
+      const li = element("li", "al-ligne"), k = indexPose(p), cle = clePose(p);
+      const tete = element("div", "al-tete");
+      const texte = element("div", "al-texte");
+      texte.append(element("span", "al-ou", p.texte), element("span", "al-depuis", `depuis ${joursDepuis(p.a.d)} jours (posée le ${dateLongue(p.a.d)})`));
+      tete.append(puceRef(p.a, null), texte);
+      li.append(tete);
+      if (modifiable) {
+        const act = element("div", "al-actions");
+        [["ok", "Se vend bien ici"], ["deplacer", suggestionsOuvertes.has(cle) ? "Masquer les idées" : "Où la mettre ?"], ["plus-tard", "Dans une semaine"]].forEach(([a, nomA]) => {
+          const b = element("button", a === "deplacer" ? "bouton-second bouton-petit" : "lien-discret", nomA);
+          b.type = "button"; b.dataset.alerte = a; b.dataset.k = k; b.dataset.cle = cle;
+          act.append(b);
+        });
+        li.append(act);
+        if (suggestionsOuvertes.has(cle)) {
+          const ideas = suggestionsPour(p, plan), ul = element("ul", "al-idees");
+          ul.append(...(ideas.length ? ideas.map((c, j) => {
+            const it = element("li", "al-idee"), t = element("div", "al-texte");
+            t.append(element("span", "al-ou", c.texte), element("span", "al-depuis", c.raisons.length ? c.raisons.join(" · ") : "une place libre"));
+            const b = element("button", "bouton-principal bouton-petit", "La mettre là");
+            b.type = "button"; b.dataset.alerte = "mettre"; b.dataset.k = k; b.dataset.j = String(j); b.dataset.cle = cle;
+            it.append(t, b);
+            return it;
+          }) : [element("li", "aide", "Pas de place libre qui lui va : libère une étagère, une pile ou un facing.")]));
+          li.append(ul);
+        }
+      }
+      return li;
+    }));
+    $("me-al-immobiles-vide").hidden = al.immobiles.length > 0;
+    // Ce qui se vend bien là où c'est : l'outil ne demande pas de le bouger.
+    $("me-al-bien").replaceChildren(...al.bien.map(p => {
+      const li = element("li", "al-ligne"), tete = element("div", "al-tete"), texte = element("div", "al-texte");
+      texte.append(element("span", "al-ou", p.texte), element("span", "al-depuis", `se vend bien ici depuis le ${dateLongue(p.a.ok)}`));
+      tete.append(puceRef(p.a, null), texte);
+      li.append(tete);
+      if (modifiable) { const b = element("button", "lien-discret", "Ne plus la garder là"); b.type = "button"; b.dataset.alerte = "pas-ok"; b.dataset.k = indexPose(p); li.append(b); }
+      return li;
+    }));
+    $("me-al-bien-bloc").hidden = !al.bien.length;
+    // Les règles à revoir ; les exceptions plié ou cintre, à vérifier.
+    const regles = al.regles.filter(r => !r.exception), exceptions = al.regles.filter(r => r.exception);
+    $("me-al-regles").replaceChildren(...regles.map(r => element("li", "al-regle", r.texte)));
+    $("me-al-regles-bloc").hidden = !regles.length;
+    $("me-al-exceptions").replaceChildren(...exceptions.map(r => element("li", "al-regle exception", r.texte)));
+    $("me-al-exceptions-bloc").hidden = !exceptions.length;
+    // À exposer : les nouveautés et les meilleures ventes qui ne sont nulle part.
+    $("me-al-exposer").replaceChildren(...al.aExposer.map(x => {
+      const li = element("li", "al-ligne al-exposer"), tete = element("div", "al-tete"), texte = element("div", "al-texte");
+      texte.append(element("span", "al-ou", nomRef(x)), element("span", "al-depuis", [x.reperes.nouveaute ? "nouveauté" : "", x.reperes.meilleure ? "meilleure vente" : ""].filter(Boolean).join(" · ") + " · exposée nulle part"));
+      tete.append(puceRef({ p: x.id }, null), texte);
+      li.append(tete);
+      if (modifiable) { const b = element("button", "bouton-second bouton-petit", "La placer"); b.type = "button"; b.dataset.placer = x.id; li.append(b); }
+      return li;
+    }));
+    $("me-al-exposer-bloc").hidden = !al.aExposer.length;
+    $("me-al-reassort").replaceChildren(...al.reassort.map(p => { const li = element("li", "al-regle"); li.textContent = `${nomRef(pieces[p.a.p])} : ${p.texte}`; return li; }));
+    $("me-al-reassort-bloc").hidden = !al.reassort.length;
+    $("me-al-perdues").replaceChildren(...al.perdues.map(p => {
+      const li = element("li", "al-ligne"), t = element("div", "al-texte");
+      t.append(element("span", "al-ou", pieces[p.a.p] ? `${nomRef(pieces[p.a.p])} (archivée)` : "Une pièce supprimée du Dressing"), element("span", "al-depuis", p.texte));
+      li.append(t);
+      if (modifiable) { const b = element("button", "lien-discret", "La retirer du plan"); b.type = "button"; b.dataset.alerte = "retirer"; b.dataset.k = indexPose(p); li.append(b); }
+      return li;
+    }));
+    $("me-al-perdues-bloc").hidden = !al.perdues.length;
+  }
+  function nombreAlertesMerch() {
+    const plan = planEnPlace() || planAffiche();
+    if (!plan) return 0;
+    const al = alertesDuPlan(plan);
+    return al.immobiles.length + al.regles.filter(r => !r.exception).length + al.perdues.length;
+  }
+  $("me-volet-alertes").addEventListener("click", async ev => {
+    const placer = ev.target.closest("[data-placer]");
+    if (placer) { const x = pieces[placer.dataset.placer]; if (x) ouvrirPlacer(x); return; }
+    const b = ev.target.closest("[data-alerte]");
+    if (!b || !peutModifierMerch()) return;
+    const pose = posesAffichees[Number(b.dataset.k)], plan = planEnPlace() || planAffiche();
+    if (!pose) return;
+    const a = b.dataset.alerte, aujourd = versIso(aujourdhui());
+    if (a === "deplacer") { if (suggestionsOuvertes.has(b.dataset.cle)) suggestionsOuvertes.delete(b.dataset.cle); else suggestionsOuvertes.add(b.dataset.cle); rendreAlertesMerch(); return; }
+    if (a === "ok") { await changerPose(pose, x => { x.ok = aujourd; }); toast("Notée : elle se vend bien ici, l'outil ne te demandera plus de la bouger."); }
+    else if (a === "pas-ok") await changerPose(pose, x => { x.ok = null; x.d = aujourd; });
+    else if (a === "plus-tard") { const seuil = reglagesMerch().seuil; await changerPose(pose, x => { x.d = versIso(aujourdhui() - Math.max(0, seuil - 7) * JOUR_MS); }); toast("On en reparle dans une semaine."); }
+    else if (a === "retirer") await changerPose(pose, () => false);
+    else if (a === "mettre") {
+      const c = suggestionsPour(pose, plan)[Number(b.dataset.j)];
+      if (!c) return;
+      suggestionsOuvertes.delete(b.dataset.cle);
+      await deplacerPose(pose, c);
+      toast(`${nomRef(pieces[pose.a.p])} : déplacée sur ${c.texte}.`);
+    }
+    rendreAlertesMerch();
+  });
+
+  // ----- la 3D : le magasin en volume, vu d'ensemble ou en s'y promenant -----
+  // Three.js n'est chargé qu'à l'ouverture de l'onglet. Le plan (x, y) devient le sol (x, z) ; la hauteur est y.
+  const URL_THREE = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
+  const URL_ORBITE = "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js";
+  let t3d = null, chargement3D = null, reconstruction3D = 0;
+  const calques3D = { noms: true, photos: true };
+  const chargerScript = src => new Promise((ok, ko) => { const s = document.createElement("script"); s.src = src; s.async = true; s.onload = ok; s.onerror = ko; document.head.append(s); });
+  function charger3D() {
+    if (!chargement3D) {
+      chargement3D = (window.THREE ? Promise.resolve() : chargerScript(URL_THREE)).then(() => (window.THREE.OrbitControls ? null : chargerScript(URL_ORBITE)));
+      chargement3D.catch(() => { chargement3D = null; });
+    }
+    return chargement3D;
+  }
+  async function ouvrir3D() {
+    const etat = $("me-3d-etat");
+    if (!t3d) {
+      etat.textContent = "Chargement de la 3D…";
+      etat.hidden = false;
+      try { await charger3D(); } catch (_) { etat.textContent = "La 3D n'a pas pu se charger. Vérifie ta connexion, puis rouvre l'onglet."; return; }
+      if (ongletMerch !== "3d") return;
+      try { creer3D(); } catch (_) { etat.textContent = "Ce navigateur n'affiche pas la 3D (WebGL)."; return; }
+    }
+    etat.hidden = true;
+    taille3D();
+    construireScene3D(true);
+  }
+  function creer3D() {
+    if (t3d) return;
+    const T = window.THREE, zone = $("me-3d-zone");
+    const renderer = new T.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+    renderer.domElement.className = "me-3d-canvas";
+    zone.prepend(renderer.domElement);
+    const scene = new T.Scene();
+    scene.background = new T.Color("#e9edf3");
+    scene.add(new T.HemisphereLight(0xffffff, 0xb9ad98, 0.72));
+    const soleil = new T.DirectionalLight(0xffffff, 0.5);
+    soleil.position.set(-8, 14, 10);
+    scene.add(soleil);
+    const camera = new T.PerspectiveCamera(55, 1, 0.05, 300);
+    const controls = new T.OrbitControls(camera, renderer.domElement);
+    controls.screenSpacePanning = true;
+    controls.addEventListener("change", () => { if (!t3d.anim) rendu3D(); });
+    t3d = { T, renderer, scene, camera, controls, groupe: null, marques: null, mode: "ensemble", anim: null, mats: new Map(), textures: new Map(), choisi: null, posees: false };
+    // Toucher sans glisser : un meuble (on s'en approche) ou, en promenade, le sol (on y va).
+    let depart = null;
+    renderer.domElement.addEventListener("pointerdown", ev => { depart = { x: ev.clientX, y: ev.clientY }; });
+    renderer.domElement.addEventListener("pointerup", ev => {
+      if (!depart || Math.hypot(ev.clientX - depart.x, ev.clientY - depart.y) > 6) return;
+      depart = null;
+      toucher3D(ev);
+    });
+    window.addEventListener("resize", () => { if (t3d && ongletMerch === "3d") { taille3D(); rendu3D(); } });
+  }
+  function taille3D() {
+    const zone = $("me-3d-zone"), l = zone.clientWidth || 640;
+    const h = Math.round(Math.min(window.innerHeight * (window.matchMedia("(max-width: 599px)").matches ? 0.6 : 0.72), Math.max(320, l * 0.8)));
+    t3d.renderer.setSize(l, h);
+    t3d.camera.aspect = l / h;
+    t3d.camera.updateProjectionMatrix();
+  }
+  const rendu3D = () => { if (t3d) t3d.renderer.render(t3d.scene, t3d.camera); };
+  function mat3D(couleur, opts) {
+    const cle = couleur + (opts ? JSON.stringify(opts) : "");
+    if (!t3d.mats.has(cle)) t3d.mats.set(cle, new t3d.T.MeshLambertMaterial({ color: couleur, ...(opts || {}) }));
+    return t3d.mats.get(cle);
+  }
+  function boite(l, h, p, couleur, x, y, z, opts) {
+    const m = new t3d.T.Mesh(new t3d.T.BoxGeometry(l, h, p), Array.isArray(couleur) ? couleur : mat3D(couleur, opts));
+    m.position.set(x, y, z);
+    return m;
+  }
+  function cylindre(r, h, couleur, x, y, z, opts) {
+    const m = new t3d.T.Mesh(new t3d.T.CylinderGeometry(r, r, h, 16), mat3D(couleur, opts));
+    m.position.set(x, y, z);
+    return m;
+  }
+  // La photo d'une pièce, en texture (chargée une fois) ; à défaut, sa couleur.
+  function texturePhoto(x) {
+    const src = x && calques3D.photos && srcPhoto(x.photo);
+    if (!src) return null;
+    if (!t3d.textures.has(src)) {
+      const tex = new t3d.T.TextureLoader().load(src, () => rendu3D(), undefined, () => { t3d.textures.set(src, null); });
+      t3d.textures.set(src, tex);
+    }
+    return t3d.textures.get(src);
+  }
+  const couleur3D = a => (a && couleurPiece(pieces[a.p])) || null;
+  const GRIS_VETEMENTS = ["#9aa3b2", "#aeb5c1", "#8a93a5", "#b8bec9"];
+  // Un vêtement de face (facing) : un panneau, avec la photo de la pièce s'il y en a une.
+  function vetementFace(a, l, h, x, y, z) {
+    const coul = couleur3D(a) || GRIS_VETEMENTS[0], tex = a ? texturePhoto(pieces[a.p]) : null;
+    const cote = mat3D(coul);
+    const mats = tex ? [cote, cote, cote, cote, new t3d.T.MeshLambertMaterial({ map: tex }), cote] : cote;
+    return boite(l, h, 0.03, mats, x, y, z);
+  }
+  function etiquette3D(texte) {
+    const c = document.createElement("canvas"), ctx = c.getContext("2d"), f = 36;
+    ctx.font = `700 ${f}px "Source Sans 3", system-ui, sans-serif`;
+    const w = Math.ceil(ctx.measureText(texte).width) + 28;
+    c.width = w; c.height = f + 22;
+    ctx.font = `700 ${f}px "Source Sans 3", system-ui, sans-serif`;
+    ctx.fillStyle = "rgba(255,255,255,.88)";
+    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(0, 0, w, f + 22, 14) : ctx.rect(0, 0, w, f + 22); ctx.fill();
+    ctx.fillStyle = "#172033";
+    ctx.textBaseline = "middle";
+    ctx.fillText(texte, 14, (f + 22) / 2 + 1);
+    const tex = new t3d.T.CanvasTexture(c);
+    const s = new t3d.T.Sprite(new t3d.T.SpriteMaterial({ map: tex, depthTest: false }));
+    s.renderOrder = 10;
+    const hauteur = 0.32;
+    s.scale.set(hauteur * w / (f + 22), hauteur, 1);
+    return s;
+  }
+  // Les plaques à crans : une rainure tous les 5 cm.
+  function texturePlaque(crans) {
+    const cle = "plaque" + crans;
+    if (!t3d.textures.has(cle)) {
+      const c = document.createElement("canvas");
+      c.width = 32; c.height = 16;
+      const ctx = c.getContext("2d");
+      ctx.fillStyle = "#f4f5f7"; ctx.fillRect(0, 0, 32, 16);
+      ctx.fillStyle = "#d4d8df"; ctx.fillRect(0, 14, 32, 2);
+      const tex = new t3d.T.CanvasTexture(c);
+      tex.wrapS = tex.wrapT = t3d.T.RepeatWrapping;
+      tex.repeat.set(1, crans);
+      t3d.textures.set(cle, tex);
+    }
+    return t3d.textures.get(cle);
+  }
+  function matPlaque(crans) {
+    const cle = "plaque-mat" + crans;
+    if (!t3d.mats.has(cle)) t3d.mats.set(cle, new t3d.T.MeshLambertMaterial({ map: texturePlaque(crans) }));
+    return t3d.mats.get(cle);
+  }
+  // ----- chaque meuble en volume -----
+  function objet3D(e, plan) {
+    const T = t3d.T, t = TYPES_MERCH[e.type], g = new T.Group();
+    g.position.set(e.x, 0, e.y);
+    g.rotation.y = -e.rot * Math.PI / 180;
+    let haut = 1;
+    if (t.porte === "uv") {
+      const H = e.crans * CRAN_CM / 100, w = e.uvL;
+      haut = H;
+      e.uvs.forEach((u, i) => {
+        const x0 = -e.l / 2 + i * w, xc = x0 + w / 2;
+        if (estMiroir(u)) { g.add(boite(w - 0.02, H - 0.3, 0.04, "#cfe6f3", xc, H / 2, -0.15, { emissive: "#6f8fa3", emissiveIntensity: 0.25 })); return; }
+        const plaque = new T.Mesh(new T.BoxGeometry(w - 0.01, H, 0.06), matPlaque(e.crans));
+        plaque.position.set(xc, H / 2, -0.17);
+        g.add(plaque);
+        g.add(boite(0.025, H, 0.07, "#b8c0cc", x0, H / 2, -0.16));
+        u.eq.forEach(q => {
+          const y = q.cran * CRAN_CM / 100, coul = pos => couleur3D(q.articles.find(a => a.pos === pos));
+          if (q.type === "etagere") {
+            g.add(boite(w - 0.03, 0.02, 0.34, "#ffffff", xc, y, 0.03));
+            if (q.refs) [0, 1].forEach(k => g.add(boite(w / 2 - 0.05, 0.18, 0.27, coul(q.refs === 2 ? String(k + 1) : "1") || GRIS_VETEMENTS[k + 1], x0 + w * (k ? 0.75 : 0.25), y + 0.1, 0.04)));
+          } else if (q.type === "pressing") {
+            const barre = cylindre(0.012, w - 0.04, "#7b8494", xc, y, 0.1);
+            barre.rotation.z = Math.PI / 2;
+            g.add(barre);
+            const n = Math.max(3, Math.round(w / 0.09));
+            for (let k = 0; k < n; k++) {
+              const a = q.articles.length ? q.articles[Math.floor(k * q.articles.length / n)] : null;
+              g.add(boite(0.035, 0.74, 0.42, couleur3D(a) || GRIS_VETEMENTS[k % 4], x0 + 0.04 + (w - 0.08) * (k + 0.5) / n, y - 0.4, 0.1));
+            }
+          } else {
+            const bras = cylindre(0.01, 0.42, "#7b8494", xc, y, 0.06);
+            bras.rotation.x = Math.PI / 2;
+            g.add(bras);
+            if (q.type === "coudee") {
+              g.add(vetementFace(q.articles.find(a => a.pos === "derriere"), Math.min(0.44, w - 0.1), 0.62, xc, y - 0.33, 0.12));
+              g.add(vetementFace(q.articles.find(a => a.pos === "devant"), Math.min(0.46, w - 0.08), 0.66, xc, y - 0.47, 0.3));
+            } else {
+              g.add(vetementFace(q.articles.find(a => a.pos === "1"), Math.min(0.46, w - 0.08), 0.7, xc, y - 0.38, 0.28));
+              if (coul("2")) g.add(vetementFace(q.articles.find(a => a.pos === "2"), Math.min(0.42, w - 0.12), 0.54, xc, y - 0.33, 0.3));
+            }
+          }
+        });
+      });
+      g.add(boite(0.025, H, 0.07, "#b8c0cc", e.l / 2, H / 2, -0.16));
+    } else if (t.porte === "niveaux") {
+      const h = e.type === "grande-table" ? 0.78 : 0.72;
+      haut = h + 0.2;
+      g.add(boite(e.l - 0.12, h - 0.06, e.p - 0.12, "#c9b089", 0, (h - 0.06) / 2, 0));
+      g.add(boite(e.l, 0.06, e.p, "#e6d3b0", 0, h - 0.03, 0));
+      for (let k = 1; k < e.hauteurs; k++) g.add(boite(e.l + 0.12 * k, 0.04, e.p + 0.1 * k, "#dcc6a0", 0, h - 0.24 * k, 0));
+      const n = e.piles, lp = Math.min((e.l - 0.08) / n * 0.82, 0.34), pp = Math.min(e.p * 0.4, 0.34);
+      ["a", "b"].forEach((r, ri) => { for (let k = 1; k <= n; k++) {
+        const a = e.niveaux[0].articles.find(x => x.pos === r + k);
+        if (!a) continue;
+        g.add(boite(lp, 0.16, pp, couleur3D(a) || GRIS_VETEMENTS[1], -e.l / 2 + 0.04 + (e.l - 0.08) * (k - 0.5) / n, h + 0.08, (ri ? 1 : -1) * e.p / 4));
+      } });
+    } else if (t.famille === "portant") {
+      const arts = e.articles || [], hRail = 1.45;
+      haut = hRail + 0.1;
+      if (e.type === "tourniquet") {
+        g.add(cylindre(0.02, hRail, "#7b8494", 0, hRail / 2, 0));
+        const anneau = new T.Mesh(new T.TorusGeometry(e.l / 2 * 0.85, 0.012, 8, 40), mat3D("#7b8494"));
+        anneau.rotation.x = Math.PI / 2;
+        anneau.position.y = hRail;
+        g.add(anneau);
+        const n = Math.max(8, Math.round(e.l * Math.PI * 7));
+        for (let k = 0; k < n; k++) {
+          const ang = k / n * Math.PI * 2, r = e.l / 2 * 0.85, a = arts.length ? arts[Math.floor(k * arts.length / n)] : null;
+          const v = boite(0.035, 0.8, 0.4, couleur3D(a) || GRIS_VETEMENTS[k % 4], Math.cos(ang) * r, hRail - 0.43, Math.sin(ang) * r);
+          v.rotation.y = -ang;
+          g.add(v);
+        }
+      } else {
+        const rails = e.p > 1 ? [-e.p / 4, e.p / 4] : [0];
+        [-1, 1].forEach(s => g.add(boite(0.04, hRail, Math.max(0.4, e.p * 0.8), "#8a93a5", s * (e.l / 2 - 0.03), hRail / 2, 0)));
+        rails.forEach((z, ri) => {
+          const rail = cylindre(0.014, e.l - 0.06, "#7b8494", 0, hRail, z);
+          rail.rotation.z = Math.PI / 2;
+          g.add(rail);
+          const n = Math.max(6, Math.floor((e.l - 0.12) / 0.07));
+          for (let k = 0; k < n; k++) {
+            const a = arts.length ? arts[Math.floor((k + ri * n) * arts.length / (n * rails.length))] : null;
+            g.add(boite(0.035, 0.82, 0.44, couleur3D(a) || GRIS_VETEMENTS[k % 4], -e.l / 2 + 0.06 + (e.l - 0.12) * (k + 0.5) / n, hRail - 0.44, z));
+          }
+        });
+      }
+    } else if (t.famille === "buste") {
+      const a = (e.articles || [])[0], c = couleur3D(a) || "#e9e6e0", grand = e.type === "mannequin";
+      haut = grand ? 1.9 : 1.4;
+      g.add(cylindre(e.l / 2 * 0.7, 0.04, "#5b6478", 0, 0.02, 0));
+      g.add(cylindre(0.02, grand ? 0.9 : 0.75, "#5b6478", 0, grand ? 0.45 : 0.38, 0));
+      g.add(cylindre(0.17, 0.62, c, 0, grand ? 1.22 : 1.05, 0));
+      if (grand) { const tete = new T.Mesh(new T.SphereGeometry(0.11, 16, 12), mat3D("#e9e6e0")); tete.position.set(0, 1.68, 0); g.add(tete); }
+    } else if (t.famille === "presentoir") {
+      const h = e.type === "bac" ? 0.75 : e.type === "cube" ? 0.45 : 1.5;
+      haut = h + 0.1;
+      if (t.rond) { g.add(cylindre(0.03, h, "#7c5aa6", 0, h / 2, 0)); g.add(cylindre(e.l / 2, 0.05, "#c9b6dc", 0, h, 0)); }
+      else g.add(boite(e.l, h, e.p, e.type === "cube" ? "#e9e3f3" : "#c9b6dc", 0, h / 2, 0));
+      const arts = e.articles || [];
+      arts.slice(0, 6).forEach((a, k) => g.add(boite(Math.min(0.14, e.l / 4), 0.1, Math.min(0.14, e.p / 3), couleur3D(a) || GRIS_VETEMENTS[k % 4], -e.l / 3 + (k % 3) * e.l / 3, h + 0.05, k < 3 ? -e.p / 5 : e.p / 5)));
+    } else {
+      const reperes = { caisse: [1.0, "#d9d2ea"], cabines: [2.2, "#dfe3ea"], pilier: [2.6, "#c3c9d3"], reserve: [2.2, "#d3d8e0"], "table-travail": [0.9, "#ece4d4"], vitrine: [2.3, "#cfe8f2"], entree: [0, null] };
+      const [h, c] = reperes[e.type] || [1, "#dfe3ea"];
+      haut = h + 0.1;
+      if (e.type === "entree") {
+        const fleche = new T.Mesh(new T.CircleGeometry(0.45, 3), mat3D("#c4501a"));
+        fleche.rotation.x = -Math.PI / 2;
+        fleche.rotation.z = Math.PI / 2;
+        fleche.position.set(0, 0.012, 0);
+        g.add(fleche);
+        haut = 0.4;
+      } else if (e.type === "vitrine") {
+        g.add(boite(e.l, h, e.p, c, 0, h / 2, 0, { transparent: true, opacity: 0.35 }));
+        (e.articles || []).slice(0, 2).forEach((a, k) => g.add(cylindre(0.16, 0.6, couleur3D(a) || "#e9e6e0", (k ? 0.4 : -0.4) * Math.min(1, e.l / 2), 1.1, 0)));
+      } else {
+        g.add(boite(e.l, h, e.p, c, 0, h / 2, 0));
+        if (e.type === "cabines") g.add(boite(Math.min(1, e.l * 0.4), h - 0.3, 0.04, "#8a93a5", e.l / 2 - 0.1 - Math.min(1, e.l * 0.4) / 2, (h - 0.3) / 2, e.p / 2 + 0.01));
+      }
+    }
+    g.traverse(o => { o.userData.id = e.id; });
+    g.userData.haut = haut;
+    return g;
+  }
+  // Libérer ce qui n'est plus affiché (les matières partagées et les photos restent en réserve).
+  function jeter3D(o) {
+    const partagees = new Set(t3d.mats.values());
+    o.traverse(x => {
+      if (x.geometry) x.geometry.dispose();
+      if (x.isSprite) { x.material.map.dispose(); x.material.dispose(); }
+      else if (Array.isArray(x.material)) x.material.forEach(m => { if (!partagees.has(m)) m.dispose(); });
+    });
+  }
+  function construireScene3D(cadrer) {
+    if (!t3d) return;
+    const T = t3d.T, plan = planAffiche();
+    if (!plan) return;
+    if (t3d.groupe) { t3d.scene.remove(t3d.groupe); jeter3D(t3d.groupe); }
+    const g = new T.Group(), L = plan.largeur, D = plan.profondeur, H = Math.min(plan.homme, L);
+    t3d.groupe = g;
+    t3d.plan = plan;
+    const sol = new T.Mesh(new T.PlaneGeometry(H, D), mat3D("#efe6d6"));
+    sol.rotation.x = -Math.PI / 2;
+    sol.position.set(H / 2, 0, D / 2);
+    sol.userData.sol = true;
+    g.add(sol);
+    const grille = new T.GridHelper(Math.max(H, D), Math.max(H, D), 0xd9cdb6, 0xe2d8c6);
+    grille.position.set(Math.max(H, D) / 2, 0.003, Math.max(H, D) / 2);
+    grille.scale.set(H / Math.max(H, D), 1, D / Math.max(H, D));
+    g.add(grille);
+    if (H < L) {
+      const femme = new T.Mesh(new T.PlaneGeometry(L - H, D), mat3D("#dfe3e9"));
+      femme.rotation.x = -Math.PI / 2;
+      femme.position.set(H + (L - H) / 2, 0, D / 2);
+      femme.userData.sol = true;
+      g.add(femme);
+    }
+    [[L / 2, 0, L, 0.08], [L / 2, D, L, 0.08], [0, D / 2, 0.08, D], [L, D / 2, 0.08, D]].forEach(([x, z, l, p]) => g.add(boite(l, 0.12, p, "#5b6478", x, 0.06, z)));
+    const els = elementsDuPlan(plan.id), alertes = new Set();
+    // Les meubles avec une alerte (une réf. qui n'a pas bougé, une règle à revoir) : une pastille rouge au-dessus.
+    try { const al = alertesDuPlan(plan); al.immobiles.forEach(p => alertes.add(p.e.id)); al.regles.filter(r => !r.exception).forEach(r => alertes.add(r.e.id)); } catch (_) { /* rien */ }
+    els.forEach(e => {
+      const o = objet3D(e, plan);
+      g.add(o);
+      if (calques3D.noms && t3d.mode === "ensemble" && TYPES_MERCH[e.type].famille !== "repere" || (calques3D.noms && t3d.mode === "ensemble" && ["caisse", "cabines", "entree"].includes(e.type))) {
+        const s = etiquette3D(nomMeuble(e).slice(0, 30));
+        s.position.set(e.x, o.userData.haut + 0.32, e.y);
+        s.userData.id = e.id;
+        g.add(s);
+      }
+      if (alertes.has(e.id)) {
+        const p = new T.Mesh(new T.SphereGeometry(0.11, 14, 10), mat3D("#d62828", { emissive: "#7a0d0d" }));
+        p.position.set(e.x, o.userData.haut + (calques3D.noms && t3d.mode === "ensemble" ? 0.62 : 0.2), e.y);
+        p.userData.id = e.id;
+        g.add(p);
+      }
+    });
+    t3d.scene.add(g);
+    if (cadrer || !t3d.posees) { t3d.posees = true; vue3D(t3d.mode, true); }
+    else rendu3D();
+  }
+  // ----- la caméra : vue d'ensemble, promenade, s'approcher d'un meuble -----
+  const adoucir = t => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+  function allerA3D(position, cible, duree) {
+    const T = t3d.T, c = t3d.camera, ctl = t3d.controls;
+    const p0 = c.position.clone(), c0 = ctl.target.clone(), p1 = new T.Vector3(...position), c1 = new T.Vector3(...cible);
+    // En promenade, on tourne sur place : la cible reste à 10 cm devant les yeux, dans la direction du regard.
+    if (t3d.mode === "promenade") { const dir = c1.clone().sub(p1); if (dir.length() > 0.001) c1.copy(p1).add(dir.normalize().multiplyScalar(0.1)); }
+    if (t3d.anim) cancelAnimationFrame(t3d.anim.raf);
+    const d = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : duree || 900, t0 = performance.now();
+    const pas = now => {
+      const k = d ? Math.min(1, (now - t0) / d) : 1, s = adoucir(k);
+      c.position.lerpVectors(p0, p1, s);
+      ctl.target.lerpVectors(c0, c1, s);
+      c.lookAt(ctl.target);
+      rendu3D();
+      if (k < 1) t3d.anim = { raf: requestAnimationFrame(pas) };
+      else { t3d.anim = null; ctl.update(); rendu3D(); }
+    };
+    t3d.anim = { raf: requestAnimationFrame(pas) };
+  }
+  function reglerControles3D() {
+    const ctl = t3d.controls, promenade = t3d.mode === "promenade";
+    ctl.enableZoom = !promenade;
+    ctl.enablePan = !promenade;
+    ctl.rotateSpeed = promenade ? -0.35 : 0.8;
+    ctl.minDistance = promenade ? 0.1 : 1.5;
+    ctl.maxDistance = promenade ? 0.1 : 80;
+    ctl.minPolarAngle = promenade ? Math.PI * 0.3 : 0;
+    ctl.maxPolarAngle = promenade ? Math.PI * 0.7 : Math.PI * 0.48;
+  }
+  function vue3D(mode, sansAnimation) {
+    if (!t3d || !t3d.plan) return;
+    t3d.mode = mode;
+    reglerControles3D();
+    const plan = t3d.plan, H = Math.min(plan.homme, plan.largeur), D = plan.profondeur;
+    const entree = elementsDuPlan(plan.id).find(e => e.type === "entree");
+    if (mode === "promenade") {
+      // À l'entrée, à hauteur des yeux, face au magasin.
+      const x = entree ? entree.x : H / 2, z = Math.min(D - 0.8, entree ? entree.y - 0.9 : D - 1);
+      allerA3D([x, 1.65, z], [x, 1.62, z - 0.1], sansAnimation ? 0 : 900);
+    } else {
+      const d = Math.max(D * 0.92, H * 1.4) * (t3d.camera.aspect < 1 ? 1.35 : 1);
+      allerA3D([H / 2, d * 0.8, D * 0.52 + d * 0.6], [H / 2, 0, D * 0.52], sansAnimation ? 0 : 900);
+    }
+    $("me-3d-aide").textContent = mode === "promenade"
+      ? "Glisse pour regarder autour de toi ; touche le sol pour y aller, un meuble pour t'en approcher."
+      : "Glisse pour faire tourner le magasin, zoome avec deux doigts ou la molette ; touche un meuble pour t'en approcher.";
+    $("me-3d-info").hidden = true;
+    if (!sansAnimation && t3d.groupe) construireScene3D(false);
+  }
+  // S'approcher d'un meuble : devant la face d'un mur, à hauteur des yeux ; un peu au-dessus d'une table ou d'un portant.
+  function approcher3D(e) {
+    const t = TYPES_MERCH[e.type];
+    t3d.choisi = e.id;
+    if (t.porte === "uv") {
+      const [fx, fz] = versPlan(e, 0, 1), nx = fx - e.x, nz = fz - e.y, d = Math.max(2.2, Math.min(5, e.l * 0.75));
+      allerA3D([e.x + nx * d, 1.6, e.y + nz * d], [e.x, 1.25, e.y], 1100);
+    } else {
+      const c = t3d.camera.position, dx = c.x - e.x, dz = c.z - e.y, n = Math.hypot(dx, dz) || 1, d = t3d.mode === "promenade" ? 1.8 : 2.6;
+      allerA3D([e.x + dx / n * d, t3d.mode === "promenade" ? 1.65 : 2.1, e.y + dz / n * d], [e.x, 0.8, e.y], 1100);
+    }
+    $("me-3d-nom").textContent = nomMeuble(e);
+    $("me-3d-ouvrir").textContent = t.porte === "uv" ? "Ouvrir le mur" : ["niveaux", "articles", "tenue"].includes(t.porte) ? "Les réfs" : "";
+    $("me-3d-ouvrir").hidden = !$("me-3d-ouvrir").textContent;
+    $("me-3d-info").hidden = false;
+    choisirElementMerch(e.id);
+  }
+  function toucher3D(ev) {
+    if (!t3d || !t3d.groupe) return;
+    const T = t3d.T, r = t3d.renderer.domElement.getBoundingClientRect();
+    const souris = new T.Vector2((ev.clientX - r.left) / r.width * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
+    const ray = new T.Raycaster();
+    ray.setFromCamera(souris, t3d.camera);
+    const touche = ray.intersectObjects(t3d.groupe.children, true).find(i => i.object.userData.id || i.object.userData.sol);
+    if (!touche) return;
+    const id = touche.object.userData.id, e = id && merchElements.docs[id];
+    if (e) { approcher3D(e); return; }
+    if (t3d.mode === "promenade" && touche.object.userData.sol) {
+      // Marcher jusqu'au point touché, en gardant la direction du regard.
+      const plan = t3d.plan, c = t3d.camera.position, dir = t3d.controls.target.clone().sub(c);
+      const x = Math.min(plan.largeur - 0.3, Math.max(0.3, touche.point.x)), z = Math.min(plan.profondeur - 0.3, Math.max(0.3, touche.point.z));
+      allerA3D([x, 1.65, z], [x + dir.x, 1.65 + dir.y, z + dir.z], 900);
+      $("me-3d-info").hidden = true;
+    }
+  }
+  document.querySelectorAll('input[name="me-vue3d"]').forEach(r => r.addEventListener("change", () => vue3D(r.value)));
+  $("me-3d-retour").addEventListener("click", () => vue3D(t3d ? t3d.mode : "ensemble"));
+  $("me-3d-ouvrir").addEventListener("click", () => {
+    const e = t3d && merchElements.docs[t3d.choisi];
+    if (!e) return;
+    if (TYPES_MERCH[e.type].porte === "uv") ouvrirMurMerch(e.id); else ouvrirMeubleMerch(e.id);
+  });
+  document.querySelectorAll("[data-calque3d]").forEach(b => b.addEventListener("click", () => {
+    calques3D[b.dataset.calque3d] = !calques3D[b.dataset.calque3d];
+    b.setAttribute("aria-pressed", String(calques3D[b.dataset.calque3d]));
+    construireScene3D(false);
+  }));
+  // Redessiner la 3D quand le plan change (un peu après, pour regrouper les changements).
+  function planifierScene3D() {
+    if (!t3d || ongletMerch !== "3d") return;
+    clearTimeout(reconstruction3D);
+    reconstruction3D = setTimeout(() => construireScene3D(false), 200);
+  }
 
   // ----- un plan : créer, régler, mettre en place, dupliquer, supprimer -----
   let planEdite = null;
@@ -12244,7 +13093,8 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     const p = planEnPlace() || planAffiche();
     if (!p) { $("resume-merch").textContent = "Le plan du magasin, à dessiner"; return; }
     const els = elementsDuPlan(p.id), c = compteMurs(els), autres = els.length - c.tous;
-    $("resume-merch").textContent = `${p.nom} · ${c.murs} mur${c.murs > 1 ? "s" : ""}, ${c.uv} UV${c.miroirs ? `, ${c.miroirs} miroir${c.miroirs > 1 ? "s" : ""}` : ""}, ${autres} autre${autres > 1 ? "s" : ""}`;
+    const n = nombreAlertesMerch();
+    $("resume-merch").textContent = `${p.nom} · ${c.murs} mur${c.murs > 1 ? "s" : ""}, ${c.uv} UV${c.miroirs ? `, ${c.miroirs} miroir${c.miroirs > 1 ? "s" : ""}` : ""}, ${autres} autre${autres > 1 ? "s" : ""}${n ? ` · ${n} alerte${n > 1 ? "s" : ""}` : ""}`;
   }
   let renduMerchPrevu = 0;
   function rendreMerch() {
@@ -12269,8 +13119,14 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     $("me-volet-plan").hidden = ongletMerch !== "plan";
     $("me-volet-liste").hidden = ongletMerch !== "liste";
     $("me-volet-regles").hidden = ongletMerch !== "regles";
-    $("me-espace").hidden = ongletMerch === "regles";
-    $("me-ajouter").hidden = !modifiable || ongletMerch === "regles";
+    $("me-volet-3d").hidden = ongletMerch !== "3d";
+    $("me-volet-alertes").hidden = ongletMerch !== "alertes";
+    $("me-espace").hidden = ongletMerch === "regles" || ongletMerch === "alertes";
+    $("me-ajouter").hidden = !modifiable || ongletMerch === "regles" || ongletMerch === "alertes";
+    const nAlertes = nombreAlertesMerch();
+    $("me-al-n").textContent = nAlertes ? ` (${nAlertes})` : "";
+    if (ongletMerch === "alertes") rendreAlertesMerch();
+    if (ongletMerch === "3d") { if (t3d) { taille3D(); planifierScene3D(); } else ouvrir3D(); }
     document.querySelectorAll("#me-outils [data-calque]").forEach(b => b.setAttribute("aria-pressed", String(!!calquesMerch[b.dataset.calque])));
     $("me-tracer").hidden = !modifiable;
     $("me-tracer").textContent = traceMerch ? "Terminer le parcours" : "Tracer le parcours";
