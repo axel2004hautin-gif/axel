@@ -1496,6 +1496,93 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
   .mu-remplacer { margin-left: 0; width: 100%; }
   .mu-detail { padding: 10px; }
 }
+
+/* Les réfs posées : sur les équipements d'un mur, sur une table (ses piles), sur un portant ; le choix dans le Dressing. */
+.mu-detail .mu-eqs { grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+.mu-detail .mu-eq { grid-template-columns: 40px minmax(0, 1fr) auto; align-items: start; }
+.mu-detail .mu-eq .mu-refs { grid-column: 1 / -1; }
+.mu-cm { width: 3.6em; min-height: 30px; padding: 2px 6px; border: 1.5px solid var(--trait); border-radius: 6px; background: var(--fond); font: 600 .9rem/1 var(--f-mono); text-align: right; }
+.mu-cm:focus { border-color: var(--marine); outline: none; }
+.mu-refs { display: grid; gap: 6px; padding-top: 6px; border-top: 1px dashed var(--trait); }
+.mu-nb { display: flex; flex-wrap: wrap; gap: 4px; }
+.mu-nb .puce-filtre { min-height: 30px; padding: 3px 10px; font-size: .82rem; }
+.mu-place { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.mu-place-nom { min-width: 6.5em; color: var(--gris); font-size: .82rem; font-weight: 600; }
+.mu-liste-refs { display: flex; flex-wrap: wrap; gap: 4px; }
+.mu-choisir { font-size: .9rem; }
+.mu-ferme { display: flex; align-items: center; gap: 8px; color: var(--gris); font-size: .85rem; font-weight: 600; }
+.mu-ferme input { width: 17px; height: 17px; margin: 0; accent-color: var(--marine); }
+.mu-ref { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 2px 4px 2px 2px; border: 1px solid var(--trait); border-radius: 999px; background: var(--fond); font-size: .82rem; }
+.mu-ref.absente { opacity: .6; font-style: italic; }
+.mu-ref-photo { flex: none; display: block; width: 26px; height: 26px; overflow: hidden; border-radius: 50%; background: var(--trait-doux); }
+.mu-ref-photo img { width: 100%; height: 100%; object-fit: cover; }
+.mu-ref-nom { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mu-ref-retirer { flex: none; display: grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--gris); font-size: 1rem; line-height: 1; }
+.mu-ref-retirer:hover { background: var(--trait-doux); color: var(--encre); }
+.mu-presse { display: inline-flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+.mu-presse + .mu-remplacer { margin-left: 0; }
+.me-pile { fill: #fbf7ef; stroke: #b59b6e; stroke-width: 1px; }
+.me-pile.pleine { stroke: rgba(23, 32, 51, .35); }
+
+.fenetre-refs { width: min(980px, calc(100vw - 24px)); max-height: min(94vh, 980px); }
+.rf-corps { display: block; padding-top: 12px; }
+.rf-filtres { position: sticky; top: 0; z-index: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 0 0 10px; background: var(--fond); }
+.rf-filtres input[type="search"] { flex: 1 1 240px; min-width: 0; }
+.rf-filtres select { flex: 0 1 200px; min-width: 0; }
+.rf-compatible { display: inline-flex; align-items: center; gap: 6px; color: var(--gris); font-weight: 600; font-size: .9rem; }
+.rf-compatible input { width: 17px; height: 17px; margin: 0; accent-color: var(--marine); }
+.rf-liste { display: grid; gap: 14px; }
+.rf-groupe-tete { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; padding-bottom: 4px; border-bottom: 1px solid var(--trait); }
+.rf-groupe-nom { font: 600 .74rem/1.3 var(--f-mono); letter-spacing: .05em; text-transform: uppercase; color: var(--gris); }
+.rf-pieces { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); gap: 8px; margin: 8px 0 0; padding: 0; list-style: none; }
+.rf-piece { display: grid; grid-template-columns: 54px minmax(0, 1fr); align-items: center; gap: 10px; width: 100%; padding: 6px; border: 1.5px solid var(--trait); border-radius: 10px; background: var(--fond); text-align: left; }
+.rf-piece:hover:not(:disabled) { border-color: var(--marine); }
+.rf-piece[aria-pressed="true"] { border-color: var(--marine); background: var(--marine-doux); box-shadow: 0 0 0 1px var(--marine); }
+.rf-piece:disabled { cursor: default; opacity: .75; }
+.rf-piece .piece-photo { width: 54px; height: 54px; border-radius: 8px; }
+.rf-piece-texte { display: grid; gap: 2px; min-width: 0; }
+.rf-piece-nom { display: -webkit-box; overflow: hidden; font-weight: 600; font-size: .86rem; line-height: 1.2; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.rf-piece-couleur { display: flex; align-items: center; gap: 5px; color: var(--gris); font-size: .82rem; }
+.rf-badge { justify-self: start; padding: 1px 7px; border-radius: 999px; background: var(--conge-doux); color: var(--conge); font: 700 .62rem/1.5 var(--f-mono); letter-spacing: .03em; }
+.rf-badge.ailleurs { background: var(--trait-doux); color: var(--gris); text-transform: none; letter-spacing: 0; font: 600 .72rem/1.35 var(--f-body); }
+.rf-badge.alerte { background: var(--repos-doux); color: var(--repos); }
+.rf-compte { margin-right: auto; color: var(--gris); font-weight: 600; }
+#fenetre-refs .fenetre-pied .bouton-danger { margin-right: 0; }
+
+.fenetre-meuble { width: min(900px, calc(100vw - 24px)); }
+.mb-corps { display: grid; gap: 14px; padding-top: 14px; }
+.mb-reglages { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+.mb-reglages[hidden] { display: none; }
+.mb-nombre { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
+.mb-nombre b { min-width: 1.6em; font: 700 1.1rem/1 var(--f-mono); text-align: center; }
+.mb-nombre .bouton-second { min-width: 40px; padding-inline: 10px; font-size: 1.1rem; }
+.mb-plateau { display: grid; gap: 6px; padding: 14px; border: 2px solid #9a7b4f; border-radius: 12px; background: #efe2cb; }
+.mb-rangee { display: grid; gap: 6px; }
+.mb-rangee-nom { font: 700 .72rem/1.2 var(--f-mono); letter-spacing: .05em; text-transform: uppercase; color: #6f5631; }
+.mb-milieu { height: 2px; margin: 2px 0; background: repeating-linear-gradient(90deg, #9a7b4f 0 8px, transparent 8px 14px); }
+.mb-piles-grille { display: grid; grid-template-columns: repeat(var(--n, 5), minmax(0, 1fr)); gap: 6px; }
+.mb-pile { display: grid; gap: 4px; justify-items: center; min-width: 0; padding: 4px; border: 1.5px dashed #b59b6e; border-radius: 8px; background: rgba(255, 255, 255, .55); }
+.mb-pile.pleine { border-style: solid; background: var(--fond); }
+.mb-pile:hover:not(:disabled) { border-color: var(--marine); }
+.mb-pile-visuel { display: grid; place-items: center; width: 100%; aspect-ratio: 1; max-width: 76px; overflow: hidden; border-radius: 6px; }
+.mb-pile-visuel img { width: 100%; height: 100%; object-fit: cover; }
+.mb-pile-plus { color: #9a7b4f; font-size: 1.4rem; font-weight: 700; }
+.mb-pile-nom { display: -webkit-box; max-width: 100%; overflow: hidden; color: var(--encre); font-size: .72rem; line-height: 1.2; text-align: center; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.mb-refs { display: grid; gap: 6px; margin: 0 0 10px; padding: 0; list-style: none; }
+.mb-ref { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.mb-ref .mu-ref { font-size: .9rem; }
+.pl-corps { display: grid; gap: 16px; padding-top: 14px; }
+.pl-bloc { display: grid; gap: 8px; }
+.pl-bloc h3 { font-size: 1rem; color: var(--marine); }
+.pl-ou { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.pl-ici { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 10px; border-radius: 8px; background: var(--trait-doux); }
+.pl-bloc select { width: 100%; }
+@media (max-width: 599px) {
+  .mb-piles-grille { gap: 4px; }
+  .mb-pile { padding: 2px; }
+  .mb-pile-nom { font-size: .64rem; }
+  .mu-presse { margin-left: 0; }
+}
 </style>
 </head>
 <body>
@@ -1949,6 +2036,7 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
               <p class="aide" id="me-info" hidden></p>
               <p class="me-alerte" id="me-alerte" role="status" hidden></p>
               <button class="bouton-principal" type="button" id="me-equiper">Équiper les UV</button>
+              <button class="bouton-principal" type="button" id="me-articles" hidden>Les réfs</button>
               <div class="me-ligne" id="me-g-taille">
                 <label class="titre-champ"><span id="me-l-nom">Largeur (m)</span><input type="text" id="me-l" inputmode="decimal" maxlength="5"></label>
                 <label class="titre-champ" id="me-p-champ">Profondeur (m)<input type="text" id="me-p" inputmode="decimal" maxlength="5"></label>
@@ -2841,13 +2929,18 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
       <div class="mu-detail-tete">
         <h3 id="mu-uv-titre">UV 1</h3>
         <span class="zone-pastille" id="mu-uv-zone"></span>
+        <span class="mu-presse">
+          <button class="bouton-second bouton-petit" type="button" id="mu-copier">Copier l'UV</button>
+          <button class="bouton-second bouton-petit" type="button" id="mu-coller" hidden>Coller ici</button>
+        </span>
         <select class="mu-remplacer" id="mu-remplacer" aria-label="Remplacer l'UV par un modèle"></select>
       </div>
       <div class="mu-miroir" id="mu-miroir" hidden><span id="mu-miroir-texte"></span><button class="bouton-second bouton-petit" type="button" id="mu-condamner"></button></div>
       <ol class="mu-eqs" id="mu-eqs"></ol>
       <p class="liste-vide" id="mu-eqs-vide" hidden>Rien sur cette UV pour l'instant.</p>
       <div class="mu-ajouts" id="mu-ajouts" role="group" aria-label="Ajouter sur cette UV"></div>
-      <p class="aide" id="mu-aide-geste">Glisse une barre ou une étagère sur le mur pour la monter ou la descendre, cran par cran (5 cm) ; ▲ ▼ font un cran. Les murs d'à côté s'ouvrent avec les flèches en haut.</p>
+      <button class="lien-discret" type="button" id="mu-fermer" hidden>Fermer la descente (une étagère au-dessus, sans rien dessus)</button>
+      <p class="aide" id="mu-aide-geste">Glisse une barre ou une étagère sur le mur pour la monter ou la descendre, cran par cran (5 cm), ou tape sa hauteur en cm ; une étagère pousse les autres pour garder 25 cm entre deux. Une étagère ou une descente ajoutée se met aux hauteurs de l'UV voisine. Les murs d'à côté s'ouvrent avec les flèches en haut.</p>
     </section>
     <details class="mu-aide" id="mu-aide"><summary>Les équipements et les crans</summary><ul class="mu-legende" id="mu-legende"></ul></details>
   </div>
@@ -2855,6 +2948,87 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     <button class="bouton-second" type="button" id="mu-moins">Retirer la dernière UV</button>
     <button class="bouton-second" type="button" id="mu-plus">Ajouter une UV</button>
     <button class="bouton-principal" type="button" data-fermer>Terminé</button>
+  </div>
+</dialog>
+
+<dialog class="fenetre fenetre-refs" id="fenetre-refs" aria-labelledby="rf-titre">
+  <div class="fenetre-tete">
+    <div>
+      <h2 id="rf-titre">Choisir</h2>
+      <p class="fenetre-sous" id="rf-sous"></p>
+    </div>
+    <button class="fermer" type="button" data-fermer aria-label="Fermer sans choisir">×</button>
+  </div>
+  <div class="fenetre-corps champs-tache rf-corps">
+    <div class="rf-filtres">
+      <input type="search" id="rf-recherche" placeholder="Chercher : modèle, couleur, marque, réf." aria-label="Chercher une pièce">
+      <select id="rf-categorie" aria-label="Catégorie"></select>
+      <select id="rf-marque" aria-label="Marque"></select>
+      <label class="rf-compatible" id="rf-compatible-l"><input type="checkbox" id="rf-compatible" checked><span id="rf-compatible-texte">Seulement ce qui va ici</span></label>
+    </div>
+    <div class="rf-liste" id="rf-liste"></div>
+    <p class="liste-vide" id="rf-vide" hidden>Aucune pièce ne correspond.</p>
+  </div>
+  <div class="fenetre-pied">
+    <button class="bouton-danger" type="button" id="rf-vider" hidden>Vider la pile</button>
+    <span class="rf-compte" id="rf-compte"></span>
+    <button class="bouton-second" type="button" data-fermer>Annuler</button>
+    <button class="bouton-principal" type="button" id="rf-valider" hidden>Ajouter</button>
+  </div>
+</dialog>
+
+<dialog class="fenetre fenetre-meuble" id="fenetre-meuble" aria-labelledby="mb-titre">
+  <div class="fenetre-tete">
+    <div>
+      <h2 id="mb-titre">Meuble</h2>
+      <p class="fenetre-sous" id="mb-sous"></p>
+    </div>
+    <button class="fermer" type="button" data-fermer aria-label="Fermer">×</button>
+  </div>
+  <div class="fenetre-corps mb-corps">
+    <div class="mb-reglages" id="mb-reglages-table" hidden>
+      <div class="mb-nombre"><span>Piles de chaque côté</span><button class="bouton-second bouton-petit" type="button" id="mb-moins" aria-label="Une pile de moins">−</button><b id="mb-n">5</b><button class="bouton-second bouton-petit" type="button" id="mb-plus" aria-label="Une pile de plus">+</button></div>
+      <div class="type-tache" role="radiogroup" aria-label="Le sens des piles">
+        <label><input type="radio" name="mb-sens" value="dos"><span>Dos à dos</span></label>
+        <label><input type="radio" name="mb-sens" value="meme"><span>Même sens</span></label>
+      </div>
+    </div>
+    <div class="mb-table" id="mb-table" hidden></div>
+    <div id="mb-liste-bloc" hidden>
+      <ol class="mb-refs" id="mb-refs"></ol>
+      <p class="liste-vide" id="mb-refs-vide" hidden>Aucune réf. pour l'instant.</p>
+      <button class="bouton-second" type="button" id="mb-ajouter">+ Ajouter des réfs</button>
+    </div>
+  </div>
+  <div class="fenetre-pied">
+    <button class="bouton-principal" type="button" data-fermer>Terminé</button>
+  </div>
+</dialog>
+
+<dialog class="fenetre fenetre-petite" id="fenetre-placer" aria-labelledby="pl-titre">
+  <div class="fenetre-tete">
+    <div>
+      <h2 id="pl-titre">En magasin</h2>
+      <p class="fenetre-sous" id="pl-sous"></p>
+    </div>
+    <button class="fermer" type="button" data-fermer aria-label="Fermer">×</button>
+  </div>
+  <div class="fenetre-corps champs-tache pl-corps">
+    <section class="pl-bloc">
+      <h3 id="pl-plan">Sur le plan</h3>
+      <ul class="pl-ou" id="pl-ou"></ul>
+      <p class="liste-vide" id="pl-nulle-part">Exposée nulle part pour l'instant.</p>
+    </section>
+    <section class="pl-bloc">
+      <h3>La placer</h3>
+      <label class="titre-champ">Meuble<select id="pl-meuble"></select></label>
+      <label class="titre-champ" id="pl-place-champ" hidden>Où sur ce meuble<select id="pl-place"></select></label>
+      <p class="aide alerte" id="pl-aide"></p>
+    </section>
+  </div>
+  <div class="fenetre-pied">
+    <button class="bouton-second" type="button" data-fermer>Fermer</button>
+    <button class="bouton-principal" type="button" id="pl-placer" disabled>Placer</button>
   </div>
 </dialog>
 
@@ -2977,6 +3151,7 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
   <div class="fenetre-pied">
     <p class="fenetre-erreur" id="pi-erreur" role="alert" hidden></p>
     <button class="bouton-danger" type="button" id="pi-supprimer" hidden>Supprimer</button>
+    <button class="bouton-second" type="button" id="pi-placer" hidden>En magasin</button>
     <button class="bouton-second" type="button" id="pi-reassort" hidden>À réassortir</button>
     <button class="bouton-second" type="button" id="pi-archiver" hidden>Archiver</button>
     <button class="bouton-second" type="button" data-fermer>Annuler</button>
@@ -6005,6 +6180,7 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     $("pi-note").value = x ? x.note : "";
     REPERES_PIECE.forEach(([k]) => { $("pi-rep-" + k).checked = !!(x && x.reperes[k]); });
     $("pi-presentation").value = x && x.presentation ? x.presentation : "";
+    $("pi-placer").hidden = !x || x.archive || !Object.keys(merchPlans.docs).length;
     $("pi-pres-modele").checked = true;
     majPresentation();
     montrerNuancier(false);
@@ -6159,6 +6335,7 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
   };
 
   $("pi-enregistrer").addEventListener("click", () => enregistrerPiece(false));
+  $("pi-placer").addEventListener("click", () => { if (pieceEditee) ouvrirPlacer(pieceEditee); });
   $("pi-encore").addEventListener("click", () => enregistrerPiece(true));
   // continuer : la fenêtre se rouvre vide, avec la même marque et la même catégorie, pour enchaîner.
   async function enregistrerPiece(continuer) {
@@ -10174,13 +10351,13 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     ["facing-pressing", "Facing haut, pressing bas", [["facing", 40], ["pressing", 22]]],
     ["pressing-facing", "Pressing haut, facing bas", [["pressing", 40], ["facing", 22]]],
     ["double-pressing", "Pressing haut, pressing bas", [["pressing", 40], ["pressing", 22]]],
-    ["etageres", "Étagères (cases de 5 crans)", [38, 33, 28, 23, 18, 13, 8].map(c => ["etagere", c])],
-    ["pressing-etageres", "Pressing haut, étagères en bas", [["pressing", 40], ["etagere", 18], ["etagere", 13], ["etagere", 8]]],
+    ["etageres", "Descente d'étagères (1,75 m à 50 cm)", [[35, { ferme: true, refs: 0 }], [30], [25], [20], [15], [10]].map(([c, o]) => ["etagere", c, o])],
+    ["pressing-etageres", "Pressing haut, étagères en bas", [["pressing", 40], ["etagere", 20, { ferme: true, refs: 0 }], ["etagere", 15], ["etagere", 10], ["etagere", 5]]],
     ["etagere-facing", "Étagère en haut, facing dessous", [["etagere", 40], ["facing", 31]]],
     ["vide", "Vide", []],
   ];
   const AJOUTS_EQ = [["facing-haut", "Facing haut", "facing", 40], ["facing-bas", "Facing bas", "facing", 22], ["pressing-haut", "Pressing haut", "pressing", 40],
-    ["pressing-bas", "Pressing bas", "pressing", 22], ["coudee", "Barre coudée", "coudee", 36], ["etagere", "Étagère", "etagere", null]];
+    ["pressing-bas", "Pressing bas", "pressing", 22], ["coudee", "Barre coudée", "coudee", 36], ["etagere", "Étagère", "etagere", null], ["descente", "Descente d'étagères", "descente", null]];
   // Des équipements d'avant les crans : rangés du haut vers le bas, un seul à sa hauteur habituelle.
   function cransParDefaut(types) {
     if (types.length === 1) return [CRAN_DEFAUT[types[0]]];
@@ -10248,9 +10425,10 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     return (Array.isArray(a) ? a : []).filter(x => x && typeof x === "object" && typeof x.p === "string" && x.p && x.p.length <= 60).slice(0, 120).map(x => ({
       p: x.p, d: typeof x.d === "string" && ISO_RE.test(x.d) ? x.d : null, ok: typeof x.ok === "string" && ISO_RE.test(x.ok) ? x.ok : null,
       n: Number.isInteger(x.n) && x.n > 0 && x.n < 1000 ? x.n : null, t: texteBorne(x.t, 40) || null, sup: x.sup === true,
+      pos: typeof x.pos === "string" && /^[a-z0-9]{1,12}$/.test(x.pos) ? x.pos : null,
     }));
   }
-  const corpsArticles = l => l.map(a => ({ p: a.p, d: a.d, ok: a.ok, n: a.n, t: a.t, sup: a.sup }));
+  const corpsArticles = l => l.map(a => ({ p: a.p, d: a.d, ok: a.ok, n: a.n, t: a.t, sup: a.sup, pos: a.pos || null }));
   function lirePlanMerch(id, d) {
     const nom = d && typeof d === "object" ? texteBorne(d.nom, 60) : "";
     if (!nom) return null;
@@ -10281,7 +10459,9 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
         return {
           miroir: !!(u && u.miroir === true), condamne: !!(u && u.miroir === true && u.condamne === true),
           eq: brut.map((q, i) => ({ id: typeof q.id === "string" && q.id ? q.id.slice(0, 16) : `q${i}`, type: q.type,
-            cran: Math.min(e.crans - 1, Number.isInteger(q.cran) && q.cran >= 1 ? q.cran : defauts[i]), articles: lireArticlesMerch(q.articles) }))
+            cran: Math.min(e.crans - 1, Number.isInteger(q.cran) && q.cran >= 1 ? q.cran : defauts[i]), articles: lireArticlesMerch(q.articles),
+            // Une étagère porte rien, une réf. (en 2 piles) ou deux réfs ; celle qui ferme une descente porte rien au départ.
+            ...(q.type === "etagere" ? { ferme: q.ferme === true, refs: [0, 1, 2].includes(q.refs) ? q.refs : q.ferme === true ? 0 : 1 } : {}) }))
             .sort((a, b) => b.cran - a.cran),
         };
       });
@@ -10296,6 +10476,10 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
       e.hauteurs = Number.isInteger(d.hauteurs) && d.hauteurs >= 1 && d.hauteurs <= 3 ? d.hauteurs : 1;
       const n = Array.isArray(d.niveaux) ? d.niveaux : [];
       e.niveaux = Array.from({ length: e.hauteurs }, (_, i) => ({ articles: lireArticlesMerch(n[i] && n[i].articles) }));
+      // Le plateau : de chaque côté, de 1 à 7 piles (grande table) ou de 1 à 5 (petite), dos à dos ou dans le même sens.
+      const max = d.type === "grande-table" ? 7 : 5;
+      e.piles = Number.isInteger(d.piles) && d.piles >= 1 && d.piles <= max ? d.piles : d.type === "grande-table" ? 5 : 3;
+      e.sens = d.sens === "meme" ? "meme" : "dos";
     }
     if (t.porte === "articles" || t.porte === "tenue") e.articles = lireArticlesMerch(d.articles);
     if (t.porte === "tenue") {
@@ -10311,10 +10495,11 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     if (t.porte === "uv") {
       c.uvL = e.uvL;
       c.crans = e.crans || CRANS_MUR;
-      c.uvs = e.uvs.map(u => ({ ...(u.miroir ? { miroir: true, condamne: !!u.condamne } : {}), eq: u.eq.map(q => ({ id: q.id, type: q.type, cran: q.cran, articles: corpsArticles(q.articles) })) }));
+      c.uvs = e.uvs.map(u => ({ ...(u.miroir ? { miroir: true, condamne: !!u.condamne } : {}),
+        eq: u.eq.map(q => ({ id: q.id, type: q.type, cran: q.cran, ...(q.type === "etagere" ? { refs: q.refs, ferme: !!q.ferme } : {}), articles: corpsArticles(q.articles) })) }));
     }
     else { c.l = auCentimetre(e.l); c.p = auCentimetre(e.p); }
-    if (t.porte === "niveaux") { c.hauteurs = e.hauteurs; c.niveaux = Array.from({ length: e.hauteurs }, (_, i) => ({ articles: corpsArticles((e.niveaux[i] || { articles: [] }).articles) })); }
+    if (t.porte === "niveaux") { c.piles = e.piles || (e.type === "grande-table" ? 5 : 3); c.sens = e.sens || "dos"; c.hauteurs = e.hauteurs; c.niveaux = Array.from({ length: e.hauteurs }, (_, i) => ({ articles: corpsArticles((e.niveaux[i] || { articles: [] }).articles) })); }
     if (t.porte === "articles" || t.porte === "tenue") c.articles = corpsArticles(e.articles || []);
     if (t.porte === "tenue") { c.tenue = e.tenue || null; c.presente = [...(e.presente || [])]; }
     return c;
@@ -10374,11 +10559,8 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
   // Ce qui cloche sur un mur : deux facings côte à côte (aussi avec le mur d'à côté), des vêtements qui descendent sur
   // ce qu'il y a dessous, une case trop basse pour une pile.
   function alertesMur(e) {
-    const uvs = new Set(), facings = [], hauteurs = [], n = e.uvs.length;
+    const uvs = new Set(), facings = [], hauteurs = [];
     e.uvs.forEach((u, i) => { if (i && aUnFacing(u) && aUnFacing(e.uvs[i - 1])) { uvs.add(i - 1); uvs.add(i); facings.push(`UV ${i} et ${i + 1}`); } });
-    const d = murVoisin(e, 1), g = murVoisin(e, -1);
-    if (d && aUnFacing(e.uvs[n - 1]) && aUnFacing(d.uvs[0])) { uvs.add(n - 1); facings.push(`UV ${n} et ${nomMeuble(d)} (son UV 1)`); }
-    if (g && aUnFacing(e.uvs[0]) && aUnFacing(g.uvs[g.uvs.length - 1])) { uvs.add(0); facings.push(`UV 1 et ${nomMeuble(g)} (son UV ${g.uvs.length})`); }
     e.uvs.forEach((u, i) => {
       if (estMiroir(u)) return;
       u.eq.forEach((q, k) => {
@@ -10454,15 +10636,17 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     return e ? ecrireElementMerch({ ...e, ...avant, ...champs }).catch(() => {}) : Promise.resolve();
   }
   window.addEventListener("pagehide", viderAttenteMerch);
-  const nouvelEq = (type, cran) => ({ id: idCourt(), type, cran: cran || CRAN_DEFAUT[type], articles: [] });
+  const nouvelEq = (type, cran) => ({ id: idCourt(), type, cran: cran || CRAN_DEFAUT[type], articles: [], ...(type === "etagere" ? { refs: 1, ferme: false } : {}) });
+  // Un équipement d'un modèle d'UV : [type, cran, options].
+  const eqModele = ([t, c, o], crans) => ({ ...nouvelEq(t, Math.min(c, (crans || CRANS_MUR) - 2)), ...(o || {}) });
   const copieUvs = uvs => uvs.map(u => ({ miroir: !!u.miroir, condamne: !!u.condamne, eq: u.eq.map(q => ({ ...q, articles: q.articles.map(a => ({ ...a })) })) }));
   // Plus d'UV : la suite reprend l'alternance (comme l'avant-dernière UV qui n'est pas un miroir), sinon un pressing.
   function ajusterUvs(uvs, n) {
     const r = copieUvs(uvs).slice(0, n);
     while (r.length < n) {
       const pleines = r.filter(u => !u.miroir), avant = pleines[pleines.length - 2], dernier = pleines[pleines.length - 1];
-      const modele = avant ? avant.eq.map(q => [q.type, q.cran]) : dernier ? (dernier.eq.some(q => estFacing(q.type)) ? [["pressing", 34]] : [["facing", 34]]) : [["pressing", 34]];
-      r.push({ miroir: false, condamne: false, eq: modele.map(([t, c]) => nouvelEq(t, c)) });
+      const modele = avant ? avant.eq.map(q => [q.type, q.cran, q.type === "etagere" ? { refs: q.refs, ferme: q.ferme } : null]) : dernier ? (dernier.eq.some(q => estFacing(q.type)) ? [["pressing", 34]] : [["facing", 34]]) : [["pressing", 34]];
+      r.push({ miroir: false, condamne: false, eq: modele.map(x => eqModele(x)) });
     }
     return r;
   }
@@ -10507,6 +10691,13 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
       forme = svgEl("rect", { class: "me-forme", x: -e.l / 2, y: -e.p / 2, width: e.l, height: e.p, rx: Math.min(0.06, e.p / 4), ...NS_TRAIT });
       g.append(forme);
       if (t.famille === "portant") g.append(svgEl("line", { class: "me-detail", x1: -e.l / 2 + 0.08, y1: 0, x2: e.l / 2 - 0.08, y2: 0, ...NS_TRAIT }));
+      if (t.porte === "niveaux") {
+        const n = e.piles, cote = Math.min((e.l - 0.1) / n * 0.78, e.p * 0.36);
+        ["a", "b"].forEach((r, ri) => { for (let k = 1; k <= n; k++) {
+          const a = e.niveaux[0].articles.find(x => x.pos === r + k), cx = -e.l / 2 + 0.05 + (e.l - 0.1) * (k - 0.5) / n, cy = (ri ? 1 : -1) * e.p / 4;
+          g.append(svgEl("rect", { class: "me-pile" + (a ? " pleine" : ""), x: cx - cote / 2, y: cy - cote / 2, width: cote, height: cote, rx: cote * 0.12, ...(a ? { fill: couleurPiece(pieces[a.p]) || "#c9ced8" } : {}), ...NS_TRAIT }));
+        } });
+      }
       if (t.porte === "niveaux") for (let k = 1; k < e.hauteurs && e.p - k * 0.26 > 0.1; k++) g.append(svgEl("rect", { class: "me-detail", x: -e.l / 2 + k * 0.13, y: -e.p / 2 + k * 0.13, width: e.l - k * 0.26, height: e.p - k * 0.26, ...NS_TRAIT }));
       if (e.type === "cabines") {   // l'ouverture, en bas à droite (vue de face)
         const w = Math.min(1, e.l * 0.4), x2 = e.l / 2 - 0.1, x1 = x2 - w, y0 = e.p / 2, xc = (x1 + x2) / 2;
@@ -10606,7 +10797,8 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     const t = TYPES_MERCH[e.type];
     if (t.porte === "tenue" && presentesPar(e).length) return `présente ${listeFr(presentesPar(e).map(nomMeuble))}`;
     if (t.porte === "uv") return resumeUvs(e);
-    if (t.porte === "niveaux") return e.hauteurs > 1 ? `${e.hauteurs} hauteurs` : "le plateau";
+    if (t.porte === "niveaux") { const n = e.niveaux[0].articles.length; return `${e.piles} pile${e.piles > 1 ? "s" : ""} de chaque côté${e.hauteurs > 1 ? `, ${e.hauteurs} hauteurs` : ""}${n ? ` · ${n} réf.` : ""}`; }
+    if (t.porte === "articles" && e.articles.length) return `${e.articles.length} réf.`;
     return t.rond ? `${virgule(e.l)} m de diamètre` : `${virgule(e.l)} × ${virgule(e.p)} m`;
   }
   function rendreListeMerch(plan, els) {
@@ -10673,6 +10865,8 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     $("me-g-mur").hidden = !mur;
     $("me-equiper").hidden = !mur;
     $("me-equiper").textContent = modifiable ? "Équiper les UV" : "Voir les UV";
+    $("me-articles").hidden = !["niveaux", "articles", "tenue"].includes(t.porte);
+    $("me-articles").textContent = t.porte === "niveaux" ? "Les piles et leurs réfs" : t.porte === "tenue" ? "Ce qu'il porte" : "Les réfs";
     if (mur) { poser("me-uvn", String(e.uvs.length)); poser("me-uvl", virgule(e.uvL)); poser("me-hmur", virgule(e.crans * CRAN_CM / 100)); }
     $("me-g-taille").hidden = mur;
     if (!mur) {
@@ -10714,7 +10908,7 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     $("me-alerte").textContent = alertes.join(" ");
     $("me-info").textContent = mur ? resumeUvs(e) : "";
     $("me-info").hidden = !mur;
-    [...$("me-form").elements].forEach(el => { if (el.id !== "me-equiper" && el.id !== "me-deselect") el.disabled = !modifiable; });
+    [...$("me-form").elements].forEach(el => { if (!["me-equiper", "me-articles", "me-deselect"].includes(el.id)) el.disabled = !modifiable; });
     $("me-actions").hidden = !modifiable;
   }
   $("me-form").addEventListener("submit", e => e.preventDefault());
@@ -10753,6 +10947,7 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
   $("me-tourner").addEventListener("click", () => { const e = merchElements.docs[choixMerch]; if (e) modifierElementMerch(e.id, { rot: (Math.round(e.rot / 90) * 90 + 90) % 360 }); });
   $("me-deselect").addEventListener("click", () => choisirElementMerch(null));
   $("me-equiper").addEventListener("click", () => { if (choixMerch) { viderAttenteMerch(); ouvrirMurMerch(choixMerch); } });
+  $("me-articles").addEventListener("click", () => { if (choixMerch) { viderAttenteMerch(); ouvrirMeubleMerch(choixMerch); } });
   $("me-dupliquer").addEventListener("click", async () => {
     const e = merchElements.docs[choixMerch];
     if (!e || !peutModifierMerch()) return;
@@ -10791,7 +10986,7 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
       Object.assign(e, { uvL, crans: unMur ? unMur.crans : CRANS_MUR, uvs, l: uvs.length * uvL, p: t.p });
     }
     else Object.assign(e, { l: t.l, p: t.p });
-    if (t.porte === "niveaux") Object.assign(e, { hauteurs: 1, niveaux: [{ articles: [] }] });
+    if (t.porte === "niveaux") Object.assign(e, { hauteurs: 1, niveaux: [{ articles: [] }], piles: type === "grande-table" ? 5 : 3, sens: "dos" });
     if (t.porte === "articles" || t.porte === "tenue") e.articles = [];
     if (t.porte === "tenue") { e.tenue = null; e.presente = []; }
     choixMerch = e.id;
@@ -10943,6 +11138,7 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
   const NUANCES_MUR = ["#8d97a8", "#a3acbb", "#7c8698", "#b3bac6", "#949eae"];
   function dessinerEqMur(u, q, i, x0, w, plancher) {
     const y = plancher - q.cran * CRAN_CM, xc = x0 + w / 2;
+    const coul = pos => { const a = q.articles.find(x => x.pos === pos); return a ? couleurPiece(pieces[a.p]) : null; };
     const g = svgEl("g", { class: `mu-q mu-q-${q.type}${q.id === eqMur ? " choisi" : ""}`, "data-uv": i, "data-id": q.id, "data-x0": x0, "data-w": w, "data-y": y, tabindex: "0", role: "button",
       "aria-label": `${nomEq(u, q)}, à ${hauteurEq(q)}, UV ${i + 1}` });
     const zone = PENDU[q.type] ? [y - 7, y + PENDU[q.type] * CRAN_CM] : [y - CASE * CRAN_CM + 2, y + 5];
@@ -10952,7 +11148,8 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
       for (let k = 0; k < n; k++) {
         const xv = x0 + 7 + pas * (k + 0.5);
         g.append(svgEl("path", { class: "mu-cintre", d: `M${xv} ${y}v3M${xv - 4} ${y + 6}L${xv} ${y + 3}L${xv + 4} ${y + 6}` }));
-        g.append(svgEl("rect", { class: "mu-vetement", x: xv - 2.8, y: y + 6, width: 5.6, height: PENDU.pressing * CRAN_CM - 8, rx: 1.5, fill: NUANCES_MUR[k % NUANCES_MUR.length] }));
+        const a = q.articles.length ? q.articles[Math.floor(k * q.articles.length / n)] : null;
+        g.append(svgEl("rect", { class: "mu-vetement", x: xv - 2.8, y: y + 6, width: 5.6, height: PENDU.pressing * CRAN_CM - 8, rx: 1.5, fill: (a && couleurPiece(pieces[a.p])) || NUANCES_MUR[k % NUANCES_MUR.length] }));
       }
       g.append(svgEl("rect", { class: "mu-barre", x: x0 + 3, y: y - 1.4, width: w - 6, height: 2.8, rx: 1.4 }));
     } else if (q.type === "facing" || q.type === "coudee") {
@@ -10964,17 +11161,19 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
       const l = Math.min(48, w - 10);
       if (q.type === "coudee") {
         g.append(svgEl("path", { class: "mu-bras", d: `M${xc - l * 0.3} ${y}H${xc - 2}L${xc + 4} ${y + 12}H${xc + l * 0.3}` }));
-        habit(xc - 3, y + 2, l * 0.86, PENDU.facing * CRAN_CM - 12, "#b6bdc9");   // derrière, plus haut
-        habit(xc + 3, y + 14, l, PENDU.facing * CRAN_CM - 6, NUANCES_MUR[0]);    // devant, plus bas
+        habit(xc - 3, y + 2, l * 0.86, PENDU.facing * CRAN_CM - 12, coul("derriere") || "#b6bdc9");   // derrière, plus haut
+        habit(xc + 3, y + 14, l, PENDU.facing * CRAN_CM - 6, coul("devant") || NUANCES_MUR[0]);    // devant, plus bas
       } else {
         g.append(svgEl("circle", { class: "mu-bras", cx: xc, cy: y, r: 2.4 }));
-        habit(xc, y + 3, l, PENDU.facing * CRAN_CM - 6, NUANCES_MUR[0]);
+        habit(xc, y + 3, l, PENDU.facing * CRAN_CM - 6, coul("1") || NUANCES_MUR[0]);
+        if (coul("2")) habit(xc, y + 7, l * 0.9, (PENDU.facing * CRAN_CM - 6) * 0.78, coul("2"));   // par-dessus : plus court, on voit le dessous au col et en bas
       }
     } else {
-      const n = Math.max(1, Math.floor((w - 8) / 30)), lp = Math.min(26, (w - 8) / n - 5), hp = Math.min(CASE * CRAN_CM - 6, 20);
+      // Rien, une réf. en deux piles, ou deux réfs (une pile chacune).
+      const n = q.refs ? 2 : 0, lp = Math.min(26, (w - 8) / 2 - 4), hp = Math.min(CASE * CRAN_CM - 6, 20);
       for (let k = 0; k < n; k++) {
         const xp = x0 + 4 + ((w - 8) / n) * (k + 0.5) - lp / 2;
-        g.append(svgEl("rect", { class: "mu-pile", x: xp, y: y - 1.5 - hp, width: lp, height: hp, rx: 1.2, fill: NUANCES_MUR[(k + 1) % NUANCES_MUR.length] }));
+        g.append(svgEl("rect", { class: "mu-pile", x: xp, y: y - 1.5 - hp, width: lp, height: hp, rx: 1.2, fill: coul(q.refs === 2 ? String(k + 1) : "1") || NUANCES_MUR[(q.refs === 2 ? k : 0) + 1] }));
         for (let b = 4; b < hp; b += 4) g.append(svgEl("line", { class: "mu-pli", x1: xp + 1, y1: y - 1.5 - b, x2: xp + lp - 1, y2: y - 1.5 - b }));
       }
       g.append(svgEl("rect", { class: "mu-planche", x: x0 + 2.5, y: y - 1.5, width: w - 5, height: 3.4, rx: 0.8 }));
@@ -11080,7 +11279,88 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     $("mu-moins").disabled = n <= 1;
     $("mu-plus").disabled = n >= 40;
   }
-  // L'UV choisie, en détail : ses équipements du haut vers le bas, leur hauteur, ▲ ▼ ×, et de quoi en ajouter.
+  // L'UV choisie, en détail : ses équipements du haut vers le bas, leur hauteur (en cm), leurs réfs, ▲ ▼ ×, et de quoi en ajouter.
+  function carteEqMur(e, u, q, modifiable) {
+    const li = element("li", `mu-eq mu-eq-${q.type}${q.id === eqMur ? " choisi" : ""}`), ic = element("span", "mu-eq-picto");
+    li.dataset.id = q.id;
+    ic.innerHTML = PICTO_EQ[q.type];
+    const texte = element("span", "mu-eq-texte"), haut = element("span", "mu-eq-n");
+    texte.append(element("span", "mu-eq-nom", nomEq(u, q) + (q.ferme ? " de fermeture" : "")));
+    if (modifiable) {
+      const champ = element("input", "mu-cm");
+      champ.type = "text";
+      champ.inputMode = "numeric";
+      champ.maxLength = 3;
+      champ.value = String(q.cran * CRAN_CM);
+      champ.dataset.id = q.id;
+      champ.setAttribute("aria-label", `Hauteur en cm : ${nomEq(u, q)}`);
+      haut.append(document.createTextNode("à "), champ, document.createTextNode(` cm · cran ${q.cran}`));
+    } else haut.textContent = `à ${hauteurEq(q)} · cran ${q.cran}`;
+    texte.append(haut);
+    li.append(ic, texte);
+    if (modifiable) {
+      const act = element("span", "mu-eq-actions");
+      [["monter", "▲", "Monter d'un cran", q.cran >= e.crans - 1], ["descendre", "▼", "Descendre d'un cran", q.cran <= 1], ["retirer", "×", "Retirer", false]].forEach(([a, s, nomA, off]) => {
+        const b = element("button", "mu-eq-bouton", s);
+        b.type = "button";
+        b.dataset.action = a;
+        b.dataset.id = q.id;
+        b.setAttribute("aria-label", `${nomA} : ${nomEq(u, q)}`);
+        b.disabled = off;
+        act.append(b);
+      });
+      li.append(act);
+    }
+    // Les réfs : sur une étagère, rien, une réf. (2 piles) ou deux réfs ; sur un facing, l'article et ce qui va par-dessus ;
+    // sur une barre coudée, derrière et devant ; sur un pressing, une liste.
+    const refs = element("div", "mu-refs");
+    const place = (pos, nomP) => {
+      const ligne = element("div", "mu-place"), a = q.articles.find(x => x.pos === pos);
+      ligne.append(element("span", "mu-place-nom", nomP));
+      if (a) ligne.append(puceRef(a, modifiable ? { retirer: pos, eq: q.id } : null));
+      else if (modifiable) { const b = element("button", "lien-discret mu-choisir", "+ Choisir la réf."); b.type = "button"; b.dataset.choisir = pos; b.dataset.eq = q.id; ligne.append(b); }
+      else ligne.append(element("span", "aide", "—"));
+      refs.append(ligne);
+    };
+    if (q.type === "etagere") {
+      const nb = element("div", "mu-nb");
+      nb.setAttribute("role", "group");
+      nb.setAttribute("aria-label", "Ce qu'il y a sur l'étagère");
+      [[0, "Rien"], [1, "1 réf. (2 piles)"], [2, "2 réfs"]].forEach(([n, nomN]) => {
+        const b = element("button", "puce-filtre", nomN);
+        b.type = "button";
+        b.dataset.nb = String(n);
+        b.dataset.eq = q.id;
+        b.setAttribute("aria-pressed", String(q.refs === n));
+        b.disabled = !modifiable;
+        nb.append(b);
+      });
+      refs.append(nb);
+      if (q.refs === 1) place("1", "La réf.");
+      if (q.refs === 2) { place("1", "Pile de gauche"); place("2", "Pile de droite"); }
+      const plusHaute = u.eq.find(x => x.type === "etagere");
+      if (modifiable && plusHaute === q) {
+        const l = element("label", "mu-ferme"), c = element("input");
+        c.type = "checkbox";
+        c.checked = q.ferme;
+        c.dataset.ferme = q.id;
+        l.append(c, element("span", null, "Étagère de fermeture (le haut de la descente)"));
+        refs.append(l);
+      }
+    } else if (q.type === "facing") {
+      place("1", "L'article");
+      if (q.articles.length) place("2", "Par-dessus (superposition)");
+    } else if (q.type === "coudee") POSITIONS_COUDEE.forEach(([pos, nomP]) => place(pos, nomP));
+    else {
+      const liste = element("div", "mu-liste-refs");
+      liste.append(...q.articles.map((a, k) => puceRef(a, modifiable ? { retirerIndex: String(k), eq: q.id } : null)));
+      if (!q.articles.length) liste.append(element("span", "aide", "Aucune réf. pour l'instant."));
+      refs.append(liste);
+      if (modifiable) { const b = element("button", "lien-discret mu-choisir", "+ Ajouter des réfs"); b.type = "button"; b.dataset.choisir = "liste"; b.dataset.eq = q.id; refs.append(b); }
+    }
+    li.append(refs);
+    return li;
+  }
   function rendreDetailMur(e, plan, modifiable) {
     const u = e.uvs[uvMur], z = zoneUv(plan, e, uvMur);
     $("mu-uv-titre").textContent = `UV ${uvMur + 1}${estMiroir(u) ? " · miroir" : ""}`;
@@ -11092,32 +11372,66 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     $("mu-condamner").textContent = u.condamne ? "Remettre le miroir" : "Condamner le miroir";
     $("mu-condamner").hidden = !modifiable;
     $("mu-condamner").classList.remove("arme");
-    $("mu-eqs").replaceChildren(...u.eq.map((q, k) => {
-      const li = element("li", `mu-eq mu-eq-${q.type}${q.id === eqMur ? " choisi" : ""}`), ic = element("span", "mu-eq-picto");
-      li.dataset.id = q.id;
-      ic.innerHTML = PICTO_EQ[q.type];
-      const texte = element("span", "mu-eq-texte");
-      texte.append(element("span", "mu-eq-nom", nomEq(u, q)), element("span", "mu-eq-n", `à ${hauteurEq(q)} · cran ${q.cran}${q.articles.length ? ` · ${q.articles.length} article${q.articles.length > 1 ? "s" : ""}` : ""}`));
-      li.append(ic, texte);
-      if (modifiable) {
-        const act = element("span", "mu-eq-actions");
-        [["monter", "▲", "Monter d'un cran", q.cran >= e.crans - 1], ["descendre", "▼", "Descendre d'un cran", q.cran <= 2], ["retirer", "×", "Retirer", false]].forEach(([a, s, nomA, off]) => {
-          const b = element("button", "mu-eq-bouton", s);
-          b.type = "button";
-          b.dataset.action = a;
-          b.dataset.id = q.id;
-          b.setAttribute("aria-label", `${nomA} : ${nomEq(u, q)}`);
-          b.disabled = off;
-          act.append(b);
-        });
-        li.append(act);
-      }
-      return li;
-    }));
+    $("mu-copier").hidden = estMiroir(u) || !u.eq.length;
+    $("mu-coller").hidden = !modifiable || !pressePapiersUv || estMiroir(u);
+    if (pressePapiersUv) $("mu-coller").title = `Coller : ${pressePapiersUv.de}`;
+    const actif = document.activeElement && document.activeElement.classList.contains("mu-cm") ? document.activeElement.dataset.id : null;
+    $("mu-eqs").replaceChildren(...u.eq.map(q => carteEqMur(e, u, q, modifiable)));
+    if (actif) { const c = $("mu-eqs").querySelector(`.mu-cm[data-id="${actif}"]`); if (c) c.focus(); }
     $("mu-eqs-vide").hidden = u.eq.length > 0 || estMiroir(u);
     $("mu-ajouts").hidden = !modifiable || estMiroir(u);
     $("mu-aide-geste").hidden = !modifiable || estMiroir(u);
+    const etageres = u.eq.filter(q => q.type === "etagere");
+    $("mu-fermer").hidden = !modifiable || estMiroir(u) || !etageres.length || etageres[0].ferme;
   }
+  // Les étagères des UV voisines du même mur (d'abord à gauche, puis à droite, puis les autres) : pour aligner les descentes.
+  function hauteursVoisines(e, i) {
+    const ordre = e.uvs.map((_, k) => k).filter(k => k !== i).sort((a, b) => Math.abs(a - i) - Math.abs(b - i) || a - b);
+    for (const k of ordre) {
+      const u = e.uvs[k];
+      if (estMiroir(u)) continue;
+      const c = u.eq.filter(q => q.type === "etagere").map(q => q.cran);
+      if (c.length) return c.sort((a, b) => b - a);
+    }
+    return null;
+  }
+  const DESCENTE_TYPE = [35, 30, 25, 20, 15, 10];   // de 1,75 m à 50 cm, une case de 5 crans (25 cm)
+  // Le presse-papiers des UV : une UV copiée se colle sur une autre, de ce mur ou d'un autre (sans ses articles).
+  const CLE_PRESSE_UV = "tableau-de-bord-axel:merch-uv-copiee";
+  let pressePapiersUv = null;
+  try { const v = JSON.parse(localStorage.getItem(CLE_PRESSE_UV) || "null"); if (v && Array.isArray(v.eq)) pressePapiersUv = v; } catch (_) { /* rien */ }
+  $("mu-copier").addEventListener("click", () => {
+    const e = merchElements.docs[murOuvert];
+    if (!e) return;
+    const u = e.uvs[uvMur];
+    pressePapiersUv = { de: `${nomMeuble(e)}, UV ${uvMur + 1}`, eq: u.eq.map(q => ({ type: q.type, cran: q.cran, refs: q.refs, ferme: q.ferme })) };
+    try { localStorage.setItem(CLE_PRESSE_UV, JSON.stringify(pressePapiersUv)); } catch (_) { /* rien */ }
+    rendreMurMerch();
+    toast("UV copiée : choisis une autre UV (de ce mur ou d'un autre), puis « Coller ici ».");
+  });
+  $("mu-coller").addEventListener("click", ev => {
+    const e = merchElements.docs[murOuvert], b = ev.currentTarget;
+    if (!e || !pressePapiersUv || !peutModifierMerch()) return;
+    const u = e.uvs[uvMur];
+    if (u.eq.some(q => q.articles.length) && !b.classList.contains("arme")) { armer(b, "Confirmer : ses réfs partent", "Coller ici"); return; }
+    desarmer(b, "Coller ici");
+    eqMur = null;
+    changerUvs(e, uvs => {
+      uvs[uvMur].eq = pressePapiersUv.eq.map(x => ({ ...nouvelEq(x.type, Math.max(1, Math.min(e.crans - 1, x.cran))), ...(x.type === "etagere" ? { refs: x.refs, ferme: !!x.ferme } : {}) }));
+    });
+    toast(`Collée depuis ${pressePapiersUv.de}, sans les réfs.`);
+  });
+  $("mu-fermer").addEventListener("click", () => {
+    const e = merchElements.docs[murOuvert];
+    if (!e || !peutModifierMerch()) return;
+    const u = e.uvs[uvMur], haut = u.eq.find(q => q.type === "etagere");
+    if (!haut) return;
+    const c = haut.cran + CASE;
+    if (c > e.crans - 1 || !estLibre(u, c, e.crans, "etagere", true)) { toast("Pas la place au-dessus : coche « Étagère de fermeture » sur l'étagère du haut.", "erreur"); return; }
+    const q = { ...nouvelEq("etagere", c), refs: 0, ferme: true };
+    eqMur = q.id;
+    changerUvs(e, uvs => { uvs[uvMur].eq.push(q); });
+  });
   $("mu-ajouts").replaceChildren(...AJOUTS_EQ.map(([id, nom]) => { const b = element("button", "puce-filtre mu-ajout", `+ ${nom}`); b.type = "button"; b.dataset.ajout = id; return b; }));
   $("mu-remplacer").replaceChildren(new Option("Remplacer l'UV par…", ""), ...MODELES_UV.map(([id, nom]) => new Option(nom, id)), new Option("Un miroir", "miroir"));
   function changerUvs(e, faire) {
@@ -11126,26 +11440,39 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     uvs.forEach(u => u.eq.sort((a, b) => b.cran - a.cran));
     modifierElementMerch(e.id, { uvs });
   }
-  // Le cran le plus proche de celui voulu où il y a la place : les vêtements pendus et les piles ne touchent rien ;
-  // sinon, à 3 crans au moins de ce qui est déjà accroché.
+  // Un cran où il y a la place : les vêtements pendus et les piles ne touchent rien (strict) ; sinon, à 3 crans au moins
+  // de ce qui est déjà accroché.
+  function estLibre(u, c, crans, type, strict) {
+    if (c < 1 || c > crans - 1) return false;
+    const b = PENDU[type] ? c - PENDU[type] : c, h = type === "etagere" ? c + CASE - 1 : c + 1;
+    return b >= 0 && u.eq.every(q => (strict ? h <= basEq(q) || b >= hautEq(q) : Math.abs(q.cran - c) >= 3));
+  }
   function cranLibre(u, voulu, crans, type) {
-    const etendue = c => [PENDU[type] ? c - PENDU[type] : c, type === "etagere" ? c + CASE - 1 : c + 1];
-    const libre = (c, strict) => {
-      if (c < 2 || c > crans - 2) return false;
-      const [b, h] = etendue(c);
-      return b >= 0 && u.eq.every(q => (strict ? h <= basEq(q) || b >= hautEq(q) : Math.abs(q.cran - c) >= 3));
-    };
-    for (const strict of [true, false]) for (let d = 0; d <= crans; d++) { if (libre(voulu - d, strict)) return voulu - d; if (libre(voulu + d, strict)) return voulu + d; }
+    const ok = (c, strict) => c >= 2 && c <= crans - 2 && estLibre(u, c, crans, type, strict);
+    for (const strict of [true, false]) for (let d = 0; d <= crans; d++) { if (ok(voulu - d, strict)) return voulu - d; if (ok(voulu + d, strict)) return voulu + d; }
     return Math.max(2, Math.min(crans - 2, voulu));
   }
+  // Monter ou descendre un équipement ; une étagère pousse les autres pour garder 5 crans (25 cm) entre deux.
   function deplacerEqMur(e, id, cran) {
+    let change = false, refuse = false;
     changerUvs(e, uvs => {
-      const q = uvs[uvMur] && uvs[uvMur].eq.find(x => x.id === id);
+      const u = uvs[uvMur], q = u && u.eq.find(x => x.id === id);
       if (!q) return false;
-      const c = Math.max(2, Math.min(e.crans - 1, cran));
+      const c = Math.max(1, Math.min(e.crans - 1, cran));
       if (c === q.cran) return false;
       q.cran = c;
+      if (q.type === "etagere") {
+        const autres = u.eq.filter(x => x.type === "etagere" && x !== q);
+        let bas = c;
+        autres.filter(x => x.cran >= c).sort((a, b) => a.cran - b.cran).forEach(x => { if (x.cran < bas + CASE) x.cran = bas + CASE; bas = x.cran; });
+        let haut = c;
+        autres.filter(x => x.cran < c).sort((a, b) => b.cran - a.cran).forEach(x => { if (x.cran > haut - CASE) x.cran = haut - CASE; haut = x.cran; });
+        if (u.eq.some(x => x.cran < 1 || x.cran > e.crans - 1)) { refuse = true; return false; }
+      }
+      change = true;
     });
+    if (refuse) toast("Pas la place de garder 25 cm entre les étagères à cette hauteur.", "erreur");
+    return change;
   }
   $("mu-ajouts").addEventListener("click", ev => {
     const b = ev.target.closest("[data-ajout]"), e = merchElements.docs[murOuvert];
@@ -11153,10 +11480,21 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     if (!a || !e || !peutModifierMerch()) return;
     const u = e.uvs[uvMur];
     if (u.eq.length >= 12) { toast("Douze équipements au plus par UV.", "erreur"); return; }
+    if (a[2] === "descente") {
+      // Les hauteurs de l'UV voisine (sinon de 1,75 m à 50 cm), là où il y a la place ; la plus haute ferme la descente.
+      const hauteurs = hauteursVoisines(e, uvMur) || DESCENTE_TYPE.filter(c => c <= e.crans - 1);
+      const libres = hauteurs.filter(c => estLibre(u, c, e.crans, "etagere", true)).slice(0, 12 - u.eq.length);
+      if (!libres.length) { toast("Pas la place pour une descente sur cette UV.", "erreur"); return; }
+      const dejaPlusHaute = u.eq.some(q => q.type === "etagere" && q.cran > Math.max(...libres));
+      eqMur = null;
+      changerUvs(e, uvs => { uvs[uvMur].eq.push(...libres.map(c => ({ ...nouvelEq("etagere", c), ...(c === Math.max(...libres) && !dejaPlusHaute && libres.length > 1 ? { ferme: true, refs: 0 } : {}) }))); });
+      return;
+    }
     let voulu = a[3];
-    if (voulu == null) {   // une étagère : une case au-dessus de la plus haute, sinon à mi-hauteur
+    if (voulu == null) {   // une étagère : à une hauteur de l'UV voisine, sinon une case au-dessus de la plus haute, sinon à mi-hauteur
+      const voisines = (hauteursVoisines(e, uvMur) || []).filter(c => estLibre(u, c, e.crans, "etagere", true));
       const etageres = u.eq.filter(q => q.type === "etagere").map(q => q.cran);
-      voulu = etageres.length ? (Math.max(...etageres) + CASE <= e.crans - 4 ? Math.max(...etageres) + CASE : Math.min(...etageres) - CASE) : 30;
+      voulu = voisines.length ? voisines[0] : etageres.length ? (Math.max(...etageres) + CASE <= e.crans - 4 ? Math.max(...etageres) + CASE : Math.min(...etageres) - CASE) : 30;
     }
     const q = nouvelEq(a[2], cranLibre(u, Math.min(voulu, e.crans - 2), e.crans, a[2]));
     eqMur = q.id;
@@ -11165,8 +11503,52 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
   $("mu-eqs").addEventListener("click", ev => {
     const e = merchElements.docs[murOuvert];
     if (!e) return;
+    const u = e.uvs[uvMur];
+    const nb = ev.target.closest("[data-nb]"), choisir = ev.target.closest("[data-choisir]"), retirer = ev.target.closest("[data-retirer], [data-retirer-index]");
+    if ((nb || choisir || retirer) && !peutModifierMerch()) return;
+    if (nb) {
+      const n = Number(nb.dataset.nb);
+      changerUvs(e, uvs => {
+        const q = uvs[uvMur].eq.find(x => x.id === nb.dataset.eq);
+        if (!q || q.refs === n) return false;
+        q.refs = n;
+        q.articles = q.articles.filter(a => n === 2 || (n === 1 && a.pos === "1"));
+      });
+      return;
+    }
+    if (choisir) {
+      const q = u.eq.find(x => x.id === choisir.dataset.eq);
+      if (!q) return;
+      const pos = choisir.dataset.choisir, liste = pos === "liste";
+      const nomPos = q.type === "etagere" ? (q.refs === 2 ? (pos === "1" ? " · pile de gauche" : " · pile de droite") : "") : q.type === "coudee" ? ` · ${(POSITIONS_COUDEE.find(x => x[0] === pos) || ["", ""])[1].toLowerCase()}` : pos === "2" ? " · par-dessus" : "";
+      choisirRefs({
+        titre: `${nomMeuble(e)} · UV ${uvMur + 1}`, sous: `${nomEq(u, q)} à ${hauteurEq(q)}${nomPos}${liste ? " : touche les pièces à ajouter ; « Toutes les couleurs » prend tout un modèle." : ""}`,
+        multiple: liste, besoin: BESOIN_EQ[q.type], deja: new Set(liste ? q.articles.map(a => a.p) : []),
+        valider: ids => changerUvs(e, uvs => {
+          const z = uvs[uvMur].eq.find(x => x.id === q.id);
+          if (!z) return false;
+          if (liste) z.articles.push(...ids.map(p => nouvelArticle(p)));
+          else { z.articles = z.articles.filter(a => a.pos !== pos); z.articles.push(nouvelArticle(ids[0], pos)); }
+        }),
+      });
+      return;
+    }
+    if (retirer) {
+      changerUvs(e, uvs => {
+        const z = uvs[uvMur].eq.find(x => x.id === retirer.dataset.eq);
+        if (!z) return false;
+        if (retirer.dataset.retirerIndex != null) z.articles.splice(Number(retirer.dataset.retirerIndex), 1);
+        else {
+          z.articles = z.articles.filter(a => a.pos !== retirer.dataset.retirer);
+          const dessus = z.type === "facing" && retirer.dataset.retirer === "1" && z.articles.find(a => a.pos === "2");
+          if (dessus) dessus.pos = "1";   // ce qui était par-dessus devient l'article
+        }
+      });
+      return;
+    }
+    if (ev.target.closest("input, label, .mu-refs")) return;
     const b = ev.target.closest("button[data-action]");
-    if (!b) { const li = ev.target.closest(".mu-eq"); if (li) { eqMur = li.dataset.id; rendreMurMerch(); } return; }
+    if (!b) { const li = ev.target.closest(".mu-eq"); if (li && li.dataset.id !== eqMur) { eqMur = li.dataset.id; rendreMurMerch(); } return; }
     if (!peutModifierMerch()) return;
     const q = e.uvs[uvMur].eq.find(x => x.id === b.dataset.id);
     if (!q) return;
@@ -11179,6 +11561,21 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
       changerUvs(e, uvs => { uvs[uvMur].eq = uvs[uvMur].eq.filter(x => x.id !== q.id); });
     }
   });
+  $("mu-eqs").addEventListener("change", ev => {
+    const e = merchElements.docs[murOuvert];
+    if (!e || !peutModifierMerch()) return;
+    const cm = ev.target.closest(".mu-cm"), f = ev.target.closest("[data-ferme]");
+    if (cm) {
+      const v = Number(cm.value.replace(/\s|cm/gi, "").replace(",", "."));
+      eqMur = cm.dataset.id;
+      if (!isFinite(v) || v <= 0 || !deplacerEqMur(e, cm.dataset.id, Math.round(v / CRAN_CM))) rendreMurMerch();
+    } else if (f) changerUvs(e, uvs => {
+      const q = uvs[uvMur].eq.find(x => x.id === f.dataset.ferme);
+      if (!q) return false;
+      q.ferme = f.checked;
+      if (f.checked && !q.articles.length) q.refs = 0;
+    });
+  });
   $("mu-remplacer").addEventListener("change", ev => {
     const v = ev.target.value, e = merchElements.docs[murOuvert];
     ev.target.value = "";
@@ -11190,7 +11587,7 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
       if (v === "miroir") { uvs[uvMur] = { miroir: true, condamne: false, eq: [] }; return; }
       const m = MODELES_UV.find(x => x[0] === v);
       if (!m) return false;
-      uvs[uvMur] = { miroir: !!avant.miroir, condamne: !!avant.miroir, eq: m[2].map(([t, c]) => nouvelEq(t, Math.min(c, e.crans - 2))) };
+      uvs[uvMur] = { miroir: !!avant.miroir, condamne: !!avant.miroir, eq: m[2].map(x => eqModele(x, e.crans)) };
     });
   });
   $("mu-condamner").addEventListener("click", ev => {
@@ -11272,6 +11669,374 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
   $("fenetre-mur").addEventListener("close", () => { murOuvert = null; glisseMur = null; });
   window.addEventListener("resize", () => { if ($("fenetre-mur").open) rendreMurMerch(); });
 
+  // ----- les réfs posées : choisies dans le Dressing, depuis le Merch ou depuis la fiche d'une pièce -----
+  // Un article posé : { p, d (posé le), ok, n, t, sup, pos }. pos : sa place quand le meuble en a plusieurs — sur une
+  // étagère « 1 » et « 2 » (les deux piles), sur un facing « 1 » et « 2 » (par-dessus), sur une barre coudée « derriere »
+  // et « devant », sur une table « a3 » (côté a, 3e pile) ou « b5 ».
+  const nouvelArticle = (p, pos) => ({ p, d: versIso(aujourdhui()), ok: null, n: null, t: null, sup: false, pos: pos || null });
+  function couleurPiece(x) {
+    if (!x) return null;
+    const n = nuanceDe(x.couleur);
+    if (n && /^#/.test(n.css)) return n.css;
+    const t = teinteDe(x.couleur);
+    return t && /^#/.test(TEINTE[t].css) ? TEINTE[t].css : "#8d97a8";
+  }
+  const nomRef = x => (x ? [x.modele || NOM_CATEGORIE[x.categorie], x.couleur].filter(Boolean).join(" · ") : "Pièce introuvable");
+  // Ce qu'un équipement demande : plié (étagère, table) ou cintre (barres, portants).
+  const BESOIN_EQ = { etagere: "plie", facing: "cintre", pressing: "cintre", coudee: "cintre" };
+  const besoinMeuble = e => (TYPES_MERCH[e.type].porte === "niveaux" ? "plie" : TYPES_MERCH[e.type].famille === "portant" ? "cintre" : null);
+  const vaIci = (x, besoin) => { const pr = presentationDe(x); return !besoin || !((besoin === "cintre" && pr === "plie") || (besoin === "plie" && pr === "cintre")); };
+  const POSITIONS_COUDEE = [["derriere", "Derrière (le plus haut)"], ["devant", "Devant"]];
+  // Les places d'une table : deux rangées de piles ; dos à dos (un côté chacune) ou dans le même sens (derrière, devant).
+  const nomsRangees = e => (e.sens === "meme" ? { a: "Derrière", b: "Devant" } : { a: "Côté 1", b: "Côté 2" });
+  const libellePile = (e, pos) => { const m = /^([ab])(\d)$/.exec(pos || ""); return m ? `${nomsRangees(e)[m[1]]} · pile ${m[2]}` : ""; };
+  // Où sont les pièces sur un plan : pièce → [{ e, texte, uv, eq, pos }].
+  function emplacementsDuPlan(planId) {
+    const m = new Map();
+    const noter = (a, e, texte, plus) => { if (!m.has(a.p)) m.set(a.p, []); m.get(a.p).push({ e, texte, pos: a.pos, ...plus }); };
+    elementsDuPlan(planId).forEach(e => {
+      const t = TYPES_MERCH[e.type];
+      if (t.porte === "uv") e.uvs.forEach((u, i) => u.eq.forEach(q => q.articles.forEach(a => noter(a, e, `${nomMeuble(e)} · UV ${i + 1} · ${nomEq(u, q).toLowerCase()} à ${hauteurEq(q)}`, { uv: i, eq: q.id }))));
+      else if (t.porte === "niveaux") e.niveaux.forEach((n, k) => n.articles.forEach(a => noter(a, e, `${nomMeuble(e)}${k ? ` · ${k + 1}e hauteur` : a.pos ? ` · ${libellePile(e, a.pos).toLowerCase()}` : ""}`, { niveau: k })));
+      else (e.articles || []).forEach(a => noter(a, e, nomMeuble(e), {}));
+    });
+    return m;
+  }
+  function puceRef(a, retirer) {
+    const x = pieces[a.p], s = element("span", "mu-ref" + (x ? "" : " absente"));
+    const pastille = element("span", "mu-ref-photo"), src = x && srcPhoto(x.photo);
+    pastille.style.background = couleurPiece(x) || "#c9ced8";
+    if (src) { const img = element("img"); img.alt = ""; img.loading = "lazy"; img.addEventListener("error", () => img.remove(), { once: true }); img.src = src; pastille.append(img); }
+    s.append(pastille, element("span", "mu-ref-nom", nomRef(x)));
+    if (retirer) { const b = element("button", "mu-ref-retirer", "×"); b.type = "button"; Object.assign(b.dataset, retirer); b.setAttribute("aria-label", `Retirer : ${nomRef(x)}`); s.append(b); }
+    return s;
+  }
+
+  // ----- choisir des réfs : le Dressing, rangé par modèle (toutes ses couleurs ensemble) -----
+  let choixRefs = null;   // { titre, sous, multiple, besoin, deja: Set, choisies: Set, valider(ids) }
+  function choisirRefs(o) {
+    choixRefs = { multiple: false, besoin: null, deja: new Set(), ...o, choisies: new Set() };
+    $("rf-titre").textContent = choixRefs.titre;
+    $("rf-sous").textContent = choixRefs.sous || "";
+    $("rf-recherche").value = "";
+    const toutes = piecesEnMagasin();
+    $("rf-categorie").replaceChildren(new Option("Toutes les catégories", ""), ...CATEGORIES.filter(([c]) => toutes.some(x => x.categorie === c)).map(([c, n]) => new Option(n, c)));
+    const marques = [...new Set(toutes.map(x => x.marque).filter(Boolean))].sort((a, b) => a.localeCompare(b, "fr"));
+    $("rf-marque").replaceChildren(new Option("Toutes les marques", ""), ...marques.map(m => new Option(m, m)));
+    $("rf-compatible").checked = true;
+    $("rf-compatible-l").hidden = !choixRefs.besoin;
+    $("rf-compatible-texte").textContent = choixRefs.besoin === "plie" ? "Seulement ce qui se plie" : "Seulement ce qui va sur cintre";
+    $("rf-valider").hidden = !choixRefs.multiple;
+    $("rf-vider").hidden = true;
+    $("rf-vider").onclick = null;
+    rendreChoixRefs();
+    ouvrir($("fenetre-refs"));
+    if (!window.matchMedia("(pointer: coarse)").matches) $("rf-recherche").focus();
+  }
+  function rendreChoixRefs() {
+    const o = choixRefs;
+    if (!o) return;
+    const q = sansAccents($("rf-recherche").value).trim(), cat = $("rf-categorie").value, marque = $("rf-marque").value, filtre = o.besoin && $("rf-compatible").checked;
+    const plan = planAffiche(), ou = plan ? emplacementsDuPlan(plan.id) : new Map();
+    const xs = piecesEnMagasin().filter(x => (!cat || x.categorie === cat) && (!marque || x.marque === marque) && (!filtre || vaIci(x, o.besoin))
+      && (!q || sansAccents([x.marque, x.modele, x.couleur, x.ref, NOM_CATEGORIE[x.categorie]].join(" ")).includes(q)));
+    // Rangées par catégorie, puis par modèle : les couleurs d'un même modèle côte à côte.
+    const groupes = new Map();
+    xs.sort((a, b) => RANG_CATEGORIE[a.categorie] - RANG_CATEGORIE[b.categorie] || cleModele(a).localeCompare(cleModele(b), "fr") || (a.couleur || "").localeCompare(b.couleur || "", "fr"))
+      .forEach(x => { const k = cleModele(x); if (!groupes.has(k)) groupes.set(k, []); groupes.get(k).push(x); });
+    $("rf-liste").replaceChildren(...[...groupes.values()].map(g => {
+      const s = element("section", "rf-groupe"), tete = element("div", "rf-groupe-tete");
+      tete.append(element("span", "rf-groupe-nom", [g[0].marque, NOM_CATEGORIE[g[0].categorie]].filter(Boolean).join(" · ") + (g.length > 1 ? ` · ${g.length} couleurs` : "")));
+      if (o.multiple && g.length > 1) {
+        const b = element("button", "lien-discret rf-toutes", "Toutes les couleurs");
+        b.type = "button";
+        b.dataset.toutes = g.map(x => x.id).join(",");
+        tete.append(b);
+      }
+      const ul = element("ul", "rf-pieces");
+      ul.append(...g.map(x => {
+        const li = element("li"), b = element("button", "rf-piece");
+        b.type = "button";
+        b.dataset.id = x.id;
+        const choisi = o.choisies.has(x.id) || o.deja.has(x.id);
+        b.setAttribute("aria-pressed", String(choisi));
+        if (o.deja.has(x.id)) b.disabled = true;
+        b.append(photoPiece(x));
+        const t = element("span", "rf-piece-texte");
+        const ligne = element("span", "rf-piece-couleur");
+        const pastille = element("span", "pastille-couleur");
+        pastille.style.setProperty("--teinte", cssCouleur(x.couleur) || "transparent");
+        ligne.append(pastille, document.createTextNode(x.couleur || "—"));
+        t.append(element("span", "rf-piece-nom", x.modele || NOM_CATEGORIE[x.categorie]), ligne);
+        const ici = ou.get(x.id) || [];
+        if (o.deja.has(x.id)) t.append(element("span", "rf-badge", "déjà ici"));
+        else if (ici.length) t.append(element("span", "rf-badge ailleurs", `déjà : ${ici[0].texte}${ici.length > 1 ? ` (+${ici.length - 1})` : ""}`));
+        if (o.besoin && !vaIci(x, o.besoin)) t.append(element("span", "rf-badge alerte", presentationDe(x) === "plie" ? "plié seulement" : "cintre seulement"));
+        b.append(t);
+        li.append(b);
+        return li;
+      }));
+      s.append(tete, ul);
+      return s;
+    }));
+    $("rf-vide").hidden = groupes.size > 0;
+    $("rf-compte").textContent = o.multiple ? (o.choisies.size ? `${o.choisies.size} choisie${o.choisies.size > 1 ? "s" : ""}` : "") : "";
+    $("rf-valider").disabled = !o.choisies.size;
+    $("rf-valider").textContent = o.choisies.size ? `Ajouter (${o.choisies.size})` : "Ajouter";
+  }
+  ["rf-recherche", "rf-categorie", "rf-marque", "rf-compatible"].forEach(id => $(id).addEventListener(id === "rf-recherche" ? "input" : "change", rendreChoixRefs));
+  $("rf-liste").addEventListener("click", ev => {
+    const o = choixRefs;
+    if (!o) return;
+    const toutes = ev.target.closest("[data-toutes]");
+    if (toutes) { toutes.dataset.toutes.split(",").filter(id => !o.deja.has(id)).forEach(id => o.choisies.add(id)); rendreChoixRefs(); return; }
+    const b = ev.target.closest(".rf-piece");
+    if (!b || b.disabled) return;
+    if (!o.multiple) { const valider = o.valider; choixRefs = null; fermer($("fenetre-refs")); valider([b.dataset.id]); return; }
+    if (o.choisies.has(b.dataset.id)) o.choisies.delete(b.dataset.id); else o.choisies.add(b.dataset.id);
+    rendreChoixRefs();
+  });
+  $("rf-valider").addEventListener("click", () => {
+    const o = choixRefs;
+    if (!o || !o.choisies.size) return;
+    choixRefs = null;
+    fermer($("fenetre-refs"));
+    o.valider([...o.choisies]);
+  });
+  $("fenetre-refs").addEventListener("close", () => { choixRefs = null; });
+
+  // ----- un meuble et ses réfs : une table (ses piles, de chaque côté), un portant, un présentoir, la vitrine, un mannequin -----
+  let meubleOuvert = null;
+  const MAX_PILES = { "grande-table": 7, "petite-table": 5 };
+  function ouvrirMeubleMerch(id) {
+    meubleOuvert = id;
+    rendreMeubleMerch();
+    ouvrir($("fenetre-meuble"));
+  }
+  function rendreMeubleMerch() {
+    const e = merchElements.docs[meubleOuvert];
+    if (!e) { if ($("fenetre-meuble").open) fermer($("fenetre-meuble")); return; }
+    const t = TYPES_MERCH[e.type], table = t.porte === "niveaux", modifiable = peutModifierMerch();
+    $("mb-titre").textContent = nomMeuble(e);
+    $("mb-reglages-table").hidden = !table;
+    $("mb-table").hidden = !table;
+    $("mb-liste-bloc").hidden = table;
+    if (table) {
+      const n = e.piles, rangs = nomsRangees(e), arts = e.niveaux[0].articles;
+      $("mb-sous").textContent = `${t.nom} · ${n} pile${n > 1 ? "s" : ""} de chaque côté · ${e.sens === "meme" ? "dans le même sens" : "dos à dos"} · une réf. par pile`;
+      $("mb-n").textContent = String(n);
+      $("mb-moins").disabled = !modifiable || n <= 1;
+      $("mb-plus").disabled = !modifiable || n >= MAX_PILES[e.type];
+      document.querySelectorAll('input[name="mb-sens"]').forEach(r => { r.checked = r.value === e.sens; r.disabled = !modifiable; });
+      // La table vue de dessus : deux rangées de piles ; une flèche dit de quel côté on la regarde.
+      const rangee = r => {
+        const bloc = element("div", `mb-rangee mb-rangee-${r}`);
+        const fleche = e.sens === "meme" ? "↓" : r === "a" ? "↑" : "↓";
+        bloc.append(element("span", "mb-rangee-nom", `${rangs[r]} ${fleche}`));
+        const piles = element("div", "mb-piles-grille");
+        piles.style.setProperty("--n", n);
+        for (let k = 1; k <= n; k++) {
+          const pos = r + k, a = arts.find(x => x.pos === pos), x = a && pieces[a.p];
+          const b = element("button", "mb-pile" + (a ? " pleine" : ""));
+          b.type = "button";
+          b.dataset.pos = pos;
+          b.setAttribute("aria-label", `${rangs[r]}, pile ${k} : ${a ? nomRef(x) : "vide"}`);
+          b.disabled = !modifiable && !a;
+          const vis = element("span", "mb-pile-visuel");
+          if (a) vis.style.background = couleurPiece(x) || "#c9ced8";
+          if (x && srcPhoto(x.photo)) { const img = element("img"); img.alt = ""; img.loading = "lazy"; img.addEventListener("error", () => img.remove(), { once: true }); img.src = srcPhoto(x.photo); vis.append(img); }
+          else vis.append(element("span", "mb-pile-plus", "+"));
+          b.append(vis, element("span", "mb-pile-nom", a ? nomRef(x) : `Pile ${k}`));
+          piles.append(b);
+        }
+        bloc.append(piles);
+        return bloc;
+      };
+      const plateau = element("div", "mb-plateau");
+      plateau.append(rangee("a"), element("div", "mb-milieu"), rangee("b"));
+      $("mb-table").replaceChildren(plateau, element("p", "aide", modifiable ? "Touche une pile pour choisir sa réf. ; touche une pile pleine pour la changer ou la vider." : ""));
+    } else {
+      const arts = e.articles || [];
+      $("mb-sous").textContent = `${t.nom} · ${arts.length} réf.${t.porte === "tenue" ? " · ce que porte le mannequin" : ""}`;
+      $("mb-refs").replaceChildren(...arts.map((a, k) => {
+        const li = element("li", "mb-ref");
+        li.append(puceRef(a, modifiable ? { retirerIndex: String(k) } : null));
+        if (modifiable) {
+          const act = element("span", "mu-eq-actions");
+          [["haut", "↑", "Monter", k === 0], ["bas", "↓", "Descendre", k === arts.length - 1]].forEach(([d, s, nomA, off]) => {
+            const b = element("button", "mu-eq-bouton", s); b.type = "button"; b.dataset.deplacer = d; b.dataset.index = String(k); b.disabled = off; b.setAttribute("aria-label", nomA); act.append(b);
+          });
+          li.append(act);
+        }
+        return li;
+      }));
+      $("mb-refs-vide").hidden = arts.length > 0;
+      $("mb-ajouter").hidden = !modifiable;
+    }
+  }
+  const tableEnRegle = (e, champs) => ({ ...champs, niveaux: e.niveaux.map((niv, k) => (k ? niv : { articles: (champs.articles || niv.articles) })) });
+  $("mb-moins").addEventListener("click", () => changerPiles(-1));
+  $("mb-plus").addEventListener("click", () => changerPiles(1));
+  function changerPiles(d) {
+    const e = merchElements.docs[meubleOuvert];
+    if (!e || !peutModifierMerch()) return;
+    const n = Math.max(1, Math.min(MAX_PILES[e.type], e.piles + d));
+    const garde = e.niveaux[0].articles.filter(a => { const m = /^[ab](\d)$/.exec(a.pos || ""); return !m || Number(m[1]) <= n; });
+    if (garde.length < e.niveaux[0].articles.length) toast("La réf. de la pile retirée n'est plus sur la table.");
+    modifierElementMerch(e.id, { piles: n, ...tableEnRegle(e, { articles: garde }) });
+  }
+  document.querySelectorAll('input[name="mb-sens"]').forEach(r => r.addEventListener("change", () => {
+    const e = merchElements.docs[meubleOuvert];
+    if (e && peutModifierMerch()) modifierElementMerch(e.id, { sens: r.value });
+  }));
+  $("mb-table").addEventListener("click", ev => {
+    const b = ev.target.closest(".mb-pile"), e = merchElements.docs[meubleOuvert];
+    if (!b || !e || !peutModifierMerch()) return;
+    const pos = b.dataset.pos, actuel = e.niveaux[0].articles.find(a => a.pos === pos);
+    choisirRefs({
+      titre: `${nomMeuble(e)} · ${libellePile(e, pos)}`, sous: actuel ? `Aujourd'hui : ${nomRef(pieces[actuel.p])}. Choisis la réf. qui la remplace.` : "Une réf. par pile.",
+      besoin: "plie", deja: new Set(actuel ? [actuel.p] : []), vider: !!actuel,
+      valider: ([p]) => {
+        const autres = e.niveaux[0].articles.filter(a => a.pos !== pos);
+        modifierElementMerch(e.id, tableEnRegle(e, { articles: [...autres, nouvelArticle(p, pos)] }));
+      },
+    });
+    $("rf-vider").hidden = !actuel;
+    $("rf-vider").onclick = () => {
+      fermer($("fenetre-refs"));
+      modifierElementMerch(e.id, tableEnRegle(e, { articles: e.niveaux[0].articles.filter(a => a.pos !== pos) }));
+    };
+  });
+  $("mb-ajouter").addEventListener("click", () => {
+    const e = merchElements.docs[meubleOuvert];
+    if (!e || !peutModifierMerch()) return;
+    choisirRefs({
+      titre: `${nomMeuble(e)} · ajouter des réfs`, sous: "Touche les pièces à ajouter ; « Toutes les couleurs » prend tout un modèle.", multiple: true, besoin: besoinMeuble(e),
+      deja: new Set((e.articles || []).map(a => a.p)),
+      valider: ids => modifierElementMerch(e.id, { articles: [...(e.articles || []), ...ids.map(p => nouvelArticle(p))] }),
+    });
+    $("rf-vider").hidden = true;
+  });
+  $("mb-refs").addEventListener("click", ev => {
+    const e = merchElements.docs[meubleOuvert];
+    if (!e || !peutModifierMerch()) return;
+    const arts = [...(e.articles || [])];
+    const r = ev.target.closest("[data-retirer-index]"), d = ev.target.closest("[data-deplacer]");
+    if (r) { arts.splice(Number(r.dataset.retirerIndex), 1); modifierElementMerch(e.id, { articles: arts }); }
+    else if (d) {
+      const k = Number(d.dataset.index), j = d.dataset.deplacer === "haut" ? k - 1 : k + 1;
+      if (j < 0 || j >= arts.length) return;
+      [arts[k], arts[j]] = [arts[j], arts[k]];
+      modifierElementMerch(e.id, { articles: arts });
+    }
+  });
+  $("fenetre-meuble").addEventListener("close", () => { meubleOuvert = null; });
+
+  // ----- depuis la fiche d'une pièce du Dressing : où elle est, et la placer -----
+  let pieceAPlacer = null;
+  // Les places possibles d'un meuble pour une pièce : [{ valeur, texte }].
+  function placesDe(e) {
+    const t = TYPES_MERCH[e.type], r = [];
+    if (t.porte === "uv") e.uvs.forEach((u, i) => {
+      if (estMiroir(u)) return;
+      u.eq.forEach(q => {
+        const base = `UV ${i + 1} · ${nomEq(u, q)}${q.ferme ? " de fermeture" : ""} à ${hauteurEq(q)}`;
+        const occupe = pos => { const a = q.articles.find(x => x.pos === pos); return a ? ` (remplace ${nomRef(pieces[a.p])})` : ""; };
+        if (q.type === "etagere") {
+          if (q.refs < 2) r.push({ valeur: JSON.stringify({ uv: i, eq: q.id, pos: "1" }), texte: `${base}${q.refs ? occupe("1") : " (y mettre une réf.)"}` });
+          else ["1", "2"].forEach(pos => r.push({ valeur: JSON.stringify({ uv: i, eq: q.id, pos }), texte: `${base} · pile ${pos === "1" ? "de gauche" : "de droite"}${occupe(pos)}` }));
+        } else if (q.type === "facing") [["1", ""], ["2", " · par-dessus"]].forEach(([pos, nomP]) => r.push({ valeur: JSON.stringify({ uv: i, eq: q.id, pos }), texte: `${base}${nomP}${occupe(pos)}` }));
+        else if (q.type === "coudee") POSITIONS_COUDEE.forEach(([pos, nomP]) => r.push({ valeur: JSON.stringify({ uv: i, eq: q.id, pos }), texte: `${base} · ${nomP.toLowerCase()}${occupe(pos)}` }));
+        else r.push({ valeur: JSON.stringify({ uv: i, eq: q.id }), texte: `${base} (s'ajoute)` });
+      });
+    });
+    else if (t.porte === "niveaux") ["a", "b"].forEach(c => { for (let k = 1; k <= e.piles; k++) { const pos = c + k, a = e.niveaux[0].articles.find(x => x.pos === pos); r.push({ valeur: JSON.stringify({ pos }), texte: `${libellePile(e, pos)}${a ? ` (remplace ${nomRef(pieces[a.p])})` : ""}` }); } });
+    else if (t.porte === "articles" || t.porte === "tenue") r.push({ valeur: JSON.stringify({}), texte: t.porte === "tenue" ? "Sur le mannequin" : "S'ajoute aux réfs" });
+    return r;
+  }
+  function ouvrirPlacer(x) {
+    pieceAPlacer = x;
+    $("pl-sous").textContent = nomPiece(x);
+    rendrePlacer();
+    ouvrir($("fenetre-placer"));
+  }
+  function rendrePlacer() {
+    const x = pieceAPlacer, plan = planEnPlace() || planAffiche();
+    if (!x || !plan) return;
+    const ou = emplacementsDuPlan(plan.id).get(x.id) || [];
+    $("pl-plan").textContent = `Sur le plan « ${plan.nom} »`;
+    $("pl-ou").replaceChildren(...ou.map((o, k) => {
+      const li = element("li", "pl-ici");
+      li.append(element("span", null, o.texte));
+      if (peutModifierMerch()) { const b = element("button", "lien-discret", "Retirer"); b.type = "button"; b.dataset.k = String(k); li.append(b); }
+      return li;
+    }));
+    $("pl-nulle-part").hidden = ou.length > 0;
+    const meubles = trierElements(elementsDuPlan(plan.id).filter(e => placesDe(e).length));
+    const avant = $("pl-meuble").value;
+    $("pl-meuble").replaceChildren(new Option("Choisir un meuble…", ""), ...FAMILLES_MERCH.map(([f, nomF]) => {
+      const g = element("optgroup");
+      g.label = nomF;
+      meubles.filter(e => TYPES_MERCH[e.type].famille === f).forEach(e => g.append(new Option(nomMeuble(e), e.id)));
+      return g.children.length ? g : null;
+    }).filter(Boolean));
+    if (meubles.some(e => e.id === avant)) $("pl-meuble").value = avant;
+    rendrePlacesPlacer();
+  }
+  function rendrePlacesPlacer() {
+    const e = merchElements.docs[$("pl-meuble").value], places = e ? placesDe(e) : [];
+    $("pl-place-champ").hidden = !e;
+    $("pl-place").replaceChildren(...places.map(o => new Option(o.texte, o.valeur)));
+    const besoin = e ? (TYPES_MERCH[e.type].porte === "uv" ? null : besoinMeuble(e)) : null;
+    $("pl-aide").textContent = e && besoin && !vaIci(pieceAPlacer, besoin) ? `Attention : cette pièce est « ${NOM_PRESENTATION[presentationDe(pieceAPlacer)].toLowerCase()} ».` : "";
+    $("pl-placer").disabled = !e || !places.length || !peutModifierMerch();
+  }
+  $("pl-meuble").addEventListener("change", rendrePlacesPlacer);
+  $("pl-placer").addEventListener("click", async () => {
+    const x = pieceAPlacer, e = merchElements.docs[$("pl-meuble").value];
+    if (!x || !e || !peutModifierMerch()) return;
+    let o;
+    try { o = JSON.parse($("pl-place").value); } catch (_) { return; }
+    await placerPiece(e, x.id, o);
+    toast(`${nomRef(x)} : placée sur ${nomMeuble(e)}.`);
+    rendrePlacer();
+  });
+  // Poser une pièce à une place d'un meuble (la place d'une seule réf. est remplacée).
+  function placerPiece(e, p, o) {
+    const t = TYPES_MERCH[e.type];
+    if (t.porte === "uv") {
+      const u0 = e.uvs[o.uv], q0 = u0 && u0.eq.find(q => q.id === o.eq);
+      if (!q0) return Promise.resolve();
+      const uvs = copieUvs(e.uvs), q = uvs[o.uv].eq.find(x => x.id === o.eq);
+      if (o.pos) {
+        q.articles = q.articles.filter(a => a.pos !== o.pos);
+        if (q.type === "etagere" && !q.refs) q.refs = 1;
+      }
+      q.articles.push(nouvelArticle(p, o.pos));
+      return modifierElementMerch(e.id, { uvs });
+    }
+    if (t.porte === "niveaux") return modifierElementMerch(e.id, tableEnRegle(e, { articles: [...e.niveaux[0].articles.filter(a => a.pos !== o.pos), nouvelArticle(p, o.pos)] }));
+    return modifierElementMerch(e.id, { articles: [...(e.articles || []), nouvelArticle(p)] });
+  }
+  $("pl-ou").addEventListener("click", async ev => {
+    const b = ev.target.closest("[data-k]"), x = pieceAPlacer, plan = planEnPlace() || planAffiche();
+    if (!b || !x || !plan || !peutModifierMerch()) return;
+    const o = (emplacementsDuPlan(plan.id).get(x.id) || [])[Number(b.dataset.k)];
+    if (!o) return;
+    const e = o.e, t = TYPES_MERCH[e.type];
+    if (t.porte === "uv") {
+      const uvs = copieUvs(e.uvs), q = uvs[o.uv].eq.find(z => z.id === o.eq);
+      const k = q.articles.findIndex(a => a.p === x.id && (a.pos || null) === (o.pos || null));
+      if (k >= 0) q.articles.splice(k, 1);
+      await modifierElementMerch(e.id, { uvs });
+    } else if (t.porte === "niveaux") {
+      const niveaux = e.niveaux.map((n, k) => (k === o.niveau ? { articles: n.articles.filter(a => !(a.p === x.id && (a.pos || null) === (o.pos || null))) } : n));
+      await modifierElementMerch(e.id, { niveaux });
+    } else await modifierElementMerch(e.id, { articles: (e.articles || []).filter(a => a.p !== x.id) });
+    rendrePlacer();
+  });
+  $("fenetre-placer").addEventListener("close", () => { pieceAPlacer = null; });
+
   // ----- un plan : créer, régler, mettre en place, dupliquer, supprimer -----
   let planEdite = null;
   // Un plan de départ, à ajuster : le mur de gauche (le plus chaud), le mur du fond (les chaussures), le mur du centre
@@ -11285,7 +12050,7 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
       if (t.porte === "articles" || t.porte === "tenue") e.articles = [];
       els.push(e);
     };
-    const mur = (nom, x, y, rot, n, modeles, zone) => ajouter("mur", nom, x, y, rot, { uvL: 1, crans: CRANS_MUR, uvs: modeles ? Array.from({ length: n }, () => ({ miroir: false, condamne: false, eq: modeles.map(([t, c]) => nouvelEq(t, c)) })) : ajusterUvs([], n), l: n, p: 0.4, zone: zone || null });
+    const mur = (nom, x, y, rot, n, modeles, zone) => ajouter("mur", nom, x, y, rot, { uvL: 1, crans: CRANS_MUR, uvs: modeles ? Array.from({ length: n }, () => ({ miroir: false, condamne: false, eq: modeles.map(x => eqModele(x)) })) : ajusterUvs([], n), l: n, p: 0.4, zone: zone || null });
     const nG = Math.max(3, Math.floor(D - 3)), nF = Math.max(2, Math.floor(H - 1.2)), nC = Math.max(2, Math.floor(D * 0.45));
     mur("Mur gauche", 0.2, 0.7 + nG / 2, 270, nG);
     mur("Mur du fond (chaussures)", 0.5 + nF / 2, 0.2, 0, nF, [["etagere", 33], ["etagere", 23], ["etagere", 13]]);
@@ -11522,6 +12287,9 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     if (ongletMerch === "liste") rendreListeMerch(plan, els);
     rendrePanneauMerch();
     if ($("fenetre-mur").open) rendreMurMerch();
+    if ($("fenetre-meuble").open) rendreMeubleMerch();
+    if ($("fenetre-placer").open) rendrePlacer();
+    if ($("fenetre-refs").open) rendreChoixRefs();
   }
   const planifierRenduMerch = () => { cancelAnimationFrame(renduMerchPrevu); renduMerchPrevu = requestAnimationFrame(rendreMerch); };
   window.addEventListener("resize", () => { if (vueActive === "merch") planifierRenduMerch(); });
