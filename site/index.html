@@ -492,6 +492,23 @@ a.choix-case:hover { background: var(--c-doux); }
 .bas-choix:has(input:checked) { border-color: var(--gris); background: var(--trait-doux); color: var(--encre); }
 .lien-piece { border: 0; cursor: pointer; }
 .lien-piece:hover { background: var(--marine); color: var(--sur-marine); }
+/* Les tâches proposées (le rétroplanning d'un temps fort qui approche) : des suggestions, en pointillés. */
+.suggestions { display: grid; gap: 10px; }
+.suggestion { display: grid; gap: 8px; padding: 12px 14px; border: 1.5px dashed var(--marine); border-radius: 12px; background: var(--marine-doux); }
+.suggestion-tete { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; }
+.suggestion-titre { margin: 0; font-weight: 700; color: var(--marine); }
+.suggestion-etapes { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.suggestion-etapes li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 4px 12px; }
+.suggestion-nom { font-weight: 600; }
+.suggestion-ecarter { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 8px; background: none; color: var(--gris); font-size: 1.3rem; line-height: 1; }
+.suggestion-ecarter:hover { background: var(--fond); color: var(--encre); }
+.suggestion > .bouton-petit { justify-self: start; }
+@media (max-width: 599px) {
+  .suggestion-etapes li { grid-template-columns: minmax(0, 1fr) auto auto; }
+  .suggestion-etapes .retro-date { grid-column: 1; grid-row: 2; }
+  .suggestion-etapes .bouton-petit { grid-row: 1 / 3; }
+  .suggestion-etapes .suggestion-ecarter { grid-row: 1 / 3; }
+}
 /* Le rétroplanning d'un temps fort, dans sa fenêtre. */
 .retro-etapes { display: grid; gap: 6px; margin-top: 4px; }
 .retro-etape { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 44px; padding: 6px 12px; border: 1.5px solid var(--trait); border-radius: 10px; font-weight: 600; cursor: pointer; }
@@ -1281,6 +1298,7 @@ details.groupe-pieces { display: block; }
         <p class="erreur-tache" id="a-erreur" role="alert" hidden></p>
       </form>
       <p class="note-lecture" id="todo-lecture" hidden>Seul le propriétaire du tableau peut modifier la to-do list.</p>
+      <section class="suggestions" id="todo-suggestions" aria-label="Tâches proposées" hidden></section>
 
       <div class="listes">
         <div class="liste-colonne">
@@ -1866,7 +1884,7 @@ details.groupe-pieces { display: block; }
     <label class="titre-champ">Monter la vitrine le<input type="date" id="ev-vitrine"></label>
     <div class="titre-champ">Rétroplanning dans la to-do
       <div class="retro-etapes" id="ev-retro"></div>
-      <p class="aide">Chaque étape arrive dans ta to-do à sa date, et suit le temps fort si ses dates changent.</p>
+      <p class="aide">Rien n'arrive dans ta to-do sans toi : coche les étapes à y mettre (elles suivent le temps fort si ses dates changent). Dans le mois qui précède un temps fort, elles te sont aussi proposées en haut de la to-do.</p>
     </div>
     <div class="titre-champ">Tenues pour la vitrine<div class="choix-tenues" id="ev-tenues"></div></div>
     <label class="titre-champ">Note<textarea id="ev-note" maxlength="500" rows="2" placeholder="Ex. : prévoir les étiquettes de prix"></textarea></label>
@@ -5985,17 +6003,17 @@ details.groupe-pieces { display: block; }
       tenues: Array.isArray(d.tenues) ? d.tenues.filter(x => typeof x === "string").slice(0, 6) : [],
       note: texteBorne(d.note, 500), creeLe: texteBorne(d.creeLe, 40),
       ouverture: d.ouverture === true,   // le magasin ouvre exceptionnellement (un dimanche)
-      // Les étapes du rétroplanning choisies ; null : pas encore décidé (un temps fort proche les reçoit tout seul).
-      retro: Array.isArray(d.retro) ? ETAPES_RETRO.map(x => x.cle).filter(k => d.retro.includes(k)) : null,
+      // Les étapes du rétroplanning que je ne veux pas qu'on me propose.
+      retroIgnore: Array.isArray(d.retroIgnore) ? ETAPES_RETRO.map(x => x.cle).filter(k => d.retroIgnore.includes(k)) : [],
     };
   }
   const corpsEvenement = e => ({ nom: e.nom, debut: e.debut, fin: e.fin, affluence: e.affluence, theme: e.theme || null, vitrineLe: e.vitrineLe,
     vitrinePrete: e.vitrinePrete, tenues: [...e.tenues], note: e.note || null, creeLe: e.creeLe || maintenant(), ...(e.ouverture ? { ouverture: true } : {}),
-    ...(Array.isArray(e.retro) ? { retro: [...e.retro] } : {}) });
+    ...(e.retroIgnore && e.retroIgnore.length ? { retroIgnore: [...e.retroIgnore] } : {}) });
   const calendrier = creerCollection("calendrier", "tableau-de-bord-axel:calendrier", lireEvenement, () => { rendreCalendrier(); rendrePlanning(); });
   const evenementsTries = () => Object.values(calendrier.docs).sort((a, b) => a.debut.localeCompare(b.debut) || a.fin.localeCompare(b.fin));
 
-  // ----- le rétroplanning d'un temps fort : ses étapes arrivent dans la to-do, à leur date -----
+  // ----- le rétroplanning d'un temps fort : des étapes proposées, que j'ajoute ou non à la to-do -----
   const ETAPES_RETRO = [
     { cle: "commande", jours: 21, nom: "Passer la commande", texte: n => `Passer la commande pour « ${n} »` },
     { cle: "idees", jours: 10, nom: "Penser la vitrine", texte: n => `Penser la vitrine « ${n} »` },
@@ -6004,20 +6022,36 @@ details.groupe-pieces { display: block; }
   ];
   // J-21, J-10, J-3 (ou le jour choisi pour monter la vitrine), J-1.
   const dateEtape = (e, x) => (x.cle === "vitrine" && e.vitrineLe ? e.vitrineLe : versIso(depuisIso(e.debut) - x.jours * JOUR_MS));
-  // Par défaut, pour un temps fort : les étapes encore à venir.
-  const retroParDefaut = e => (e.affluence === "forte" && ISO_RE.test(e.debut || "") ? ETAPES_RETRO.filter(x => dateEtape(e, x) >= versIso(aujourdhui())).map(x => x.cle) : []);
   const tachesDuTempsFort = id => Object.values(taches).filter(t => t.evenement === id);
-  // Met la to-do d'accord avec les étapes choisies : ajoute, déplace (dates, nom), retire ce qui n'est pas fait.
-  async function synchroniserRetro(e) {
+  // Une étape déjà dans la to-do : reliée au temps fort, ou une « Monter la vitrine » ajoutée à la main avant.
+  const etapeDansTodo = (e, x) => tachesDuTempsFort(e.id).find(t => t.etape === x.cle)
+    || (x.cle === "vitrine" ? Object.values(taches).find(t => !t.evenement && t.texte === x.texte(e.nom)) : null) || null;
+  // Ce qui m'est proposé : pour un temps fort qui commence dans les 30 jours, les étapes encore à venir,
+  // qui ne sont ni dans la to-do ni écartées. Rien n'arrive dans la to-do sans moi.
+  function etapesProposees(e) {
+    const t = aujourdhui(), auj = versIso(t);
+    if (e.affluence !== "forte" || depuisIso(e.debut) <= t || depuisIso(e.debut) - t > 30 * JOUR_MS) return [];
+    return ETAPES_RETRO.filter(x => dateEtape(e, x) >= auj && !e.retroIgnore.includes(x.cle) && !(x.cle === "vitrine" && e.vitrinePrete) && !etapeDansTodo(e, x));
+  }
+  const suggestionsRetro = () => (peutModifierTodo() && peutModifierGr() ? evenementsTries().map(e => ({ e, etapes: etapesProposees(e) })).filter(x => x.etapes.length) : []);
+  async function ajouterEtape(e, x) {
+    const t = etapeDansTodo(e, x), auj = versIso(aujourdhui()), date = dateEtape(e, x);
+    if (t) { if (!t.evenement) await ecrireTache(t.id, { ...corpsDe(t), evenement: e.id, etape: x.cle }); return; }
+    await ecrireTache(nouvelId(), nouvelleTache({ texte: x.texte(e.nom).slice(0, 300), pour: date < auj ? auj : date, evenement: e.id, etape: x.cle }));
+  }
+  // Écarter des étapes : elles ne sont plus proposées pour ce temps fort ; « reprendre » les remet.
+  async function ecarterEtapes(e, ecarter, reprendre) {
+    const ignore = ETAPES_RETRO.map(x => x.cle).filter(k => (e.retroIgnore.includes(k) || (ecarter || []).includes(k)) && !(reprendre || []).includes(k));
+    if (ignore.join() !== e.retroIgnore.join()) await calendrier.ecrire(e.id, corpsEvenement({ ...e, retroIgnore: ignore }));
+  }
+  // La fenêtre d'un temps fort : ajoute les étapes cochées, retire les décochées (pas encore faites), suit ses dates et son nom.
+  async function synchroniserRetro(e, voulues) {
     if (!peutModifierTodo()) return 0;
-    const voulues = e.retro || [], auj = versIso(aujourdhui()), liees = tachesDuTempsFort(e.id);
+    const auj = versIso(aujourdhui());
     let ajoutees = 0;
     for (const x of ETAPES_RETRO) {
-      const texte = x.texte(e.nom).slice(0, 300);
-      let t = liees.find(y => y.etape === x.cle);
-      // Une « Monter la vitrine » ajoutée avant, sans lien : on la reprend plutôt que de la doubler.
-      if (!t && x.cle === "vitrine") t = Object.values(taches).find(y => !y.evenement && !y.fait && y.texte === texte) || null;
-      if (!voulues.includes(x.cle)) { if (t && t.evenement && !t.fait) await ecrireTache(t.id, null); continue; }
+      const t = etapeDansTodo(e, x), texte = x.texte(e.nom).slice(0, 300);
+      if (!voulues.includes(x.cle)) { if (t && t.evenement === e.id && !t.fait) await ecrireTache(t.id, null); continue; }
       if (t && t.fait) continue;
       const date = dateEtape(e, x), pour = date < auj ? auj : date;
       if (t && t.texte === texte && t.pour === pour && t.evenement === e.id && t.etape === x.cle) continue;
@@ -6030,39 +6064,68 @@ details.groupe-pieces { display: block; }
   async function retirerRetro(id) {
     for (const t of tachesDuTempsFort(id)) if (!t.fait) await ecrireTache(t.id, null);
   }
-  // Une étape supprimée de la to-do n'est plus voulue : elle ne revient pas.
+  // Une étape supprimée de la to-do n'est plus proposée.
   function oublierEtape(t) {
     const ev = t.evenement && calendrier.docs[t.evenement];
-    if (ev && Array.isArray(ev.retro) && ev.retro.includes(t.etape) && peutModifierGr())
-      calendrier.ecrire(ev.id, corpsEvenement({ ...ev, retro: ev.retro.filter(k => k !== t.etape) })).catch(() => {});
+    if (ev && t.etape && peutModifierGr()) ecarterEtapes(ev, [t.etape]).catch(() => {});
   }
   function vitrineDepuisTache(id, prete) {
     const ev = calendrier.docs[id];
     if (ev && ev.vitrinePrete !== prete && peutModifierGr()) calendrier.ecrire(ev.id, corpsEvenement({ ...ev, vitrinePrete: prete })).catch(() => {});
   }
-  // Tout seul : un temps fort dans les 30 jours, pas encore décidé, reçoit ses étapes à venir.
-  let retroEnCours = false, minuterieRetro = 0;
-  const retroTraites = new Set();
-  const planifierRetro = () => { clearTimeout(minuterieRetro); minuterieRetro = setTimeout(retroAuto, 400); };
-  async function retroAuto() {
-    if (retroEnCours || !peutModifierTodo() || !peutModifierGr()) return;
-    if (mode !== "local" && !(calendrier.recu && todoRecu)) return;
-    const t = aujourdhui();
-    const proches = evenementsTries().filter(e => !retroTraites.has(e.id) && e.retro == null && e.affluence === "forte"
-      && depuisIso(e.debut) > t && depuisIso(e.debut) - t <= 30 * JOUR_MS);
-    if (!proches.length) return;
-    retroEnCours = true;
-    try {
-      for (const e of proches) {
-        retroTraites.add(e.id);
-        const retro = retroParDefaut(e);
-        await calendrier.ecrire(e.id, corpsEvenement({ ...e, retro }));
-        const n = await synchroniserRetro({ ...e, retro });
-        if (n) toast(`Rétroplanning de « ${e.nom} » : ${n} étape${n > 1 ? "s" : ""} dans ta to-do.`);
+  // Les propositions, en haut de la to-do : une carte par temps fort qui approche.
+  function rendreSuggestions() {
+    const zone = $("todo-suggestions"), liste = suggestionsRetro();
+    zone.hidden = !liste.length;
+    zone.replaceChildren(...liste.map(({ e, etapes }) => {
+      const bloc = element("div", "suggestion"), tete = element("div", "suggestion-tete");
+      tete.append(element("p", "suggestion-titre", `${e.nom} ${dansJours(depuisIso(e.debut))} : je te propose de préparer…`));
+      const non = element("button", "lien-discret", "Non merci");
+      non.type = "button";
+      non.dataset.retroNon = e.id;
+      non.title = "Ne plus rien proposer pour ce temps fort";
+      tete.append(non);
+      const ul = element("ul", "suggestion-etapes");
+      ul.append(...etapes.map(x => {
+        const li = element("li");
+        li.append(element("span", "suggestion-nom", x.nom), element("span", "retro-date", dateCourte(depuisIso(dateEtape(e, x)))));
+        const plus = element("button", "bouton-second bouton-petit", "Ajouter");
+        plus.type = "button";
+        plus.dataset.retroAjout = `${e.id}|${x.cle}`;
+        plus.setAttribute("aria-label", `Ajouter à la to-do : ${x.texte(e.nom)}`);
+        const ecarter = element("button", "suggestion-ecarter", "×");
+        ecarter.type = "button";
+        ecarter.dataset.retroEcarter = `${e.id}|${x.cle}`;
+        ecarter.setAttribute("aria-label", `Ne pas me proposer : ${x.nom}`);
+        ecarter.title = "Ne pas me le proposer";
+        li.append(plus, ecarter);
+        return li;
+      }));
+      bloc.append(tete, ul);
+      if (etapes.length > 1) {
+        const tout = element("button", "bouton-second bouton-petit", "Tout ajouter");
+        tout.type = "button";
+        tout.dataset.retroTout = e.id;
+        bloc.append(tout);
       }
-    } catch (_) { /* on réessaiera au prochain chargement */ }
-    finally { retroEnCours = false; }
+      return bloc;
+    }));
   }
+  $("todo-suggestions").addEventListener("click", async ev => {
+    const b = ev.target.closest("[data-retro-ajout], [data-retro-ecarter], [data-retro-tout], [data-retro-non]");
+    if (!b || !peutModifierTodo() || !peutModifierGr()) return;
+    const [id, cle] = (b.dataset.retroAjout || b.dataset.retroEcarter || b.dataset.retroTout || b.dataset.retroNon).split("|");
+    const e = calendrier.docs[id], x = ETAPES_RETRO.find(y => y.cle === cle);
+    if (!e) return;
+    b.disabled = true;
+    try {
+      if (b.dataset.retroAjout && x) { await ajouterEtape(e, x); toast(`Ajouté à ta to-do : ${x.nom.toLowerCase()}, ${dateCourte(depuisIso(dateEtape(e, x)))}`); }
+      else if (b.dataset.retroTout) { const l = etapesProposees(e); for (const y of l) await ajouterEtape(e, y); toast(`${l.length} tâche${l.length > 1 ? "s" : ""} ajoutée${l.length > 1 ? "s" : ""} à ta to-do.`); }
+      else if (b.dataset.retroEcarter && x) await ecarterEtapes(e, [x.cle]);
+      else if (b.dataset.retroNon) { await ecarterEtapes(e, etapesProposees(e).map(y => y.cle)); toast(`Plus de proposition pour « ${e.nom} ».`); }
+    } catch (err) { b.disabled = false; echecEcriture(err); }
+    rendreSuggestions();
+  });
   const finDe = e => depuisIso(e.fin);
   const datesCourtes = e => {
     const a = new Date(depuisIso(e.debut)), b = new Date(depuisIso(e.fin));
@@ -6188,12 +6251,12 @@ details.groupe-pieces { display: block; }
       c.dataset.vitrinePrete = e.id;
       choix.append(c, element("span", null, "Vitrine prête"));
       actions.append(choix);
-      if (!liees.length && peutModifierTodo()) {
-        const b = element("button", "bouton-second", "Préparer dans la to-do");
-        b.type = "button";
-        b.dataset.retro = e.id;
-        b.title = "Le rétroplanning : la commande, la vitrine, les étiquettes";
-        actions.append(b);
+      const proposees = peutModifierTodo() ? etapesProposees(e) : [];
+      if (proposees.length) {
+        const a = element("a", "bouton-second", `${proposees.length} tâche${proposees.length > 1 ? "s" : ""} proposée${proposees.length > 1 ? "s" : ""}`);
+        a.href = "#todo";
+        a.title = "Les étapes à préparer, à ajouter ou non à ta to-do";
+        actions.append(a);
       }
       const m = element("button", "lien-discret", "Modifier");
       m.type = "button";
@@ -6242,7 +6305,7 @@ details.groupe-pieces { display: block; }
     $("ca-vide").hidden = tout.length > 0;
     $("ca-ajouter").hidden = !peutModifierGr();
     rendreCarteCalendrier();
-    planifierRetro();
+    rendreSuggestions();
   }
   function rendreCarteCalendrier() {
     const e = prochainEvenement();
@@ -6254,14 +6317,14 @@ details.groupe-pieces { display: block; }
   }
 
   // La fenêtre d'un temps fort.
-  let evenementEdite = null, tenuesChoisies = [], retroChoisies = null;
+  let evenementEdite = null, tenuesChoisies = [], retroChoisies = new Set(), retroAvant = new Set();
   // Le temps fort tel que la fenêtre le décrit (pour les dates des étapes).
   const evenementDeFenetre = () => ({ id: evenementEdite ? evenementEdite.id : null, debut: $("ev-debut").value, vitrineLe: $("ev-vitrine").value || null,
     affluence: (document.querySelector('input[name="ev-affluence"]:checked') || {}).value === "normale" ? "normale" : "forte" });
   function rendreRetroFenetre() {
     const e = evenementDeFenetre(), zone = $("ev-retro");
     if (!ISO_RE.test(e.debut)) { zone.replaceChildren(element("p", "aide", "Choisis d'abord les dates.")); return; }
-    const choisies = retroChoisies || new Set(retroParDefaut(e)), liees = e.id ? tachesDuTempsFort(e.id) : [], auj = versIso(aujourdhui());
+    const choisies = retroChoisies, liees = e.id ? tachesDuTempsFort(e.id) : [], auj = versIso(aujourdhui());
     zone.replaceChildren(...ETAPES_RETRO.map(x => {
       const t = liees.find(y => y.etape === x.cle), fait = !!(t && t.fait), date = dateEtape(e, x);
       const l = element("label", "retro-etape" + (fait ? " faite" : "")), c = element("input");
@@ -6277,7 +6340,6 @@ details.groupe-pieces { display: block; }
   $("ev-retro").addEventListener("change", e => {
     const c = e.target.closest("[data-etape]");
     if (!c) return;
-    if (!retroChoisies) retroChoisies = new Set(retroParDefaut(evenementDeFenetre()));
     if (c.checked) retroChoisies.add(c.dataset.etape); else retroChoisies.delete(c.dataset.etape);
   });
   ["ev-debut", "ev-vitrine"].forEach(id => $(id).addEventListener("input", rendreRetroFenetre));
@@ -6308,7 +6370,8 @@ details.groupe-pieces { display: block; }
     $("ev-vitrine").value = e && e.vitrineLe ? e.vitrineLe : "";
     $("ev-note").value = e ? e.note : "";
     $("ev-ouverture").checked = !!(e && e.ouverture);
-    retroChoisies = e && Array.isArray(e.retro) ? new Set(e.retro) : null;
+    retroAvant = new Set(e ? ETAPES_RETRO.filter(x => etapeDansTodo(e, x)).map(x => x.cle) : []);
+    retroChoisies = new Set(retroAvant);
     rendreRetroFenetre();
     rendreChoixTenues();
     [...$("ev-form").elements].forEach(el => { el.disabled = !modifiable; });
@@ -6338,17 +6401,18 @@ details.groupe-pieces { display: block; }
     const avant = evenementEdite, id = avant ? avant.id : calendrier.nouvelId();
     const affluence = (document.querySelector('input[name="ev-affluence"]:checked') || {}).value === "normale" ? "normale" : "forte";
     const vitrine = vitrineLe && ISO_RE.test(vitrineLe) ? vitrineLe : null;
-    // Les étapes : celles cochées ; sans y toucher, celles déjà choisies, ou par défaut celles à venir.
-    const retro = retroChoisies ? ETAPES_RETRO.map(x => x.cle).filter(k => retroChoisies.has(k))
-      : avant && Array.isArray(avant.retro) ? avant.retro : retroParDefaut({ debut, vitrineLe: vitrine, affluence });
+    // Les étapes cochées vont dans la to-do ; une étape décochée n'est plus proposée.
+    const voulues = ETAPES_RETRO.map(x => x.cle).filter(k => retroChoisies.has(k));
+    const ecartees = ETAPES_RETRO.map(x => x.cle).filter(k => retroAvant.has(k) && !retroChoisies.has(k));
+    const retroIgnore = ETAPES_RETRO.map(x => x.cle).filter(k => ((avant ? avant.retroIgnore : []).includes(k) || ecartees.includes(k)) && !voulues.includes(k));
     try {
       const corps = corpsEvenement({ nom: nom.slice(0, 80), debut, fin, affluence, theme: $("ev-theme").value.trim().slice(0, 600),
         vitrineLe: vitrine, vitrinePrete: avant ? avant.vitrinePrete : false, tenues: tenuesChoisies,
-        note: $("ev-note").value.trim().slice(0, 500), creeLe: avant ? avant.creeLe : maintenant(), ouverture: $("ev-ouverture").checked, retro });
+        note: $("ev-note").value.trim().slice(0, 500), creeLe: avant ? avant.creeLe : maintenant(), ouverture: $("ev-ouverture").checked, retroIgnore });
       await calendrier.ecrire(id, corps);
       fermer($("fenetre-evenement"));
       let n = 0;
-      try { n = await synchroniserRetro({ ...corps, id }); } catch (err) { echecEcriture(err); }
+      try { n = await synchroniserRetro({ ...corps, id }, voulues); } catch (err) { echecEcriture(err); }
       toast((avant ? "Temps fort enregistré." : "Temps fort ajouté.") + (n ? ` ${n} étape${n > 1 ? "s" : ""} dans ta to-do.` : ""));
     } catch (err) { erreur(messageEcriture(err)); }
   });
@@ -6361,19 +6425,6 @@ details.groupe-pieces { display: block; }
     catch (err) { $("ev-erreur").textContent = messageEcriture(err); $("ev-erreur").hidden = false; }
   });
   document.querySelector('[data-vue="calendrier"]').addEventListener("click", async e => {
-    const retroB = e.target.closest("[data-retro]");
-    if (retroB) {
-      const ev = calendrier.docs[retroB.dataset.retro];
-      if (!ev || !peutModifierTodo() || !peutModifierGr()) return;
-      const retro = retroParDefaut({ ...ev, affluence: "forte" });
-      if (!retro.length) { toast("Trop tard pour un rétroplanning : ajoute ce qu'il reste à faire à la main."); return; }
-      try {
-        await calendrier.ecrire(ev.id, corpsEvenement({ ...ev, retro }));
-        const n = await synchroniserRetro({ ...ev, retro });
-        toast(`${n || retro.length} étape${(n || retro.length) > 1 ? "s" : ""} dans ta to-do.`);
-      } catch (err) { echecEcriture(err); }
-      return;
-    }
     const tenue = e.target.closest("[data-ouvrir-tenue]");
     if (tenue) { const t = tenues.docs[tenue.dataset.ouvrirTenue]; if (t) { e.preventDefault(); montrer("tenues"); chargerTenueDansAtelier(t); } return; }
     const b = e.target.closest("[data-evenement]");
@@ -6699,6 +6750,9 @@ details.groupe-pieces { display: block; }
       if ((!dernierSolde || dernierSolde.le < doc.le) && t - depuisIso(doc.le) >= 2 * JOUR_MS)
         ajouter(`argent:comptes:${cle}`, "argent", "Mettre à jour mes comptes (Trade Republic et livrets)", "epargne", { action: "comptes", libelleAction: "Mettre à jour" });
     }
+    // Un temps fort approche : des tâches à préparer sont proposées dans la to-do (rien n'y est ajouté sans moi).
+    suggestionsRetro().forEach(({ e, etapes }) => ajouter(`travail:retro:${e.id}`, "travail",
+      `${e.nom} ${dansJours(depuisIso(e.debut))} : ${etapes.length} tâche${etapes.length > 1 ? "s" : ""} à préparer ${etapes.length > 1 ? "te sont proposées" : "t'est proposée"}`, "todo", { libelleAction: "Voir" }));
     const faits = rappelsFaits();
     return liste.map(x => ({ ...x, fait: faits[x.id] || null })).filter(x => !x.fait || x.fait === auj);
   }
