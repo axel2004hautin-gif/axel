@@ -1301,6 +1301,11 @@ details.groupe-pieces { display: block; }
 .me-f-mur .me-forme { fill: #dfe6f2; stroke: var(--marine); }
 .me-f-mur .me-uv { fill: #e8edf5; stroke: #b6c2d8; stroke-width: 1px; }
 .me-f-mur .me-uv.alerte { fill: var(--erreur-doux); stroke: var(--erreur); stroke-width: 2px; }
+.me-f-mur .me-uv.gene { stroke: #e07a35; stroke-width: 2px; }
+.me-f-mur .me-uv.miroir { fill: #d9edf8; stroke: #8fb4cc; }
+.me-ouverture { stroke: #ffffff; stroke-width: 5px; }
+.me-porte { fill: none; stroke: #5b6478; stroke-width: 2px; stroke-linecap: round; stroke-linejoin: round; }
+.zone-pastille.z-miroir { background: #e1f0f9; color: #2d5670; }
 .me-f-mur .me-face { stroke: var(--marine); stroke-width: 4px; stroke-linecap: round; }
 .me-uv-code { fill: var(--marine); font-weight: 800; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 .me-f-table .me-forme { fill: #efe2cb; stroke: #9a7b4f; }
@@ -1339,6 +1344,7 @@ details.groupe-pieces { display: block; }
 .me-form-tete { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
 .me-form-tete .fermer { width: 34px; height: 34px; margin: -6px -6px 0 0; }
 .me-ligne { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-items: end; }
+#me-g-mur { grid-template-columns: repeat(auto-fit, minmax(6.5em, 1fr)); }
 .me-ligne[hidden] { display: none; }
 .me-ligne-rot { grid-template-columns: minmax(0, 1fr) auto; }
 .me-form input, .me-form select, .me-form textarea { width: 100%; min-width: 0; }
@@ -1374,16 +1380,10 @@ details.groupe-pieces { display: block; }
 }
 
 /* Un mur vu de face : ses UV côte à côte, les équipements de haut en bas. */
-.fenetre-mur { width: min(1120px, calc(100vw - 24px)); }
 .mu-aide { margin-top: 12px; }
 .mu-aide summary { color: var(--marine); font-weight: 700; cursor: pointer; }
 .mu-legende { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 6px 14px; margin: 10px 0 4px; padding: 0; list-style: none; color: var(--gris); font-size: .9rem; }
 .mu-legende li { display: flex; align-items: center; gap: 8px; }
-.mu-uvs { display: flex; gap: 10px; overflow-x: auto; padding: 10px 2px 12px; scroll-snap-type: x proximity; }
-.mu-uv { flex: 0 0 168px; display: grid; grid-template-rows: auto 1fr auto; gap: 8px; min-height: 320px; padding: 10px; border: 1.5px solid var(--trait); border-radius: 10px; background: #f6f7fa; scroll-snap-align: start; }
-.mu-uv.alerte { border-color: var(--erreur); background: var(--erreur-doux); }
-.mu-uv-tete { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
-.mu-uv-num { font: 700 .8rem/1.2 var(--f-mono); letter-spacing: .05em; color: var(--marine); }
 .mu-eqs { display: grid; align-content: start; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .mu-eq { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: center; gap: 4px 8px; padding: 8px; border: 1.5px solid var(--trait); border-radius: 8px; background: var(--fond); }
 .mu-eq-facing, .mu-eq-coudee { border-color: #e9b48f; }
@@ -1398,8 +1398,6 @@ details.groupe-pieces { display: block; }
 .mu-eq-bouton:hover:not(:disabled) { border-color: var(--marine); }
 .mu-eq-bouton:disabled { opacity: .35; cursor: default; }
 .mu-eq-bouton.arme { border-color: var(--erreur); background: var(--erreur); color: var(--sur-marine); }
-.mu-eq-vide { padding: 18px 8px; border: 1.5px dashed var(--trait); border-radius: 8px; color: var(--gris); text-align: center; }
-.mu-ajout { width: 100%; min-height: 40px; padding: 6px 8px; border: 1.5px dashed var(--marine); border-radius: 8px; background: var(--fond); color: var(--marine); font-weight: 700; }
 
 /* Réglages du merch */
 .mr-form { display: grid; gap: 18px; padding-top: 14px; }
@@ -1418,6 +1416,79 @@ details.groupe-pieces { display: block; }
 .mp-option { display: flex; align-items: flex-start; gap: 10px; line-height: 1.4; }
 .mp-option[hidden] { display: none; }
 .mp-option input { flex: none; width: 18px; height: 18px; margin: 3px 0 0; accent-color: var(--marine); }
+
+/* Un mur vu de face, comme si on était devant : les plaques à crans, la silhouette pour l'échelle, l'UV choisie en détail. */
+.fenetre-mur { width: min(1180px, calc(100vw - 24px)); max-height: min(94vh, 980px); }
+.fenetre-mur .fenetre-tete { align-items: center; }
+.mu-nav { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; margin-left: auto; }
+.mu-nav .bouton-second { white-space: nowrap; }
+.mu-corps { display: block; padding-top: 12px; }
+.mu-corps > * + * { margin-top: 12px; }
+.mu-corps .me-alerte { display: grid; gap: 2px; }
+.mu-scene { overflow-x: auto; overflow-y: hidden; padding: 4px 0 2px; border-radius: 12px; background: linear-gradient(#f7f8fa, #eef0f4); overscroll-behavior-x: contain; }
+#mu-svg { display: block; font-family: var(--f-body); user-select: none; -webkit-user-select: none; }
+.mu-scene.approche #mu-svg { animation: mu-approche .65s cubic-bezier(.2, .75, .25, 1) both; transform-origin: 50% 60%; }
+.mu-scene.vers-droite #mu-svg { animation: mu-vers-droite .45s cubic-bezier(.2, .75, .25, 1) both; }
+.mu-scene.vers-gauche #mu-svg { animation: mu-vers-gauche .45s cubic-bezier(.2, .75, .25, 1) both; }
+@keyframes mu-approche { from { opacity: 0; transform: perspective(1100px) translateZ(-320px) rotateY(-14deg); } to { opacity: 1; transform: none; } }
+@keyframes mu-vers-droite { from { opacity: 0; transform: translateX(90px); } to { opacity: 1; transform: none; } }
+@keyframes mu-vers-gauche { from { opacity: 0; transform: translateX(-90px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .mu-scene #mu-svg { animation: none !important; } }
+.mu-sol { fill: url(#mu-sol); }
+.mu-regle line { stroke: #9aa3b2; stroke-width: 1px; vector-effect: non-scaling-stroke; }
+.mu-regle text { fill: #7a8395; text-anchor: end; dominant-baseline: middle; font-family: var(--f-mono); }
+.mu-silhouette { fill: #c9ced8; }
+.mu-silhouette text { fill: #7a8395; text-anchor: middle; font-weight: 700; }
+.mu-panneau { fill: url(#mu-plaque); stroke: none; cursor: pointer; }
+.mu-panneau.choisie { stroke: var(--marine); stroke-width: 3px; vector-effect: non-scaling-stroke; }
+.mu-panneau.alerte { fill: #fbe9e8; }
+.mu-crans { fill: none; stroke: #dde1e8; stroke-width: 1px; vector-effect: non-scaling-stroke; pointer-events: none; }
+.mu-crans.case { stroke: #c7cdd7; }
+.mu-montants line { stroke: #b8c0cc; stroke-width: 3px; vector-effect: non-scaling-stroke; }
+.mu-bande { pointer-events: none; }
+.mu-miroir-verre { stroke: #9aa3b2; stroke-width: 2px; vector-effect: non-scaling-stroke; cursor: pointer; }
+.mu-reflet { fill: none; stroke: #ffffff; stroke-width: 3px; stroke-linecap: round; vector-effect: non-scaling-stroke; opacity: .9; pointer-events: none; }
+.mu-miroir-nom { fill: #5f7f96; text-anchor: middle; dominant-baseline: middle; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; pointer-events: none; }
+.mu-condamne { fill: #8a93a5; text-anchor: middle; font-style: italic; pointer-events: none; }
+.mu-uv-nom { fill: var(--gris); text-anchor: middle; font-family: var(--f-mono); font-weight: 600; cursor: pointer; }
+.mu-uv-nom.choisie { fill: var(--marine); font-weight: 800; }
+.mu-uv-nom.alerte { fill: var(--erreur); }
+.mu-q { cursor: ns-resize; touch-action: none; outline: none; }
+.mu-clic { fill: transparent; }
+.mu-q:hover .mu-clic, .mu-q:focus-visible .mu-clic { fill: rgba(0, 34, 82, .05); }
+.mu-barre { fill: #7b8494; }
+.mu-bras { fill: none; stroke: #6b7484; stroke-width: 2.5px; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+circle.mu-bras { fill: #6b7484; stroke: none; }
+.mu-cintre { fill: none; stroke: #7b8494; stroke-width: 1.4px; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.mu-vetement { stroke: rgba(23, 32, 51, .25); stroke-width: 1px; vector-effect: non-scaling-stroke; }
+.mu-planche { fill: #ffffff; stroke: #aab2bf; stroke-width: 1.2px; vector-effect: non-scaling-stroke; }
+.mu-pile { stroke: rgba(23, 32, 51, .22); stroke-width: 1px; vector-effect: non-scaling-stroke; }
+.mu-pli { stroke: rgba(255, 255, 255, .55); stroke-width: 1px; vector-effect: non-scaling-stroke; }
+.mu-gene { fill: rgba(198, 40, 40, .16); stroke: var(--erreur); stroke-width: 1px; stroke-dasharray: 4 3; vector-effect: non-scaling-stroke; pointer-events: none; }
+.mu-q.choisi .mu-clic { fill: rgba(224, 122, 53, .08); }
+.mu-cadre-choisi { fill: none; stroke: #e07a35; stroke-width: 2.5px; stroke-dasharray: 6 4; vector-effect: non-scaling-stroke; pointer-events: none; }
+.mu-tag rect { fill: #e07a35; }
+.mu-tag text { fill: #ffffff; font: 700 calc(11px / var(--k, 1)) var(--f-mono); text-anchor: middle; dominant-baseline: middle; }
+.mu-detail { display: grid; gap: 10px; padding: 12px 14px; border: 1.5px solid var(--trait); border-radius: 12px; }
+.mu-detail-tete { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.mu-detail-tete h3 { font-size: 1.1rem; color: var(--marine); }
+.mu-remplacer { margin-left: auto; min-height: 40px; padding: 6px 10px; border: 1.5px dashed var(--marine); border-radius: 8px; background: var(--fond); color: var(--marine); font-weight: 700; }
+.mu-miroir { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 8px 12px; border-radius: 8px; background: #e7f2f9; color: #2d5670; }
+.mu-detail .mu-eqs { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
+.mu-detail .mu-eq { cursor: pointer; }
+.mu-detail .mu-eq.choisi { border-color: #e07a35; box-shadow: 0 0 0 1px #e07a35; }
+.mu-detail .mu-eq-actions { grid-column: auto; }
+.mu-detail .mu-eq { grid-template-columns: 40px minmax(0, 1fr) auto; }
+.mu-ajouts { display: flex; flex-wrap: wrap; gap: 6px; }
+.mu-ajout.puce-filtre { border-style: dashed; color: var(--marine); }
+@media (max-width: 599px) {
+  .fenetre-mur .fenetre-tete { flex-wrap: wrap; }
+  .fenetre-mur .fenetre-tete > div:first-child { flex: 1 1 0; min-width: 0; }
+  .fenetre-mur .fenetre-tete .fermer { order: 2; }
+  .mu-nav { order: 3; width: 100%; justify-content: space-between; margin-left: 0; }
+  .mu-remplacer { margin-left: 0; width: 100%; }
+  .mu-detail { padding: 10px; }
+}
 </style>
 </head>
 <body>
@@ -1866,6 +1937,7 @@ details.groupe-pieces { display: block; }
               <div class="me-ligne" id="me-g-mur">
                 <label class="titre-champ">Nombre d'UV<input type="text" id="me-uvn" inputmode="numeric" maxlength="2"></label>
                 <label class="titre-champ">Une UV (m)<input type="text" id="me-uvl" inputmode="decimal" maxlength="5"></label>
+                <label class="titre-champ">Hauteur des plaques (m)<input type="text" id="me-hmur" inputmode="decimal" maxlength="5"></label>
               </div>
               <p class="aide" id="me-info" hidden></p>
               <p class="me-alerte" id="me-alerte" role="status" hidden></p>
@@ -2744,12 +2816,28 @@ details.groupe-pieces { display: block; }
       <h2 id="mu-titre">Mur</h2>
       <p class="fenetre-sous" id="mu-sous"></p>
     </div>
+    <div class="mu-nav">
+      <button class="bouton-second bouton-petit" type="button" id="mu-prec" hidden></button>
+      <button class="bouton-second bouton-petit" type="button" id="mu-suiv" hidden></button>
+    </div>
     <button class="fermer" type="button" data-fermer aria-label="Fermer">×</button>
   </div>
-  <div class="fenetre-corps">
-    <details class="mu-aide" id="mu-aide"><summary>Les équipements d'une UV</summary><ul class="mu-legende" id="mu-legende"></ul></details>
+  <div class="fenetre-corps mu-corps">
     <p class="me-alerte" id="mu-alerte" role="status" hidden></p>
-    <div class="mu-uvs" id="mu-uvs"></div>
+    <div class="mu-scene" id="mu-scene"><svg id="mu-svg" role="group" aria-label="Le mur vu de face, de gauche à droite"></svg></div>
+    <section class="mu-detail" aria-labelledby="mu-uv-titre">
+      <div class="mu-detail-tete">
+        <h3 id="mu-uv-titre">UV 1</h3>
+        <span class="zone-pastille" id="mu-uv-zone"></span>
+        <select class="mu-remplacer" id="mu-remplacer" aria-label="Remplacer l'UV par un modèle"></select>
+      </div>
+      <div class="mu-miroir" id="mu-miroir" hidden><span id="mu-miroir-texte"></span><button class="bouton-second bouton-petit" type="button" id="mu-condamner"></button></div>
+      <ol class="mu-eqs" id="mu-eqs"></ol>
+      <p class="liste-vide" id="mu-eqs-vide" hidden>Rien sur cette UV pour l'instant.</p>
+      <div class="mu-ajouts" id="mu-ajouts" role="group" aria-label="Ajouter sur cette UV"></div>
+      <p class="aide" id="mu-aide-geste">Glisse une barre ou une étagère sur le mur pour la monter ou la descendre, cran par cran (5 cm) ; ▲ ▼ font un cran. Les murs d'à côté s'ouvrent avec les flèches en haut.</p>
+    </section>
+    <details class="mu-aide" id="mu-aide"><summary>Les équipements et les crans</summary><ul class="mu-legende" id="mu-legende"></ul></details>
   </div>
   <div class="fenetre-pied">
     <button class="bouton-second" type="button" id="mu-moins">Retirer la dernière UV</button>
@@ -10031,7 +10119,7 @@ details.groupe-pieces { display: block; }
   //  - une table : hauteurs (1 à 3, le plateau puis les tables gigognes) et niveaux: [{ articles }] ;
   //  - un portant, un présentoir, la vitrine : articles ; un buste : tenue et articles.
   // Un article posé : { p: l'id de la pièce, d: posé le (AAAA-MM-JJ), ok: « se vend bien ici » depuis le, n, t, sup }.
-  const FAMILLES_MERCH = [["mur", "Murs"], ["table", "Tables"], ["portant", "Portants"], ["presentoir", "Présentoirs"], ["buste", "Bustes et mannequins"], ["repere", "Repères"]];
+  const FAMILLES_MERCH = [["mur", "Murs et miroirs"], ["table", "Tables"], ["portant", "Portants"], ["presentoir", "Présentoirs"], ["buste", "Bustes et mannequins"], ["repere", "Repères"]];
   const TYPES_MERCH = {
     mur: { nom: "Mur", famille: "mur", p: 0.4, porte: "uv" },
     "grande-table": { nom: "Grande table", famille: "table", l: 1.8, p: 0.9, porte: "niveaux" },
@@ -10056,16 +10144,36 @@ details.groupe-pieces { display: block; }
     ["facing", "Facing", "F", "Un bras de face : un modèle, ou deux en superposition."],
     ["pressing", "Pressing", "P", "Une barre le long du mur : les cintres côte à côte."],
     ["etagere", "Étagère", "E", "Une étagère : des piles pliées."],
-    ["coudee", "Barre coudée", "C", "Deux facings l'un derrière l'autre, le second plus haut."],
+    ["coudee", "Barre coudée", "C", "Deux facings l'un derrière l'autre, celui du fond plus haut."],
   ];
   const NOM_EQUIPEMENT = Object.fromEntries(EQUIPEMENTS.map(([id, nom]) => [id, nom]));
   const LETTRE_EQUIPEMENT = Object.fromEntries(EQUIPEMENTS.map(([id, , l]) => [id, l]));
   const estFacing = type => type === "facing" || type === "coudee";
+  // Les murs Blue Box : des plaques à crans (un tous les 5 cm environ) ; une barre ou une étagère se met à n'importe quel
+  // cran. Une case d'étagères fait en général 5 crans (une pile de sweats). Une hauteur se compte en crans depuis le sol.
+  const CRAN_CM = 5, CRANS_MUR = 48, CASE = 5;
+  const PENDU = { pressing: 16, facing: 15, coudee: 17 };   // les vêtements pendent sous la barre : 80, 75, 85 cm
+  const CRAN_DEFAUT = { facing: 34, pressing: 34, coudee: 36, etagere: 30 };
   const MODELES_UV = [
-    ["pressing", "Pressing", ["pressing"]], ["facing", "Facing", ["facing"]], ["coudee", "Barre coudée", ["coudee"]],
-    ["etageres", "4 étagères", ["etagere", "etagere", "etagere", "etagere"]], ["etagere-pressing", "2 étagères et un pressing", ["etagere", "etagere", "pressing"]],
-    ["etagere-facing", "Une étagère et un facing", ["etagere", "facing"]], ["double-pressing", "2 pressings", ["pressing", "pressing"]], ["vide", "Vide", []],
+    ["pressing", "Pressing", [["pressing", 34]]],
+    ["facing", "Facing", [["facing", 34]]],
+    ["coudee", "Barre coudée", [["coudee", 36]]],
+    ["facing-pressing", "Facing haut, pressing bas", [["facing", 40], ["pressing", 22]]],
+    ["pressing-facing", "Pressing haut, facing bas", [["pressing", 40], ["facing", 22]]],
+    ["double-pressing", "Pressing haut, pressing bas", [["pressing", 40], ["pressing", 22]]],
+    ["etageres", "Étagères (cases de 5 crans)", [38, 33, 28, 23, 18, 13, 8].map(c => ["etagere", c])],
+    ["pressing-etageres", "Pressing haut, étagères en bas", [["pressing", 40], ["etagere", 18], ["etagere", 13], ["etagere", 8]]],
+    ["etagere-facing", "Étagère en haut, facing dessous", [["etagere", 40], ["facing", 31]]],
+    ["vide", "Vide", []],
   ];
+  const AJOUTS_EQ = [["facing-haut", "Facing haut", "facing", 40], ["facing-bas", "Facing bas", "facing", 22], ["pressing-haut", "Pressing haut", "pressing", 40],
+    ["pressing-bas", "Pressing bas", "pressing", 22], ["coudee", "Barre coudée", "coudee", 36], ["etagere", "Étagère", "etagere", null]];
+  // Des équipements d'avant les crans : rangés du haut vers le bas, un seul à sa hauteur habituelle.
+  function cransParDefaut(types) {
+    if (types.length === 1) return [CRAN_DEFAUT[types[0]]];
+    let c = 40;
+    return types.map(t => { const r = Math.max(3, c); c -= t === "etagere" ? CASE : PENDU[t] + 2; return r; });
+  }
   const ZONES_MERCH = [["chaude", "Chaude"], ["tiede", "Tiède"], ["froide", "Froide"]];
   const NOM_ZONE = Object.fromEntries(ZONES_MERCH);
   // Les règles du merch du magasin (celles choisies par Axel, avec ses précisions). « verif » : vérifiée par l'outil.
@@ -10144,12 +10252,19 @@ details.groupe-pieces { display: block; }
       zone: NOM_ZONE[d.zone] ? d.zone : null, note: texteBorne(d.note, 300), creeLe: texteBorne(d.creeLe, 40), modifieLe: texteBorne(d.modifieLe, 40),
     };
     if (t.porte === "uv") {
-      e.uvL = nombreBorne(d.uvL, 0.4, 3, 1);
-      e.uvs = (Array.isArray(d.uvs) ? d.uvs : []).slice(0, 40).map(u => ({
-        eq: (u && Array.isArray(u.eq) ? u.eq : []).filter(q => q && NOM_EQUIPEMENT[q.type]).slice(0, 8)
-          .map((q, i) => ({ id: typeof q.id === "string" && q.id ? q.id.slice(0, 16) : `q${i}`, type: q.type, articles: lireArticlesMerch(q.articles) })),
-      }));
-      if (!e.uvs.length) e.uvs = [{ eq: [] }];
+      e.uvL = nombreBorne(d.uvL, 0.3, 3, 1);
+      e.crans = Number.isInteger(d.crans) && d.crans >= 20 && d.crans <= 80 ? d.crans : CRANS_MUR;
+      e.uvs = (Array.isArray(d.uvs) ? d.uvs : []).slice(0, 40).map(u => {
+        const brut = (u && Array.isArray(u.eq) ? u.eq : []).filter(q => q && NOM_EQUIPEMENT[q.type]).slice(0, 12);
+        const defauts = cransParDefaut(brut.map(q => q.type));
+        return {
+          miroir: !!(u && u.miroir === true), condamne: !!(u && u.miroir === true && u.condamne === true),
+          eq: brut.map((q, i) => ({ id: typeof q.id === "string" && q.id ? q.id.slice(0, 16) : `q${i}`, type: q.type,
+            cran: Math.min(e.crans - 1, Number.isInteger(q.cran) && q.cran >= 1 ? q.cran : defauts[i]), articles: lireArticlesMerch(q.articles) }))
+            .sort((a, b) => b.cran - a.cran),
+        };
+      });
+      if (!e.uvs.length) e.uvs = [{ eq: [], miroir: false, condamne: false }];
       e.l = e.uvs.length * e.uvL;
       e.p = t.p;
     } else {
@@ -10169,7 +10284,11 @@ details.groupe-pieces { display: block; }
     const t = TYPES_MERCH[e.type];
     const c = { plan: e.plan, type: e.type, nom: e.nom || null, x: auCentimetre(e.x), y: auCentimetre(e.y), rot: e.rot, zone: e.zone || null,
       note: e.note || null, creeLe: e.creeLe || maintenant(), modifieLe: maintenant() };
-    if (t.porte === "uv") { c.uvL = e.uvL; c.uvs = e.uvs.map(u => ({ eq: u.eq.map(q => ({ id: q.id, type: q.type, articles: corpsArticles(q.articles) })) })); }
+    if (t.porte === "uv") {
+      c.uvL = e.uvL;
+      c.crans = e.crans || CRANS_MUR;
+      c.uvs = e.uvs.map(u => ({ ...(u.miroir ? { miroir: true, condamne: !!u.condamne } : {}), eq: u.eq.map(q => ({ id: q.id, type: q.type, cran: q.cran, articles: corpsArticles(q.articles) })) }));
+    }
     else { c.l = auCentimetre(e.l); c.p = auCentimetre(e.p); }
     if (t.porte === "niveaux") { c.hauteurs = e.hauteurs; c.niveaux = Array.from({ length: e.hauteurs }, (_, i) => ({ articles: corpsArticles((e.niveaux[i] || { articles: [] }).articles) })); }
     if (t.porte === "articles" || t.porte === "tenue") c.articles = corpsArticles(e.articles || []);
@@ -10193,7 +10312,8 @@ details.groupe-pieces { display: block; }
   const planEnPlace = () => plansMerch().find(p => p.actif) || null;
   const elementsDuPlan = planId => Object.values(merchElements.docs).filter(e => e.plan === planId);
   const ORDRE_FAMILLE = Object.fromEntries(FAMILLES_MERCH.map(([f], i) => [f, i]));
-  const trierElements = l => l.sort((a, b) => ORDRE_FAMILLE[TYPES_MERCH[a.type].famille] - ORDRE_FAMILLE[TYPES_MERCH[b.type].famille] || nomMeuble(a).localeCompare(nomMeuble(b), "fr", { numeric: true }));
+  const trierElements = l => l.sort((a, b) => ORDRE_FAMILLE[TYPES_MERCH[a.type].famille] - ORDRE_FAMILLE[TYPES_MERCH[b.type].famille]
+    || (TYPES_MERCH[a.type].porte === "uv" && TYPES_MERCH[b.type].porte === "uv" ? estUnMiroir(a) - estUnMiroir(b) : 0) || nomMeuble(a).localeCompare(nomMeuble(b), "fr", { numeric: true }));
   const nomMeuble = e => e.nom || TYPES_MERCH[e.type].nom;
 
   // Les zones : plus on est près de l'entrée (en bas) et à gauche, plus c'est chaud ; un meuble peut forcer la sienne.
@@ -10203,15 +10323,60 @@ details.groupe-pieces { display: block; }
   const versPlan = (e, lx, ly) => { const a = e.rot * Math.PI / 180, c = Math.cos(a), s = Math.sin(a); return [e.x + lx * c - ly * s, e.y + lx * s + ly * c]; };
   const zoneElement = (plan, e) => e.zone || zoneDeChaleur(chaleurMerch(plan, e.x, e.y));
   const zoneUv = (plan, e, i) => e.zone || zoneDeChaleur(chaleurMerch(plan, ...versPlan(e, -e.l / 2 + (i + 0.5) * e.uvL, e.p / 2)));
-  // Deux UV voisines qui ont chacune un facing (ou une barre coudée) : interdit.
-  const facingsCoteACote = e => e.uvs.slice(1).map((u, i) => i).filter(i => e.uvs[i].eq.some(q => estFacing(q.type)) && e.uvs[i + 1].eq.some(q => estFacing(q.type)));
+  const estMiroir = u => u.miroir && !u.condamne;
+  const estUnMiroir = e => TYPES_MERCH[e.type].porte === "uv" && e.uvs.every(estMiroir);
+  const aUnFacing = u => !estMiroir(u) && u.eq.some(q => estFacing(q.type));
+  // Le mur qui prolonge celui-ci à droite (cote = 1) ou à gauche (-1), vu de face : leurs bouts se touchent (à 60 cm près).
+  function murVoisin(e, cote) {
+    const [x, y] = versPlan(e, cote * e.l / 2, 0);
+    let mieux = null, dMin = 0.6;
+    elementsDuPlan(e.plan).forEach(f => {
+      if (f.id === e.id || TYPES_MERCH[f.type].porte !== "uv") return;
+      const [fx, fy] = versPlan(f, -cote * f.l / 2, 0), d = Math.hypot(fx - x, fy - y);
+      if (d < dMin) { dMin = d; mieux = f; }
+    });
+    return mieux;
+  }
+  const hauteurEq = q => `${q.cran * CRAN_CM} cm`;
+  // Le nom d'un équipement dans son UV : « Facing haut », « Pressing bas » quand il y a plusieurs barres.
+  function nomEq(u, q) {
+    if (q.type === "etagere") return "Étagère";
+    const barres = u.eq.filter(x => x.type !== "etagere"), i = barres.indexOf(q);
+    if (barres.length < 2 || i < 0) return NOM_EQUIPEMENT[q.type];
+    return `${NOM_EQUIPEMENT[q.type]} ${i === 0 ? "haut" : i === barres.length - 1 ? "bas" : "du milieu"}`;
+  }
+  const leNomEq = (u, q) => (q.type === "etagere" ? "l'étagère" : q.type === "coudee" ? "la barre coudée" : `le ${nomEq(u, q).toLowerCase()}`);
+  const duNomEq = (u, q) => (q.type === "coudee" ? "de la barre coudée" : `du ${nomEq(u, q).toLowerCase()}`);
+  // Ce qui cloche sur un mur : deux facings côte à côte (aussi avec le mur d'à côté), des vêtements qui descendent sur
+  // ce qu'il y a dessous, une case trop basse pour une pile.
+  function alertesMur(e) {
+    const uvs = new Set(), facings = [], hauteurs = [], n = e.uvs.length;
+    e.uvs.forEach((u, i) => { if (i && aUnFacing(u) && aUnFacing(e.uvs[i - 1])) { uvs.add(i - 1); uvs.add(i); facings.push(`UV ${i} et ${i + 1}`); } });
+    const d = murVoisin(e, 1), g = murVoisin(e, -1);
+    if (d && aUnFacing(e.uvs[n - 1]) && aUnFacing(d.uvs[0])) { uvs.add(n - 1); facings.push(`UV ${n} et ${nomMeuble(d)} (son UV 1)`); }
+    if (g && aUnFacing(e.uvs[0]) && aUnFacing(g.uvs[g.uvs.length - 1])) { uvs.add(0); facings.push(`UV 1 et ${nomMeuble(g)} (son UV ${g.uvs.length})`); }
+    e.uvs.forEach((u, i) => {
+      if (estMiroir(u)) return;
+      u.eq.forEach((q, k) => {
+        const b = u.eq.slice(k + 1).find(x => hautEq(x) > basEq(q));
+        if (!b) return;
+        const texte = PENDU[q.type] ? `les vêtements ${duNomEq(u, q)} (à ${hauteurEq(q)}) touchent ${leNomEq(u, b)} (à ${hauteurEq(b)})`
+          : b.type === "etagere" ? `l'étagère à ${hauteurEq(q)} est trop près de celle à ${hauteurEq(b)} : une case fait 5 crans (25 cm)`
+            : `l'étagère à ${hauteurEq(q)} est trop près ${duNomEq(u, b)} à ${hauteurEq(b)}`;
+        hauteurs.push({ uv: i, haut: q, bas: b, texte });
+      });
+    });
+    return { uvs, facings, hauteurs };
+  }
   function resumeUvs(e) {
-    const n = {};
+    const n = {}, miroirs = e.uvs.filter(estMiroir).length;
     e.uvs.forEach(u => u.eq.forEach(q => { n[q.type] = (n[q.type] || 0) + 1; }));
     const parties = EQUIPEMENTS.filter(([id]) => n[id]).map(([id, nom]) => `${n[id]} ${id === "etagere" ? (n[id] > 1 ? "étagères" : "étagère") : id === "coudee" ? (n[id] > 1 ? "barres coudées" : "barre coudée") : nom.toLowerCase() + (n[id] > 1 ? "s" : "")}`);
+    if (miroirs) parties.push(miroirs > 1 ? `${miroirs} miroirs` : "un miroir");
     return `${e.uvs.length} UV${parties.length ? " : " + parties.join(", ") : ""}`;
   }
   const codeUv = u => {
+    if (estMiroir(u)) return "M";
     const l = [];
     u.eq.forEach(q => { const c = LETTRE_EQUIPEMENT[q.type]; const d = l[l.length - 1]; if (d && d.c === c) d.n++; else l.push({ c, n: 1 }); });
     return l.map(x => x.c + (x.n > 1 ? x.n : "")).join("·");
@@ -10265,14 +10430,15 @@ details.groupe-pieces { display: block; }
     return e ? ecrireElementMerch({ ...e, ...avant, ...champs }).catch(() => {}) : Promise.resolve();
   }
   window.addEventListener("pagehide", viderAttenteMerch);
-  const nouvelEq = type => ({ id: idCourt(), type, articles: [] });
-  const copieUvs = uvs => uvs.map(u => ({ eq: u.eq.map(q => ({ ...q, articles: q.articles.map(a => ({ ...a })) })) }));
-  // Plus d'UV : la suite reprend l'alternance (une UV sur deux comme celle d'avant-avant), sinon un pressing.
+  const nouvelEq = (type, cran) => ({ id: idCourt(), type, cran: cran || CRAN_DEFAUT[type], articles: [] });
+  const copieUvs = uvs => uvs.map(u => ({ miroir: !!u.miroir, condamne: !!u.condamne, eq: u.eq.map(q => ({ ...q, articles: q.articles.map(a => ({ ...a })) })) }));
+  // Plus d'UV : la suite reprend l'alternance (comme l'avant-dernière UV qui n'est pas un miroir), sinon un pressing.
   function ajusterUvs(uvs, n) {
     const r = copieUvs(uvs).slice(0, n);
     while (r.length < n) {
-      const modele = r.length >= 2 ? r[r.length - 2].eq.map(q => q.type) : r.length === 1 ? (r[0].eq.some(q => estFacing(q.type)) ? ["pressing"] : ["facing"]) : ["pressing"];
-      r.push({ eq: modele.map(nouvelEq) });
+      const pleines = r.filter(u => !u.miroir), avant = pleines[pleines.length - 2], dernier = pleines[pleines.length - 1];
+      const modele = avant ? avant.eq.map(q => [q.type, q.cran]) : dernier ? (dernier.eq.some(q => estFacing(q.type)) ? [["pressing", 34]] : [["facing", 34]]) : [["pressing", 34]];
+      r.push({ miroir: false, condamne: false, eq: modele.map(([t, c]) => nouvelEq(t, c)) });
     }
     return r;
   }
@@ -10298,11 +10464,11 @@ details.groupe-pieces { display: block; }
     if (t.porte === "uv") {
       forme = svgEl("rect", { class: "me-forme", x: -e.l / 2, y: -e.p / 2, width: e.l, height: e.p, ...NS_TRAIT });
       g.append(forme);
-      const cote = new Set(facingsCoteACote(e).flatMap(i => [i, i + 1]));
+      const al = alertesMur(e), cote = al.uvs, gene = new Set(al.hauteurs.map(h => h.uv));
       e.uvs.forEach((u, i) => {
         const x0 = -e.l / 2 + i * e.uvL;
-        const c = svgEl("rect", { class: "me-uv" + (cote.has(i) ? " alerte" : ""), x: x0, y: -e.p / 2, width: e.uvL, height: e.p, ...NS_TRAIT });
-        if (calquesMerch.zones) c.style.fill = COULEUR_ZONE[zoneUv(plan, e, i)];
+        const c = svgEl("rect", { class: "me-uv" + (cote.has(i) ? " alerte" : gene.has(i) ? " gene" : "") + (estMiroir(u) ? " miroir" : ""), x: x0, y: -e.p / 2, width: e.uvL, height: e.p, ...NS_TRAIT });
+        if (calquesMerch.zones && !estMiroir(u)) c.style.fill = COULEUR_ZONE[zoneUv(plan, e, i)];
         g.append(c);
         const code = codeUv(u);
         if (code) g.append(svgEl("text", { class: "me-uv-code", transform: `translate(${x0 + e.uvL / 2} 0) rotate(${-e.rot})`, "font-size": Math.min(policeMerch * 0.9, e.p * 0.62, e.uvL / Math.max(1.6, code.length * 0.62)) }, code));
@@ -10318,6 +10484,11 @@ details.groupe-pieces { display: block; }
       g.append(forme);
       if (t.famille === "portant") g.append(svgEl("line", { class: "me-detail", x1: -e.l / 2 + 0.08, y1: 0, x2: e.l / 2 - 0.08, y2: 0, ...NS_TRAIT }));
       if (t.porte === "niveaux") for (let k = 1; k < e.hauteurs && e.p - k * 0.26 > 0.1; k++) g.append(svgEl("rect", { class: "me-detail", x: -e.l / 2 + k * 0.13, y: -e.p / 2 + k * 0.13, width: e.l - k * 0.26, height: e.p - k * 0.26, ...NS_TRAIT }));
+      if (e.type === "cabines") {   // l'ouverture, en bas à droite (vue de face)
+        const w = Math.min(1, e.l * 0.4), x2 = e.l / 2 - 0.1, x1 = x2 - w, y0 = e.p / 2, xc = (x1 + x2) / 2;
+        g.append(svgEl("line", { class: "me-ouverture", x1, y1: y0, x2, y2: y0, ...NS_TRAIT }));
+        g.append(svgEl("path", { class: "me-porte", d: `M${xc} ${y0 - 0.25}V${y0 + 0.35}M${xc - 0.16} ${y0 + 0.19}L${xc} ${y0 + 0.35}L${xc + 0.16} ${y0 + 0.19}`, ...NS_TRAIT }));
+      }
       if (e.type === "entree") g.append(svgEl("path", { class: "me-fleche-entree", d: `M0 ${e.p / 2}V${-e.p / 2 - 0.55}M-0.28 ${-e.p / 2 - 0.27}L0 ${-e.p / 2 - 0.55}L0.28 ${-e.p / 2 - 0.27}`, ...NS_TRAIT }));
     }
     if (calquesMerch.zones && t.porte !== "uv" && t.famille !== "repere") forme.style.fill = COULEUR_ZONE[zoneElement(plan, e)];
@@ -10421,12 +10592,14 @@ details.groupe-pieces { display: block; }
         b.dataset.id = e.id;
         b.setAttribute("aria-pressed", String(e.id === choixMerch));
         const texte = element("span", "me-item-texte");
-        texte.append(element("span", "me-item-nom", nomMeuble(e)), element("span", "me-item-detail", [e.nom ? TYPES_MERCH[e.type].nom : "", detailElement(e)].filter(Boolean).join(" · ")));
+        texte.append(element("span", "me-item-nom", nomMeuble(e)), element("span", "me-item-detail", [e.nom && !estUnMiroir(e) ? TYPES_MERCH[e.type].nom : "", estUnMiroir(e) ? "" : detailElement(e)].filter(Boolean).join(" · ")));
         b.append(texte);
         if (TYPES_MERCH[e.type].famille !== "repere") {
           const z = TYPES_MERCH[e.type].porte === "uv" ? null : zoneElement(plan, e);
           if (z) b.append(element("span", `zone-pastille z-${z}`, NOM_ZONE[z]));
-          else if (facingsCoteACote(e).length) b.append(element("span", "zone-pastille z-alerte", "2 facings côte à côte"));
+          else if (alertesMur(e).facings.length) b.append(element("span", "zone-pastille z-alerte", "2 facings côte à côte"));
+          else if (alertesMur(e).hauteurs.length) b.append(element("span", "zone-pastille z-alerte", "à revoir"));
+          else if (estUnMiroir(e)) b.append(element("span", "zone-pastille z-miroir", "Miroir"));
         }
         li.append(b);
         return li;
@@ -10452,10 +10625,10 @@ details.groupe-pieces { display: block; }
     if (!e || !plan) {
       $("me-form").dataset.id = "";
       if (!plan) return;
-      const els = elementsDuPlan(plan.id), murs = els.filter(x => x.type === "mur");
+      const els = elementsDuPlan(plan.id), c = compteMurs(els);
       const meubles = els.filter(x => !["mur", "repere"].includes(TYPES_MERCH[x.type].famille));
       $("me-resume-texte").textContent = !els.length ? (modifiable ? "Le plan est vide : « Ajouter » pour poser les murs, les tables, les portants…" : "Le plan est vide.")
-        : `${murs.length} mur${murs.length > 1 ? "s" : ""} (${murs.reduce((n, x) => n + x.uvs.length, 0)} UV) et ${meubles.length} meuble${meubles.length > 1 ? "s" : ""}. ${modifiable ? "Touche un meuble pour le régler ; sur ordinateur, fais-le glisser." : ""}`;
+        : `${c.murs} mur${c.murs > 1 ? "s" : ""} (${c.uv} UV)${c.miroirs ? `, ${c.miroirs} miroir${c.miroirs > 1 ? "s" : ""}` : ""} et ${meubles.length} meuble${meubles.length > 1 ? "s" : ""}. ${modifiable ? "Touche un meuble pour le régler ; sur ordinateur, fais-le glisser." : ""}`;
       $("me-compte").replaceChildren(...FAMILLES_MERCH.map(([f, nomF]) => [nomF, els.filter(x => TYPES_MERCH[x.type].famille === f).length]).filter(([, n]) => n)
         .map(([nomF, n]) => { const li = element("li"); li.append(element("span", null, nomF), element("span", "nombre", String(n))); return li; }));
       return;
@@ -10470,7 +10643,7 @@ details.groupe-pieces { display: block; }
     $("me-g-mur").hidden = !mur;
     $("me-equiper").hidden = !mur;
     $("me-equiper").textContent = modifiable ? "Équiper les UV" : "Voir les UV";
-    if (mur) { poser("me-uvn", String(e.uvs.length)); poser("me-uvl", virgule(e.uvL)); }
+    if (mur) { poser("me-uvn", String(e.uvs.length)); poser("me-uvl", virgule(e.uvL)); poser("me-hmur", virgule(e.crans * CRAN_CM / 100)); }
     $("me-g-taille").hidden = mur;
     if (!mur) {
       $("me-l-nom").textContent = t.rond ? "Diamètre (m)" : "Largeur (m)";
@@ -10490,9 +10663,10 @@ details.groupe-pieces { display: block; }
       $("me-zone").value = e.zone || "";
     }
     poser("me-note", e.note);
-    const cote = mur ? facingsCoteACote(e) : [];
-    $("me-alerte").hidden = !cote.length;
-    $("me-alerte").textContent = cote.length ? `Deux facings côte à côte : ${listeFr(cote.map(i => `UV ${i + 1} et ${i + 2}`))}.` : "";
+    const al = mur ? alertesMur(e) : { facings: [], hauteurs: [] };
+    const alertes = [...(al.facings.length ? [`Deux facings côte à côte : ${listeFr(al.facings)}.`] : []), ...al.hauteurs.map(h => `UV ${h.uv + 1} : ${h.texte}.`)];
+    $("me-alerte").hidden = !alertes.length;
+    $("me-alerte").textContent = alertes.join(" ");
     $("me-info").textContent = mur ? resumeUvs(e) : "";
     $("me-info").hidden = !mur;
     [...$("me-form").elements].forEach(el => { if (el.id !== "me-equiper" && el.id !== "me-deselect") el.disabled = !modifiable; });
@@ -10508,7 +10682,8 @@ details.groupe-pieces { display: block; }
       case "me-nom": modifierElementMerch(id, { nom: v.trim().slice(0, 60) }, true); break;
       case "me-note": modifierElementMerch(id, { note: v.trim().slice(0, 300) }, true); break;
       case "me-uvn": if (Number.isInteger(n) && n >= 1 && n <= 40) modifierElementMerch(id, { uvs: ajusterUvs(e.uvs, n) }, true); break;
-      case "me-uvl": if (n >= 0.4 && n <= 3) modifierElementMerch(id, { uvL: auCentimetre(n) }, true); break;
+      case "me-uvl": if (n >= 0.3 && n <= 3) modifierElementMerch(id, { uvL: auCentimetre(n) }, true); break;
+      case "me-hmur": if (n >= 1 && n <= 4) modifierElementMerch(id, { crans: Math.round(n * 100 / CRAN_CM) }, true); break;
       case "me-l": if (n >= 0.2 && n <= 20) modifierElementMerch(id, TYPES_MERCH[e.type].rond ? { l: n, p: n } : { l: n }, true); break;
       case "me-p": if (n >= 0.1 && n <= 20) modifierElementMerch(id, { p: n }, true); break;
       case "me-x": if (v.trim() && isFinite(n) && plan) modifierElementMerch(id, { x: dansPlan(n, plan.largeur) }, true); break;
@@ -10550,16 +10725,21 @@ details.groupe-pieces { display: block; }
   });
 
   // ----- ajouter un meuble -----
-  async function ajouterElementMerch(type) {
+  async function ajouterElementMerch(choix) {
+    const miroir = choix === "mur-miroir", type = miroir ? "mur" : choix;
     const plan = planAffiche(), t = TYPES_MERCH[type];
     if (!plan || !t || !peutModifierMerch()) return;
     viderAttenteMerch();
-    const tous = elementsDuPlan(plan.id), memes = tous.filter(e => e.type === type).length;
+    const tous = elementsDuPlan(plan.id), memes = tous.filter(e => e.type === type && (t.porte !== "uv" || estUnMiroir(e) === miroir)).length;
+    const unMur = tous.find(e => TYPES_MERCH[e.type].porte === "uv" && !estUnMiroir(e));
     let x = auCentimetre(Math.min(plan.homme, plan.largeur) / 2), y = auCentimetre(plan.profondeur / 2);
     for (let k = 0; k < 30 && tous.some(e => Math.abs(e.x - x) < 0.3 && Math.abs(e.y - y) < 0.3); k++) { x += 0.5; y += 0.5; }
     const numero = t.famille === "repere" ? (memes ? ` ${memes + 1}` : "") : ` ${memes + 1}`;
-    const e = { id: merchElements.nouvelId(), plan: plan.id, type, nom: `${t.nom}${numero}`, x, y, rot: 0, zone: null, note: "", creeLe: maintenant() };
-    if (t.porte === "uv") Object.assign(e, { uvL: 1, uvs: ajusterUvs([], 6), l: 6, p: t.p });
+    const e = { id: merchElements.nouvelId(), plan: plan.id, type, nom: `${miroir ? "Miroir" : t.nom}${numero}`, x, y, rot: 0, zone: null, note: "", creeLe: maintenant() };
+    if (t.porte === "uv") {
+      const uvL = unMur ? unMur.uvL : 1, uvs = miroir ? [{ miroir: true, condamne: false, eq: [] }] : ajusterUvs([], 6);
+      Object.assign(e, { uvL, crans: unMur ? unMur.crans : CRANS_MUR, uvs, l: uvs.length * uvL, p: t.p });
+    }
     else Object.assign(e, { l: t.l, p: t.p });
     if (t.porte === "niveaux") Object.assign(e, { hauteurs: 1, niveaux: [{ articles: [] }] });
     if (t.porte === "articles" || t.porte === "tenue") e.articles = [];
@@ -10573,6 +10753,7 @@ details.groupe-pieces { display: block; }
     const g = element("optgroup");
     g.label = nomF;
     Object.entries(TYPES_MERCH).filter(([, t]) => t.famille === f).forEach(([id, t]) => g.append(new Option(t.nom + (t.aide ? ` (${t.aide})` : ""), id)));
+    if (f === "mur") g.append(new Option("Miroir (une UV)", "mur-miroir"));
     return g;
   }));
   $("me-ajouter").addEventListener("change", e => { const type = e.target.value; e.target.value = ""; if (type) ajouterElementMerch(type); });
@@ -10672,13 +10853,31 @@ details.groupe-pieces { display: block; }
   });
   $("me-liste").addEventListener("click", ev => { const b = ev.target.closest(".me-item"); if (b) choisirElementMerch(b.dataset.id, true); });
 
-  // ----- un mur, vu de face : ses UV et leurs équipements -----
-  let murOuvert = null;
-  function ouvrirMurMerch(id) {
+  // ----- un mur, vu de face, comme si on était devant : les plaques à crans, ses barres et ses étagères -----
+  // Dessiné en centimètres : la plaque, un cran tous les 5 cm (plus marqué toutes les 5 crans, une case), la silhouette
+  // d'un homme de 1,80 m pour l'échelle. Une barre ou une étagère se glisse cran par cran ; ▲ ▼ aussi.
+  let murOuvert = null, uvMur = 0, eqMur = null, glisseMur = null;
+  const G_MUR = 92, HAUT_MUR = 26, BAS_MUR = 44;   // la marge de gauche (règle, silhouette), en haut, en bas (le sol)
+  function ouvrirMurMerch(id, uv, sens) {
     murOuvert = id;
-    $("mu-aide").open = !window.matchMedia("(max-width: 599px)").matches;
+    const e = merchElements.docs[id];
+    uvMur = e ? Math.max(0, Math.min(e.uvs.length - 1, uv || 0)) : 0;
+    eqMur = null;
+    if (!$("fenetre-mur").open) $("mu-aide").open = false;
     rendreMurMerch();
-    ouvrir($("fenetre-mur"));
+    if (!$("fenetre-mur").open) ouvrir($("fenetre-mur"));
+    // On s'approche du mur ; d'un mur à l'autre, on le longe.
+    const scene = $("mu-scene");
+    scene.classList.remove("approche", "vers-gauche", "vers-droite");
+    void scene.offsetWidth;
+    scene.classList.add(sens ? (sens > 0 ? "vers-droite" : "vers-gauche") : "approche");
+    requestAnimationFrame(() => montrerUvMur(sens < 0 ? "fin" : "debut"));
+  }
+  function montrerUvMur(ou) {
+    const scene = $("mu-scene"), r = scene.querySelector(`.mu-panneau[data-uv="${uvMur}"]`);
+    if (ou === "fin") scene.scrollLeft = scene.scrollWidth;
+    else if (ou === "debut") scene.scrollLeft = 0;
+    else if (r) { const b = r.getBoundingClientRect(), s = scene.getBoundingClientRect(); if (b.left < s.left || b.right > s.right) scene.scrollLeft += b.left - s.left - 40; }
   }
   $("mu-legende").replaceChildren(...EQUIPEMENTS.map(([id, nom, , aide]) => {
     const li = element("li", `mu-legende-${id}`), ic = element("span", "mu-eq-picto");
@@ -10687,96 +10886,330 @@ details.groupe-pieces { display: block; }
     t.append(element("b", null, nom), document.createTextNode(` : ${aide.charAt(0).toLowerCase()}${aide.slice(1)}`));
     li.append(ic, t);
     return li;
-  }));
+  }), element("li", "mu-legende-crans", "Les plaques ont un cran tous les 5 cm : une barre ou une étagère se met à n'importe quel cran. Une case d'étagères fait en général 5 crans (une pile de sweats)."));
+  // Le haut et le bas de ce que prend un équipement, en crans : les vêtements pendent sous une barre, la pile tient sur l'étagère.
+  const basEq = q => (PENDU[q.type] ? q.cran - PENDU[q.type] : q.cran);
+  const hautEq = q => (q.type === "etagere" ? q.cran + CASE - 1 : q.cran + 1);
+  const NUANCES_MUR = ["#8d97a8", "#a3acbb", "#7c8698", "#b3bac6", "#949eae"];
+  function dessinerEqMur(u, q, i, x0, w, plancher) {
+    const y = plancher - q.cran * CRAN_CM, xc = x0 + w / 2;
+    const g = svgEl("g", { class: `mu-q mu-q-${q.type}${q.id === eqMur ? " choisi" : ""}`, "data-uv": i, "data-id": q.id, "data-x0": x0, "data-w": w, "data-y": y, tabindex: "0", role: "button",
+      "aria-label": `${nomEq(u, q)}, à ${hauteurEq(q)}, UV ${i + 1}` });
+    const zone = PENDU[q.type] ? [y - 7, y + PENDU[q.type] * CRAN_CM] : [y - CASE * CRAN_CM + 2, y + 5];
+    g.append(svgEl("rect", { class: "mu-clic", x: x0 + 1, y: zone[0], width: w - 2, height: zone[1] - zone[0] }));
+    if (q.type === "pressing") {
+      const n = Math.max(2, Math.floor((w - 14) / 8)), pas = (w - 14) / n;
+      for (let k = 0; k < n; k++) {
+        const xv = x0 + 7 + pas * (k + 0.5);
+        g.append(svgEl("path", { class: "mu-cintre", d: `M${xv} ${y}v3M${xv - 4} ${y + 6}L${xv} ${y + 3}L${xv + 4} ${y + 6}` }));
+        g.append(svgEl("rect", { class: "mu-vetement", x: xv - 2.8, y: y + 6, width: 5.6, height: PENDU.pressing * CRAN_CM - 8, rx: 1.5, fill: NUANCES_MUR[k % NUANCES_MUR.length] }));
+      }
+      g.append(svgEl("rect", { class: "mu-barre", x: x0 + 3, y: y - 1.4, width: w - 6, height: 2.8, rx: 1.4 }));
+    } else if (q.type === "facing" || q.type === "coudee") {
+      const habit = (cx, cy, l, h, fill) => {
+        const a = l / 2;
+        g.append(svgEl("path", { class: "mu-cintre", d: `M${cx} ${cy - 4}v3M${cx - a * 0.55} ${cy + 3}L${cx} ${cy - 1}L${cx + a * 0.55} ${cy + 3}` }));
+        g.append(svgEl("path", { class: "mu-vetement", fill, d: `M${cx - a * 0.42} ${cy + 3}L${cx - a} ${cy + h * 0.12}L${cx - a * 0.86} ${cy + h * 0.34}L${cx - a * 0.62} ${cy + h * 0.28}V${cy + h}H${cx + a * 0.62}V${cy + h * 0.28}L${cx + a * 0.86} ${cy + h * 0.34}L${cx + a} ${cy + h * 0.12}L${cx + a * 0.42} ${cy + 3}Q${cx} ${cy + h * 0.1} ${cx - a * 0.42} ${cy + 3}Z` }));
+      };
+      const l = Math.min(48, w - 10);
+      if (q.type === "coudee") {
+        g.append(svgEl("path", { class: "mu-bras", d: `M${xc - l * 0.3} ${y}H${xc - 2}L${xc + 4} ${y + 12}H${xc + l * 0.3}` }));
+        habit(xc - 3, y + 2, l * 0.86, PENDU.facing * CRAN_CM - 12, "#b6bdc9");   // derrière, plus haut
+        habit(xc + 3, y + 14, l, PENDU.facing * CRAN_CM - 6, NUANCES_MUR[0]);    // devant, plus bas
+      } else {
+        g.append(svgEl("circle", { class: "mu-bras", cx: xc, cy: y, r: 2.4 }));
+        habit(xc, y + 3, l, PENDU.facing * CRAN_CM - 6, NUANCES_MUR[0]);
+      }
+    } else {
+      const n = Math.max(1, Math.floor((w - 8) / 30)), lp = Math.min(26, (w - 8) / n - 5), hp = Math.min(CASE * CRAN_CM - 6, 20);
+      for (let k = 0; k < n; k++) {
+        const xp = x0 + 4 + ((w - 8) / n) * (k + 0.5) - lp / 2;
+        g.append(svgEl("rect", { class: "mu-pile", x: xp, y: y - 1.5 - hp, width: lp, height: hp, rx: 1.2, fill: NUANCES_MUR[(k + 1) % NUANCES_MUR.length] }));
+        for (let b = 4; b < hp; b += 4) g.append(svgEl("line", { class: "mu-pli", x1: xp + 1, y1: y - 1.5 - b, x2: xp + lp - 1, y2: y - 1.5 - b }));
+      }
+      g.append(svgEl("rect", { class: "mu-planche", x: x0 + 2.5, y: y - 1.5, width: w - 5, height: 3.4, rx: 0.8 }));
+    }
+    if (q.id === eqMur) {
+      g.append(svgEl("rect", { class: "mu-cadre-choisi", x: x0 + 1.5, y: zone[0], width: w - 3, height: zone[1] - zone[0], rx: 3 }));
+      const tag = svgEl("g", { class: "mu-tag" });
+      tag.append(svgEl("rect", { x: x0 + w - 40, y: y - 8, width: 38, height: 16, rx: 8 }), svgEl("text", { x: x0 + w - 21, y: y + 0.5 }, `${q.cran * CRAN_CM}`));
+      g.append(tag);
+    }
+    return g;
+  }
   function rendreMurMerch() {
     const e = merchElements.docs[murOuvert], plan = e && merchPlans.docs[e.plan];
-    if (!e || !plan) { if ($("fenetre-mur").open) fermer($("fenetre-mur")); return; }
+    if (!e || !plan || TYPES_MERCH[e.type].porte !== "uv") { if ($("fenetre-mur").open) fermer($("fenetre-mur")); return; }
     const modifiable = peutModifierMerch();
+    uvMur = Math.max(0, Math.min(e.uvs.length - 1, uvMur));
     $("mu-titre").textContent = nomMeuble(e);
-    $("mu-sous").textContent = `${resumeUvs(e)} · ${virgule(e.uvL)} m chacune · vu de face, de gauche à droite`;
-    const cote = facingsCoteACote(e), enAlerte = new Set(cote.flatMap(i => [i, i + 1]));
-    $("mu-alerte").hidden = !cote.length;
-    $("mu-alerte").textContent = cote.length ? `Deux facings côte à côte : ${listeFr(cote.map(i => `UV ${i + 1} et ${i + 2}`))}. Mets un pressing ou des étagères entre les deux.` : "";
-    const conteneur = $("mu-uvs"), defile = conteneur.scrollLeft;
-    conteneur.replaceChildren(...e.uvs.map((u, i) => {
-      const col = element("section", "mu-uv" + (enAlerte.has(i) ? " alerte" : ""));
-      col.setAttribute("aria-label", `UV ${i + 1}`);
-      const tete = element("div", "mu-uv-tete"), z = zoneUv(plan, e, i);
-      tete.append(element("span", "mu-uv-num", `UV ${i + 1}`), element("span", `zone-pastille z-${z}`, NOM_ZONE[z]));
-      const ol = element("ol", "mu-eqs");
-      u.eq.forEach((q, k) => {
-        const li = element("li", `mu-eq mu-eq-${q.type}`), ic = element("span", "mu-eq-picto");
-        ic.innerHTML = PICTO_EQ[q.type];
-        const texte = element("span", "mu-eq-texte");
-        texte.append(element("span", "mu-eq-nom", NOM_EQUIPEMENT[q.type]));
-        if (q.articles.length) texte.append(element("span", "mu-eq-n", `${q.articles.length} article${q.articles.length > 1 ? "s" : ""}`));
-        li.append(ic, texte);
-        if (modifiable) {
-          const act = element("span", "mu-eq-actions");
-          [["haut", "↑", "Monter", k === 0], ["bas", "↓", "Descendre", k === u.eq.length - 1], ["retirer", "×", "Retirer", false]].forEach(([a, s, nomA, off]) => {
-            const b = element("button", "mu-eq-bouton", s);
-            b.type = "button";
-            b.dataset.action = a;
-            b.dataset.uv = String(i);
-            b.dataset.eq = String(k);
-            b.setAttribute("aria-label", `${nomA} : ${NOM_EQUIPEMENT[q.type]}, UV ${i + 1}`);
-            b.disabled = off;
-            act.append(b);
-          });
-          li.append(act);
-        }
-        ol.append(li);
-      });
-      if (!u.eq.length) ol.append(element("li", "mu-eq-vide", "Vide"));
-      col.append(tete, ol);
-      if (modifiable) {
-        const s = element("select", "mu-ajout");
-        s.dataset.uv = String(i);
-        s.setAttribute("aria-label", `Ajouter ou changer, UV ${i + 1}`);
-        const g1 = element("optgroup"), g2 = element("optgroup");
-        g1.label = "Ajouter en dessous";
-        EQUIPEMENTS.forEach(([id, nom]) => g1.append(new Option(nom, "+" + id)));
-        g2.label = "Remplacer l'UV par";
-        MODELES_UV.forEach(([id, nom]) => g2.append(new Option(nom, "=" + id)));
-        s.append(new Option("+ Ajouter…", ""), g1, g2);
-        col.append(s);
+    $("mu-sous").textContent = `${resumeUvs(e)} · UV de ${Math.round(e.uvL * 100)} cm · plaques de ${virgule(e.crans * CRAN_CM / 100)} m (${e.crans} crans) · vu de face`;
+    // Les murs d'à côté : on les longe.
+    const g = murVoisin(e, -1), d = murVoisin(e, 1);
+    $("mu-prec").hidden = !g;
+    $("mu-suiv").hidden = !d;
+    if (g) { $("mu-prec").textContent = `← ${nomMeuble(g)}`; $("mu-prec").dataset.id = g.id; }
+    if (d) { $("mu-suiv").textContent = `${nomMeuble(d)} →`; $("mu-suiv").dataset.id = d.id; }
+    const al = alertesMur(e);
+    const textes = [];
+    if (al.facings.length) textes.push(`Deux facings côte à côte : ${listeFr(al.facings)}.`);
+    al.hauteurs.forEach(h => textes.push(`UV ${h.uv + 1} : ${h.texte}.`));
+    $("mu-alerte").hidden = !textes.length;
+    $("mu-alerte").replaceChildren(...textes.map(t => element("span", null, t)));
+    // Le mur, en centimètres.
+    const w = e.uvL * 100, H = e.crans * CRAN_CM, n = e.uvs.length;
+    const vbW = G_MUR + n * w + 24, vbH = HAUT_MUR + H + BAS_MUR, plancher = HAUT_MUR + H;
+    const telephone = window.matchMedia("(max-width: 599px)").matches;
+    const K = Math.max(0.95, Math.min(2.1, (window.innerHeight * (telephone ? 0.44 : 0.52)) / vbH));
+    const svg = $("mu-svg");
+    svg.setAttribute("viewBox", `0 0 ${vbW} ${vbH}`);
+    svg.setAttribute("width", Math.round(vbW * K));
+    svg.setAttribute("height", Math.round(vbH * K));
+    svg.style.setProperty("--k", K);
+    const f = [];
+    const defs = svgEl("defs", {});
+    const deg = (id, stops, attrs) => { const l = svgEl("linearGradient", { id, ...attrs }); stops.forEach(([o, c]) => l.append(svgEl("stop", { offset: o, "stop-color": c }))); defs.append(l); };
+    deg("mu-plaque", [[0, "#fbfbfc"], [1, "#e9ecf1"]], { x1: 0, y1: 0, x2: 0, y2: 1 });
+    deg("mu-sol", [[0, "#e4ddd0"], [1, "#cfc4b2"]], { x1: 0, y1: 0, x2: 0, y2: 1 });
+    deg("mu-verre", [[0, "#cfe6f3"], [0.45, "#f4fafd"], [0.55, "#ffffff"], [1, "#c3dcec"]], { x1: 0, y1: 0, x2: 1, y2: 1 });
+    f.push(defs);
+    f.push(svgEl("rect", { class: "mu-sol", x: 0, y: plancher, width: vbW, height: BAS_MUR }));
+    // La règle (tous les 50 cm) et la silhouette d'1,80 m.
+    const regle = svgEl("g", { class: "mu-regle", "font-size": 11 / K });
+    regle.append(svgEl("line", { x1: 26, y1: plancher, x2: 26, y2: HAUT_MUR }));
+    for (let cm = 0; cm <= H; cm += 25) {
+      regle.append(svgEl("line", { x1: cm % 50 ? 22 : 18, y1: plancher - cm, x2: 26, y2: plancher - cm }));
+      if (!(cm % 50) && cm) regle.append(svgEl("text", { x: 15, y: plancher - cm }, String(cm)));
+    }
+    f.push(regle);
+    const hom = svgEl("g", { class: "mu-silhouette" });
+    const hx = 58, hh = 180;
+    hom.append(svgEl("circle", { cx: hx, cy: plancher - hh + 11, r: 10.5 }),
+      svgEl("path", { d: `M${hx - 17} ${plancher - hh + 30}Q${hx} ${plancher - hh + 23} ${hx + 17} ${plancher - hh + 30}L${hx + 21} ${plancher - 92}H${hx + 13}L${hx + 11} ${plancher - 128}L${hx + 9} ${plancher}H${hx + 1}L${hx} ${plancher - 80}L${hx - 1} ${plancher}H${hx - 9}L${hx - 11} ${plancher - 128}L${hx - 13} ${plancher - 92}H${hx - 21}Z` }),
+      svgEl("text", { x: hx, y: plancher + 16, "font-size": 10 / K }, "1,80 m"));
+    f.push(hom);
+    const enAlerte = al.uvs, gene = new Set(al.hauteurs.map(h => h.uv));
+    e.uvs.forEach((u, i) => {
+      const x0 = G_MUR + i * w;
+      const colonne = svgEl("g", { class: "mu-uv-g" });
+      const panneau = svgEl("rect", { class: "mu-panneau" + (i === uvMur ? " choisie" : "") + (enAlerte.has(i) ? " alerte" : ""), "data-uv": i, x: x0, y: HAUT_MUR, width: w, height: H });
+      colonne.append(panneau);
+      const z = zoneUv(plan, e, i);
+      colonne.append(svgEl("rect", { class: "mu-bande", x: x0 + 1, y: HAUT_MUR - 7, width: w - 2, height: 5, rx: 2.5, fill: COULEUR_ZONE[z] }));
+      if (estMiroir(u)) {
+        colonne.append(svgEl("rect", { class: "mu-miroir-verre", x: x0 + 5, y: HAUT_MUR + 18, width: w - 10, height: H - 36, rx: 3, fill: "url(#mu-verre)", "data-uv": i }));
+        colonne.append(svgEl("path", { class: "mu-reflet", d: `M${x0 + 12} ${HAUT_MUR + 70}L${x0 + w * 0.55} ${HAUT_MUR + 30}M${x0 + 14} ${HAUT_MUR + 98}L${x0 + w * 0.72} ${HAUT_MUR + 46}` }));
+        colonne.append(svgEl("text", { class: "mu-miroir-nom", x: x0 + w / 2, y: HAUT_MUR + H / 2, "font-size": 12 / K }, "Miroir"));
+      } else {
+        // Les crans, d'un seul trait par UV ; une case (5 crans) un peu plus marquée.
+        let fins = "", cases = "";
+        for (let c = 1; c < e.crans; c++) { const y = plancher - c * CRAN_CM, s = `M${x0 + 3} ${y}H${x0 + w - 3}`; if (c % CASE) fins += s; else cases += s; }
+        colonne.append(svgEl("path", { class: "mu-crans", d: fins }), svgEl("path", { class: "mu-crans case", d: cases }));
+        if (u.miroir) colonne.append(svgEl("text", { class: "mu-condamne", x: x0 + w / 2, y: HAUT_MUR + 10, "font-size": 9.5 / K }, "miroir condamné"));
       }
-      return col;
-    }));
-    conteneur.scrollLeft = defile;
+      // Ce qui se gêne (des vêtements sur une étagère…) : en rouge clair.
+      al.hauteurs.filter(h => h.uv === i).forEach(h => {
+        const yb = plancher - hautEq(h.bas) * CRAN_CM, yh = plancher - basEq(h.haut) * CRAN_CM;
+        colonne.append(svgEl("rect", { class: "mu-gene", x: x0 + 2, y: yb, width: w - 4, height: Math.max(3, yh - yb) }));
+      });
+      u.eq.forEach(q => colonne.append(dessinerEqMur(u, q, i, x0, w, plancher)));
+      colonne.append(svgEl("text", { class: "mu-uv-nom" + (i === uvMur ? " choisie" : "") + (gene.has(i) || enAlerte.has(i) ? " alerte" : ""), x: x0 + w / 2, y: plancher + 22, "font-size": 11 / K, "data-uv": i }, `UV ${i + 1}`));
+      f.push(colonne);
+    });
+    // Les montants entre les UV, devant tout.
+    const montants = svgEl("g", { class: "mu-montants" });
+    for (let i = 0; i <= n; i++) montants.append(svgEl("line", { x1: G_MUR + i * w, y1: HAUT_MUR - 2, x2: G_MUR + i * w, y2: plancher }));
+    f.push(montants);
+    const focus = document.activeElement && document.activeElement.closest ? document.activeElement.closest("#mu-svg .mu-q") : null;
+    const defile = $("mu-scene").scrollLeft;
+    svg.replaceChildren(...f);
+    $("mu-scene").scrollLeft = defile;
+    if (focus) { const q = svg.querySelector(`.mu-q[data-id="${focus.dataset.id}"]`); if (q) q.focus({ preventScroll: true }); }
+    rendreDetailMur(e, plan, modifiable);
     $("mu-plus").hidden = $("mu-moins").hidden = !modifiable;
-    $("mu-moins").disabled = e.uvs.length <= 1;
-    $("mu-plus").disabled = e.uvs.length >= 40;
+    $("mu-moins").disabled = n <= 1;
+    $("mu-plus").disabled = n >= 40;
   }
-  $("mu-uvs").addEventListener("click", ev => {
-    const b = ev.target.closest("button[data-action]"), e = merchElements.docs[murOuvert];
-    if (!b || !e || !peutModifierMerch()) return;
-    const uvs = copieUvs(e.uvs), i = Number(b.dataset.uv), k = Number(b.dataset.eq), eq = uvs[i] && uvs[i].eq;
-    if (!eq || !eq[k]) return;
-    if (b.dataset.action === "retirer") {
-      if (eq[k].articles.length && !b.classList.contains("arme")) { b.classList.add("arme"); b.textContent = "Sûr ?"; b.setAttribute("aria-label", "Confirmer : retirer avec ses articles"); return; }
-      eq.splice(k, 1);
-    } else {
-      const j = b.dataset.action === "haut" ? k - 1 : k + 1;
-      if (j < 0 || j >= eq.length) return;
-      [eq[k], eq[j]] = [eq[j], eq[k]];
-    }
+  // L'UV choisie, en détail : ses équipements du haut vers le bas, leur hauteur, ▲ ▼ ×, et de quoi en ajouter.
+  function rendreDetailMur(e, plan, modifiable) {
+    const u = e.uvs[uvMur], z = zoneUv(plan, e, uvMur);
+    $("mu-uv-titre").textContent = `UV ${uvMur + 1}${estMiroir(u) ? " · miroir" : ""}`;
+    $("mu-uv-zone").className = `zone-pastille z-${z}`;
+    $("mu-uv-zone").textContent = NOM_ZONE[z];
+    $("mu-remplacer").hidden = !modifiable;
+    $("mu-miroir").hidden = !u.miroir;
+    $("mu-miroir-texte").textContent = u.condamne ? "Le miroir est condamné : l'UV reçoit des barres et des étagères comme les autres." : "Un miroir : condamné, il reçoit des articles comme une UV.";
+    $("mu-condamner").textContent = u.condamne ? "Remettre le miroir" : "Condamner le miroir";
+    $("mu-condamner").hidden = !modifiable;
+    $("mu-condamner").classList.remove("arme");
+    $("mu-eqs").replaceChildren(...u.eq.map((q, k) => {
+      const li = element("li", `mu-eq mu-eq-${q.type}${q.id === eqMur ? " choisi" : ""}`), ic = element("span", "mu-eq-picto");
+      li.dataset.id = q.id;
+      ic.innerHTML = PICTO_EQ[q.type];
+      const texte = element("span", "mu-eq-texte");
+      texte.append(element("span", "mu-eq-nom", nomEq(u, q)), element("span", "mu-eq-n", `à ${hauteurEq(q)} · cran ${q.cran}${q.articles.length ? ` · ${q.articles.length} article${q.articles.length > 1 ? "s" : ""}` : ""}`));
+      li.append(ic, texte);
+      if (modifiable) {
+        const act = element("span", "mu-eq-actions");
+        [["monter", "▲", "Monter d'un cran", q.cran >= e.crans - 1], ["descendre", "▼", "Descendre d'un cran", q.cran <= 2], ["retirer", "×", "Retirer", false]].forEach(([a, s, nomA, off]) => {
+          const b = element("button", "mu-eq-bouton", s);
+          b.type = "button";
+          b.dataset.action = a;
+          b.dataset.id = q.id;
+          b.setAttribute("aria-label", `${nomA} : ${nomEq(u, q)}`);
+          b.disabled = off;
+          act.append(b);
+        });
+        li.append(act);
+      }
+      return li;
+    }));
+    $("mu-eqs-vide").hidden = u.eq.length > 0 || estMiroir(u);
+    $("mu-ajouts").hidden = !modifiable || estMiroir(u);
+    $("mu-aide-geste").hidden = !modifiable || estMiroir(u);
+  }
+  $("mu-ajouts").replaceChildren(...AJOUTS_EQ.map(([id, nom]) => { const b = element("button", "puce-filtre mu-ajout", `+ ${nom}`); b.type = "button"; b.dataset.ajout = id; return b; }));
+  $("mu-remplacer").replaceChildren(new Option("Remplacer l'UV par…", ""), ...MODELES_UV.map(([id, nom]) => new Option(nom, id)), new Option("Un miroir", "miroir"));
+  function changerUvs(e, faire) {
+    const uvs = copieUvs(e.uvs);
+    if (faire(uvs) === false) return;
+    uvs.forEach(u => u.eq.sort((a, b) => b.cran - a.cran));
     modifierElementMerch(e.id, { uvs });
+  }
+  // Le cran le plus proche de celui voulu où il y a la place : les vêtements pendus et les piles ne touchent rien ;
+  // sinon, à 3 crans au moins de ce qui est déjà accroché.
+  function cranLibre(u, voulu, crans, type) {
+    const etendue = c => [PENDU[type] ? c - PENDU[type] : c, type === "etagere" ? c + CASE - 1 : c + 1];
+    const libre = (c, strict) => {
+      if (c < 2 || c > crans - 2) return false;
+      const [b, h] = etendue(c);
+      return b >= 0 && u.eq.every(q => (strict ? h <= basEq(q) || b >= hautEq(q) : Math.abs(q.cran - c) >= 3));
+    };
+    for (const strict of [true, false]) for (let d = 0; d <= crans; d++) { if (libre(voulu - d, strict)) return voulu - d; if (libre(voulu + d, strict)) return voulu + d; }
+    return Math.max(2, Math.min(crans - 2, voulu));
+  }
+  function deplacerEqMur(e, id, cran) {
+    changerUvs(e, uvs => {
+      const q = uvs[uvMur] && uvs[uvMur].eq.find(x => x.id === id);
+      if (!q) return false;
+      const c = Math.max(2, Math.min(e.crans - 1, cran));
+      if (c === q.cran) return false;
+      q.cran = c;
+    });
+  }
+  $("mu-ajouts").addEventListener("click", ev => {
+    const b = ev.target.closest("[data-ajout]"), e = merchElements.docs[murOuvert];
+    const a = b && AJOUTS_EQ.find(x => x[0] === b.dataset.ajout);
+    if (!a || !e || !peutModifierMerch()) return;
+    const u = e.uvs[uvMur];
+    if (u.eq.length >= 12) { toast("Douze équipements au plus par UV.", "erreur"); return; }
+    let voulu = a[3];
+    if (voulu == null) {   // une étagère : une case au-dessus de la plus haute, sinon à mi-hauteur
+      const etageres = u.eq.filter(q => q.type === "etagere").map(q => q.cran);
+      voulu = etageres.length ? (Math.max(...etageres) + CASE <= e.crans - 4 ? Math.max(...etageres) + CASE : Math.min(...etageres) - CASE) : 30;
+    }
+    const q = nouvelEq(a[2], cranLibre(u, Math.min(voulu, e.crans - 2), e.crans, a[2]));
+    eqMur = q.id;
+    changerUvs(e, uvs => { uvs[uvMur].eq.push(q); });
   });
-  $("mu-uvs").addEventListener("change", ev => {
-    const s = ev.target.closest("select.mu-ajout"), e = merchElements.docs[murOuvert];
-    if (!s || !s.value || !e || !peutModifierMerch()) return;
-    const uvs = copieUvs(e.uvs), i = Number(s.dataset.uv), v = s.value;
-    s.value = "";
-    if (!uvs[i]) return;
-    if (v[0] === "+" && NOM_EQUIPEMENT[v.slice(1)]) { if (uvs[i].eq.length >= 8) { toast("Huit équipements au plus par UV.", "erreur"); return; } uvs[i].eq.push(nouvelEq(v.slice(1))); }
+  $("mu-eqs").addEventListener("click", ev => {
+    const e = merchElements.docs[murOuvert];
+    if (!e) return;
+    const b = ev.target.closest("button[data-action]");
+    if (!b) { const li = ev.target.closest(".mu-eq"); if (li) { eqMur = li.dataset.id; rendreMurMerch(); } return; }
+    if (!peutModifierMerch()) return;
+    const q = e.uvs[uvMur].eq.find(x => x.id === b.dataset.id);
+    if (!q) return;
+    eqMur = q.id;
+    if (b.dataset.action === "monter") deplacerEqMur(e, q.id, q.cran + 1);
+    else if (b.dataset.action === "descendre") deplacerEqMur(e, q.id, q.cran - 1);
     else {
-      const m = MODELES_UV.find(x => x[0] === v.slice(1));
-      if (!m) return;
-      if (uvs[i].eq.some(q => q.articles.length)) toast("Les articles de cette UV sont retirés du mur.");
-      uvs[i].eq = m[2].map(nouvelEq);
+      if (q.articles.length && !b.classList.contains("arme")) { b.classList.add("arme"); b.textContent = "Sûr ?"; return; }
+      eqMur = null;
+      changerUvs(e, uvs => { uvs[uvMur].eq = uvs[uvMur].eq.filter(x => x.id !== q.id); });
     }
-    modifierElementMerch(e.id, { uvs });
+  });
+  $("mu-remplacer").addEventListener("change", ev => {
+    const v = ev.target.value, e = merchElements.docs[murOuvert];
+    ev.target.value = "";
+    if (!v || !e || !peutModifierMerch()) return;
+    const avant = e.uvs[uvMur];
+    if (avant.eq.some(q => q.articles.length)) toast("Les articles de cette UV sont retirés du mur.");
+    eqMur = null;
+    changerUvs(e, uvs => {
+      if (v === "miroir") { uvs[uvMur] = { miroir: true, condamne: false, eq: [] }; return; }
+      const m = MODELES_UV.find(x => x[0] === v);
+      if (!m) return false;
+      uvs[uvMur] = { miroir: !!avant.miroir, condamne: !!avant.miroir, eq: m[2].map(([t, c]) => nouvelEq(t, Math.min(c, e.crans - 2))) };
+    });
+  });
+  $("mu-condamner").addEventListener("click", ev => {
+    const e = merchElements.docs[murOuvert], b = ev.currentTarget;
+    if (!e || !peutModifierMerch()) return;
+    const u = e.uvs[uvMur];
+    if (u.condamne && u.eq.length && !b.classList.contains("arme")) { b.classList.add("arme"); b.textContent = u.eq.length > 1 ? `Confirmer : ses ${u.eq.length} équipements partent` : "Confirmer : son équipement part"; return; }
+    eqMur = null;
+    changerUvs(e, uvs => { uvs[uvMur] = { miroir: true, condamne: !u.condamne, eq: [] }; });
+  });
+  $("mu-prec").addEventListener("click", () => { const id = $("mu-prec").dataset.id, g = merchElements.docs[id]; if (g) { choixMerch = id; ouvrirMurMerch(id, g.uvs.length - 1, -1); marquerChoixMerch(); } });
+  $("mu-suiv").addEventListener("click", () => { const id = $("mu-suiv").dataset.id; if (merchElements.docs[id]) { choixMerch = id; ouvrirMurMerch(id, 0, 1); marquerChoixMerch(); } });
+  // Toucher une UV la choisit ; glisser une barre ou une étagère la monte ou la descend, cran par cran.
+  $("mu-svg").addEventListener("pointerdown", ev => {
+    const e = merchElements.docs[murOuvert];
+    if (!e || ev.button > 0) return;
+    const q = ev.target.closest(".mu-q"), cible = q || ev.target.closest("[data-uv]");
+    if (!cible) return;
+    const i = Number(cible.dataset.uv);
+    if (!q) { if (i !== uvMur || eqMur) { uvMur = i; eqMur = null; rendreMurMerch(); } return; }
+    const change = uvMur !== i || eqMur !== q.dataset.id;
+    uvMur = i;
+    eqMur = q.dataset.id;
+    const eq = e.uvs[i].eq.find(x => x.id === eqMur);
+    if (!eq || !peutModifierMerch()) { rendreMurMerch(); return; }
+    ev.preventDefault();
+    // Le choix se voit tout de suite, sur le même dessin : le geste continue sans que le mur soit redessiné.
+    const svg = ev.currentTarget;
+    svg.querySelectorAll(".mu-q.choisi").forEach(x => x.classList.remove("choisi"));
+    q.classList.add("choisi");
+    if (!q.querySelector(".mu-tag")) {
+      const x0 = Number(q.dataset.x0), w = Number(q.dataset.w), y = Number(q.dataset.y);
+      const tag = svgEl("g", { class: "mu-tag" });
+      tag.append(svgEl("rect", { x: x0 + w - 40, y: y - 8, width: 38, height: 16, rx: 8 }), svgEl("text", { x: x0 + w - 21, y: y + 0.5 }, String(eq.cran * CRAN_CM)));
+      q.append(tag);
+    }
+    q.focus({ preventScroll: true });
+    glisseMur = { id: eqMur, y0: ev.clientY, cran0: eq.cran, cran: eq.cran, g: q, change, echelle: svg.getScreenCTM().d || 1, pointeur: ev.pointerId };
+    try { svg.setPointerCapture(ev.pointerId); } catch (_) { /* rien */ }
+  });
+  $("mu-svg").addEventListener("pointermove", ev => {
+    const s = glisseMur, e = merchElements.docs[murOuvert];
+    if (!s || !e || ev.pointerId !== s.pointeur) return;
+    const c = Math.max(2, Math.min(e.crans - 1, s.cran0 - Math.round((ev.clientY - s.y0) / (s.echelle * CRAN_CM))));
+    if (c === s.cran) return;
+    s.cran = c;
+    if (s.g) {
+      s.g.setAttribute("transform", `translate(0 ${-(c - s.cran0) * CRAN_CM})`);
+      const t = s.g.querySelector(".mu-tag text");
+      if (t) t.textContent = String(c * CRAN_CM);
+    }
+  });
+  function finGlisseMur(ev) {
+    const s = glisseMur, e = merchElements.docs[murOuvert];
+    if (!s || ev.pointerId !== s.pointeur) return;
+    glisseMur = null;
+    if (e && s.cran !== s.cran0) deplacerEqMur(e, s.id, s.cran);
+    else if (s.change) rendreMurMerch();
+  }
+  $("mu-svg").addEventListener("pointerup", finGlisseMur);
+  $("mu-svg").addEventListener("pointercancel", finGlisseMur);
+  $("mu-svg").addEventListener("keydown", ev => {
+    const e = merchElements.docs[murOuvert];
+    if (!e || !eqMur || !peutModifierMerch()) return;
+    const q = e.uvs[uvMur] && e.uvs[uvMur].eq.find(x => x.id === eqMur);
+    const d = { ArrowUp: 1, ArrowDown: -1 }[ev.key];
+    if (!q || !d) return;
+    ev.preventDefault();
+    deplacerEqMur(e, q.id, q.cran + d * (ev.shiftKey ? CASE : 1));
   });
   $("mu-plus").addEventListener("click", () => { const e = merchElements.docs[murOuvert]; if (e && e.uvs.length < 40) modifierElementMerch(e.id, { uvs: ajusterUvs(e.uvs, e.uvs.length + 1) }); });
   $("mu-moins").addEventListener("click", ev => {
@@ -10786,7 +11219,8 @@ details.groupe-pieces { display: block; }
     desarmer(b, "Retirer la dernière UV");
     modifierElementMerch(e.id, { uvs: ajusterUvs(e.uvs, e.uvs.length - 1) });
   });
-  $("fenetre-mur").addEventListener("close", () => { murOuvert = null; });
+  $("fenetre-mur").addEventListener("close", () => { murOuvert = null; glisseMur = null; });
+  window.addEventListener("resize", () => { if ($("fenetre-mur").open) rendreMurMerch(); });
 
   // ----- un plan : créer, régler, mettre en place, dupliquer, supprimer -----
   let planEdite = null;
@@ -10801,10 +11235,10 @@ details.groupe-pieces { display: block; }
       if (t.porte === "articles" || t.porte === "tenue") e.articles = [];
       els.push(e);
     };
-    const mur = (nom, x, y, rot, n, modeles, zone) => ajouter("mur", nom, x, y, rot, { uvL: 1, uvs: modeles ? Array.from({ length: n }, () => ({ eq: modeles.map(nouvelEq) })) : ajusterUvs([], n), l: n, p: 0.4, zone: zone || null });
+    const mur = (nom, x, y, rot, n, modeles, zone) => ajouter("mur", nom, x, y, rot, { uvL: 1, crans: CRANS_MUR, uvs: modeles ? Array.from({ length: n }, () => ({ miroir: false, condamne: false, eq: modeles.map(([t, c]) => nouvelEq(t, c)) })) : ajusterUvs([], n), l: n, p: 0.4, zone: zone || null });
     const nG = Math.max(3, Math.floor(D - 3)), nF = Math.max(2, Math.floor(H - 1.2)), nC = Math.max(2, Math.floor(D * 0.45));
     mur("Mur gauche", 0.2, 0.7 + nG / 2, 270, nG);
-    mur("Mur du fond (chaussures)", 0.5 + nF / 2, 0.2, 0, nF, ["etagere", "etagere", "etagere"]);
+    mur("Mur du fond (chaussures)", 0.5 + nF / 2, 0.2, 0, nF, [["etagere", 33], ["etagere", 23], ["etagere", 13]]);
     if (H < L - 0.5) mur("Mur du centre", H - 0.2, D * 0.45, 90, nC, null, "froide");
     ajouter("entree", "Entrée", H < L - 0.5 ? H : L / 2, D - 0.2, 0);
     ajouter("vitrine", "Vitrine Homme", Math.min(H - 1.3, 0.5 + Math.min(3, H - 2.5) / 2 + 0.3), D - 0.6, 0, { l: Math.max(1.2, Math.min(3, H - 2.5)) });
@@ -10986,11 +11420,16 @@ details.groupe-pieces { display: block; }
   }));
 
   // ----- tout redessiner -----
+  // Les murs (sans les miroirs), les miroirs, et les UV qui portent des articles (sans les miroirs).
+  function compteMurs(els) {
+    const murs = els.filter(e => TYPES_MERCH[e.type].porte === "uv");
+    return { murs: murs.filter(e => !estUnMiroir(e)).length, miroirs: murs.filter(estUnMiroir).length, uv: murs.reduce((n, e) => n + e.uvs.filter(u => !estMiroir(u)).length, 0), tous: murs.length };
+  }
   function rendreResumeMerch() {
     const p = planEnPlace() || planAffiche();
     if (!p) { $("resume-merch").textContent = "Le plan du magasin, à dessiner"; return; }
-    const els = elementsDuPlan(p.id), murs = els.filter(e => e.type === "mur");
-    $("resume-merch").textContent = `${p.nom} · ${murs.length} mur${murs.length > 1 ? "s" : ""}, ${murs.reduce((n, e) => n + e.uvs.length, 0)} UV, ${els.length - murs.length} autre${els.length - murs.length > 1 ? "s" : ""}`;
+    const els = elementsDuPlan(p.id), c = compteMurs(els), autres = els.length - c.tous;
+    $("resume-merch").textContent = `${p.nom} · ${c.murs} mur${c.murs > 1 ? "s" : ""}, ${c.uv} UV${c.miroirs ? `, ${c.miroirs} miroir${c.miroirs > 1 ? "s" : ""}` : ""}, ${autres} autre${autres > 1 ? "s" : ""}`;
   }
   let renduMerchPrevu = 0;
   function rendreMerch() {
