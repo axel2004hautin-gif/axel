@@ -33,7 +33,8 @@ from PIL import Image, ImageDraw
 CATEGORIES = [
     (r"pantalons?|chinos?|cargos?|joggings?", "pantalons"),
     (r"jeans?", "jeans"),
-    (r"pulls?|pull-overs?|pullovers?|gilets?|cardigans?|mailles?", "pulls"),
+    (r"gilets?|cardigans?", "gilets"),
+    (r"pulls?|pull-overs?|pullovers?|mailles?", "pulls"),
     (r"t-?shirts?|tee-?shirts?|tees?|debardeurs?", "t-shirts"),
     (r"chemises?", "chemises"),
     (r"vestes?|blazers?|surchemises?", "vestes"),
