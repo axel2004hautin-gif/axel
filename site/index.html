@@ -518,6 +518,55 @@ a.choix-case:hover { background: var(--c-doux); }
   .suggestion-etapes .bouton-petit { grid-row: 1 / 3; }
   .suggestion-etapes .suggestion-ecarter { grid-row: 1 / 3; }
 }
+/* Le calendrier : cette semaine, les événements internes, la galerie des vitrines, préparer une année. */
+.semaine-jours { list-style: none; margin: 0; padding: 0; display: grid; }
+.semaine-jours > li { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 4px 16px; padding: 10px 2px; border-bottom: 1px solid var(--trait); }
+.semaine-jours .sj-jour { font-weight: 700; color: var(--marine); }
+.semaine-jours .sj-jour.aujourdhui { color: var(--rouge); }
+.semaine-jours .sj-choses { display: grid; gap: 4px; }
+.semaine-jours .sj-chose { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+.semaine-jours .sj-vide { color: var(--gris); }
+.sj-chose .puce { flex: none; }
+@media (max-width: 599px) { .semaine-jours > li { grid-template-columns: minmax(0, 1fr); } }
+.puce.interne { background: var(--or-doux); color: var(--or); }
+.puce.ferie { background: var(--ferie-doux); color: var(--ferie); }
+.puce.conge { background: var(--conge-doux); color: var(--conge); }
+.sj-chose.lien { border: 0; background: none; padding: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.sj-chose.lien:hover .sj-texte { text-decoration: underline; }
+.puce.agenda { background: none; box-shadow: inset 0 0 0 1px var(--marine); color: var(--marine); }
+.frise-piste.internes { height: 22px; }
+.frise-interne { position: absolute; top: 4px; bottom: 4px; min-width: 8px; padding: 0; border: 0; border-radius: 4px; background: var(--or); cursor: pointer; }
+.frise-piste.internes .frise-etiquette { color: var(--or); }
+.legende-frise .l-interne::before { background: var(--or); border-color: var(--or); }
+.ev-champs { display: contents; }
+.ev-categories label span { color: var(--encre); }
+.ev-photos { display: flex; flex-wrap: wrap; gap: 8px; }
+.ev-photo { position: relative; width: 92px; aspect-ratio: 4 / 5; border-radius: 8px; overflow: hidden; background: var(--trait-doux); }
+.ev-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ev-photo button { position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; background: rgba(23, 32, 51, .75); color: #fff; font-size: 1rem; line-height: 1; }
+.ev-photos-bouton { justify-self: start; }
+.galerie-vitrines { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; }
+.carte-vitrine { display: grid; gap: 6px; padding: 0; border: 0; background: none; color: var(--encre); text-align: left; cursor: pointer; }
+.carte-vitrine .cv-photo { position: relative; aspect-ratio: 4 / 5; border-radius: 12px; overflow: hidden; background: var(--trait-doux); }
+.carte-vitrine img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.carte-vitrine .cv-nombre { position: absolute; right: 6px; bottom: 6px; padding: 2px 8px; border-radius: 999px; background: rgba(23, 32, 51, .75); color: #fff; font: 600 .72rem/1.4 var(--f-mono); }
+.carte-vitrine .cv-nom { font-weight: 700; }
+.carte-vitrine .cv-dates { color: var(--gris); font-size: .88rem; }
+.carte-vitrine:hover .cv-nom { text-decoration: underline; }
+.vi-corps { display: grid; gap: 10px; justify-items: center; }
+.vi-corps img { max-width: 100%; max-height: 62vh; border-radius: 10px; object-fit: contain; background: var(--trait-doux); }
+.vi-nav { display: flex; align-items: center; gap: 14px; font: 600 .9rem/1 var(--f-mono); color: var(--gris); }
+.an-annee { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 6px 0 12px; }
+.an-annee-nom { font: 800 1.6rem/1 var(--f-display); color: var(--marine); min-width: 90px; text-align: center; }
+.an-liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.an-ligne { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 4px 12px; padding: 10px 12px; border: 1.5px solid var(--trait); border-radius: 10px; cursor: pointer; }
+.an-ligne input { width: 20px; height: 20px; margin: 0; accent-color: var(--marine); }
+.an-ligne:has(input:checked) { border-color: var(--marine); background: var(--marine-doux); }
+.an-ligne.deja { cursor: default; opacity: .65; }
+.an-texte { display: grid; gap: 2px; min-width: 0; }
+.an-nom { font-weight: 700; }
+.an-dates { color: var(--gris); font-size: .9rem; }
+.an-etat { font: 600 .74rem/1.3 var(--f-mono); color: var(--gris); text-align: right; }
 /* Le rétroplanning d'un temps fort, dans sa fenêtre. */
 .retro-etapes { display: grid; gap: 6px; margin-top: 4px; }
 .retro-etape { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 44px; padding: 6px 12px; border: 1.5px solid var(--trait); border-radius: 10px; font-weight: 600; cursor: pointer; }
@@ -1529,24 +1578,35 @@ details.groupe-pieces { display: block; }
           <h1 id="titre-calendrier" tabindex="-1">Calendrier commercial</h1>
         </div>
         <div class="page-tete-actions">
-          <button class="bouton-principal" type="button" id="ca-ajouter">Ajouter un temps fort</button>
+          <button class="bouton-second bouton-icone" type="button" id="ca-agenda" hidden><svg class="picto" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4M12 12.5v5M9.5 15h5"/></svg><span id="ca-agenda-texte">Google Agenda</span></button>
+          <button class="bouton-second" type="button" id="ca-annee">Préparer une année</button>
+          <button class="bouton-principal" type="button" id="ca-ajouter">Ajouter</button>
         </div>
       </div>
+      <section class="cette-semaine" aria-labelledby="ca-semaine-titre">
+        <div class="section-tete-ligne"><h2 id="ca-semaine-titre">Cette semaine</h2></div>
+        <ul class="semaine-jours" id="ca-semaine"></ul>
+      </section>
       <section class="prochain" id="ca-prochain" aria-labelledby="ca-prochain-nom" hidden></section>
       <section aria-labelledby="ca-frise-titre">
         <div class="section-tete-ligne"><h2 id="ca-frise-titre">Les 12 prochains mois</h2></div>
         <div class="frise-annee-zone"><div class="frise-annee" id="ca-frise"></div></div>
-        <p class="legende-frise"><span>Temps fort : je reste au magasin</span><span class="l-normale">Affluence normale</span><span class="l-conge">Mes congés posés</span><span class="l-auj">Aujourd'hui</span></p>
+        <p class="legende-frise"><span>Temps fort : je reste au magasin</span><span class="l-normale">Affluence normale</span><span class="l-interne">Événement interne</span><span class="l-conge">Mes congés posés</span><span class="l-auj">Aujourd'hui</span></p>
       </section>
       <section aria-labelledby="ca-calmes-titre">
         <div class="section-tete-ligne"><h2 id="ca-calmes-titre">Bons moments pour poser des congés</h2></div>
         <ul class="calmes" id="ca-calmes"></ul>
-        <p class="aide">Les périodes sans temps fort, en dehors de la semaine qui le prépare. Une période d'affluence normale reste possible.</p>
+        <p class="aide">Les périodes sans temps fort ni événement interne (un inventaire, une formation), en dehors de la semaine qui prépare un temps fort. Une période d'affluence normale reste possible.</p>
       </section>
       <section aria-labelledby="ca-liste-titre">
-        <div class="section-tete-ligne"><h2 id="ca-liste-titre">Tous les temps forts</h2></div>
+        <div class="section-tete-ligne"><h2 id="ca-liste-titre">Tous les temps forts et événements</h2></div>
         <ol class="evts" id="ca-liste"></ol>
-        <p class="liste-vide" id="ca-vide" hidden>Aucun temps fort pour l'instant. Ajoute les soldes, Black Friday, Noël, la fête des pères…</p>
+        <p class="liste-vide" id="ca-vide" hidden>Rien pour l'instant. « Préparer une année » propose les soldes, Black Friday, Noël, la fête des pères…</p>
+      </section>
+      <section aria-labelledby="ca-vitrines-titre">
+        <div class="section-tete-ligne"><h2 id="ca-vitrines-titre">Mes vitrines</h2></div>
+        <div class="galerie-vitrines" id="ca-vitrines"></div>
+        <p class="liste-vide" id="ca-vitrines-vide">Ajoute les photos de tes vitrines dans un temps fort (« Modifier ») : elles se rangent ici, de la plus récente à la plus ancienne.</p>
       </section>
     </div>
   </section>
@@ -1879,11 +1939,20 @@ details.groupe-pieces { display: block; }
     <button class="fermer" type="button" data-fermer aria-label="Fermer sans enregistrer">×</button>
   </div>
   <form class="fenetre-corps edition champs-tache" id="ev-form" autocomplete="off" novalidate>
+    <div class="type-tache" role="radiogroup" aria-label="Genre">
+      <label><input type="radio" name="ev-genre" value="fort" checked><span>Temps fort</span></label>
+      <label><input type="radio" name="ev-genre" value="interne"><span>Événement interne</span></label>
+    </div>
+    <div class="titre-champ" id="ev-categorie-bloc" hidden>Quoi ?
+      <div class="jt-rubriques ev-categories" id="ev-categories" role="radiogroup" aria-label="Quoi ?"></div>
+    </div>
     <label class="titre-champ">Nom<input class="champ-texte" type="text" id="ev-nom" maxlength="80" placeholder="Ex. : Black Friday"></label>
     <div class="ligne-champs">
       <label class="titre-champ">Du<input type="date" id="ev-debut"></label>
       <label class="titre-champ">Au<input type="date" id="ev-fin"></label>
+      <label class="titre-champ" id="ev-heure-bloc" hidden>À (facultatif)<input type="time" id="ev-heure"></label>
     </div>
+    <div class="ev-champs" id="ev-champs-fort">
     <div class="titre-champ">Affluence
       <div class="type-tache">
         <label><input type="radio" name="ev-affluence" value="forte"><span>Temps fort</span></label>
@@ -1898,13 +1967,64 @@ details.groupe-pieces { display: block; }
       <p class="aide">Rien n'arrive dans ta to-do sans toi : coche les étapes à y mettre (elles suivent le temps fort si ses dates changent). Dans le mois qui précède un temps fort, elles te sont aussi proposées en haut de la to-do.</p>
     </div>
     <div class="titre-champ">Tenues pour la vitrine<div class="choix-tenues" id="ev-tenues"></div></div>
+    <div class="titre-champ" id="ev-photos-bloc">Photos de la vitrine
+      <div class="ev-photos" id="ev-photos"></div>
+      <label class="bouton-second bouton-fichier ev-photos-bouton" id="ev-photos-bouton"><span>Ajouter des photos</span><input class="invisible" type="file" id="ev-photos-fichier" accept="image/*" multiple></label>
+    </div>
+    </div>
     <label class="titre-champ">Note<textarea id="ev-note" maxlength="500" rows="2" placeholder="Ex. : prévoir les étiquettes de prix"></textarea></label>
+    <label class="urgent-choix repete-choix" id="ev-agenda-bloc" hidden><input type="checkbox" id="ev-agenda"><span>Dans mon Google Agenda</span></label>
   </form>
   <div class="fenetre-pied">
     <p class="fenetre-erreur" id="ev-erreur" role="alert" hidden></p>
     <button class="bouton-danger" type="button" id="ev-supprimer" hidden>Supprimer</button>
     <button class="bouton-second" type="button" data-fermer>Annuler</button>
     <button class="bouton-principal" type="button" id="ev-enregistrer">Enregistrer</button>
+  </div>
+</dialog>
+
+<dialog class="fenetre fenetre-petite" id="fenetre-annee" aria-labelledby="an-titre">
+  <div class="fenetre-tete">
+    <div>
+      <h2 id="an-titre">Préparer une année</h2>
+      <p class="fenetre-sous">Les temps forts de l'année, aux bonnes dates : coche ceux à ajouter. Rien n'est ajouté sans toi.</p>
+    </div>
+    <button class="fermer" type="button" data-fermer aria-label="Fermer">×</button>
+  </div>
+  <div class="fenetre-corps">
+    <div class="an-annee">
+      <button class="fleche-semaine" type="button" id="an-prec" aria-label="Année précédente"><svg class="picto" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6l-6 6 6 6"/></svg></button>
+      <span class="an-annee-nom" id="an-annee"></span>
+      <button class="fleche-semaine" type="button" id="an-suiv" aria-label="Année suivante"><svg class="picto" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 6l6 6-6 6"/></svg></button>
+    </div>
+    <ul class="an-liste" id="an-liste"></ul>
+    <p class="aide">Les dates suivent les règles de chaque année (les soldes, le 3e dimanche de juin pour la fête des pères, le vendredi après le 4e jeudi de novembre pour Black Friday…), et la durée de tes temps forts de l'année d'avant. Les autres temps forts de l'année d'avant sont repris aux mêmes dates, à confirmer.</p>
+  </div>
+  <div class="fenetre-pied">
+    <button class="bouton-second" type="button" data-fermer>Annuler</button>
+    <button class="bouton-principal" type="button" id="an-ajouter">Ajouter</button>
+  </div>
+</dialog>
+
+<dialog class="fenetre" id="fenetre-vitrine" aria-labelledby="vi-titre">
+  <div class="fenetre-tete">
+    <div>
+      <h2 id="vi-titre">Vitrine</h2>
+      <p class="fenetre-sous" id="vi-sous"></p>
+    </div>
+    <button class="fermer" type="button" data-fermer aria-label="Fermer">×</button>
+  </div>
+  <div class="fenetre-corps vi-corps">
+    <img id="vi-image" alt="">
+    <div class="vi-nav" id="vi-nav">
+      <button class="fleche-semaine" type="button" id="vi-prec" aria-label="Photo précédente"><svg class="picto" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6l-6 6 6 6"/></svg></button>
+      <span id="vi-compte"></span>
+      <button class="fleche-semaine" type="button" id="vi-suiv" aria-label="Photo suivante"><svg class="picto" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 6l6 6-6 6"/></svg></button>
+    </div>
+  </div>
+  <div class="fenetre-pied">
+    <button class="bouton-second" type="button" id="vi-modifier">Modifier le temps fort</button>
+    <button class="bouton-principal" type="button" data-fermer>Fermer</button>
   </div>
 </dialog>
 
@@ -2554,7 +2674,7 @@ details.groupe-pieces { display: block; }
     // Claude, pour proposer une description de tenue : seulement pour qui peut modifier.
     if (proprio) c.use("sample").then(ns => { sampleNs = ns; rendreTenues(); }, () => {});
     // Google Agenda (le connecteur de claude.ai) et l'enregistrement d'un fichier : seulement pour le propriétaire.
-    if (proprio) c.use("mcp").then(ns => { mcpNs = ns; majBoutonsSemaine(); }, () => {});
+    if (proprio) c.use("mcp").then(ns => { mcpNs = ns; majBoutonsSemaine(); majBoutonAgendaCalendrier(); }, () => {});
     if (proprio) c.use("downloads").then(ns => { downloadsNs = ns; }, () => {});
     rendreTout();
   }
@@ -6216,21 +6336,35 @@ details.groupe-pieces { display: block; }
     const debut = date(d.debut);
     if (!nom || !debut) return null;
     const fin = date(d.fin) && date(d.fin) >= debut ? d.fin : debut;
+    const interne = d.genre === "interne";   // un inventaire, une visite, une réunion, une formation
     return {
-      id, nom, debut, fin, affluence: d.affluence === "normale" ? "normale" : "forte",
+      id, nom, debut, fin, affluence: interne || d.affluence === "normale" ? "normale" : "forte",
       theme: texteBorne(d.theme, 600), vitrineLe: date(d.vitrineLe), vitrinePrete: d.vitrinePrete === true,
       tenues: Array.isArray(d.tenues) ? d.tenues.filter(x => typeof x === "string").slice(0, 6) : [],
       note: texteBorne(d.note, 500), creeLe: texteBorne(d.creeLe, 40),
-      ouverture: d.ouverture === true,   // le magasin ouvre exceptionnellement (un dimanche)
+      ouverture: !interne && d.ouverture === true,   // le magasin ouvre exceptionnellement (un dimanche)
       // Les étapes du rétroplanning que je ne veux pas qu'on me propose.
       retroIgnore: Array.isArray(d.retroIgnore) ? ETAPES_RETRO.map(x => x.cle).filter(k => d.retroIgnore.includes(k)) : [],
+      genre: interne ? "interne" : "fort",
+      categorie: interne ? (CATEGORIES_EVT.some(([k]) => k === d.categorie) ? d.categorie : "autre") : null,
+      heure: interne && typeof d.heure === "string" && HEURE_RE.test(d.heure) ? d.heure : null,
+      photos: Array.isArray(d.photos) ? d.photos.filter(photoValide).slice(0, MAX_PHOTOS) : [],   // la vitrine en photo
+      cle: texteBorne(d.cle, 40) || null,          // le temps fort de l'année dont il vient (« Préparer une année »)
+      agendaId: texteBorne(d.agendaId, 200) || null,   // son événement dans Google Agenda
     };
   }
   const corpsEvenement = e => ({ nom: e.nom, debut: e.debut, fin: e.fin, affluence: e.affluence, theme: e.theme || null, vitrineLe: e.vitrineLe,
     vitrinePrete: e.vitrinePrete, tenues: [...e.tenues], note: e.note || null, creeLe: e.creeLe || maintenant(), ...(e.ouverture ? { ouverture: true } : {}),
-    ...(e.retroIgnore && e.retroIgnore.length ? { retroIgnore: [...e.retroIgnore] } : {}) });
+    ...(e.retroIgnore && e.retroIgnore.length ? { retroIgnore: [...e.retroIgnore] } : {}),
+    ...(e.genre === "interne" ? { genre: "interne", categorie: e.categorie || "autre", heure: e.heure || null } : {}),
+    ...(e.photos && e.photos.length ? { photos: [...e.photos] } : {}), ...(e.cle ? { cle: e.cle } : {}), ...(e.agendaId ? { agendaId: e.agendaId } : {}) });
   const calendrier = creerCollection("calendrier", "tableau-de-bord-axel:calendrier", lireEvenement, () => { rendreCalendrier(); rendrePlanning(); });
   const evenementsTries = () => Object.values(calendrier.docs).sort((a, b) => a.debut.localeCompare(b.debut) || a.fin.localeCompare(b.fin));
+  // Les événements internes du magasin, à côté des temps forts commerciaux.
+  const CATEGORIES_EVT = [["inventaire", "Inventaire"], ["visite", "Visite du responsable"], ["reunion", "Réunion"], ["formation", "Formation"], ["autre", "Autre"]];
+  const NOM_CATEGORIE_EVT = Object.fromEntries(CATEGORIES_EVT);
+  const estInterne = e => e.genre === "interne";
+  const tempsForts = () => evenementsTries().filter(e => !estInterne(e));
 
   // ----- le rétroplanning d'un temps fort : des étapes proposées, que j'ajoute ou non à la to-do -----
   const ETAPES_RETRO = [
@@ -6354,7 +6488,7 @@ details.groupe-pieces { display: block; }
       : `${quantieme(a.getUTCDate())} ${MOIS_COURTS[a.getUTCMonth()]} → ${quantieme(b.getUTCDate())} ${MOIS_COURTS[b.getUTCMonth()]}`;
   };
   const dansJours = t => { const n = Math.round((t - aujourdhui()) / JOUR_MS); return n === 0 ? "aujourd'hui" : n === 1 ? "demain" : n > 0 ? `dans ${n} jours` : `il y a ${-n} jours`; };
-  const prochainEvenement = () => evenementsTries().find(e => finDe(e) >= aujourdhui()) || null;
+  const prochainEvenement = () => tempsForts().find(e => finDe(e) >= aujourdhui()) || null;
   const congesPoses = () => {
     const l = [];
     Object.entries(semaines).forEach(([cle, s]) => { if (CLE_RE.test(cle)) JOURS.forEach((j, i) => { if (s.jours[j].conge) l.push(lundiDeCle(cle) + i * JOUR_MS); }); });
@@ -6363,7 +6497,8 @@ details.groupe-pieces { display: block; }
   // Les périodes calmes des 12 prochains mois : sans temps fort, ni la semaine qui le prépare.
   function periodesCalmes() {
     const debut = aujourdhui(), fin = debut + 365 * JOUR_MS;
-    const prises = evenementsTries().filter(e => e.affluence === "forte").map(e => [depuisIso(e.debut) - 7 * JOUR_MS, finDe(e)]).sort((a, b) => a[0] - b[0]);
+    const prises = [...tempsForts().filter(e => e.affluence === "forte").map(e => [depuisIso(e.debut) - 7 * JOUR_MS, finDe(e)]),
+      ...evenementsTries().filter(estInterne).map(e => [depuisIso(e.debut), finDe(e)])].sort((a, b) => a[0] - b[0]);
     const libres = [];
     let curseur = debut;
     prises.forEach(([a, b]) => { if (a > curseur) libres.push([curseur, Math.min(a - JOUR_MS, fin)]); curseur = Math.max(curseur, b + JOUR_MS); });
@@ -6392,7 +6527,7 @@ details.groupe-pieces { display: block; }
     const enPc = px => px / largeur * 100, ecart = enPc(6);
     const police = `700 ${parseFloat(getComputedStyle(document.documentElement).fontSize) * .78}px ${getComputedStyle(frise).fontFamily}`;
     const pistes = [];
-    evenementsTries().filter(e => finDe(e) >= t0 && depuisIso(e.debut) < t1).forEach(e => {
+    tempsForts().filter(e => finDe(e) >= t0 && depuisIso(e.debut) < t1).forEach(e => {
       const g = pos(depuisIso(e.debut)), d = pos(finDe(e) + JOUR_MS), texte = enPc(largeurTexte(e.nom, police) + 2);
       const cote = d - g >= texte + enPc(12) ? null : d + ecart + texte <= 100 ? "apres" : "avant";
       const debut = cote === "avant" ? g - ecart - texte : g, fin = cote === "apres" ? d + ecart + texte : d;
@@ -6421,6 +6556,22 @@ details.groupe-pieces { display: block; }
       });
       zone.append(piste);
     });
+    const internes = evenementsTries().filter(e => estInterne(e) && finDe(e) >= t0 && depuisIso(e.debut) < t1);
+    if (internes.length) {
+      const piste = element("div", "frise-piste internes");
+      piste.append(element("span", "frise-etiquette", "Interne"));
+      internes.forEach(e => {
+        const b = element("button", "frise-interne");
+        b.type = "button";
+        b.dataset.evenement = e.id;
+        b.style.left = `${pos(depuisIso(e.debut))}%`;
+        b.style.width = `${pos(finDe(e) + JOUR_MS) - pos(depuisIso(e.debut))}%`;
+        b.title = `${e.nom} · ${datesCourtes(e)}`;
+        b.setAttribute("aria-label", `${e.nom}, ${datesCourtes(e)}`);
+        piste.append(b);
+      });
+      zone.append(piste);
+    }
     const conges = congesPoses().filter(t => t >= t0 && t < t1);
     if (conges.length) {
       const piste = element("div", "frise-piste conges");
@@ -6428,7 +6579,7 @@ details.groupe-pieces { display: block; }
       conges.forEach(t => { const c = element("span", "frise-conge"); c.style.left = `${pos(t)}%`; c.style.width = `${pos(t + JOUR_MS) - pos(t)}%`; c.title = `Congé · ${dateCourte(t)}`; piste.append(c); });
       zone.append(piste);
     }
-    if (!pistes.length && !conges.length) zone.append(element("div", "frise-piste"));
+    if (!pistes.length && !conges.length && !internes.length) zone.append(element("div", "frise-piste"));
     const ligne = element("span", "frise-aujourdhui");
     ligne.style.left = `${pos(aujourdhui())}%`;
     zone.append(ligne);
@@ -6508,14 +6659,18 @@ details.groupe-pieces { display: block; }
       const milieu = element("span");
       milieu.append(element("span", "evt-nom", e.nom));
       if (e.theme) milieu.append(element("span", "evt-theme", e.theme));
+      else if (estInterne(e) && e.note) milieu.append(element("span", "evt-theme", e.note));
       const puces = element("span", "evt-puces");
-      puces.append(element("span", "puce " + (e.affluence === "forte" ? "forte" : ""), e.affluence === "forte" ? "Temps fort" : "Normale"));
+      if (estInterne(e)) puces.append(element("span", "puce interne", NOM_CATEGORIE_EVT[e.categorie] + (e.heure ? ` · ${formatHeure(e.heure)}` : "")));
+      else puces.append(element("span", "puce " + (e.affluence === "forte" ? "forte" : ""), e.affluence === "forte" ? "Temps fort" : "Normale"));
       if (e.ouverture) puces.append(element("span", "puce forte", "Ouverture"));
       if (e.vitrinePrete) puces.append(element("span", "puce prete", "Vitrine prête"));
       else if (e.vitrineLe) puces.append(element("span", "puce", `Vitrine le ${dateCourte(depuisIso(e.vitrineLe))}`));
       if (e.tenues.length) puces.append(element("span", "puce", `${e.tenues.length} tenue${e.tenues.length > 1 ? "s" : ""}`));
       const liees = tachesDuTempsFort(e.id);
       if (liees.length) puces.append(element("span", "puce", `Rétro ${liees.filter(x => x.fait).length}/${liees.length}`));
+      if (e.photos.length) puces.append(element("span", "puce", `${e.photos.length} photo${e.photos.length > 1 ? "s" : ""}`));
+      if (e.agendaId) puces.append(element("span", "puce agenda", "Agenda ✓"));
       b.append(element("span", "evt-dates", datesCourtes(e)), milieu, puces);
       li.append(b);
       f.append(li);
@@ -6523,20 +6678,79 @@ details.groupe-pieces { display: block; }
     $("ca-liste").replaceChildren(f);
     $("ca-vide").hidden = tout.length > 0;
     $("ca-ajouter").hidden = !peutModifierGr();
+    $("ca-annee").hidden = !peutModifierGr();
     rendreCarteCalendrier();
     rendreSuggestions();
+    rendreCetteSemaine();
+    rendreGalerie();
+    majBoutonAgendaCalendrier();
   }
   function rendreCarteCalendrier() {
     const e = prochainEvenement();
     $("ligne-calendrier").hidden = !e;
     if (e) $("ligne-calendrier").textContent = `${e.nom} : ${depuisIso(e.debut) <= aujourdhui() ? "en cours" : dansJours(depuisIso(e.debut))}`
       + (e.vitrinePrete ? " · vitrine prête" : e.vitrineLe ? ` · vitrine le ${dateCourte(depuisIso(e.vitrineLe))}` : "");
-    const n = Object.keys(calendrier.docs).length;
-    $("resume-calendrier").textContent = n ? `${n} temps fort${n > 1 ? "s" : ""} dans l'année` : "Aucun temps fort pour l'instant";
+    const n = tempsForts().length, semaine = [0, 1, 2, 3, 4, 5, 6].reduce((k, i) => k + chosesDuJour(aujourdhui() + i * JOUR_MS).length, 0);
+    $("resume-calendrier").textContent = (n ? `${n} temps fort${n > 1 ? "s" : ""} dans l'année` : "Aucun temps fort pour l'instant")
+      + (semaine ? ` · ${semaine} chose${semaine > 1 ? "s" : ""} cette semaine` : "");
   }
 
   // La fenêtre d'un temps fort.
-  let evenementEdite = null, tenuesChoisies = [], retroChoisies = new Set(), retroAvant = new Set();
+  let evenementEdite = null, tenuesChoisies = [], retroChoisies = new Set(), retroAvant = new Set(), photosEvt = [];
+  $("ev-categories").replaceChildren(...CATEGORIES_EVT.map(([k, nom]) => {
+    const l = element("label", "r-travail"), i = element("input");
+    i.type = "radio"; i.name = "ev-categorie"; i.value = k;
+    l.append(i, element("span", null, nom));
+    return l;
+  }));
+  const genreFenetre = () => ((document.querySelector('input[name="ev-genre"]:checked') || {}).value === "interne" ? "interne" : "fort");
+  function majGenreFenetre() {
+    const interne = genreFenetre() === "interne";
+    $("ev-categorie-bloc").hidden = !interne;
+    $("ev-heure-bloc").hidden = !interne;
+    $("ev-champs-fort").hidden = interne;
+    $("ev-nom").placeholder = interne ? "Ex. : Inventaire d'hiver (facultatif)" : "Ex. : Black Friday";
+    if (!evenementEdite) $("ev-titre").textContent = interne ? "Ajouter un événement interne" : "Ajouter un temps fort";
+  }
+  document.querySelectorAll('input[name="ev-genre"]').forEach(r => r.addEventListener("change", majGenreFenetre));
+  // Les photos de la vitrine : celles déjà enregistrées, et les nouvelles (envoyées à l'enregistrement).
+  function libererPhotosEvt() { photosEvt.forEach(f => { if (f.url) URL.revokeObjectURL(f.url); }); }
+  function rendrePhotosEvt() {
+    const modifiable = peutModifierGr() && peutModifierPieces();
+    $("ev-photos").replaceChildren(...photosEvt.map((f, i) => {
+      const c = element("span", "ev-photo"), img = element("img");
+      img.alt = `Photo ${i + 1} de la vitrine`;
+      img.src = f.stockee ? srcPhoto(f.stockee) : f.url;
+      c.append(img);
+      if (modifiable) {
+        const b = element("button", null, "×");
+        b.type = "button";
+        b.dataset.retirerPhoto = String(i);
+        b.setAttribute("aria-label", `Retirer la photo ${i + 1}`);
+        c.append(b);
+      }
+      return c;
+    }));
+    $("ev-photos-bouton").hidden = !modifiable || photosEvt.length >= MAX_PHOTOS;
+    $("ev-photos-bloc").hidden = !modifiable && !photosEvt.length;
+  }
+  $("ev-photos").addEventListener("click", e => {
+    const b = e.target.closest("[data-retirer-photo]");
+    if (!b) return;
+    const [f] = photosEvt.splice(Number(b.dataset.retirerPhoto), 1);
+    if (f && f.url) URL.revokeObjectURL(f.url);
+    rendrePhotosEvt();
+  });
+  $("ev-photos-fichier").addEventListener("change", async e => {
+    const fichiers = [...e.target.files].slice(0, MAX_PHOTOS - photosEvt.length);
+    e.target.value = "";
+    for (const f of fichiers) {
+      try { const jpeg = await versJpeg(f, 1600); photosEvt.push({ fichier: jpeg, url: URL.createObjectURL(jpeg) }); }
+      catch (_) { $("ev-erreur").textContent = "Une photo ne s'ouvre pas : elle n'a pas été ajoutée."; $("ev-erreur").hidden = false; }
+    }
+    rendrePhotosEvt();
+  });
+  $("fenetre-evenement").addEventListener("close", () => { libererPhotosEvt(); photosEvt = []; });
   // Le temps fort tel que la fenêtre le décrit (pour les dates des étapes).
   const evenementDeFenetre = () => ({ id: evenementEdite ? evenementEdite.id : null, debut: $("ev-debut").value, vitrineLe: $("ev-vitrine").value || null,
     affluence: (document.querySelector('input[name="ev-affluence"]:checked') || {}).value === "normale" ? "normale" : "forte" });
@@ -6580,7 +6794,7 @@ details.groupe-pieces { display: block; }
     if (!e && !modifiable) return;
     evenementEdite = e;
     tenuesChoisies = e ? [...e.tenues] : [];
-    $("ev-titre").textContent = !e ? "Ajouter un temps fort" : modifiable ? "Modifier le temps fort" : e.nom;
+    $("ev-titre").textContent = !e ? "Ajouter un temps fort" : modifiable ? (estInterne(e) ? "Modifier l'événement" : "Modifier le temps fort") : e.nom;
     $("ev-nom").value = e ? e.nom : "";
     $("ev-debut").value = e ? e.debut : "";
     $("ev-fin").value = e ? e.fin : "";
@@ -6589,10 +6803,18 @@ details.groupe-pieces { display: block; }
     $("ev-vitrine").value = e && e.vitrineLe ? e.vitrineLe : "";
     $("ev-note").value = e ? e.note : "";
     $("ev-ouverture").checked = !!(e && e.ouverture);
+    document.querySelectorAll('input[name="ev-genre"]').forEach(r => { r.checked = r.value === (e && estInterne(e) ? "interne" : "fort"); });
+    document.querySelectorAll('input[name="ev-categorie"]').forEach(r => { r.checked = r.value === (e && e.categorie ? e.categorie : "inventaire"); });
+    $("ev-heure").value = e && e.heure ? e.heure : "";
+    libererPhotosEvt();
+    photosEvt = e ? e.photos.map(v => ({ stockee: v })) : [];
+    $("ev-agenda-bloc").hidden = !mcpNs || !modifiable;
+    $("ev-agenda").checked = !!(e && e.agendaId);
     retroAvant = new Set(e ? ETAPES_RETRO.filter(x => etapeDansTodo(e, x)).map(x => x.cle) : []);
     retroChoisies = new Set(retroAvant);
     rendreRetroFenetre();
     rendreChoixTenues();
+    rendrePhotosEvt();
     [...$("ev-form").elements].forEach(el => { el.disabled = !modifiable; });
     $("ev-enregistrer").hidden = !modifiable;
     $("ev-supprimer").hidden = !(e && modifiable);
@@ -6600,6 +6822,7 @@ details.groupe-pieces { display: block; }
     $("ev-erreur").hidden = true;
     ouvrir($("fenetre-evenement"));
     $("fenetre-evenement").querySelector(".fenetre-corps").scrollTop = 0;
+    majGenreFenetre();
     if (modifiable) $("ev-nom").focus();
   }
   $("ev-tenues").addEventListener("click", e => {
@@ -6613,7 +6836,10 @@ details.groupe-pieces { display: block; }
   $("ca-ajouter").addEventListener("click", () => ouvrirEvenement(null));
   $("ev-enregistrer").addEventListener("click", async () => {
     const erreur = (m, champ) => { $("ev-erreur").textContent = m; $("ev-erreur").hidden = false; if (champ) champ.focus(); };
-    const nom = $("ev-nom").value.trim(), debut = $("ev-debut").value, fin = $("ev-fin").value || debut, vitrineLe = $("ev-vitrine").value || null;
+    const genre = genreFenetre(), interne = genre === "interne";
+    const categorie = interne ? ((document.querySelector('input[name="ev-categorie"]:checked') || {}).value || "autre") : null;
+    const nom = $("ev-nom").value.trim() || (interne ? NOM_CATEGORIE_EVT[categorie] : ""), debut = $("ev-debut").value, fin = $("ev-fin").value || debut, vitrineLe = interne ? null : $("ev-vitrine").value || null;
+    const heure = interne && HEURE_RE.test($("ev-heure").value) ? $("ev-heure").value : null;
     if (!nom) return erreur("Donne un nom au temps fort.", $("ev-nom"));
     if (!ISO_RE.test(debut)) return erreur("Choisis la date de début.", $("ev-debut"));
     if (!ISO_RE.test(fin) || fin < debut) return erreur("La fin doit être le même jour ou après le début.", $("ev-fin"));
@@ -6621,31 +6847,65 @@ details.groupe-pieces { display: block; }
     const affluence = (document.querySelector('input[name="ev-affluence"]:checked') || {}).value === "normale" ? "normale" : "forte";
     const vitrine = vitrineLe && ISO_RE.test(vitrineLe) ? vitrineLe : null;
     // Les étapes cochées vont dans la to-do ; une étape décochée n'est plus proposée.
-    const voulues = ETAPES_RETRO.map(x => x.cle).filter(k => retroChoisies.has(k));
+    const voulues = interne ? [] : ETAPES_RETRO.map(x => x.cle).filter(k => retroChoisies.has(k));
     const ecartees = ETAPES_RETRO.map(x => x.cle).filter(k => retroAvant.has(k) && !retroChoisies.has(k));
     const retroIgnore = ETAPES_RETRO.map(x => x.cle).filter(k => ((avant ? avant.retroIgnore : []).includes(k) || ecartees.includes(k)) && !voulues.includes(k));
+    const b = $("ev-enregistrer");
+    if (b.disabled) return;
+    b.disabled = true;
     try {
-      const corps = corpsEvenement({ nom: nom.slice(0, 80), debut, fin, affluence, theme: $("ev-theme").value.trim().slice(0, 600),
-        vitrineLe: vitrine, vitrinePrete: avant ? avant.vitrinePrete : false, tenues: tenuesChoisies,
-        note: $("ev-note").value.trim().slice(0, 500), creeLe: avant ? avant.creeLe : maintenant(), ouverture: $("ev-ouverture").checked, retroIgnore });
+      // Les nouvelles photos de la vitrine sont envoyées une à une (en local, réduites).
+      const photos = [];
+      if (!interne) for (const f of photosEvt) {
+        if (f.stockee) photos.push(f.stockee);
+        else if (mode === "base" && assets) photos.push((await assets.upload(f.fichier, { type: "image/jpeg" })).id);
+        else if (mode === "local") photos.push(await enDataUrl(await versJpeg(f.fichier, 700)));
+      }
+      let corps = corpsEvenement({ nom: nom.slice(0, 80), debut, fin, affluence: interne ? "normale" : affluence, theme: interne ? "" : $("ev-theme").value.trim().slice(0, 600),
+        vitrineLe: vitrine, vitrinePrete: avant ? avant.vitrinePrete : false, tenues: interne ? [] : tenuesChoisies,
+        note: $("ev-note").value.trim().slice(0, 500), creeLe: avant ? avant.creeLe : maintenant(), ouverture: !interne && $("ev-ouverture").checked,
+        retroIgnore: interne ? [] : retroIgnore, genre, categorie, heure, photos, cle: avant ? avant.cle : null, agendaId: avant ? avant.agendaId : null });
       await calendrier.ecrire(id, corps);
+      if (assets && avant) avant.photos.filter(v => PHOTO_ASSET_RE.test(v) && !photos.includes(v)).forEach(v => assets.delete(v).catch(() => {}));
       fermer($("fenetre-evenement"));
       let n = 0;
       try { n = await synchroniserRetro({ ...corps, id }, voulues); } catch (err) { echecEcriture(err); }
-      toast((avant ? "Temps fort enregistré." : "Temps fort ajouté.") + (n ? ` ${n} étape${n > 1 ? "s" : ""} dans ta to-do.` : ""));
+      toast((avant ? (interne ? "Événement enregistré." : "Temps fort enregistré.") : (interne ? "Événement ajouté." : "Temps fort ajouté.")) + (n ? ` ${n} étape${n > 1 ? "s" : ""} dans ta to-do.` : ""));
+      // Google Agenda : ajouté, déplacé ou retiré selon la case (seulement si quelque chose a changé).
+      const veut = !$("ev-agenda-bloc").hidden && $("ev-agenda").checked;
+      const change = !avant || !avant.agendaId || ["nom", "debut", "fin", "genre", "heure"].some(k => (avant[k] || null) !== (corps[k] || null));
+      if (mcpNs && (veut ? change : corps.agendaId)) {
+        try {
+          const agendaId = await agendaEvenement({ ...corps, id }, veut);
+          corps = { ...corps };
+          if (agendaId) corps.agendaId = agendaId; else delete corps.agendaId;
+          await calendrier.ecrire(id, corps);
+          toast(veut ? "Dans ton Google Agenda." : "Retiré de ton Google Agenda.");
+        } catch (err) { toast(messageAgenda(err), "erreur"); }
+      }
     } catch (err) { erreur(messageEcriture(err)); }
+    finally { b.disabled = false; }
   });
   $("ev-supprimer").addEventListener("click", async e => {
     const b = e.currentTarget, x = evenementEdite;
     if (!x || !peutModifierGr()) return;
     if (!b.classList.contains("arme")) { armer(b, "Confirmer la suppression", "Supprimer"); return; }
     desarmer(b, "Supprimer");
-    try { await calendrier.ecrire(x.id, null); fermer($("fenetre-evenement")); await retirerRetro(x.id); toast("Temps fort supprimé."); }
+    try {
+      await calendrier.ecrire(x.id, null);
+      fermer($("fenetre-evenement"));
+      await retirerRetro(x.id);
+      if (assets) x.photos.filter(v => PHOTO_ASSET_RE.test(v)).forEach(v => assets.delete(v).catch(() => {}));
+      if (x.agendaId && mcpNs) agendaEvenement(x, false).catch(err => toast(messageAgenda(err), "erreur"));
+      toast(estInterne(x) ? "Événement supprimé." : "Temps fort supprimé.");
+    }
     catch (err) { $("ev-erreur").textContent = messageEcriture(err); $("ev-erreur").hidden = false; }
   });
   document.querySelector('[data-vue="calendrier"]').addEventListener("click", async e => {
     const tenue = e.target.closest("[data-ouvrir-tenue]");
     if (tenue) { const t = tenues.docs[tenue.dataset.ouvrirTenue]; if (t) { e.preventDefault(); montrer("tenues"); chargerTenueDansAtelier(t); } return; }
+    const v = e.target.closest("[data-vitrine]");
+    if (v) { ouvrirVitrine(v.dataset.vitrine); return; }
     const b = e.target.closest("[data-evenement]");
     if (b) ouvrirEvenement(b.dataset.evenement);
   });
@@ -6662,6 +6922,223 @@ details.groupe-pieces { display: block; }
       if (t && t.fait !== c.checked && peutModifierTodo()) await ecrireTache(t.id, { ...corpsDe(t), fait: c.checked, faitLe: c.checked ? maintenant() : null });
     }
     catch (err) { c.checked = !c.checked; toast(messageEcriture(err), "erreur"); }
+  });
+
+  // ----- cette semaine : ce qui arrive dans les 7 prochains jours -----
+  function chosesDuJour(t) {
+    const iso = versIso(t), l = [], fort = e => (e.affluence === "forte" ? "forte" : "");
+    evenementsTries().forEach(e => {
+      if (estInterne(e)) {
+        if (e.debut <= iso && iso <= e.fin) l.push({ puce: ["interne", NOM_CATEGORIE_EVT[e.categorie]], texte: e.nom + (e.heure && e.debut === iso ? ` · ${formatHeure(e.heure)}` : ""), id: e.id });
+        return;
+      }
+      if (e.debut === iso) l.push({ puce: [fort(e), "Début"], texte: e.fin !== e.debut ? `${e.nom} (jusqu'au ${dateCourte(finDe(e))})` : e.nom, id: e.id });
+      else if (e.fin === iso) l.push({ puce: ["", "Dernier jour"], texte: e.nom, id: e.id });
+      else if (t === aujourdhui() && e.debut < iso && iso < e.fin) l.push({ puce: [fort(e), "En cours"], texte: `${e.nom} (jusqu'au ${dateCourte(finDe(e))})`, id: e.id });
+      if (e.vitrineLe === iso && !e.vitrinePrete) l.push({ puce: ["", "Vitrine"], texte: `Monter la vitrine « ${e.nom} »`, id: e.id });
+      if (e.ouverture && new Date(t).getUTCDay() === 0 && e.debut <= iso && iso <= e.fin) l.push({ puce: ["forte", "Ouverture"], texte: "Le magasin ouvre ce dimanche", id: e.id });
+    });
+    const f = ferieDe(t);
+    if (f) l.push({ puce: ["ferie", "Férié"], texte: f });
+    const j = jourDuPlanning(t);
+    if (j && j.conge) l.push({ puce: ["conge", "Congé"], texte: "Je suis en congé" });
+    return l;
+  }
+  function rendreCetteSemaine() {
+    const t0 = aujourdhui(), jours = [];
+    for (let i = 0; i < 7; i++) { const t = t0 + i * JOUR_MS, l = chosesDuJour(t); if (l.length) jours.push([t, l]); }
+    if (!jours.length) { $("ca-semaine").replaceChildren(element("li", "sj-vide", "Rien de particulier dans les 7 prochains jours.")); return; }
+    $("ca-semaine").replaceChildren(...jours.map(([t, l]) => {
+      const li = element("li"), choses = element("div", "sj-choses");
+      li.append(element("span", "sj-jour" + (t === t0 ? " aujourdhui" : ""), t === t0 ? "Aujourd'hui" : t === t0 + JOUR_MS ? "Demain" : majuscule(dateCourte(t))));
+      l.forEach(x => {
+        const c = element(x.id ? "button" : "div", "sj-chose" + (x.id ? " lien" : ""));
+        if (x.id) { c.type = "button"; c.dataset.evenement = x.id; }
+        c.append(element("span", "puce " + x.puce[0], x.puce[1]), element("span", "sj-texte", x.texte));
+        choses.append(c);
+      });
+      li.append(choses);
+      return li;
+    }));
+  }
+
+  // ----- la galerie des vitrines : les photos des temps forts, de la plus récente à la plus ancienne -----
+  function rendreGalerie() {
+    const liste = evenementsTries().filter(e => e.photos.length).sort((a, b) => b.debut.localeCompare(a.debut));
+    $("ca-vitrines").replaceChildren(...liste.map(e => {
+      const b = element("button", "carte-vitrine"), cadre = element("span", "cv-photo"), img = element("img");
+      b.type = "button";
+      b.dataset.vitrine = e.id;
+      img.alt = "";
+      img.loading = "lazy";
+      img.src = srcPhoto(e.photos[0]);
+      cadre.append(img);
+      if (e.photos.length > 1) cadre.append(element("span", "cv-nombre", `${e.photos.length} photos`));
+      b.append(cadre, element("span", "cv-nom", e.nom), element("span", "cv-dates", `${datesCourtes(e)} ${e.debut.slice(0, 4)}`));
+      b.setAttribute("aria-label", `Vitrine ${e.nom}, ${datesCourtes(e)} ${e.debut.slice(0, 4)}`);
+      return b;
+    }));
+    $("ca-vitrines-vide").hidden = liste.length > 0;
+  }
+  let vitrineVue = null, vitrineI = 0;
+  function montrerVitrine() {
+    const e = calendrier.docs[vitrineVue];
+    if (!e || !e.photos.length) { fermer($("fenetre-vitrine")); return; }
+    vitrineI = (vitrineI + e.photos.length) % e.photos.length;
+    $("vi-titre").textContent = e.nom;
+    $("vi-sous").textContent = `${datesCourtes(e)} ${e.debut.slice(0, 4)}`;
+    $("vi-image").src = srcPhoto(e.photos[vitrineI]);
+    $("vi-image").alt = `Vitrine ${e.nom}, photo ${vitrineI + 1} sur ${e.photos.length}`;
+    $("vi-compte").textContent = `${vitrineI + 1} / ${e.photos.length}`;
+    $("vi-nav").hidden = e.photos.length < 2;
+    $("vi-modifier").hidden = !peutModifierGr();
+  }
+  function ouvrirVitrine(id) { vitrineVue = id; vitrineI = 0; montrerVitrine(); ouvrir($("fenetre-vitrine")); }
+  $("vi-prec").addEventListener("click", () => { vitrineI--; montrerVitrine(); });
+  $("vi-suiv").addEventListener("click", () => { vitrineI++; montrerVitrine(); });
+  $("vi-modifier").addEventListener("click", () => { fermer($("fenetre-vitrine")); ouvrirEvenement(vitrineVue); });
+
+  // ----- Google Agenda : les temps forts (sur toute leur durée) et les événements internes (à leur heure) -----
+  function corpsAgenda(e) {
+    const description = estInterne(e) ? e.note || "" : ["Temps fort au magasin.", e.theme].filter(Boolean).join("\n");
+    if (estInterne(e) && e.heure) {
+      const m = Math.min(minutes(e.heure) + 60, 23 * 60 + 59), fin = `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+      return { summary: e.nom, description, startTime: `${e.debut}T${e.heure}:00`, endTime: `${e.debut}T${fin}:00` };
+    }
+    return { summary: e.nom, description, allDay: true, startTime: `${e.debut}T00:00:00`, endTime: `${versIso(finDe(e) + JOUR_MS)}T00:00:00` };
+  }
+  // Retire l'ancien événement de l'agenda (s'il y en a un), puis l'ajoute de nouveau si on le veut : l'identifiant, ou null.
+  async function agendaEvenement(e, veut) {
+    const appel = (outil, entree) => mcpNs.callTool(AGENDA, outil, entree, { cache: false });
+    if (e.agendaId) { try { await appel("delete_event", { eventId: e.agendaId, notificationLevel: "NONE" }); } catch (err) { if (!err || err.code !== "tool_error") throw err; } }
+    if (!veut) return null;
+    const id = idEvenement(await appel("create_event", { ...corpsAgenda(e), notificationLevel: "NONE" }));
+    if (!id) throw { code: "sans_id" };
+    return id;
+  }
+  let agendaCalEnCours = false;
+  const aMettreDansAgenda = () => evenementsTries().filter(e => !e.agendaId && finDe(e) >= aujourdhui() && depuisIso(e.debut) <= aujourdhui() + 365 * JOUR_MS);
+  function majBoutonAgendaCalendrier() {
+    const l = mcpNs && mode === "base" && peutModifierGr() ? aMettreDansAgenda() : [];
+    const b = $("ca-agenda");
+    b.hidden = !l.length && !agendaCalEnCours;
+    b.disabled = agendaCalEnCours;
+    $("ca-agenda-texte").textContent = agendaCalEnCours ? "Envoi…" : `Google Agenda (${l.length})`;
+    b.title = `Mettre ${l.length > 1 ? `les ${l.length} temps forts et événements` : "le temps fort"} à venir dans Google Agenda`;
+  }
+  $("ca-agenda").addEventListener("click", async () => {
+    if (agendaCalEnCours || !mcpNs) return;
+    const l = aMettreDansAgenda();
+    agendaCalEnCours = true;
+    majBoutonAgendaCalendrier();
+    let n = 0;
+    try {
+      for (const e of l) {
+        const agendaId = await agendaEvenement(e, true);
+        await calendrier.ecrire(e.id, corpsEvenement({ ...e, agendaId }));
+        n++;
+      }
+      toast(`Google Agenda : ${n} ajouté${n > 1 ? "s" : ""}.`);
+    } catch (err) { toast((n ? `${n} ajouté${n > 1 ? "s" : ""}, puis : ` : "") + messageAgenda(err), "erreur"); }
+    finally { agendaCalEnCours = false; majBoutonAgendaCalendrier(); }
+  });
+
+  // ----- préparer une année : les temps forts aux dates de l'année, proposés à cocher -----
+  // nieme(année, mois, jour de la semaine (0 = dimanche), n) : le n-ième de ce jour dans le mois ; n = -1 : le dernier.
+  function nieme(annee, mois, jourSemaine, n) {
+    if (n > 0) { const premier = Date.UTC(annee, mois, 1); return premier + (((jourSemaine - new Date(premier).getUTCDay() + 7) % 7) + (n - 1) * 7) * JOUR_MS; }
+    const dernier = Date.UTC(annee, mois + 1, 0);
+    return dernier - ((new Date(dernier).getUTCDay() - jourSemaine + 7) % 7) * JOUR_MS;
+  }
+  const quantiemeDe = t => new Date(t).getUTCDate();
+  // ancre : le jour qui fixe le temps fort ; decalage : son début et sa fin autour (en jours), sauf si l'année d'avant dit autrement.
+  const TEMPS_FORTS_ANNEE = [
+    // Soldes : le 2e mercredi de janvier (le 1er si le 2e tombe après le 12), le dernier mercredi de juin (l'avant-dernier après le 28), 4 semaines.
+    { cle: "soldes-hiver", nom: "Soldes d'hiver", mots: /soldes? d.?hiver/, affluence: "forte", decalage: [0, 27], ancre: a => { const t = nieme(a, 0, 3, 2); return quantiemeDe(t) > 12 ? t - 7 * JOUR_MS : t; } },
+    { cle: "saint-valentin", nom: "Saint-Valentin", mots: /valentin/, affluence: "normale", decalage: [-11, 0], ancre: a => Date.UTC(a, 1, 14) },
+    { cle: "printemps", nom: "Printemps", mots: /printemps/, affluence: "normale", decalage: [0, 30], ancre: a => Date.UTC(a, 2, 1) },
+    // La fête des mères : le dernier dimanche de mai (le 1er de juin s'il tombe le jour de la Pentecôte).
+    { cle: "fete-des-meres", nom: "Fête des mères", mots: /fete des meres/, affluence: "normale", coche: false, decalage: [-13, 0], ancre: a => { const t = nieme(a, 4, 0, -1); return t === paques(a) + 49 * JOUR_MS ? t + 7 * JOUR_MS : t; } },
+    { cle: "fete-des-peres", nom: "Fête des pères", mots: /fete des peres/, affluence: "forte", decalage: [-13, 0], ancre: a => nieme(a, 5, 0, 3) },
+    { cle: "soldes-ete", nom: "Soldes d'été", mots: /soldes? d.?ete/, affluence: "forte", decalage: [0, 27], ancre: a => { const t = nieme(a, 5, 3, -1); return quantiemeDe(t) > 28 ? t - 7 * JOUR_MS : t; } },
+    { cle: "rentree", nom: "Rentrée", mots: /rentree/, affluence: "normale", decalage: [-9, 10], ancre: a => Date.UTC(a, 8, 1) },
+    // Black Friday : le vendredi après le 4e jeudi de novembre, du lundi au Cyber Monday.
+    { cle: "black-friday", nom: "Black Friday", mots: /black friday/, affluence: "forte", decalage: [-4, 3], ancre: a => nieme(a, 10, 4, 4) + JOUR_MS },
+    { cle: "noel", nom: "Noël", mots: /noel/, affluence: "forte", decalage: [-23, 0], ancre: a => Date.UTC(a, 11, 24) },
+    { cle: "fin-annee", nom: "Fêtes de fin d'année", mots: /fin d.?annee|reveillon/, affluence: "normale", decalage: [-5, 0], ancre: a => Date.UTC(a, 11, 31) },
+  ];
+  const modeleDe = e => TEMPS_FORTS_ANNEE.find(x => e.cle === x.cle || x.mots.test(sansAccents(e.nom))) || null;
+  const anneeDe = e => Number(e.debut.slice(0, 4));
+  const sansChiffre = t => (t && !/\d/.test(t) ? t : "");
+  function propositionsAnnee(annee) {
+    const forts = tempsForts(), l = [];
+    TEMPS_FORTS_ANNEE.forEach(x => {
+      const ancre = x.ancre(annee), memes = forts.filter(e => modeleDe(e) === x);
+      const deja = memes.find(e => anneeDe(e) === annee);
+      // L'année d'avant (la plus proche) donne la durée, la vitrine, l'affluence et le thème.
+      const avant = memes.filter(e => anneeDe(e) !== annee).sort((a, b) => Math.abs(anneeDe(a) - annee) - Math.abs(anneeDe(b) - annee))[0];
+      const ancreAvant = avant ? x.ancre(anneeDe(avant)) : null, j = t => Math.round((t - ancreAvant) / JOUR_MS);
+      const [da, fa] = avant ? [j(depuisIso(avant.debut)), j(depuisIso(avant.fin))] : x.decalage;
+      l.push({ nom: deja ? deja.nom : avant ? avant.nom : x.nom, debut: versIso(ancre + da * JOUR_MS), fin: versIso(ancre + fa * JOUR_MS), affluence: avant ? avant.affluence : x.affluence,
+        theme: avant ? sansChiffre(avant.theme) : "", vitrineLe: avant && avant.vitrineLe ? versIso(ancre + j(depuisIso(avant.vitrineLe)) * JOUR_MS) : null,
+        cle: x.cle, note: "", deja: deja || null, coche: x.coche !== false });
+    });
+    // Les autres temps forts de l'année d'avant (un anniversaire du magasin…) : aux mêmes dates, à confirmer.
+    forts.filter(e => anneeDe(e) === annee - 1 && !modeleDe(e)).forEach(e => {
+      const plusUn = iso => { const d = new Date(depuisIso(iso)); return versIso(Date.UTC(d.getUTCFullYear() + 1, d.getUTCMonth(), d.getUTCDate())); };
+      const deja = forts.find(y => anneeDe(y) === annee && sansAccents(y.nom) === sansAccents(e.nom));
+      l.push({ nom: e.nom, debut: plusUn(e.debut), fin: plusUn(e.fin), affluence: e.affluence, theme: sansChiffre(e.theme), vitrineLe: e.vitrineLe ? plusUn(e.vitrineLe) : null,
+        cle: null, note: `Repris de ${annee - 1} : dates à confirmer.`, deja: deja || null, coche: true });
+    });
+    return l.sort((a, b) => (a.deja ? a.deja.debut : a.debut).localeCompare(b.deja ? b.deja.debut : b.debut));
+  }
+  let anneePreparee = null, propositions = [];
+  function rendreAnnee() {
+    propositions = propositionsAnnee(anneePreparee);
+    $("an-annee").textContent = String(anneePreparee);
+    $("an-titre").textContent = `Les temps forts de ${anneePreparee}`;
+    $("an-liste").replaceChildren(...propositions.map((x, i) => {
+      const li = element("li"), l = element("label", "an-ligne" + (x.deja ? " deja" : "")), c = element("input"), texte = element("span", "an-texte");
+      c.type = "checkbox";
+      c.dataset.i = String(i);
+      c.checked = !x.deja && x.coche;
+      c.disabled = !!x.deja;
+      const e = x.deja || x;
+      texte.append(element("span", "an-nom", e.nom), element("span", "an-dates", e.debut === e.fin ? majuscule(dateCourte(depuisIso(e.debut))) : `Du ${dateCourte(depuisIso(e.debut))} au ${dateCourte(depuisIso(e.fin))}`));
+      l.append(c, texte, element("span", "an-etat", x.deja ? "Déjà là" : x.affluence === "forte" ? "Temps fort" : "Affluence normale"));
+      li.append(l);
+      return li;
+    }));
+    majBoutonAnnee();
+  }
+  function majBoutonAnnee() {
+    const n = $("an-liste").querySelectorAll("input:checked:not(:disabled)").length;
+    $("an-ajouter").disabled = !n;
+    $("an-ajouter").textContent = n ? `Ajouter ${n} temps fort${n > 1 ? "s" : ""}` : "Ajouter";
+  }
+  $("an-liste").addEventListener("change", majBoutonAnnee);
+  $("ca-annee").addEventListener("click", () => {
+    const d = new Date(aujourdhui());
+    anneePreparee = d.getUTCMonth() >= 8 ? d.getUTCFullYear() + 1 : d.getUTCFullYear();
+    rendreAnnee();
+    ouvrir($("fenetre-annee"));
+  });
+  $("an-prec").addEventListener("click", () => { anneePreparee--; rendreAnnee(); });
+  $("an-suiv").addEventListener("click", () => { anneePreparee++; rendreAnnee(); });
+  $("an-ajouter").addEventListener("click", async () => {
+    const choisis = [...$("an-liste").querySelectorAll("input:checked:not(:disabled)")].map(c => propositions[Number(c.dataset.i)]);
+    if (!choisis.length || !peutModifierGr()) return;
+    $("an-ajouter").disabled = true;
+    let n = 0;
+    try {
+      for (const x of choisis) {
+        await calendrier.ecrire(calendrier.nouvelId(), corpsEvenement({ nom: x.nom, debut: x.debut, fin: x.fin, affluence: x.affluence, theme: x.theme, vitrineLe: x.vitrineLe,
+          vitrinePrete: false, tenues: [], note: x.note, creeLe: maintenant(), cle: x.cle }));
+        n++;
+      }
+      fermer($("fenetre-annee"));
+      toast(`${n} temps fort${n > 1 ? "s" : ""} ajouté${n > 1 ? "s" : ""} pour ${anneePreparee}.`);
+    } catch (err) { toast((n ? `${n} ajouté${n > 1 ? "s" : ""}, puis : ` : "") + messageEcriture(err), "erreur"); rendreAnnee(); }
   });
 
   // ---------- objectifs : la part homme du chiffre d'affaires ----------
