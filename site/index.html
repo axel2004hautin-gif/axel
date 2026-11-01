@@ -8467,6 +8467,28 @@ details.groupe-pieces { display: block; }
   let minuterieRoad = 0;
   window.addEventListener("resize", () => { clearTimeout(minuterieRoad); minuterieRoad = setTimeout(() => { if (vueActive === "epargne") rendreHubArgent(); }, 150); });
 
+  // ---------- l'appli Claude sur Android n'ouvre pas le choix de fichier ----------
+  // Dans l'appli Claude sur Android, la page ne peut pas ouvrir le choix de photo ou de fichier : un appui sur
+  // « Lire une photo », « Ajouter des photos », « Choisir les captures » ou « Importer un relevé » ne fait rien.
+  // Si rien ne s'ouvre (la page ne perd pas la main), on dit pourquoi et quoi faire.
+  const MESSAGE_FICHIER = "L'appli Claude sur Android n'ouvre pas les photos ni les fichiers : ouvre ton tableau de bord dans Chrome (claude.ai), ou envoie la photo à Claude dans une conversation.";
+  document.addEventListener("click", e => {
+    if (!/Android/i.test(navigator.userAgent) || e.target.matches('input[type="file"]')) return;
+    const l = e.target.closest("label.bouton-fichier"), input = l && l.querySelector('input[type="file"]');
+    if (!input || input.disabled) return;
+    let reagi = false;
+    const vu = () => { reagi = true; };
+    window.addEventListener("blur", vu, { once: true });
+    document.addEventListener("visibilitychange", vu, { once: true });
+    input.addEventListener("change", vu, { once: true });
+    setTimeout(() => {
+      window.removeEventListener("blur", vu);
+      document.removeEventListener("visibilitychange", vu);
+      input.removeEventListener("change", vu);
+      if (!reagi && document.hasFocus()) toast(MESSAGE_FICHIER, "erreur");
+    }, 1500);
+  });
+
   // ---------- démarrage ----------
   construireSaisie();
   rendreDate();
