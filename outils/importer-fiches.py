@@ -43,7 +43,12 @@ CATEGORIES = [
     (r"sweats?|sweat-shirts?|sweatshirts?|hoodies?", "sweats"),
     (r"polos?", "polos"),
     (r"shorts?|bermudas?", "shorts"),
-    (r"accessoires?|casquettes?|bonnets?|ceintures?|echarpes?|sacs?|chaussettes?|portefeuilles?", "accessoires"),
+    (r"calecons?|boxers?|slips?", "calecons"),
+    (r"chaussettes?|socquettes?", "chaussettes"),
+    (r"ceintures?", "ceintures"),
+    (r"casquettes?|caps?|bobs?", "casquettes"),
+    (r"bonnets?|beanies?", "bonnets"),
+    (r"accessoires?|echarpes?|gants?|sacs?|portefeuilles?|cravates?", "accessoires"),
 ]
 # Les noms de couleur des marques (souvent en anglais) vers les nuances du nuancier de la page.
 COULEURS = {
