@@ -287,6 +287,11 @@ a.choix-case:hover { background: var(--c-doux); }
 .ecart.plus { color: var(--conge); }
 .ecart.moins { color: var(--repos); }
 .bilan-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
+/* Google Agenda et Partager : une icône, et leur nom quand il y a la place. */
+.bouton-icone { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.bouton-icone.fait { border-color: var(--marine); background: var(--marine-doux); color: var(--marine); }
+.bouton-icone:disabled { opacity: .6; cursor: progress; }
+@media (max-width: 1099px) { .bouton-icone .libelle-large { display: none; } .bouton-icone { padding-inline: 12px; } }
 .bilan-vide { grid-column: 1 / 3; color: var(--gris); font-size: 1.1rem; }
 .note-lecture { grid-column: 1 / -1; color: var(--gris); font-size: .95rem; }
 .bouton-principal { min-height: 48px; padding: 12px 22px; border: 0; border-radius: 10px; background: var(--marine); color: var(--sur-marine); font-weight: 700; font-size: 1.05rem; line-height: 1.1; }
@@ -300,6 +305,9 @@ a.choix-case:hover { background: var(--c-doux); }
   .bilan .bouton-principal, .bilan .bouton-second { min-height: 44px; }
   .bilan-actions { grid-column: 1 / -1; flex-wrap: nowrap; }
   .bilan-actions > * { flex: 1 1 0; padding-inline: 10px; }
+  .bilan-actions { gap: 8px; }
+  .bilan-actions > * { font-size: .95rem; }
+  .bilan-actions > .bouton-icone { flex: 0 0 44px; padding-inline: 0; }
   .bilan-vide { grid-column: 1 / -1; }
 }
 /* Téléphone : « Semaine 43 » et le choix sur une ligne, les dates en dessous */
@@ -1264,6 +1272,8 @@ details.groupe-pieces { display: block; }
         </div>
         <p class="bilan-vide" id="bilan-vide" hidden>Pas encore de planning pour cette semaine.</p>
         <div class="bilan-actions">
+          <button class="bouton-second bouton-icone" id="agenda-semaine" type="button" hidden><svg class="picto" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4M12 12.5v5M9.5 15h5"/></svg><span class="libelle-large" id="agenda-semaine-texte">Google Agenda</span></button>
+          <button class="bouton-second bouton-icone" id="partager-semaine" type="button" hidden aria-label="Partager ma semaine en image" title="Partager ma semaine en image"><svg class="picto" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3.5M7.5 8L12 3.5 16.5 8M5 12.5V20h14v-7.5"/></svg><span class="libelle-large">Partager</span></button>
           <button class="bouton-second" id="ouvrir-compteur" type="button">Mon compteur</button>
           <button class="bouton-principal" id="ouvrir-modif" type="button" disabled>Modifier le planning</button>
         </div>
@@ -2495,7 +2505,7 @@ details.groupe-pieces { display: block; }
     tenues.chargerLocal();
     comparaisons.chargerLocal();
     demandes.chargerLocal();
-    [comptesArgent, soldes, projets, charges, operations, paies, budgets].forEach(c => c.chargerLocal());
+    [comptesArgent, soldes, projets, charges, operations, paies, budgets, agenda].forEach(c => c.chargerLocal());
   }
   function sauverLocal() {
     try { localStorage.setItem(CLE_LOCALE, JSON.stringify(semaines)); return true; } catch (_) { return false; }
@@ -2539,9 +2549,12 @@ details.groupe-pieces { display: block; }
     tenues.abonner();
     comparaisons.abonner();
     demandes.abonner();
-    [comptesArgent, soldes, projets, charges, operations, paies, budgets].forEach(c => c.abonner());
+    [comptesArgent, soldes, projets, charges, operations, paies, budgets, agenda].forEach(c => c.abonner());
     // Claude, pour proposer une description de tenue : seulement pour qui peut modifier.
     if (proprio) c.use("sample").then(ns => { sampleNs = ns; rendreTenues(); }, () => {});
+    // Google Agenda (le connecteur de claude.ai) et l'enregistrement d'un fichier : seulement pour le propriétaire.
+    if (proprio) c.use("mcp").then(ns => { mcpNs = ns; majBoutonsSemaine(); }, () => {});
+    if (proprio) c.use("downloads").then(ns => { downloadsNs = ns; }, () => {});
     rendreTout();
   }
 
@@ -2720,6 +2733,7 @@ details.groupe-pieces { display: block; }
     bouton.hidden = mode === "lecture";
     bouton.disabled = mode === "attente";
     $("note-lecture").hidden = mode !== "lecture";
+    majBoutonsSemaine();
   }
 
 
@@ -3111,6 +3125,8 @@ details.groupe-pieces { display: block; }
       fermer($("fenetre-planning"));
       rendreTout();
       toast(`Planning de la semaine ${info.num} enregistré.`);
+      // Une semaine déjà mise dans Google Agenda y est mise à jour.
+      if (agenda.docs[info.cle] && mcpNs) synchroniserAgenda(info.cle);
     } catch (e) {
       const code = e && e.code;
       montrerErreur(code === "quota_exceeded"
@@ -3120,6 +3136,184 @@ details.groupe-pieces { display: block; }
       enregistrement = false;
       $("fp-enregistrer").disabled = false;
     }
+  });
+
+  // ---------- Google Agenda et le partage de la semaine ----------
+  // Google Agenda : chaque service (le matin, l'après-midi) devient un créneau « Blue Box » dans l'agenda
+  // principal, par le connecteur Google Agenda de claude.ai (avec les rappels habituels de l'agenda).
+  // agenda/AAAA-Wss garde, pour chaque créneau envoyé, son identifiant dans Google Agenda : la semaine se
+  // met à jour (déplacer, retirer) au lieu de se doubler, et suit le planning quand il change.
+  let mcpNs = null, downloadsNs = null, agendaEnCours = false;
+  const AGENDA = "Google Calendar";
+  const lireAgenda = (id, d) => {
+    if (!CLE_RE.test(id) || !d || typeof d !== "object") return null;
+    const creneaux = {};
+    Object.entries(d.creneaux && typeof d.creneaux === "object" ? d.creneaux : {}).forEach(([k, x]) => {
+      if (/^[a-z]+-(matin|apresMidi)$/.test(k) && x && typeof x.id === "string" && x.id && ISO_RE.test(x.date || "") && HEURE_RE.test(x.debut || "") && HEURE_RE.test(x.fin || ""))
+        creneaux[k] = { id: x.id.slice(0, 200), date: x.date, debut: x.debut, fin: x.fin };
+    });
+    return { id, creneaux };
+  };
+  const agenda = creerCollection("agenda", "tableau-de-bord-axel:agenda", lireAgenda, () => majBoutonsSemaine());
+  // Les créneaux d'une semaine, d'après le planning.
+  function creneauxVoulus(cle, sem) {
+    const lundi = lundiDeCle(cle), voulus = {};
+    if (sem) JOURS.forEach((j, i) => {
+      const jour = sem.jours[j];
+      if (!jour || statutDe(jour)) return;
+      PERIODES.forEach(p => { const x = jour[p.cle]; if (dureePeriode(x) > 0) voulus[`${j}-${p.cle}`] = { date: versIso(lundi + i * JOUR_MS), debut: x.debut, fin: x.fin }; });
+    });
+    return voulus;
+  }
+  const memeCreneau = (a, b) => !!a && !!b && a.date === b.date && a.debut === b.debut && a.fin === b.fin;
+  function agendaAJour(cle) {
+    const doc = agenda.docs[cle];
+    if (!doc) return false;
+    const voulus = creneauxVoulus(cle, semaines[cle]), a = Object.keys(voulus), b = Object.keys(doc.creneaux);
+    return a.length === b.length && a.every(k => memeCreneau(voulus[k], doc.creneaux[k]));
+  }
+  // L'identifiant de l'événement créé, où que le connecteur le range dans sa réponse.
+  function idEvenement(r) {
+    const p = r && r.payload;
+    const chercher = (o, prof) => {
+      if (!o || typeof o !== "object" || prof > 3) return null;
+      if (typeof o.id === "string" && o.id) return o.id;
+      if (typeof o.eventId === "string" && o.eventId) return o.eventId;
+      for (const v of Object.values(o)) { const x = chercher(v, prof + 1); if (x) return x; }
+      return null;
+    };
+    if (typeof p === "string") { const m = p.match(/"id"\s*:\s*"([^"]+)"/) || p.match(/event ?id\W+([A-Za-z0-9_]{8,})/i); return m ? m[1] : null; }
+    return chercher(p, 0);
+  }
+  function messageAgenda(e) {
+    const code = e && e.code;
+    if (code === "server_not_connected") return "Google Agenda n'est pas connecté : ajoute-le dans claude.ai, Paramètres, Connecteurs.";
+    if (code === "needs_reauth") return "Reconnecte Google Agenda dans claude.ai, Paramètres, Connecteurs.";
+    if (code === "selection_required") return "Choisis ton compte Google Agenda quand claude.ai te le demande.";
+    if (code === "not_in_manifest" || code === "approval_required" || code === "consent_required") return "Google Agenda n'est pas autorisé pour cette page : accepte quand claude.ai te le demande.";
+    if (code === "blocked_by_policy") return "Ton organisation ne permet pas Google Agenda ici.";
+    if (code === "server_unavailable" || code === "upstream_error" || code === "rate_limited") return "Google Agenda ne répond pas : réessaie dans un moment (vérifie l'agenda avant, une partie a pu passer).";
+    if (code === "sans_id") return "Google Agenda a reçu un créneau, mais sans pouvoir le suivre : vérifie l'agenda, il pourrait se doubler.";
+    if (code === "tool_error") return "Google Agenda a refusé : " + String(e.message || "").slice(0, 140);
+    return "Google Agenda n'a pas pu être mis à jour. Réessaie dans un moment.";
+  }
+  async function synchroniserAgenda(cle) {
+    if (!mcpNs || agendaEnCours || !peutModifierGr()) return;
+    agendaEnCours = true;
+    majBoutonsSemaine();
+    const voulus = creneauxVoulus(cle, semaines[cle]), avant = (agenda.docs[cle] || { creneaux: {} }).creneaux, apres = { ...avant };
+    const appel = (outil, entree) => mcpNs.callTool(AGENDA, outil, entree, { cache: false });
+    const n = { ajoutes: 0, modifies: 0, retires: 0 };
+    let erreur = null;
+    try {
+      // Ce qui n'est plus au planning part de l'agenda (déjà effacé à la main : tant mieux).
+      for (const [k, x] of Object.entries(avant)) if (!voulus[k]) {
+        try { await appel("delete_event", { eventId: x.id, notificationLevel: "NONE" }); } catch (e) { if (!e || e.code !== "tool_error") throw e; }
+        delete apres[k];
+        n.retires++;
+      }
+      for (const [k, v] of Object.entries(voulus)) {
+        const deja = avant[k];
+        if (memeCreneau(deja, v)) continue;
+        const startTime = `${v.date}T${v.debut}:00`, endTime = `${v.date}T${v.fin}:00`;
+        if (deja) {
+          try { await appel("update_event", { eventId: deja.id, startTime, endTime, notificationLevel: "NONE" }); apres[k] = { id: deja.id, ...v }; n.modifies++; continue; }
+          catch (e) { if (!e || e.code !== "tool_error") throw e; delete apres[k]; }   // effacé dans l'agenda : on le recrée
+        }
+        const r = await appel("create_event", { summary: "Blue Box", description: "Mon service, depuis mon tableau de bord.", startTime, endTime, notificationLevel: "NONE" });
+        const id = idEvenement(r);
+        if (!id) throw { code: "sans_id" };
+        apres[k] = { id, ...v };
+        n.ajoutes++;
+      }
+    } catch (e) { erreur = e; }
+    // Ce qui est passé est gardé, même si un appel a échoué en route.
+    try { await agenda.ecrire(cle, { creneaux: apres, modifieLe: new Date().toISOString() }); } catch (_) { /* le bouton le redira */ }
+    agendaEnCours = false;
+    majBoutonsSemaine();
+    if (erreur) { toast(messageAgenda(erreur), "erreur"); return; }
+    const total = Object.keys(voulus).length, morceaux = [n.ajoutes && `${n.ajoutes} ajouté${n.ajoutes > 1 ? "s" : ""}`, n.modifies && `${n.modifies} déplacé${n.modifies > 1 ? "s" : ""}`, n.retires && `${n.retires} retiré${n.retires > 1 ? "s" : ""}`].filter(Boolean);
+    toast(morceaux.length ? `Google Agenda : ${listeFr(morceaux)}.` : total ? "Ta semaine est déjà dans Google Agenda." : "Rien à mettre dans Google Agenda cette semaine.");
+  }
+  function majBoutonsSemaine() {
+    const cle = infoSemaine(lundiAffiche).cle, s = semaines[cle], vide = estVide(s);
+    const b = $("agenda-semaine"), doc = agenda.docs[cle], aJour = agendaAJour(cle);
+    b.hidden = !mcpNs || mode !== "base" || (vide && !doc);
+    b.disabled = agendaEnCours;
+    b.classList.toggle("fait", aJour && !agendaEnCours);
+    const texte = agendaEnCours ? "Envoi à Google Agenda…" : aJour ? "Ta semaine est dans Google Agenda" : doc ? "Mettre à jour Google Agenda" : "Mettre ma semaine dans Google Agenda";
+    b.title = texte;
+    b.setAttribute("aria-label", texte);
+    $("agenda-semaine-texte").textContent = agendaEnCours ? "Envoi…" : aJour ? "Dans l'agenda ✓" : doc ? "Mettre à jour l'agenda" : "Google Agenda";
+    $("partager-semaine").hidden = vide || mode === "attente";
+  }
+  $("agenda-semaine").addEventListener("click", () => synchroniserAgenda(infoSemaine(lundiAffiche).cle));
+
+  // Partager la semaine : une image (les jours, mes horaires, le total), envoyée par le partage du téléphone,
+  // sinon enregistrée (dans l'appli Claude sur iPhone, l'enregistrement ouvre aussi le partage).
+  const couleurCss = (nom, defaut) => getComputedStyle(document.documentElement).getPropertyValue(nom).trim() || defaut;
+  async function imageSemaine(lundi) {
+    const info = infoSemaine(lundi), sem = semaines[info.cle] || semaineVide(), jours = JOURS.slice(0, avecDimanche(lundi, sem) ? 7 : 6);
+    try { await Promise.all([document.fonts.load('800 60px "Source Sans 3"'), document.fonts.load('600 36px "Source Sans 3"')]); } catch (_) { /* la police de secours ira */ }
+    const L = 1080, TETE = 230, LIGNE = 118, PIED = 140, H = TETE + jours.length * LIGNE + PIED;
+    const cv = document.createElement("canvas");
+    cv.width = L; cv.height = H;
+    const g = cv.getContext("2d"), police = (poids, taille) => `${poids} ${taille}px "Source Sans 3", "Helvetica Neue", Arial, sans-serif`;
+    const marine = couleurCss("--marine", "#002252"), encre = couleurCss("--encre", "#172033"), gris = couleurCss("--gris", "#5b6478");
+    const COULEUR_STATUT = { repos: couleurCss("--repos", "#94560a"), conge: couleurCss("--conge", "#1f6f54"), ferie: couleurCss("--ferie", "#5b4f86") };
+    g.fillStyle = "#ffffff"; g.fillRect(0, 0, L, H);
+    g.fillStyle = marine; g.fillRect(0, 0, L, TETE);
+    g.fillStyle = "#ffffff"; g.font = police(800, 76); g.fillText(`Semaine ${info.num}`, 64, 122);
+    g.fillStyle = couleurCss("--sur-marine-2", "#c9d2e6"); g.font = police(600, 40); g.fillText(majuscule(libelleDates(lundi)), 64, 182);
+    jours.forEach((j, i) => {
+      const y = TETE + i * LIGNE, t = lundi + i * JOUR_MS, d = new Date(t), jour = sem.jours[j], statut = statutDe(jour), duree = dureeJour(jour), f = ferieDe(t);
+      if (i % 2) { g.fillStyle = couleurCss("--trait-doux", "#f0f2f6"); g.fillRect(0, y, L, LIGNE); }
+      g.textAlign = "left";
+      g.fillStyle = encre; g.font = police(800, 44); g.fillText(majuscule(j), 64, y + 58);
+      g.fillStyle = gris; g.font = police(600, 32); g.fillText(`${d.getUTCDate()} ${MOIS[d.getUTCMonth()]}`, 64, y + 98);
+      g.textAlign = "right";
+      if (statut) { g.fillStyle = COULEUR_STATUT[statut]; g.font = police(800, 44); g.fillText(NOM_STATUT[statut] + (statut === "ferie" && f ? ` · ${f}` : ""), L - 64, y + 74); }
+      else if (duree) {
+        g.fillStyle = marine; g.font = police(800, 44); g.fillText(horairesDe(jour), L - 64, y + 60);
+        g.fillStyle = gris; g.font = police(600, 30); g.fillText(formatDuree(duree), L - 64, y + 98);
+      } else { g.fillStyle = gris; g.font = police(600, 40); g.fillText("—", L - 64, y + 74); }
+    });
+    const y = TETE + jours.length * LIGNE;
+    g.fillStyle = couleurCss("--trait", "#dce1ea"); g.fillRect(64, y + 12, L - 128, 3);
+    g.textAlign = "left"; g.fillStyle = encre; g.font = police(800, 48); g.fillText("Total", 64, y + 92);
+    g.textAlign = "right"; g.fillText(formatDuree(dureeSemaine(sem)), L - 64, y + 92);
+    return new Promise((ok, ko) => cv.toBlob(b => (b ? ok(b) : ko(new Error("image"))), "image/png"));
+  }
+  let partageEnCours = false;
+  $("partager-semaine").addEventListener("click", async () => {
+    if (partageEnCours) return;
+    partageEnCours = true;
+    try {
+      const info = infoSemaine(lundiAffiche), nom = `planning-semaine-${info.num}.png`, image = await imageSemaine(lundiAffiche);
+      const fichier = typeof File === "function" ? new File([image], nom, { type: "image/png" }) : null;
+      if (fichier && navigator.canShare && navigator.canShare({ files: [fichier] })) {
+        try { await navigator.share({ files: [fichier], title: `Mon planning, semaine ${info.num}` }); return; }
+        catch (e) { if (e && e.name === "AbortError") return; /* partage refusé ici : on enregistre l'image */ }
+      }
+      if (downloadsNs) {
+        try { await downloadsNs.save({ filename: nom, data: image }); toast("Image prête : envoie-la depuis tes photos ou tes fichiers."); }
+        catch (e) {
+          const code = e && e.code;
+          if (code === "declined") return;
+          toast(code === "rate_limited" ? "Un enregistrement est déjà en cours." : "L'image n'a pas pu être enregistrée ici.", "erreur");
+        }
+        return;
+      }
+      // Hors de claude.ai : un simple téléchargement.
+      const a = element("a");
+      a.href = URL.createObjectURL(image);
+      a.download = nom;
+      document.body.append(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    } catch (_) { toast("L'image n'a pas pu être préparée.", "erreur"); }
+    finally { partageEnCours = false; }
   });
 
   // ---------- la fenêtre du compteur ----------
