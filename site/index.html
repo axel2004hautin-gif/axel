@@ -1298,20 +1298,20 @@ details.groupe-pieces { display: block; }
 .me-el .me-forme { stroke-width: 1.5px; }
 .me-el .me-detail { fill: none; stroke-width: 1px; opacity: .7; }
 .me-el .me-detail.plein { fill: currentColor; }
-.me-f-mur .me-forme { fill: #dfe6f2; stroke: var(--marine); }
-.me-f-mur .me-uv { fill: #e8edf5; stroke: #b6c2d8; stroke-width: 1px; }
+.me-f-mur .me-forme { fill: #24262b; stroke: #121316; }
+.me-f-mur .me-uv { fill: #33363d; stroke: #5a5e66; stroke-width: 1px; }
 .me-f-mur .me-uv.alerte { fill: var(--erreur-doux); stroke: var(--erreur); stroke-width: 2px; }
 .me-f-mur .me-uv.gene { stroke: #e07a35; stroke-width: 2px; }
 .me-f-mur .me-uv.miroir { fill: #d9edf8; stroke: #8fb4cc; }
 .me-ouverture { stroke: #ffffff; stroke-width: 5px; }
 .me-porte { fill: none; stroke: #5b6478; stroke-width: 2px; stroke-linecap: round; stroke-linejoin: round; }
 .zone-pastille.z-miroir { background: #e1f0f9; color: #2d5670; }
-.me-f-mur .me-face { stroke: var(--marine); stroke-width: 4px; stroke-linecap: round; }
-.me-uv-code { fill: var(--marine); font-weight: 800; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.me-f-mur .me-face { stroke: #9aa3b2; stroke-width: 4px; stroke-linecap: round; }
+.me-uv-code { fill: #ffffff; font-weight: 800; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 .me-f-table .me-forme { fill: #efe2cb; stroke: #9a7b4f; }
 .me-f-table { color: #9a7b4f; }
 .me-f-table .me-detail { stroke: #9a7b4f; }
-.me-f-portant .me-forme { fill: #e6e9ef; stroke: #5b6478; }
+.me-f-portant .me-forme { fill: #c9ced6; stroke: #4f5764; }
 .me-f-portant .me-detail { stroke: #5b6478; stroke-width: 2.5px; opacity: 1; }
 .me-f-presentoir .me-forme { fill: #efe7f5; stroke: #7c5aa6; }
 .me-f-buste { color: #c4501a; }
@@ -1320,6 +1320,12 @@ details.groupe-pieces { display: block; }
 .me-t-vitrine .me-forme { fill: #e2f1f7; stroke: #3b8fb0; stroke-dasharray: none; }
 .me-t-caisse .me-forme { fill: #e9e3f3; stroke: #5b4f86; stroke-dasharray: none; }
 .me-t-table-travail .me-forme { fill: #f4efe4; stroke: #8a7a5a; stroke-dasharray: 3 3; }
+.me-t-ecran .me-forme { fill: #15161a; stroke: #000000; stroke-dasharray: none; }
+.me-t-porte .me-forme { fill: #a07850; stroke: #5b4128; stroke-dasharray: none; }
+.me-porte-arc { fill: none; stroke: #8a6a45; stroke-width: 1.2px; stroke-dasharray: 4 3; }
+.me-cab-mur { stroke: #8a93a5; stroke-width: 2px; }
+.me-cab-rideau { stroke: #3d4659; stroke-width: 3px; stroke-dasharray: 4 3; }
+.me-cab-miroir { stroke: #6fb0d6; stroke-width: 4px; stroke-linecap: round; }
 .me-t-pilier .me-forme { fill: #c9ced8; stroke: #5b6478; stroke-dasharray: none; }
 .me-t-entree .me-forme { fill: #ffffff; stroke: #c4501a; }
 .me-fleche-entree { fill: none; stroke: #c4501a; stroke-width: 3px; stroke-linecap: round; stroke-linejoin: round; }
@@ -1621,6 +1627,30 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
   .me-onglets span { padding: 8px 2px; font-size: .86rem; }
   .al-exposer { grid-template-columns: minmax(0, 1fr); }
   .mu-presse-mur { width: 100%; }
+}
+
+/* La 3D en grand : elle prend presque tout l'écran, le panneau du meuble à côté (en dessous sur téléphone). */
+body.me-plein { overflow: hidden; }
+.me-espace.plein { position: fixed; inset: 0; z-index: 300; margin: 0; padding: 10px; gap: 10px; background: var(--fond); grid-template-columns: minmax(0, 3fr) minmax(280px, 1fr); align-items: stretch; overflow: hidden; }
+.me-espace.plein > .me-principal { min-height: 0; height: calc(100dvh - 20px); grid-template-rows: minmax(0, 1fr); }
+.me-espace.plein #me-volet-3d { min-height: 0; height: 100%; grid-template-rows: auto minmax(0, 1fr) auto; }
+.me-espace.plein .me-3d-zone { min-height: 0; height: 100%; }
+.me-espace.plein .me-3d-canvas { position: absolute; inset: 0; }
+.me-espace.plein .me-panneau { position: static; max-height: calc(100dvh - 20px); overflow: auto; }
+.me-3d-agrandir { margin-left: auto; }
+.me-espace.plein .me-panneau { align-content: start; }
+.me-3d-pad { position: absolute; right: 10px; bottom: 10px; display: grid; grid-template-columns: repeat(3, 44px); grid-template-rows: repeat(2, 44px); gap: 6px; }
+.me-3d-pad[hidden] { display: none; }
+.me-3d-pad button { display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; background: rgba(255, 255, 255, .92); color: var(--marine); font-family: inherit; font-size: 20px; font-weight: 700; line-height: 1; box-shadow: 0 4px 12px rgba(15, 25, 50, .22); cursor: pointer; }
+.me-3d-pad button:hover { background: #ffffff; }
+.me-3d-pad button:focus-visible { outline: 3px solid #e07a35; outline-offset: 2px; }
+.me-3d-pad [data-pas3d="arriere"] { grid-column: 2; }
+.me-3d-carte { position: absolute; left: 10px; bottom: 10px; border-radius: 8px; box-shadow: 0 4px 14px rgba(15, 25, 50, .25); cursor: pointer; }
+.mu-miroir-verre.condamne { opacity: .9; }
+@media (max-width: 899px) {
+  .me-espace.plein { grid-template-columns: minmax(0, 1fr); grid-template-rows: 72dvh auto; overflow: auto; }
+  .me-espace.plein > .me-principal { height: 72dvh; }
+  .me-espace.plein .me-panneau { max-height: none; }
 }
 </style>
 </head>
@@ -2065,9 +2095,17 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
                   <button class="puce-filtre" type="button" data-calque3d="noms" aria-pressed="true">Noms</button>
                   <button class="puce-filtre" type="button" data-calque3d="photos" aria-pressed="true">Photos</button>
                 </div>
+                <button class="bouton-second bouton-petit me-3d-agrandir" type="button" id="me-3d-plein" aria-pressed="false">Agrandir</button>
               </div>
               <div class="me-3d-zone" id="me-3d-zone">
                 <p class="me-3d-etat" id="me-3d-etat">Chargement de la 3D…</p>
+                <canvas class="me-3d-carte" id="me-3d-carte" hidden aria-label="La mini-carte : où tu es ; touche-la pour y aller"></canvas>
+                <div class="me-3d-pad" id="me-3d-pad" role="group" aria-label="Se déplacer" hidden>
+                  <button type="button" data-pas3d="gauche" aria-label="Tourner à gauche" title="Tourner à gauche">↺</button>
+                  <button type="button" data-pas3d="avant" aria-label="Avancer" title="Avancer">↑</button>
+                  <button type="button" data-pas3d="droite" aria-label="Tourner à droite" title="Tourner à droite">↻</button>
+                  <button type="button" data-pas3d="arriere" aria-label="Reculer" title="Reculer">↓</button>
+                </div>
                 <div class="me-3d-info" id="me-3d-info" hidden>
                   <b id="me-3d-nom"></b>
                   <button class="bouton-principal bouton-petit" type="button" id="me-3d-ouvrir"></button>
@@ -10432,7 +10470,28 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     pilier: { nom: "Pilier", famille: "repere", l: 0.5, p: 0.5 },
     reserve: { nom: "Réserve", famille: "repere", l: 1, p: 0.3 },
     "table-travail": { nom: "Table de travail (sur roues)", famille: "repere", l: 1.2, p: 0.6 },
+    ecran: { nom: "Écran (télé)", famille: "repere", l: 1.6, p: 0.08 },
+    porte: { nom: "Porte", famille: "repere", l: 0.9, p: 0.1 },
   };
+  // Le détail des cabines, en coordonnées du meuble (l'ouverture en bas à droite) : deux cabines d'une personne à gauche,
+  // un miroir pour chacune en face (à droite en sortant), la grande cabine au fond avec son miroir, un rideau à chaque
+  // cabine. Des segments [x1, y1, x2, y2] ; un miroir dit aussi de quel côté il regarde.
+  function plansCabines(l, p) {
+    const x0 = -l / 2, x1 = l / 2, y0 = -p / 2, y1 = p / 2;
+    const cw = Math.min(1.2, l * 0.4), pg = Math.min(1.6, p * 0.42), xc = x0 + cw, yg = y0 + pg, h2 = (y1 - yg) / 2;
+    const ow = Math.min(1, l * 0.4), ox2 = x1 - 0.1, ox1 = Math.max(xc + 0.05, ox2 - ow);
+    const cx = (xc + x1) / 2, rg = Math.max(0.2, Math.min(0.45, (x1 - xc) / 2 - 0.1));
+    const murs = [[x0, y0, x1, y0], [x0, y0, x0, y1], [x1, y0, x1, y1], [x0, y1, ox1, y1], [ox2, y1, x1, y1],
+      [x0, yg, cx - rg, yg], [cx + rg, yg, x1, yg], [x0, yg + h2, xc, yg + h2]];
+    const rideaux = [[cx - rg, yg, cx + rg, yg]], miroirs = [[-0.3, y0, 0.3, y0, 0, 1]];
+    [0, 1].forEach(k => {
+      const ya = yg + k * h2, cr = Math.max(0.3, Math.min(0.8, h2 - 0.2)), ym = Math.min(y1 - 0.3, ya + 0.1 + cr * 0.5 + 0.35);
+      murs.push([xc, ya, xc, ya + 0.1], [xc, ya + 0.1 + cr, xc, ya + h2]);
+      rideaux.push([xc, ya + 0.1, xc, ya + 0.1 + cr]);
+      miroirs.push([x1, ym - 0.25, x1, ym + 0.25, -1, 0]);
+    });
+    return { murs, rideaux, miroirs };
+  }
   const EQUIPEMENTS = [
     ["facing", "Facing", "F", "Un bras de face : un modèle, ou deux en superposition."],
     ["pressing", "Pressing", "P", "Une barre le long du mur : les cintres côte à côte."],
@@ -10811,6 +10870,13 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
         } });
       }
       if (t.porte === "niveaux") for (let k = 1; k < e.hauteurs && e.p - k * 0.26 > 0.1; k++) g.append(svgEl("rect", { class: "me-detail", x: -e.l / 2 + k * 0.13, y: -e.p / 2 + k * 0.13, width: e.l - k * 0.26, height: e.p - k * 0.26, ...NS_TRAIT }));
+      if (e.type === "cabines") {
+        const pl = plansCabines(e.l, e.p);
+        pl.murs.slice(5).forEach(([x1, y1, x2, y2]) => g.append(svgEl("line", { class: "me-cab-mur", x1, y1, x2, y2, ...NS_TRAIT })));
+        pl.rideaux.forEach(([x1, y1, x2, y2]) => g.append(svgEl("line", { class: "me-cab-rideau", x1, y1, x2, y2, ...NS_TRAIT })));
+        pl.miroirs.forEach(([x1, y1, x2, y2, nx, ny]) => g.append(svgEl("line", { class: "me-cab-miroir", x1: x1 + nx * 0.06, y1: y1 + ny * 0.06, x2: x2 + nx * 0.06, y2: y2 + ny * 0.06, ...NS_TRAIT })));
+      }
+      if (e.type === "porte") g.append(svgEl("path", { class: "me-porte-arc", d: `M${-e.l / 2} ${e.p / 2}V${e.p / 2 + e.l}A${e.l} ${e.l} 0 0 0 ${e.l / 2} ${e.p / 2}`, ...NS_TRAIT }));
       if (e.type === "cabines") {   // l'ouverture, en bas à droite (vue de face)
         const w = Math.min(1, e.l * 0.4), x2 = e.l / 2 - 0.1, x1 = x2 - w, y0 = e.p / 2, xc = (x1 + x2) / 2;
         g.append(svgEl("line", { class: "me-ouverture", x1, y1: y0, x2, y2: y0, ...NS_TRAIT }));
@@ -11371,6 +11437,7 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
         colonne.append(svgEl("path", { class: "mu-reflet", d: `M${x0 + 12} ${HAUT_MUR + 70}L${x0 + w * 0.55} ${HAUT_MUR + 30}M${x0 + 14} ${HAUT_MUR + 98}L${x0 + w * 0.72} ${HAUT_MUR + 46}` }));
         colonne.append(svgEl("text", { class: "mu-miroir-nom", x: x0 + w / 2, y: HAUT_MUR + H / 2, "font-size": 12 / K }, "Miroir"));
       } else {
+        if (u.miroir) colonne.append(svgEl("rect", { class: "mu-miroir-verre condamne", x: x0 + 5, y: HAUT_MUR + 18, width: w - 10, height: H - 36, rx: 3, fill: "url(#mu-verre)", "data-uv": i }));
         // Les crans, d'un seul trait par UV ; une case (5 crans) un peu plus marquée.
         let fins = "", cases = "";
         for (let c = 1; c < e.crans; c++) { const y = plancher - c * CRAN_CM, s = `M${x0 + 3} ${y}H${x0 + w - 3}`; if (c % CASE) fins += s; else cases += s; }
@@ -12469,8 +12536,12 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
   // Three.js n'est chargé qu'à l'ouverture de l'onglet. Le plan (x, y) devient le sol (x, z) ; la hauteur est y.
   const URL_THREE = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
   const URL_ORBITE = "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js";
-  let t3d = null, chargement3D = null, reconstruction3D = 0;
+  let t3d = null, chargement3D = null, reconstruction3D = 0, plein3D = false;
   const calques3D = { noms: true, photos: true };
+  // Les couleurs pour se repérer d'un coup d'œil : les murs noirs, les tables beiges, les portants gris.
+  const C3D = { plaque: "#24262b", rainure: "#383b42", montant: "#121316", etagere: "#5b616b", barre: "#b4bac3", plateau: "#e6d2aa", pied: "#cdb68d",
+    portant: "#8c929b", cloison: "#e4e7ec", rideau: "#3d4659", miroir: "#cfe6f3", porte: "#7b5b3b", cadre: "#4b3a28", ecran: "#0e0f12" };
+  const YEUX = 1.65, PAS_GRILLE = 0.25, CORPS = 0.25, VITESSE = 1.6, PENTE = 0.22;
   const chargerScript = src => new Promise((ok, ko) => { const s = document.createElement("script"); s.src = src; s.async = true; s.onload = ok; s.onerror = ko; document.head.append(s); });
   function charger3D() {
     if (!chargement3D) {
@@ -12498,6 +12569,8 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     const renderer = new T.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
     renderer.domElement.className = "me-3d-canvas";
+    renderer.domElement.tabIndex = 0;
+    renderer.domElement.setAttribute("aria-label", "Le magasin en 3D");
     zone.prepend(renderer.domElement);
     const scene = new T.Scene();
     scene.background = new T.Color("#e9edf3");
@@ -12508,9 +12581,10 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     const camera = new T.PerspectiveCamera(55, 1, 0.05, 300);
     const controls = new T.OrbitControls(camera, renderer.domElement);
     controls.screenSpacePanning = true;
-    controls.addEventListener("change", () => { if (!t3d.anim) rendu3D(); });
-    t3d = { T, renderer, scene, camera, controls, groupe: null, marques: null, mode: "ensemble", anim: null, mats: new Map(), textures: new Map(), choisi: null, posees: false };
-    // Toucher sans glisser : un meuble (on s'en approche) ou, en promenade, le sol (on y va).
+    controls.addEventListener("change", () => { if (!t3d.anim) { rendu3D(); dessinerMiniCarte(); } });
+    controls.addEventListener("end", () => { if (t3d.mode === "promenade") placerFleches(); });
+    t3d = { T, renderer, scene, camera, controls, groupe: null, fleches: null, mode: "ensemble", anim: null, mats: new Map(), textures: new Map(), choisi: null, posees: false, grille: null, formes: [] };
+    // Toucher sans glisser : une flèche ou le sol (on y va), un meuble (on s'en approche).
     let depart = null;
     renderer.domElement.addEventListener("pointerdown", ev => { depart = { x: ev.clientX, y: ev.clientY }; });
     renderer.domElement.addEventListener("pointerup", ev => {
@@ -12518,11 +12592,19 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
       depart = null;
       toucher3D(ev);
     });
+    // Au clavier, en promenade : ↑ ↓ avancer, reculer ; ← → tourner.
+    renderer.domElement.addEventListener("keydown", ev => {
+      if (!t3d || t3d.mode !== "promenade") return;
+      const d = { ArrowUp: 1, ArrowDown: -1 }[ev.key], r = { ArrowLeft: -1, ArrowRight: 1 }[ev.key];
+      if (!d && !r) return;
+      ev.preventDefault();
+      if (r) tourner3D(r * Math.PI / 6); else avancer3D(d);
+    });
     window.addEventListener("resize", () => { if (t3d && ongletMerch === "3d") { taille3D(); rendu3D(); } });
   }
   function taille3D() {
     const zone = $("me-3d-zone"), l = zone.clientWidth || 640;
-    const h = Math.round(Math.min(window.innerHeight * (window.matchMedia("(max-width: 599px)").matches ? 0.6 : 0.72), Math.max(320, l * 0.8)));
+    const h = plein3D ? Math.max(240, zone.clientHeight) : Math.round(Math.min(window.innerHeight * (window.matchMedia("(max-width: 599px)").matches ? 0.6 : 0.72), Math.max(320, l * 0.8)));
     t3d.renderer.setSize(l, h);
     t3d.camera.aspect = l / h;
     t3d.camera.updateProjectionMatrix();
@@ -12534,13 +12616,22 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     return t3d.mats.get(cle);
   }
   function boite(l, h, p, couleur, x, y, z, opts) {
-    const m = new t3d.T.Mesh(new t3d.T.BoxGeometry(l, h, p), Array.isArray(couleur) ? couleur : mat3D(couleur, opts));
+    const m = new t3d.T.Mesh(new t3d.T.BoxGeometry(l, h, p), Array.isArray(couleur) || (couleur && couleur.isMaterial) ? couleur : mat3D(couleur, opts));
     m.position.set(x, y, z);
     return m;
   }
   function cylindre(r, h, couleur, x, y, z, opts) {
     const m = new t3d.T.Mesh(new t3d.T.CylinderGeometry(r, r, h, 16), mat3D(couleur, opts));
     m.position.set(x, y, z);
+    return m;
+  }
+  // Une cloison (ou un miroir, un rideau) le long d'un segment du sol, en coordonnées du meuble.
+  function cloison3D(g, [x1, y1, x2, y2], h, ep, couleur, bas, opts) {
+    const l = Math.hypot(x2 - x1, y2 - y1);
+    if (l < 0.02) return null;
+    const m = boite(l, h, ep, couleur, (x1 + x2) / 2, (bas || 0) + h / 2, (y1 + y2) / 2, opts);
+    m.rotation.y = -Math.atan2(y2 - y1, x2 - x1);
+    g.add(m);
     return m;
   }
   // La photo d'une pièce, en texture (chargée une fois) ; à défaut, sa couleur.
@@ -12555,7 +12646,6 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
   }
   const couleur3D = a => (a && couleurPiece(pieces[a.p])) || null;
   const GRIS_VETEMENTS = ["#9aa3b2", "#aeb5c1", "#8a93a5", "#b8bec9"];
-  // Un vêtement de face (facing) : un panneau, avec la photo de la pièce s'il y en a une.
   function vetementFace(a, l, h, x, y, z) {
     const coul = couleur3D(a) || GRIS_VETEMENTS[0], tex = a ? texturePhoto(pieces[a.p]) : null;
     const cote = mat3D(coul);
@@ -12568,41 +12658,50 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     const w = Math.ceil(ctx.measureText(texte).width) + 28;
     c.width = w; c.height = f + 22;
     ctx.font = `700 ${f}px "Source Sans 3", system-ui, sans-serif`;
-    ctx.fillStyle = "rgba(255,255,255,.88)";
-    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(0, 0, w, f + 22, 14) : ctx.rect(0, 0, w, f + 22); ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,.9)";
+    ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(0, 0, w, f + 22, 14); else ctx.rect(0, 0, w, f + 22); ctx.fill();
     ctx.fillStyle = "#172033";
     ctx.textBaseline = "middle";
     ctx.fillText(texte, 14, (f + 22) / 2 + 1);
-    const tex = new t3d.T.CanvasTexture(c);
-    const s = new t3d.T.Sprite(new t3d.T.SpriteMaterial({ map: tex, depthTest: false }));
+    const s = new t3d.T.Sprite(new t3d.T.SpriteMaterial({ map: new t3d.T.CanvasTexture(c), depthTest: false }));
     s.renderOrder = 10;
-    const hauteur = 0.32;
-    s.scale.set(hauteur * w / (f + 22), hauteur, 1);
+    s.scale.set(0.32 * w / (f + 22), 0.32, 1);
     return s;
   }
-  // Les plaques à crans : une rainure tous les 5 cm.
-  function texturePlaque(crans) {
+  // Les plaques noires à crans : une rainure tous les 5 cm.
+  function matPlaque(crans) {
     const cle = "plaque" + crans;
-    if (!t3d.textures.has(cle)) {
+    if (!t3d.mats.has(cle)) {
       const c = document.createElement("canvas");
       c.width = 32; c.height = 16;
       const ctx = c.getContext("2d");
-      ctx.fillStyle = "#f4f5f7"; ctx.fillRect(0, 0, 32, 16);
-      ctx.fillStyle = "#d4d8df"; ctx.fillRect(0, 14, 32, 2);
+      ctx.fillStyle = C3D.plaque; ctx.fillRect(0, 0, 32, 16);
+      ctx.fillStyle = C3D.rainure; ctx.fillRect(0, 14, 32, 2);
       const tex = new t3d.T.CanvasTexture(c);
       tex.wrapS = tex.wrapT = t3d.T.RepeatWrapping;
       tex.repeat.set(1, crans);
-      t3d.textures.set(cle, tex);
+      t3d.mats.set(cle, new t3d.T.MeshLambertMaterial({ map: tex }));
     }
-    return t3d.textures.get(cle);
-  }
-  function matPlaque(crans) {
-    const cle = "plaque-mat" + crans;
-    if (!t3d.mats.has(cle)) t3d.mats.set(cle, new t3d.T.MeshLambertMaterial({ map: texturePlaque(crans) }));
     return t3d.mats.get(cle);
   }
+  function matVerre() {
+    if (!t3d.mats.has("verre")) t3d.mats.set("verre", new t3d.T.MeshPhongMaterial({ color: C3D.miroir, specular: 0xffffff, shininess: 90, emissive: 0x4f6f84, emissiveIntensity: 0.35 }));
+    return t3d.mats.get("verre");
+  }
+  // Un rideau de cabine : des plis, d'un bout à l'autre du segment.
+  function rideau3D(g, [x1, y1, x2, y2]) {
+    const l = Math.hypot(x2 - x1, y2 - y1), n = Math.max(3, Math.round(l / 0.12)), a = Math.atan2(y2 - y1, x2 - x1);
+    const nx = -Math.sin(a), ny = Math.cos(a);
+    for (let k = 0; k < n; k++) {
+      const t = (k + 0.5) / n, z = (k % 2 ? 0.03 : -0.03);
+      const m = boite(l / n + 0.02, 1.85, 0.025, C3D.rideau, x1 + (x2 - x1) * t + nx * z, 0.15 + 0.925, y1 + (y2 - y1) * t + ny * z);
+      m.rotation.y = -a + (k % 2 ? 0.35 : -0.35);
+      g.add(m);
+    }
+    cloison3D(g, [x1, y1, x2, y2], 0.03, 0.03, C3D.barre, 2.05);
+  }
   // ----- chaque meuble en volume -----
-  function objet3D(e, plan) {
+  function objet3D(e) {
     const T = t3d.T, t = TYPES_MERCH[e.type], g = new T.Group();
     g.position.set(e.x, 0, e.y);
     g.rotation.y = -e.rot * Math.PI / 180;
@@ -12612,18 +12711,18 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
       haut = H;
       e.uvs.forEach((u, i) => {
         const x0 = -e.l / 2 + i * w, xc = x0 + w / 2;
-        if (estMiroir(u)) { g.add(boite(w - 0.02, H - 0.3, 0.04, "#cfe6f3", xc, H / 2, -0.15, { emissive: "#6f8fa3", emissiveIntensity: 0.25 })); return; }
-        const plaque = new T.Mesh(new T.BoxGeometry(w - 0.01, H, 0.06), matPlaque(e.crans));
-        plaque.position.set(xc, H / 2, -0.17);
-        g.add(plaque);
-        g.add(boite(0.025, H, 0.07, "#b8c0cc", x0, H / 2, -0.16));
+        if (estMiroir(u)) { g.add(boite(w - 0.02, H - 0.3, 0.04, matVerre(), xc, H / 2, -0.15)); g.add(boite(0.025, H, 0.07, C3D.montant, x0, H / 2, -0.16)); return; }
+        // Un miroir condamné reste visible derrière ses étagères, pour se repérer.
+        g.add(new T.Mesh(new T.BoxGeometry(w - 0.01, H, 0.06), u.miroir ? matVerre() : matPlaque(e.crans)));
+        g.children[g.children.length - 1].position.set(xc, H / 2, -0.17);
+        g.add(boite(0.025, H, 0.07, C3D.montant, x0, H / 2, -0.16));
         u.eq.forEach(q => {
           const y = q.cran * CRAN_CM / 100, coul = pos => couleur3D(q.articles.find(a => a.pos === pos));
           if (q.type === "etagere") {
-            g.add(boite(w - 0.03, 0.02, 0.34, "#ffffff", xc, y, 0.03));
+            g.add(boite(w - 0.03, 0.022, 0.34, C3D.etagere, xc, y, 0.03));
             if (q.refs) [0, 1].forEach(k => g.add(boite(w / 2 - 0.05, 0.18, 0.27, coul(q.refs === 2 ? String(k + 1) : "1") || GRIS_VETEMENTS[k + 1], x0 + w * (k ? 0.75 : 0.25), y + 0.1, 0.04)));
           } else if (q.type === "pressing") {
-            const barre = cylindre(0.012, w - 0.04, "#7b8494", xc, y, 0.1);
+            const barre = cylindre(0.012, w - 0.04, C3D.barre, xc, y, 0.1);
             barre.rotation.z = Math.PI / 2;
             g.add(barre);
             const n = Math.max(3, Math.round(w / 0.09));
@@ -12632,7 +12731,7 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
               g.add(boite(0.035, 0.74, 0.42, couleur3D(a) || GRIS_VETEMENTS[k % 4], x0 + 0.04 + (w - 0.08) * (k + 0.5) / n, y - 0.4, 0.1));
             }
           } else {
-            const bras = cylindre(0.01, 0.42, "#7b8494", xc, y, 0.06);
+            const bras = cylindre(0.01, 0.42, C3D.barre, xc, y, 0.06);
             bras.rotation.x = Math.PI / 2;
             g.add(bras);
             if (q.type === "coudee") {
@@ -12645,46 +12744,46 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
           }
         });
       });
-      g.add(boite(0.025, H, 0.07, "#b8c0cc", e.l / 2, H / 2, -0.16));
+      g.add(boite(0.025, H, 0.07, C3D.montant, e.l / 2, H / 2, -0.16));
     } else if (t.porte === "niveaux") {
       const h = e.type === "grande-table" ? 0.78 : 0.72;
       haut = h + 0.2;
-      g.add(boite(e.l - 0.12, h - 0.06, e.p - 0.12, "#c9b089", 0, (h - 0.06) / 2, 0));
-      g.add(boite(e.l, 0.06, e.p, "#e6d3b0", 0, h - 0.03, 0));
-      for (let k = 1; k < e.hauteurs; k++) g.add(boite(e.l + 0.12 * k, 0.04, e.p + 0.1 * k, "#dcc6a0", 0, h - 0.24 * k, 0));
+      g.add(boite(e.l - 0.12, h - 0.06, e.p - 0.12, C3D.pied, 0, (h - 0.06) / 2, 0));
+      g.add(boite(e.l, 0.06, e.p, C3D.plateau, 0, h - 0.03, 0));
+      for (let k = 1; k < e.hauteurs; k++) g.add(boite(e.l + 0.12 * k, 0.04, e.p + 0.1 * k, C3D.plateau, 0, h - 0.24 * k, 0));
       const n = e.piles, lp = Math.min((e.l - 0.08) / n * 0.82, 0.34), pp = Math.min(e.p * 0.4, 0.34);
       ["a", "b"].forEach((r, ri) => { for (let k = 1; k <= n; k++) {
         const a = e.niveaux[0].articles.find(x => x.pos === r + k);
-        if (!a) continue;
-        g.add(boite(lp, 0.16, pp, couleur3D(a) || GRIS_VETEMENTS[1], -e.l / 2 + 0.04 + (e.l - 0.08) * (k - 0.5) / n, h + 0.08, (ri ? 1 : -1) * e.p / 4));
+        if (a) g.add(boite(lp, 0.16, pp, couleur3D(a) || GRIS_VETEMENTS[1], -e.l / 2 + 0.04 + (e.l - 0.08) * (k - 0.5) / n, h + 0.08, (ri ? 1 : -1) * e.p / 4));
       } });
     } else if (t.famille === "portant") {
-      const arts = e.articles || [], hRail = 1.45;
+      // À hauteur d'une grande table : ils ne cachent plus le magasin.
+      const arts = e.articles || [], hRail = 0.95, long = 0.68;
       haut = hRail + 0.1;
       if (e.type === "tourniquet") {
-        g.add(cylindre(0.02, hRail, "#7b8494", 0, hRail / 2, 0));
-        const anneau = new T.Mesh(new T.TorusGeometry(e.l / 2 * 0.85, 0.012, 8, 40), mat3D("#7b8494"));
+        g.add(cylindre(0.02, hRail, C3D.portant, 0, hRail / 2, 0));
+        const anneau = new T.Mesh(new T.TorusGeometry(e.l / 2 * 0.85, 0.012, 8, 40), mat3D(C3D.portant));
         anneau.rotation.x = Math.PI / 2;
         anneau.position.y = hRail;
         g.add(anneau);
         const n = Math.max(8, Math.round(e.l * Math.PI * 7));
         for (let k = 0; k < n; k++) {
           const ang = k / n * Math.PI * 2, r = e.l / 2 * 0.85, a = arts.length ? arts[Math.floor(k * arts.length / n)] : null;
-          const v = boite(0.035, 0.8, 0.4, couleur3D(a) || GRIS_VETEMENTS[k % 4], Math.cos(ang) * r, hRail - 0.43, Math.sin(ang) * r);
+          const v = boite(0.035, long, 0.38, couleur3D(a) || GRIS_VETEMENTS[k % 4], Math.cos(ang) * r, hRail - long / 2 - 0.03, Math.sin(ang) * r);
           v.rotation.y = -ang;
           g.add(v);
         }
       } else {
         const rails = e.p > 1 ? [-e.p / 4, e.p / 4] : [0];
-        [-1, 1].forEach(s => g.add(boite(0.04, hRail, Math.max(0.4, e.p * 0.8), "#8a93a5", s * (e.l / 2 - 0.03), hRail / 2, 0)));
+        [-1, 1].forEach(s => g.add(boite(0.04, hRail, Math.max(0.4, e.p * 0.8), C3D.portant, s * (e.l / 2 - 0.03), hRail / 2, 0)));
         rails.forEach((z, ri) => {
-          const rail = cylindre(0.014, e.l - 0.06, "#7b8494", 0, hRail, z);
+          const rail = cylindre(0.014, e.l - 0.06, C3D.portant, 0, hRail, z);
           rail.rotation.z = Math.PI / 2;
           g.add(rail);
           const n = Math.max(6, Math.floor((e.l - 0.12) / 0.07));
           for (let k = 0; k < n; k++) {
             const a = arts.length ? arts[Math.floor((k + ri * n) * arts.length / (n * rails.length))] : null;
-            g.add(boite(0.035, 0.82, 0.44, couleur3D(a) || GRIS_VETEMENTS[k % 4], -e.l / 2 + 0.06 + (e.l - 0.12) * (k + 0.5) / n, hRail - 0.44, z));
+            g.add(boite(0.035, long, 0.42, couleur3D(a) || GRIS_VETEMENTS[k % 4], -e.l / 2 + 0.06 + (e.l - 0.12) * (k + 0.5) / n, hRail - long / 2 - 0.03, z));
           }
         });
       }
@@ -12700,10 +12799,34 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
       haut = h + 0.1;
       if (t.rond) { g.add(cylindre(0.03, h, "#7c5aa6", 0, h / 2, 0)); g.add(cylindre(e.l / 2, 0.05, "#c9b6dc", 0, h, 0)); }
       else g.add(boite(e.l, h, e.p, e.type === "cube" ? "#e9e3f3" : "#c9b6dc", 0, h / 2, 0));
-      const arts = e.articles || [];
-      arts.slice(0, 6).forEach((a, k) => g.add(boite(Math.min(0.14, e.l / 4), 0.1, Math.min(0.14, e.p / 3), couleur3D(a) || GRIS_VETEMENTS[k % 4], -e.l / 3 + (k % 3) * e.l / 3, h + 0.05, k < 3 ? -e.p / 5 : e.p / 5)));
+      (e.articles || []).slice(0, 6).forEach((a, k) => g.add(boite(Math.min(0.14, e.l / 4), 0.1, Math.min(0.14, e.p / 3), couleur3D(a) || GRIS_VETEMENTS[k % 4], -e.l / 3 + (k % 3) * e.l / 3, h + 0.05, k < 3 ? -e.p / 5 : e.p / 5)));
+    } else if (e.type === "cabines") {
+      // Deux cabines à gauche (un miroir pour chacune, en face en sortant), la grande au fond avec son miroir ; des rideaux.
+      const pl = plansCabines(e.l, e.p);
+      haut = 2.3;
+      g.add(boite(e.l, 0.02, e.p, "#f1f2f5", 0, 0.01, 0));
+      pl.murs.forEach(s => cloison3D(g, s, 2.2, 0.05, C3D.cloison));
+      pl.rideaux.forEach(s => rideau3D(g, s));
+      pl.miroirs.forEach(([x1, y1, x2, y2, nx, ny]) => cloison3D(g, [x1 + nx * 0.035, y1 + ny * 0.035, x2 + nx * 0.035, y2 + ny * 0.035], 1.6, 0.02, matVerre(), 0.3));
+    } else if (e.type === "ecran") {
+      // L'écran derrière la caisse : il montre le fond du magasin, comme la caméra.
+      const h = Math.min(1.2, Math.max(0.5, e.l / 3.8)), bas = 1.45;
+      haut = bas + h + 0.1;
+      g.add(boite(e.l, h + 0.06, 0.06, C3D.ecran, 0, bas + h / 2, 0));
+      const ecran = new T.Mesh(new T.PlaneGeometry(e.l - 0.08, h - 0.04), ecranMateriau());
+      ecran.position.set(0, bas + h / 2, 0.035);
+      ecran.userData.ecran = true;
+      g.add(ecran);
+      g.userData.ecran = { l: e.l - 0.08, h: h - 0.04 };
+    } else if (e.type === "porte") {
+      haut = 2.2;
+      cloison3D(g, [-e.l / 2, 0, e.l / 2, 0], 2.1, 0.05, C3D.porte);
+      cloison3D(g, [-e.l / 2 - 0.05, 0, -e.l / 2, 0], 2.15, 0.08, C3D.cadre);
+      cloison3D(g, [e.l / 2, 0, e.l / 2 + 0.05, 0], 2.15, 0.08, C3D.cadre);
+      cloison3D(g, [-e.l / 2 - 0.05, 0, e.l / 2 + 0.05, 0], 0.06, 0.08, C3D.cadre, 2.1);
+      g.add(boite(0.1, 0.025, 0.06, C3D.barre, e.l / 2 - 0.12, 1.0, 0.05));
     } else {
-      const reperes = { caisse: [1.0, "#d9d2ea"], cabines: [2.2, "#dfe3ea"], pilier: [2.6, "#c3c9d3"], reserve: [2.2, "#d3d8e0"], "table-travail": [0.9, "#ece4d4"], vitrine: [2.3, "#cfe8f2"], entree: [0, null] };
+      const reperes = { caisse: [1.0, "#d9d2ea"], pilier: [2.6, "#c3c9d3"], reserve: [2.2, "#d3d8e0"], "table-travail": [0.9, "#ece4d4"], vitrine: [2.3, "#cfe8f2"], entree: [0, null] };
       const [h, c] = reperes[e.type] || [1, "#dfe3ea"];
       haut = h + 0.1;
       if (e.type === "entree") {
@@ -12716,14 +12839,35 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
       } else if (e.type === "vitrine") {
         g.add(boite(e.l, h, e.p, c, 0, h / 2, 0, { transparent: true, opacity: 0.35 }));
         (e.articles || []).slice(0, 2).forEach((a, k) => g.add(cylindre(0.16, 0.6, couleur3D(a) || "#e9e6e0", (k ? 0.4 : -0.4) * Math.min(1, e.l / 2), 1.1, 0)));
-      } else {
-        g.add(boite(e.l, h, e.p, c, 0, h / 2, 0));
-        if (e.type === "cabines") g.add(boite(Math.min(1, e.l * 0.4), h - 0.3, 0.04, "#8a93a5", e.l / 2 - 0.1 - Math.min(1, e.l * 0.4) / 2, (h - 0.3) / 2, e.p / 2 + 0.01));
-      }
+      } else g.add(boite(e.l, h, e.p, c, 0, h / 2, 0));
     }
     g.traverse(o => { o.userData.id = e.id; });
     g.userData.haut = haut;
     return g;
+  }
+  // L'écran : une image du fond du magasin, refaite à chaque changement du plan.
+  function ecranMateriau() {
+    if (!t3d.ecranRT) {
+      t3d.ecranRT = new t3d.T.WebGLRenderTarget(1024, 288);
+      t3d.mats.set("ecran", new t3d.T.MeshBasicMaterial({ map: t3d.ecranRT.texture }));
+    }
+    return t3d.mats.get("ecran");
+  }
+  function filmerFond(plan) {
+    const ecran = t3d.groupe.children.find(o => o.userData && o.userData.ecran && o.isGroup);
+    if (!ecran || !t3d.ecranRT) return;
+    const T = t3d.T, H = Math.min(plan.homme, plan.largeur), D = plan.profondeur, { l, h } = ecran.userData.ecran;
+    const cam = new T.PerspectiveCamera(42, l / h, 0.1, 200);
+    cam.position.set(H * 0.55, 2.7, D - 0.4);
+    cam.lookAt(H * 0.45, 0.6, D * 0.12);
+    const caches = [];
+    t3d.groupe.traverse(o => { if ((o.userData && o.userData.ecran && o.isMesh) || o.isSprite) { caches.push(o); o.visible = false; } });
+    if (t3d.fleches) t3d.fleches.visible = false;
+    t3d.renderer.setRenderTarget(t3d.ecranRT);
+    t3d.renderer.render(t3d.scene, cam);
+    t3d.renderer.setRenderTarget(null);
+    caches.forEach(o => { o.visible = true; });
+    if (t3d.fleches) t3d.fleches.visible = true;
   }
   // Libérer ce qui n'est plus affiché (les matières partagées et les photos restent en réserve).
   function jeter3D(o) {
@@ -12732,6 +12876,16 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
       if (x.geometry) x.geometry.dispose();
       if (x.isSprite) { x.material.map.dispose(); x.material.dispose(); }
       else if (Array.isArray(x.material)) x.material.forEach(m => { if (!partagees.has(m)) m.dispose(); });
+    });
+  }
+  // Les contours des meubles, vus de dessus : pour la mini-carte et la grille de marche.
+  function formesDuPlan(plan) {
+    return elementsDuPlan(plan.id).map(e => {
+      const t = TYPES_MERCH[e.type];
+      const couleur = t.porte === "uv" ? "#24262b" : t.porte === "niveaux" ? "#e0c999" : t.famille === "portant" ? "#9aa0a9" : e.type === "entree" ? null : "#cfd4dc";
+      if (t.rond) return { e, couleur, cercle: [e.x, e.y, e.l / 2] };
+      const p = t.porte === "uv" ? 0.4 : e.p;
+      return { e, couleur, pts: [[-e.l / 2, -p / 2], [e.l / 2, -p / 2], [e.l / 2, p / 2], [-e.l / 2, p / 2]].map(([a, b]) => versPlan(e, a, b)) };
     });
   }
   function construireScene3D(cadrer) {
@@ -12755,17 +12909,17 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
       const femme = new T.Mesh(new T.PlaneGeometry(L - H, D), mat3D("#dfe3e9"));
       femme.rotation.x = -Math.PI / 2;
       femme.position.set(H + (L - H) / 2, 0, D / 2);
-      femme.userData.sol = true;
       g.add(femme);
     }
     [[L / 2, 0, L, 0.08], [L / 2, D, L, 0.08], [0, D / 2, 0.08, D], [L, D / 2, 0.08, D]].forEach(([x, z, l, p]) => g.add(boite(l, 0.12, p, "#5b6478", x, 0.06, z)));
     const els = elementsDuPlan(plan.id), alertes = new Set();
     // Les meubles avec une alerte (une réf. qui n'a pas bougé, une règle à revoir) : une pastille rouge au-dessus.
     try { const al = alertesDuPlan(plan); al.immobiles.forEach(p => alertes.add(p.e.id)); al.regles.filter(r => !r.exception).forEach(r => alertes.add(r.e.id)); } catch (_) { /* rien */ }
+    const noms = calques3D.noms && t3d.mode === "ensemble";
     els.forEach(e => {
-      const o = objet3D(e, plan);
+      const o = objet3D(e);
       g.add(o);
-      if (calques3D.noms && t3d.mode === "ensemble" && TYPES_MERCH[e.type].famille !== "repere" || (calques3D.noms && t3d.mode === "ensemble" && ["caisse", "cabines", "entree"].includes(e.type))) {
+      if (noms && (TYPES_MERCH[e.type].famille !== "repere" || ["caisse", "cabines", "entree", "ecran", "porte"].includes(e.type))) {
         const s = etiquette3D(nomMeuble(e).slice(0, 30));
         s.position.set(e.x, o.userData.haut + 0.32, e.y);
         s.userData.id = e.id;
@@ -12773,21 +12927,220 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
       }
       if (alertes.has(e.id)) {
         const p = new T.Mesh(new T.SphereGeometry(0.11, 14, 10), mat3D("#d62828", { emissive: "#7a0d0d" }));
-        p.position.set(e.x, o.userData.haut + (calques3D.noms && t3d.mode === "ensemble" ? 0.62 : 0.2), e.y);
+        p.position.set(e.x, o.userData.haut + (noms ? 0.62 : 0.2), e.y);
         p.userData.id = e.id;
         g.add(p);
       }
     });
     t3d.scene.add(g);
+    t3d.formes = formesDuPlan(plan);
+    t3d.grille = grilleMarche(plan);
+    filmerFond(plan);
     if (cadrer || !t3d.posees) { t3d.posees = true; vue3D(t3d.mode, true); }
-    else rendu3D();
+    else { if (t3d.mode === "promenade") placerFleches(); rendu3D(); dessinerMiniCarte(); }
+  }
+
+  // ----- se promener sans traverser les meubles : une grille du sol (25 cm), libre ou prise -----
+  function grilleMarche(plan) {
+    const H = Math.min(plan.homme, plan.largeur), D = plan.profondeur, nx = Math.ceil(H / PAS_GRILLE), nz = Math.ceil(D / PAS_GRILLE);
+    const libre = new Uint8Array(nx * nz).fill(1);
+    for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
+      const x = (i + 0.5) * PAS_GRILLE, z = (j + 0.5) * PAS_GRILLE;
+      if (x < CORPS || z < CORPS || x > H - CORPS || z > D - CORPS) libre[j * nx + i] = 0;
+    }
+    elementsDuPlan(plan.id).forEach(e => {
+      if (e.type === "entree" || e.type === "ecran") return;
+      const t = TYPES_MERCH[e.type], a = e.rot * Math.PI / 180, c = Math.cos(a), s = Math.sin(a);
+      const p = t.porte === "uv" ? 0.4 : e.p, avant = t.porte === "uv" ? 0.35 : 0;   // devant un mur : les vêtements qui dépassent
+      const r = Math.hypot(e.l, p) / 2 + avant + CORPS + PAS_GRILLE;
+      const i0 = Math.max(0, Math.floor((e.x - r) / PAS_GRILLE)), i1 = Math.min(nx - 1, Math.ceil((e.x + r) / PAS_GRILLE));
+      const j0 = Math.max(0, Math.floor((e.y - r) / PAS_GRILLE)), j1 = Math.min(nz - 1, Math.ceil((e.y + r) / PAS_GRILLE));
+      for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+        const dx = (i + 0.5) * PAS_GRILLE - e.x, dz = (j + 0.5) * PAS_GRILLE - e.y;
+        const lx = dx * c + dz * s, ly = -dx * s + dz * c;
+        const dedans = t.rond ? Math.hypot(lx, ly) <= e.l / 2 + CORPS : Math.abs(lx) <= e.l / 2 + CORPS && ly >= -p / 2 - CORPS && ly <= p / 2 + avant + CORPS;
+        if (dedans) libre[j * nx + i] = 0;
+      }
+    });
+    return { nx, nz, libre, H, D };
+  }
+  const celluleDe = (g, x, z) => [Math.min(g.nx - 1, Math.max(0, Math.floor(x / PAS_GRILLE))), Math.min(g.nz - 1, Math.max(0, Math.floor(z / PAS_GRILLE)))];
+  const estLibre3D = (g, x, z) => { if (x < 0 || z < 0 || x > g.H || z > g.D) return false; const [i, j] = celluleDe(g, x, z); return !!g.libre[j * g.nx + i]; };
+  const centreCellule = (i, j) => [(i + 0.5) * PAS_GRILLE, (j + 0.5) * PAS_GRILLE];
+  function celluleLibreProche(g, i0, j0) {
+    if (g.libre[j0 * g.nx + i0]) return [i0, j0];
+    for (let r = 1; r < 40; r++) {
+      let mieux = null, dMin = Infinity;
+      for (let j = j0 - r; j <= j0 + r; j++) for (let i = i0 - r; i <= i0 + r; i++) {
+        if (i < 0 || j < 0 || i >= g.nx || j >= g.nz || (Math.abs(i - i0) !== r && Math.abs(j - j0) !== r) || !g.libre[j * g.nx + i]) continue;
+        const d = Math.hypot(i - i0, j - j0);
+        if (d < dMin) { dMin = d; mieux = [i, j]; }
+      }
+      if (mieux) return mieux;
+    }
+    return null;
+  }
+  function segmentLibre(g, [x1, z1], [x2, z2]) {
+    const n = Math.max(1, Math.ceil(Math.hypot(x2 - x1, z2 - z1) / 0.1));
+    for (let k = 0; k <= n; k++) if (!estLibre3D(g, x1 + (x2 - x1) * k / n, z1 + (z2 - z1) * k / n)) return false;
+    return true;
+  }
+  // Le chemin le plus court d'un point à un autre, en contournant les meubles (A*), puis lissé en lignes droites.
+  function chemin3D(g, depart, arrivee) {
+    const d = celluleLibreProche(g, ...celluleDe(g, ...depart)), a = celluleLibreProche(g, ...celluleDe(g, ...arrivee));
+    if (!d || !a) return null;
+    const n = g.nx * g.nz, cout = new Float32Array(n).fill(Infinity), venu = new Int32Array(n).fill(-1), ferme = new Uint8Array(n);
+    const id = (i, j) => j * g.nx + i, cible = id(...a), h = k => Math.hypot(k % g.nx - a[0], Math.floor(k / g.nx) - a[1]);
+    const tas = [];
+    const pousser = (k, f) => { tas.push([f, k]); let c = tas.length - 1; while (c > 0) { const p = (c - 1) >> 1; if (tas[p][0] <= tas[c][0]) break; [tas[p], tas[c]] = [tas[c], tas[p]]; c = p; } };
+    const tirer = () => { const r = tas[0], f = tas.pop(); if (tas.length) { tas[0] = f; let c = 0; for (;;) { const l = 2 * c + 1, rr = l + 1; let m = c; if (l < tas.length && tas[l][0] < tas[m][0]) m = l; if (rr < tas.length && tas[rr][0] < tas[m][0]) m = rr; if (m === c) break; [tas[m], tas[c]] = [tas[c], tas[m]]; c = m; } } return r; };
+    const k0 = id(...d);
+    cout[k0] = 0;
+    pousser(k0, h(k0));
+    while (tas.length) {
+      const [, k] = tirer();
+      if (k === cible) break;
+      if (ferme[k]) continue;
+      ferme[k] = 1;
+      const i = k % g.nx, j = Math.floor(k / g.nx);
+      for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) {
+        if (!di && !dj) continue;
+        const ni = i + di, nj = j + dj;
+        if (ni < 0 || nj < 0 || ni >= g.nx || nj >= g.nz) continue;
+        const kk = id(ni, nj);
+        if (!g.libre[kk] || ferme[kk] || (di && dj && (!g.libre[id(i + di, j)] || !g.libre[id(i, j + dj)]))) continue;
+        const c = cout[k] + (di && dj ? Math.SQRT2 : 1);
+        if (c < cout[kk]) { cout[kk] = c; venu[kk] = k; pousser(kk, c + h(kk)); }
+      }
+    }
+    if (cible !== k0 && venu[cible] < 0) return null;
+    const cases = [];
+    for (let k = cible; k >= 0; k = k === k0 ? -1 : venu[k]) cases.unshift(centreCellule(k % g.nx, Math.floor(k / g.nx)));
+    // Lisser : garder les seuls points où la ligne droite ne passe plus.
+    const pts = [depart];
+    let base = depart;
+    for (let k = 1; k < cases.length; k++) if (!segmentLibre(g, base, cases[k])) { pts.push(cases[k - 1]); base = cases[k - 1]; }
+    pts.push(segmentLibre(g, base, arrivee) && estLibre3D(g, ...arrivee) ? arrivee : cases[cases.length - 1]);
+    return pts;
+  }
+  function departPromenade(g, x0, z0) {
+    let mieux = null, score = -Infinity;
+    for (let j = 0; j < g.nz; j++) for (let i = 0; i < g.nx; i++) {
+      if (!g.libre[j * g.nx + i]) continue;
+      const [x, z] = centreCellule(i, j), d = Math.hypot(x - x0, z - z0);
+      if (d > 4) continue;
+      let vue = 0;
+      while (vue < 12 && estLibre3D(g, x, z - vue - 0.25)) vue += 0.25;
+      if (vue - d * 0.8 > score) { score = vue - d * 0.8; mieux = [x, z]; }
+    }
+    return mieux;
+  }
+  // Marcher le long d'un chemin, en regardant devant soi ; à la fin, regarder un point (un meuble) s'il y en a un.
+  function marcher3D(points, regard) {
+    const T = t3d.T, c = t3d.camera, ctl = t3d.controls;
+    if (t3d.anim) cancelAnimationFrame(t3d.anim.raf);
+    const pts = points.map(([x, z]) => new T.Vector3(x, YEUX, z)), longueurs = [];
+    let total = 0;
+    for (let k = 1; k < pts.length; k++) { const d = pts[k].distanceTo(pts[k - 1]); longueurs.push(d); total += d; }
+    const fin = regard ? new T.Vector3(...regard) : null;
+    let dir = ctl.target.clone().sub(c.position);
+    if (dir.lengthSq() < 1e-8) dir.set(0, 0, -1);
+    dir.normalize();
+    if (t3d.fleches) t3d.fleches.visible = false;
+    $("me-3d-info").hidden = !regard;
+    const duree = Math.max(fin ? 600 : 350, total / VITESSE * 1000), t0 = performance.now();
+    const pas = now => {
+      const k = Math.min(1, (now - t0) / duree), s = adoucir(k) * total;
+      let reste = s, i = 0;
+      while (i < longueurs.length && reste > longueurs[i]) { reste -= longueurs[i]; i++; }
+      const pos = i >= longueurs.length ? pts[pts.length - 1].clone() : pts[i].clone().lerp(pts[i + 1], longueurs[i] ? reste / longueurs[i] : 1);
+      let voulu = fin && (k > 0.6 || total < 0.3) ? fin.clone().sub(pos) : i < longueurs.length ? pts[i + 1].clone().sub(pts[i]) : null;
+      if (voulu && !(fin && (k > 0.6 || total < 0.3))) voulu.y = -PENTE * Math.hypot(voulu.x, voulu.z);
+      if (voulu && voulu.lengthSq() > 1e-6) { voulu.normalize(); dir.lerp(voulu, k >= 1 ? 1 : 0.12).normalize(); }
+      c.position.copy(pos);
+      ctl.target.copy(pos).add(dir.clone().multiplyScalar(0.1));
+      c.lookAt(ctl.target);
+      rendu3D();
+      dessinerMiniCarte();
+      if (k < 1) t3d.anim = { raf: requestAnimationFrame(pas) };
+      else { t3d.anim = null; ctl.update(); placerFleches(); rendu3D(); dessinerMiniCarte(); }
+    };
+    t3d.anim = { raf: requestAnimationFrame(pas) };
+  }
+  function regardActuel() { const d = t3d.controls.target.clone().sub(t3d.camera.position); d.y = 0; return d.lengthSq() < 1e-8 ? new t3d.T.Vector3(0, 0, -1) : d.normalize(); }
+  function tourner3D(angle) {
+    const p = t3d.camera.position, d = regardActuel(), a = Math.atan2(d.x, -d.z) + angle;
+    marcher3D([[p.x, p.z]], [p.x + Math.sin(a) * 5, YEUX - 5 * PENTE, p.z - Math.cos(a) * 5]);
+    $("me-3d-info").hidden = true;
+  }
+  function avancer3D(sens) {
+    const p = t3d.camera.position, d = regardActuel().multiplyScalar(sens);
+    let pas = 0;
+    while (pas < 1.2 && estLibre3D(t3d.grille, p.x + d.x * (pas + 0.25), p.z + d.z * (pas + 0.25))) pas += 0.25;
+    if (pas < 0.25) return;
+    const dir = regardActuel();
+    marcher3D([[p.x, p.z], [p.x + d.x * pas, p.z + d.z * pas]], [p.x + d.x * pas + dir.x * 5, YEUX - 5 * PENTE, p.z + d.z * pas + dir.z * 5]);
+    $("me-3d-info").hidden = true;
+  }
+  // Les flèches au sol, autour de soi : là où on peut aller (au moins un mètre de libre). On les touche pour avancer.
+  function placerFleches() {
+    if (t3d.fleches) { t3d.scene.remove(t3d.fleches); t3d.fleches.traverse(o => { if (o.geometry) o.geometry.dispose(); }); t3d.fleches = null; }
+    if (t3d.mode !== "promenade" || !t3d.grille) return;
+    const T = t3d.T, g = new T.Group(), p = t3d.camera.position;
+    if (!t3d.mats.has("fleche")) t3d.mats.set("fleche", new T.MeshBasicMaterial({ color: "#e07a35", transparent: true, opacity: 0.85 }));
+    const forme = new T.Shape();
+    forme.moveTo(0, 0.3); forme.lineTo(0.26, 0.04); forme.lineTo(0.1, 0.04); forme.lineTo(0.1, -0.24); forme.lineTo(-0.1, -0.24); forme.lineTo(-0.1, 0.04); forme.lineTo(-0.26, 0.04); forme.closePath();
+    const r0 = regardActuel(), a0 = Math.atan2(r0.x, -r0.z);
+    [0, -0.5, 0.5, -Math.PI / 2, Math.PI / 2, Math.PI].forEach(da => {
+      const a = a0 + da, dx = Math.sin(a), dz = -Math.cos(a);
+      let d = 0;
+      while (d < 4 && estLibre3D(t3d.grille, p.x + dx * (d + 0.25), p.z + dz * (d + 0.25))) d += 0.25;
+      if (d < 1.5) return;
+      const pas = Math.min(d, 3), loin = Math.min(2.3, d - 0.1);
+      const m = new T.Mesh(new T.ShapeGeometry(forme), t3d.mats.get("fleche"));
+      m.scale.set(1.4, 1.4, 1);
+      m.position.set(p.x + dx * loin, 0.025, p.z + dz * loin);
+      m.rotation.x = -Math.PI / 2;
+      m.rotation.z = -a;
+      m.userData.fleche = [p.x + dx * pas, p.z + dz * pas, dx, dz];
+      g.add(m);
+    });
+    t3d.fleches = g;
+    t3d.scene.add(g);
+  }
+  // ----- la mini-carte : où je suis, où je regarde ; la toucher pour y aller -----
+  function dessinerMiniCarte() {
+    const c = $("me-3d-carte");
+    if (!t3d || !t3d.plan || t3d.mode !== "promenade") { if (c) c.hidden = true; return; }
+    const plan = t3d.plan, H = Math.min(plan.homme, plan.largeur), D = plan.profondeur;
+    const largeur = window.matchMedia("(max-width: 599px)").matches ? 70 : 130, k = largeur / H, hauteur = Math.round(D * k);
+    c.hidden = false;
+    const r = Math.min(2, window.devicePixelRatio || 1);
+    if (c.width !== largeur * r) { c.width = largeur * r; c.height = hauteur * r; c.style.width = largeur + "px"; c.style.height = hauteur + "px"; }
+    const ctx = c.getContext("2d");
+    ctx.setTransform(r * k, 0, 0, r * k, 0, 0);
+    ctx.clearRect(0, 0, H, D);
+    ctx.fillStyle = "#f4ede0"; ctx.fillRect(0, 0, H, D);
+    t3d.formes.forEach(f => {
+      if (!f.couleur) return;
+      ctx.fillStyle = f.couleur;
+      ctx.beginPath();
+      if (f.cercle) ctx.arc(f.cercle[0], f.cercle[1], f.cercle[2], 0, Math.PI * 2);
+      else f.pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+      ctx.fill();
+    });
+    const p = t3d.camera.position, d = regardActuel(), a = Math.atan2(d.z, d.x);
+    ctx.fillStyle = "rgba(224, 122, 53, .3)";
+    ctx.beginPath(); ctx.moveTo(p.x, p.z); ctx.arc(p.x, p.z, 2.6, a - 0.5, a + 0.5); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "#c4501a";
+    ctx.beginPath(); ctx.arc(p.x, p.z, 0.3, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "#172033"; ctx.lineWidth = 0.08; ctx.strokeRect(0, 0, H, D);
   }
   // ----- la caméra : vue d'ensemble, promenade, s'approcher d'un meuble -----
   const adoucir = t => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
   function allerA3D(position, cible, duree) {
     const T = t3d.T, c = t3d.camera, ctl = t3d.controls;
     const p0 = c.position.clone(), c0 = ctl.target.clone(), p1 = new T.Vector3(...position), c1 = new T.Vector3(...cible);
-    // En promenade, on tourne sur place : la cible reste à 10 cm devant les yeux, dans la direction du regard.
     if (t3d.mode === "promenade") { const dir = c1.clone().sub(p1); if (dir.length() > 0.001) c1.copy(p1).add(dir.normalize().multiplyScalar(0.1)); }
     if (t3d.anim) cancelAnimationFrame(t3d.anim.raf);
     const d = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : duree || 900, t0 = performance.now();
@@ -12798,7 +13151,7 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
       c.lookAt(ctl.target);
       rendu3D();
       if (k < 1) t3d.anim = { raf: requestAnimationFrame(pas) };
-      else { t3d.anim = null; ctl.update(); rendu3D(); }
+      else { t3d.anim = null; ctl.update(); placerFleches(); rendu3D(); dessinerMiniCarte(); }
     };
     t3d.anim = { raf: requestAnimationFrame(pas) };
   }
@@ -12814,34 +13167,55 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
   }
   function vue3D(mode, sansAnimation) {
     if (!t3d || !t3d.plan) return;
+    const change = t3d.mode !== mode;
     t3d.mode = mode;
     reglerControles3D();
     const plan = t3d.plan, H = Math.min(plan.homme, plan.largeur), D = plan.profondeur;
     const entree = elementsDuPlan(plan.id).find(e => e.type === "entree");
     if (mode === "promenade") {
-      // À l'entrée, à hauteur des yeux, face au magasin.
-      const x = entree ? entree.x : H / 2, z = Math.min(D - 0.8, entree ? entree.y - 0.9 : D - 1);
-      allerA3D([x, 1.65, z], [x, 1.62, z - 0.1], sansAnimation ? 0 : 900);
+      // À l'entrée, à hauteur des yeux, face au magasin (sur une case libre).
+      const g = t3d.grille, x0 = entree ? entree.x : H / 2, z0 = Math.min(D - 0.8, entree ? entree.y - 1 : D - 1);
+      const [x, z] = (g && departPromenade(g, x0, z0)) || [x0, z0];
+      allerA3D([x, YEUX, z], [x, YEUX - PENTE, z - 1], sansAnimation ? 0 : 900);
     } else {
       const d = Math.max(D * 0.92, H * 1.4) * (t3d.camera.aspect < 1 ? 1.35 : 1);
       allerA3D([H / 2, d * 0.8, D * 0.52 + d * 0.6], [H / 2, 0, D * 0.52], sansAnimation ? 0 : 900);
     }
     $("me-3d-aide").textContent = mode === "promenade"
-      ? "Glisse pour regarder autour de toi ; touche le sol pour y aller, un meuble pour t'en approcher."
+      ? "Touche une flèche orange ou le sol pour avancer (sans traverser les meubles), un meuble pour t'en approcher ; glisse pour regarder autour de toi. Les boutons en bas à droite font avancer, reculer et tourner (au clavier : ↑ ↓ ← →). La mini-carte montre où tu es : touche-la pour y aller."
       : "Glisse pour faire tourner le magasin, zoome avec deux doigts ou la molette ; touche un meuble pour t'en approcher.";
     $("me-3d-info").hidden = true;
-    if (!sansAnimation && t3d.groupe) construireScene3D(false);
+    $("me-3d-pad").hidden = mode !== "promenade";
+    if (change && !sansAnimation && t3d.groupe) construireScene3D(false);
+    dessinerMiniCarte();
   }
-  // S'approcher d'un meuble : devant la face d'un mur, à hauteur des yeux ; un peu au-dessus d'une table ou d'un portant.
-  function approcher3D(e) {
-    const t = TYPES_MERCH[e.type];
-    t3d.choisi = e.id;
+  // Le point libre où se tenir pour regarder un meuble : devant la face d'un mur, sinon du côté où l'on est.
+  function pointDevant(e) {
+    const g = t3d.grille, t = TYPES_MERCH[e.type], p = t3d.camera.position, candidats = [];
     if (t.porte === "uv") {
-      const [fx, fz] = versPlan(e, 0, 1), nx = fx - e.x, nz = fz - e.y, d = Math.max(2.2, Math.min(5, e.l * 0.75));
-      allerA3D([e.x + nx * d, 1.6, e.y + nz * d], [e.x, 1.25, e.y], 1100);
+      const [fx, fz] = versPlan(e, 0, 1), nx = fx - e.x, nz = fz - e.y;
+      for (let d = 1.4; d <= 3.2; d += 0.2) candidats.push([e.x + nx * d, e.y + nz * d]);
     } else {
-      const c = t3d.camera.position, dx = c.x - e.x, dz = c.z - e.y, n = Math.hypot(dx, dz) || 1, d = t3d.mode === "promenade" ? 1.8 : 2.6;
-      allerA3D([e.x + dx / n * d, t3d.mode === "promenade" ? 1.65 : 2.1, e.y + dz / n * d], [e.x, 0.8, e.y], 1100);
+      const r = Math.max(e.l, e.p) / 2 + 0.7;
+      for (let k = 0; k < 16; k++) { const a = k * Math.PI / 8; candidats.push([e.x + Math.cos(a) * r, e.y + Math.sin(a) * r]); }
+    }
+    const libres = candidats.filter(c => estLibre3D(g, ...c));
+    if (!libres.length) return null;
+    return t.porte === "uv" ? libres[0] : libres.sort((a, b) => Math.hypot(a[0] - p.x, a[1] - p.z) - Math.hypot(b[0] - p.x, b[1] - p.z))[0];
+  }
+  // S'approcher d'un meuble : en vue d'ensemble, la caméra vole jusqu'à lui ; en promenade, on y marche.
+  function approcher3D(e) {
+    const t = TYPES_MERCH[e.type], vise = [e.x, t.porte === "uv" ? 1.25 : 0.8, e.y];
+    t3d.choisi = e.id;
+    if (t3d.mode === "promenade") {
+      const ici = [t3d.camera.position.x, t3d.camera.position.z], la = pointDevant(e), ch = la && chemin3D(t3d.grille, ici, la);
+      if (ch) marcher3D(ch, vise); else marcher3D([ici], vise);
+    } else if (t.porte === "uv") {
+      const [fx, fz] = versPlan(e, 0, 1), nx = fx - e.x, nz = fz - e.y, d = Math.max(2.2, Math.min(5, e.l * 0.75));
+      allerA3D([e.x + nx * d, 1.6, e.y + nz * d], vise, 1100);
+    } else {
+      const c = t3d.camera.position, dx = c.x - e.x, dz = c.z - e.y, n = Math.hypot(dx, dz) || 1;
+      allerA3D([e.x + dx / n * 2.6, 2.1, e.y + dz / n * 2.6], vise, 1100);
     }
     $("me-3d-nom").textContent = nomMeuble(e);
     $("me-3d-ouvrir").textContent = t.porte === "uv" ? "Ouvrir le mur" : ["niveaux", "articles", "tenue"].includes(t.porte) ? "Les réfs" : "";
@@ -12849,26 +13223,52 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     $("me-3d-info").hidden = false;
     choisirElementMerch(e.id);
   }
+  function aller3D(x, z) {
+    const ch = chemin3D(t3d.grille, [t3d.camera.position.x, t3d.camera.position.z], [x, z]);
+    if (!ch) { toast("Pas de passage jusque-là."); return; }
+    marcher3D(ch);
+  }
   function toucher3D(ev) {
-    if (!t3d || !t3d.groupe) return;
+    if (!t3d || !t3d.groupe || t3d.anim) return;
     const T = t3d.T, r = t3d.renderer.domElement.getBoundingClientRect();
     const souris = new T.Vector2((ev.clientX - r.left) / r.width * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
     const ray = new T.Raycaster();
     ray.setFromCamera(souris, t3d.camera);
+    if (t3d.fleches && t3d.mode === "promenade") {
+      const f = ray.intersectObjects(t3d.fleches.children, false)[0];
+      if (f) { const [x, z] = f.object.userData.fleche; marcher3D([[t3d.camera.position.x, t3d.camera.position.z], [x, z]]); return; }
+    }
     const touche = ray.intersectObjects(t3d.groupe.children, true).find(i => i.object.userData.id || i.object.userData.sol);
     if (!touche) return;
     const id = touche.object.userData.id, e = id && merchElements.docs[id];
     if (e) { approcher3D(e); return; }
-    if (t3d.mode === "promenade" && touche.object.userData.sol) {
-      // Marcher jusqu'au point touché, en gardant la direction du regard.
-      const plan = t3d.plan, c = t3d.camera.position, dir = t3d.controls.target.clone().sub(c);
-      const x = Math.min(plan.largeur - 0.3, Math.max(0.3, touche.point.x)), z = Math.min(plan.profondeur - 0.3, Math.max(0.3, touche.point.z));
-      allerA3D([x, 1.65, z], [x + dir.x, 1.65 + dir.y, z + dir.z], 900);
-      $("me-3d-info").hidden = true;
-    }
+    if (t3d.mode === "promenade" && touche.object.userData.sol) aller3D(touche.point.x, touche.point.z);
   }
+  // ----- en grand : la 3D prend presque tout l'écran, le panneau du meuble à côté -----
+  function pleinEcran3D(oui) {
+    plein3D = !!oui;
+    $("me-espace").classList.toggle("plein", plein3D);
+    document.body.classList.toggle("me-plein", plein3D);
+    $("me-3d-plein").textContent = plein3D ? "Réduire" : "Agrandir";
+    $("me-3d-plein").setAttribute("aria-pressed", String(plein3D));
+    if (t3d) requestAnimationFrame(() => { taille3D(); rendu3D(); dessinerMiniCarte(); });
+  }
+  $("me-3d-plein").addEventListener("click", () => pleinEcran3D(!plein3D));
+  $("me-3d-pad").addEventListener("click", ev => {
+    const b = ev.target.closest("[data-pas3d]");
+    if (!b || !t3d || t3d.mode !== "promenade") return;
+    const q = b.dataset.pas3d;
+    if (q === "avant" || q === "arriere") avancer3D(q === "avant" ? 1 : -1); else tourner3D((q === "gauche" ? -1 : 1) * Math.PI / 6);
+  });
+  document.addEventListener("keydown", ev => { if (ev.key === "Escape" && plein3D && !document.querySelector("dialog[open]")) pleinEcran3D(false); });
+  $("me-3d-carte").addEventListener("click", ev => {
+    if (!t3d || !t3d.plan || t3d.mode !== "promenade" || t3d.anim) return;
+    const r = ev.currentTarget.getBoundingClientRect(), H = Math.min(t3d.plan.homme, t3d.plan.largeur);
+    const k = r.width / H;
+    aller3D((ev.clientX - r.left) / k, (ev.clientY - r.top) / k);
+  });
   document.querySelectorAll('input[name="me-vue3d"]').forEach(r => r.addEventListener("change", () => vue3D(r.value)));
-  $("me-3d-retour").addEventListener("click", () => vue3D(t3d ? t3d.mode : "ensemble"));
+  $("me-3d-retour").addEventListener("click", () => { if (t3d && t3d.mode === "promenade") $("me-3d-info").hidden = true; else vue3D("ensemble"); });
   $("me-3d-ouvrir").addEventListener("click", () => {
     const e = t3d && merchElements.docs[t3d.choisi];
     if (!e) return;
@@ -13126,6 +13526,7 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     const nAlertes = nombreAlertesMerch();
     $("me-al-n").textContent = nAlertes ? ` (${nAlertes})` : "";
     if (ongletMerch === "alertes") rendreAlertesMerch();
+    if (ongletMerch !== "3d" && plein3D) pleinEcran3D(false);
     if (ongletMerch === "3d") { if (t3d) { taille3D(); planifierScene3D(); } else ouvrir3D(); }
     document.querySelectorAll("#me-outils [data-calque]").forEach(b => b.setAttribute("aria-pressed", String(!!calquesMerch[b.dataset.calque])));
     $("me-tracer").hidden = !modifiable;
