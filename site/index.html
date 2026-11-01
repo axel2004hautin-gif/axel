@@ -123,6 +123,8 @@ body.fond-travail { background: var(--marine); }
 .choix-cases[data-n="7"] { grid-template-columns: repeat(12, minmax(0, 1fr)); }
 .choix-cases[data-n="7"] > li { grid-column: span 3; }
 .choix-cases[data-n="7"] > li:nth-child(n+5) { grid-column: span 4; }
+.choix-cases[data-n="8"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 799px) { .choix-cases[data-n="8"] { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .choix-case { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px; height: 100%; min-height: 300px; padding: 20px 14px; text-decoration: none; transition: background-color .15s ease; }
 a.choix-case:hover { background: var(--c-doux); }
 .choix-case:focus-visible { outline: 3px solid var(--c); outline-offset: 3px; }
@@ -1263,6 +1265,159 @@ details.groupe-pieces { display: block; }
 
 .toast { position: fixed; left: 50%; top: calc(12px + env(safe-area-inset-top, 0px)); z-index: 50; max-width: calc(100% - 32px); padding: 12px 18px; border-radius: 10px; background: var(--encre); color: var(--sur-marine); font-weight: 600; box-shadow: 0 10px 30px rgba(15, 25, 50, .25); transform: translateX(-50%); }
 .toast.erreur { background: var(--erreur); }
+
+/* Merch : le plan du magasin vu de dessus (l'entrée en bas, le côté Homme à gauche), le meuble choisi à côté. */
+.merch { display: grid; gap: 14px; }
+.me-barre { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.me-plan-choix { display: inline-flex; align-items: center; gap: 8px; min-width: 0; font-weight: 700; color: var(--marine); }
+.me-plan-choix select { min-width: 0; max-width: min(420px, 62vw); min-height: 40px; padding: 6px 10px; border: 1.5px solid var(--trait); border-radius: 8px; background: var(--fond); font-weight: 600; }
+.me-etat { padding: 3px 9px; border-radius: 999px; background: var(--conge-doux); color: var(--conge); font: 700 .68rem/1.4 var(--f-mono); letter-spacing: .05em; text-transform: uppercase; white-space: nowrap; }
+.me-etat.prevu { background: var(--or-doux); color: var(--or); }
+.me-barre-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
+.me-vide { display: grid; justify-items: start; gap: 14px; max-width: 46em; padding: 18px 0 8px; color: var(--gris); }
+.me-onglets-ligne { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.me-onglets { max-width: 100%; }
+.me-ajouter { min-height: 44px; padding: 8px 12px; border: 1.5px solid var(--marine); border-radius: 10px; background: var(--marine); color: var(--sur-marine); font-weight: 700; }
+.me-ajouter optgroup, .me-ajouter option { background: var(--fond); color: var(--encre); }
+.me-espace { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 18px; align-items: start; margin-top: 14px; }
+.me-principal { display: grid; gap: 10px; min-width: 0; }
+.me-outils { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.me-calques { display: flex; flex-wrap: wrap; gap: 6px; }
+.me-zoom { display: inline-flex; gap: 6px; margin-left: auto; }
+.me-zoom .bouton-second { min-width: 40px; padding-inline: 10px; font-size: 1.1rem; }
+.me-zoom .bouton-second:disabled { opacity: .45; cursor: default; }
+.me-plan-zone { overflow: auto; max-height: 76vh; border: 1.5px solid var(--trait); border-radius: 12px; background: #f6f7fa; overscroll-behavior: contain; }
+#me-svg { display: block; width: 100%; height: auto; margin-inline: auto; font-family: var(--f-body); user-select: none; -webkit-user-select: none; }
+#me-svg.trace { cursor: crosshair; }
+.me-sol { fill: #ffffff; }
+.me-murs { fill: none; stroke: var(--encre); stroke-width: 3px; }
+.me-separation { stroke: #9aa3b2; stroke-width: 2px; stroke-dasharray: 6 5; }
+.me-legende { fill: #8a93a5; font-weight: 700; letter-spacing: .06em; text-anchor: middle; dominant-baseline: middle; text-transform: uppercase; }
+.me-el { cursor: grab; outline: none; }
+.me-el.choisi { touch-action: none; }
+.me-el .me-forme { stroke-width: 1.5px; }
+.me-el .me-detail { fill: none; stroke-width: 1px; opacity: .7; }
+.me-el .me-detail.plein { fill: currentColor; }
+.me-f-mur .me-forme { fill: #dfe6f2; stroke: var(--marine); }
+.me-f-mur .me-uv { fill: #e8edf5; stroke: #b6c2d8; stroke-width: 1px; }
+.me-f-mur .me-uv.alerte { fill: var(--erreur-doux); stroke: var(--erreur); stroke-width: 2px; }
+.me-f-mur .me-face { stroke: var(--marine); stroke-width: 4px; stroke-linecap: round; }
+.me-uv-code { fill: var(--marine); font-weight: 800; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.me-f-table .me-forme { fill: #efe2cb; stroke: #9a7b4f; }
+.me-f-table { color: #9a7b4f; }
+.me-f-table .me-detail { stroke: #9a7b4f; }
+.me-f-portant .me-forme { fill: #e6e9ef; stroke: #5b6478; }
+.me-f-portant .me-detail { stroke: #5b6478; stroke-width: 2.5px; opacity: 1; }
+.me-f-presentoir .me-forme { fill: #efe7f5; stroke: #7c5aa6; }
+.me-f-buste { color: #c4501a; }
+.me-f-buste .me-forme { fill: #fbe9de; stroke: #c4501a; }
+.me-f-repere .me-forme { fill: #eef0f3; stroke: #8a93a5; stroke-dasharray: 5 4; }
+.me-t-vitrine .me-forme { fill: #e2f1f7; stroke: #3b8fb0; stroke-dasharray: none; }
+.me-t-caisse .me-forme { fill: #e9e3f3; stroke: #5b4f86; stroke-dasharray: none; }
+.me-t-pilier .me-forme { fill: #c9ced8; stroke: #5b6478; stroke-dasharray: none; }
+.me-t-entree .me-forme { fill: #ffffff; stroke: #c4501a; }
+.me-fleche-entree { fill: none; stroke: #c4501a; stroke-width: 3px; stroke-linecap: round; stroke-linejoin: round; }
+.me-el:hover .me-forme { filter: brightness(.96); }
+.me-el:focus-visible .me-forme, .me-el.choisi .me-forme { stroke: #e07a35; stroke-width: 3.5px; stroke-dasharray: none; }
+.me-noms { pointer-events: none; }
+.me-nom { fill: var(--encre); font-weight: 700; dominant-baseline: middle; paint-order: stroke; stroke: rgba(255, 255, 255, .92); stroke-width: .09em; stroke-linejoin: round; }
+.me-parcours { fill: none; stroke: #c4501a; stroke-width: 2.5px; stroke-dasharray: 8 6; stroke-linejoin: round; opacity: .85; pointer-events: none; }
+.me-points circle { fill: #c4501a; stroke: #ffffff; stroke-width: 2px; vector-effect: non-scaling-stroke; }
+.me-points circle.premier { fill: var(--conge); }
+.me-zones-legende { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.zone-pastille { flex: none; padding: 2px 8px; border-radius: 999px; font: 700 .66rem/1.5 var(--f-mono); letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+.zone-pastille.z-chaude { background: #fde1d3; color: #9a3f14; }
+.zone-pastille.z-tiede { background: #fbefc7; color: #7a5d05; }
+.zone-pastille.z-froide { background: #dce9f7; color: #24467f; }
+.zone-pastille.z-alerte { background: var(--erreur-doux); color: var(--erreur); }
+.me-panneau { position: sticky; top: 12px; display: grid; gap: 12px; min-width: 0; padding: 14px; border: 1.5px solid var(--trait); border-radius: 12px; background: var(--fond); }
+.me-panneau-titre { font-family: var(--f-display); font-weight: 800; font-size: 1.15rem; line-height: 1.2; color: var(--marine); }
+.me-resume { display: grid; gap: 10px; }
+.me-compte { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.me-compte li { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--trait-doux); }
+.me-form { display: grid; gap: 12px; }
+.me-form-tete { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.me-form-tete .fermer { width: 34px; height: 34px; margin: -6px -6px 0 0; }
+.me-ligne { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-items: end; }
+.me-ligne[hidden] { display: none; }
+.me-ligne-rot { grid-template-columns: minmax(0, 1fr) auto; }
+.me-form input, .me-form select, .me-form textarea { width: 100%; min-width: 0; }
+.me-alerte { padding: 8px 12px; border-radius: 8px; background: var(--erreur-doux); color: var(--erreur); font-weight: 600; font-size: .92rem; }
+.me-actions { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding-top: 4px; border-top: 1px solid var(--trait-doux); }
+.me-actions .bouton-danger { margin-right: 0; }
+.me-groupe { display: grid; gap: 8px; }
+.me-groupe + .me-groupe { margin-top: 16px; }
+.me-groupe h3 { display: flex; align-items: baseline; gap: 8px; font-size: 1rem; color: var(--marine); }
+.me-items { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.me-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; min-height: 52px; padding: 8px 12px; border: 1.5px solid var(--trait); border-radius: 10px; background: var(--fond); text-align: left; }
+.me-item:hover { border-color: var(--marine); }
+.me-item[aria-pressed="true"] { border-color: var(--marine); background: var(--marine-doux); }
+.me-item-texte { display: grid; min-width: 0; }
+.me-item-nom { font-weight: 700; overflow-wrap: anywhere; }
+.me-item-detail { color: var(--gris); font-size: .9rem; }
+.me-regles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 18px 26px; margin-top: 12px; }
+.me-regles-groupe h3 { padding-bottom: 6px; border-bottom: 2px solid var(--marine); font-size: 1.05rem; color: var(--marine); }
+.me-regles-liste { display: grid; gap: 8px; margin: 10px 0 0; padding: 0; list-style: none; }
+.me-regles-liste li { display: grid; gap: 4px; padding: 8px 10px; border-radius: 8px; background: var(--trait-doux); line-height: 1.4; }
+.me-regles-liste li.mienne { background: var(--marine-doux); }
+.me-regle-tag { justify-self: start; padding: 1px 7px; border-radius: 999px; background: var(--marine); color: var(--sur-marine); font: 700 .62rem/1.5 var(--f-mono); letter-spacing: .05em; text-transform: uppercase; }
+@media (max-width: 899px) {
+  .me-espace { grid-template-columns: minmax(0, 1fr); }
+  .me-panneau { position: static; scroll-margin-top: 12px; }
+  .me-plan-zone { max-height: 70vh; }
+}
+@media (max-width: 599px) {
+  .me-barre-actions { margin-left: 0; }
+  .me-onglets-ligne > * { flex: 1 1 100%; }
+  .me-onglets label { flex: 1; }
+  .me-zoom { margin-left: 0; }
+}
+
+/* Un mur vu de face : ses UV côte à côte, les équipements de haut en bas. */
+.fenetre-mur { width: min(1120px, calc(100vw - 24px)); }
+.mu-aide { margin-top: 12px; }
+.mu-aide summary { color: var(--marine); font-weight: 700; cursor: pointer; }
+.mu-legende { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 6px 14px; margin: 10px 0 4px; padding: 0; list-style: none; color: var(--gris); font-size: .9rem; }
+.mu-legende li { display: flex; align-items: center; gap: 8px; }
+.mu-uvs { display: flex; gap: 10px; overflow-x: auto; padding: 10px 2px 12px; scroll-snap-type: x proximity; }
+.mu-uv { flex: 0 0 168px; display: grid; grid-template-rows: auto 1fr auto; gap: 8px; min-height: 320px; padding: 10px; border: 1.5px solid var(--trait); border-radius: 10px; background: #f6f7fa; scroll-snap-align: start; }
+.mu-uv.alerte { border-color: var(--erreur); background: var(--erreur-doux); }
+.mu-uv-tete { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.mu-uv-num { font: 700 .8rem/1.2 var(--f-mono); letter-spacing: .05em; color: var(--marine); }
+.mu-eqs { display: grid; align-content: start; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.mu-eq { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: center; gap: 4px 8px; padding: 8px; border: 1.5px solid var(--trait); border-radius: 8px; background: var(--fond); }
+.mu-eq-facing, .mu-eq-coudee { border-color: #e9b48f; }
+.mu-eq-picto { display: grid; place-items: center; width: 40px; height: 32px; color: var(--marine); }
+.mu-eq-picto svg { width: 40px; height: 32px; }
+.mu-eq-facing .mu-eq-picto, .mu-eq-coudee .mu-eq-picto { color: #c4501a; }
+.mu-eq-texte { display: grid; min-width: 0; }
+.mu-eq-nom { font-weight: 700; font-size: .95rem; line-height: 1.2; }
+.mu-eq-n { color: var(--gris); font-size: .82rem; }
+.mu-eq-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 4px; }
+.mu-eq-bouton { min-width: 32px; height: 30px; padding: 0 8px; border: 1px solid var(--trait); border-radius: 6px; background: var(--fond); color: var(--encre); font-weight: 700; }
+.mu-eq-bouton:hover:not(:disabled) { border-color: var(--marine); }
+.mu-eq-bouton:disabled { opacity: .35; cursor: default; }
+.mu-eq-bouton.arme { border-color: var(--erreur); background: var(--erreur); color: var(--sur-marine); }
+.mu-eq-vide { padding: 18px 8px; border: 1.5px dashed var(--trait); border-radius: 8px; color: var(--gris); text-align: center; }
+.mu-ajout { width: 100%; min-height: 40px; padding: 6px 8px; border: 1.5px dashed var(--marine); border-radius: 8px; background: var(--fond); color: var(--marine); font-weight: 700; }
+
+/* Réglages du merch */
+.mr-form { display: grid; gap: 18px; padding-top: 14px; }
+.mr-bloc { display: grid; gap: 8px; }
+.mr-bloc h3 { font-size: 1.02rem; color: var(--marine); }
+.mr-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 8px 16px; }
+.mr-marque { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 11em); align-items: center; gap: 10px; font-weight: 600; }
+.mr-marque select { width: 100%; min-height: 40px; }
+.mr-seuil input { max-width: 8em; }
+.rep-meilleure { background: var(--or-doux); color: var(--or); box-shadow: inset 0 0 0 1px #e8cf86; }
+.pi-presentation-modele { display: flex; align-items: center; gap: 8px; margin-top: 6px; color: var(--gris); font-weight: 600; font-size: .92rem; }
+.pi-presentation-modele input { width: 18px; height: 18px; margin: 0; accent-color: var(--marine); }
+.mp-depart { display: grid; gap: 8px; min-width: 0; margin: 0; padding: 10px 12px 12px; border: 1px solid var(--trait); border-radius: 10px; }
+.mp-depart[hidden] { display: none; }
+.mp-depart legend { padding: 0 6px; font-weight: 700; color: var(--marine); }
+.mp-option { display: flex; align-items: flex-start; gap: 10px; line-height: 1.4; }
+.mp-option[hidden] { display: none; }
+.mp-option input { flex: none; width: 18px; height: 18px; margin: 3px 0 0; accent-color: var(--marine); }
 </style>
 </head>
 <body>
@@ -1327,10 +1482,11 @@ details.groupe-pieces { display: block; }
   <section class="r-travail page-choix" data-vue="travail" aria-labelledby="titre-travail" hidden>
     <div class="cadre choix sous-choix">
       <h1 class="invisible" id="titre-travail" tabindex="-1">Travail</h1>
-      <ul class="choix-cases" data-n="7">
+      <ul class="choix-cases" data-n="8">
         <li><a class="choix-case" href="#planning"><span class="choix-nom">Planning</span><span class="choix-info"><span id="aujourdhui-planning"></span><span id="resume-planning"></span></span></a></li>
         <li><a class="choix-case" href="#todo"><span class="choix-nom">To do list</span><span class="choix-info"><span id="resume-todo"></span></span></a></li>
         <li><a class="choix-case" href="#garde-robe"><span class="choix-nom">Dressing</span><span class="choix-info"><span id="resume-pieces"></span></span></a></li>
+        <li><a class="choix-case" href="#merch"><span class="choix-nom">Merch</span><span class="choix-info"><span id="resume-merch"></span></span></a></li>
         <li><a class="choix-case" href="#objectifs"><span class="choix-nom">Objectifs</span><span class="choix-info"><span id="ligne-objectifs"></span><span id="resume-objectifs"></span></span></a></li>
         <li><a class="choix-case" href="#calendrier"><span class="choix-nom">Calendrier</span><span class="choix-info"><span id="ligne-calendrier"></span><span id="resume-calendrier"></span></span></a></li>
         <li><a class="choix-case" href="#equipe"><span class="choix-nom">Équipe</span><span class="choix-info"><span id="resume-equipe"></span></span></a></li>
@@ -1636,6 +1792,108 @@ details.groupe-pieces { display: block; }
           <div class="en-texte" id="en-texte-claude"></div>
         </div>
       </section>
+    </div>
+  </section>
+
+  <section class="r-travail" data-vue="merch" aria-labelledby="titre-merch" hidden>
+    <div class="cadre merch">
+      <div class="page-tete">
+        <div>
+          <h1 id="titre-merch" tabindex="-1">Merch</h1>
+        </div>
+      </div>
+      <div class="me-barre">
+        <label class="me-plan-choix" id="me-plan-choix">Plan<select id="me-plan"></select></label>
+        <span class="me-etat" id="me-etat" hidden></span>
+        <div class="me-barre-actions">
+          <button class="bouton-second bouton-petit" type="button" id="me-plan-modifier">Régler le plan</button>
+          <button class="bouton-second bouton-petit" type="button" id="me-nouveau">Nouveau plan</button>
+          <button class="bouton-second bouton-petit" type="button" id="me-reglages">Réglages</button>
+        </div>
+      </div>
+      <div class="me-vide" id="me-vide" hidden>
+        <p>Le magasin vu de dessus, l'entrée en bas et le côté Homme à gauche : les murs et leurs UV (facing, pressing, étagères, barre coudée), les tables, les portants, les bustes, la caisse… Ensuite, chaque meuble reçoit ses articles.</p>
+        <button class="bouton-principal" type="button" id="me-vide-creer">Dessiner le plan du magasin</button>
+      </div>
+      <div id="me-contenu" hidden>
+        <div class="me-onglets-ligne">
+          <div class="type-tache me-onglets" role="radiogroup" aria-label="Afficher">
+            <label><input type="radio" name="me-onglet" value="plan" checked><span>Plan</span></label>
+            <label><input type="radio" name="me-onglet" value="liste"><span>Liste</span></label>
+            <label><input type="radio" name="me-onglet" value="regles"><span>Mes règles</span></label>
+          </div>
+          <select class="me-ajouter" id="me-ajouter" aria-label="Ajouter un meuble au plan"></select>
+        </div>
+        <div class="me-espace" id="me-espace">
+          <div class="me-principal">
+            <div class="me-principal" id="me-volet-plan">
+              <div class="me-outils" id="me-outils">
+                <div class="me-calques" role="group" aria-label="Afficher sur le plan">
+                  <button class="puce-filtre" type="button" data-calque="zones" aria-pressed="false">Zones</button>
+                  <button class="puce-filtre" type="button" data-calque="parcours" aria-pressed="true">Parcours</button>
+                  <button class="puce-filtre" type="button" data-calque="noms" aria-pressed="true">Noms</button>
+                  <button class="puce-filtre" type="button" data-calque="femme" aria-pressed="false">Côté Femme</button>
+                </div>
+                <button class="bouton-second bouton-petit" type="button" id="me-tracer" aria-pressed="false">Tracer le parcours</button>
+                <button class="lien-discret" type="button" id="me-annuler-point" hidden>Retirer le dernier point</button>
+                <button class="lien-discret" type="button" id="me-effacer-parcours" hidden>Effacer le parcours</button>
+                <div class="me-zoom">
+                  <button class="bouton-second bouton-petit" type="button" id="me-zoom-moins" aria-label="Dézoomer">−</button>
+                  <button class="bouton-second bouton-petit" type="button" id="me-zoom-plus" aria-label="Zoomer">+</button>
+                </div>
+              </div>
+              <p class="aide" id="me-aide-trace" hidden>Touche le plan pour poser les points du parcours du client, depuis l'entrée ; « Terminer le parcours » quand c'est fini.</p>
+              <div class="me-plan-zone" id="me-plan-zone"><svg id="me-svg" role="group" aria-label="Le plan du magasin vu de dessus, l'entrée en bas"></svg></div>
+              <div class="me-zones-legende" id="me-zones-legende" hidden>
+                <span class="zone-pastille z-chaude">Chaude</span><span class="zone-pastille z-tiede">Tiède</span><span class="zone-pastille z-froide">Froide</span>
+                <span class="aide">Calculées depuis l'entrée (en bas) et la gauche, où le client va d'abord. Chaque meuble peut forcer la sienne : le mur du centre est froid.</span>
+              </div>
+            </div>
+            <div id="me-volet-liste" hidden>
+              <div id="me-liste"></div>
+              <p class="liste-vide" id="me-liste-vide" hidden>Le plan est vide.</p>
+            </div>
+          </div>
+          <aside class="me-panneau" id="me-panneau" aria-label="Le meuble choisi">
+            <div class="me-resume" id="me-resume">
+              <h2 class="me-panneau-titre">Le plan</h2>
+              <p class="aide" id="me-resume-texte"></p>
+              <ul class="me-compte" id="me-compte"></ul>
+            </div>
+            <form class="champs-tache me-form" id="me-form" autocomplete="off" novalidate hidden>
+              <div class="me-form-tete"><h2 class="me-panneau-titre" id="me-type"></h2><button class="fermer" type="button" id="me-deselect" aria-label="Fermer le meuble">×</button></div>
+              <label class="titre-champ">Nom<input type="text" id="me-nom" maxlength="60"></label>
+              <div class="me-ligne" id="me-g-mur">
+                <label class="titre-champ">Nombre d'UV<input type="text" id="me-uvn" inputmode="numeric" maxlength="2"></label>
+                <label class="titre-champ">Une UV (m)<input type="text" id="me-uvl" inputmode="decimal" maxlength="5"></label>
+              </div>
+              <p class="aide" id="me-info" hidden></p>
+              <p class="me-alerte" id="me-alerte" role="status" hidden></p>
+              <button class="bouton-principal" type="button" id="me-equiper">Équiper les UV</button>
+              <div class="me-ligne" id="me-g-taille">
+                <label class="titre-champ"><span id="me-l-nom">Largeur (m)</span><input type="text" id="me-l" inputmode="decimal" maxlength="5"></label>
+                <label class="titre-champ" id="me-p-champ">Profondeur (m)<input type="text" id="me-p" inputmode="decimal" maxlength="5"></label>
+              </div>
+              <label class="titre-champ" id="me-g-hauteurs">Hauteurs<select id="me-hauteurs"><option value="1">Le plateau seul</option><option value="2">2 hauteurs (table gigogne)</option><option value="3">3 hauteurs</option></select></label>
+              <div class="me-ligne me-ligne-rot">
+                <label class="titre-champ">Orientation<select id="me-rot"></select></label>
+                <button class="bouton-second" type="button" id="me-tourner">Tourner ↻</button>
+              </div>
+              <div class="me-ligne">
+                <label class="titre-champ">Depuis la gauche (m)<input type="text" id="me-x" inputmode="decimal" maxlength="6"></label>
+                <label class="titre-champ">Depuis le fond (m)<input type="text" id="me-y" inputmode="decimal" maxlength="6"></label>
+              </div>
+              <label class="titre-champ" id="me-g-zone">Zone<select id="me-zone"></select></label>
+              <label class="titre-champ">Note<textarea id="me-note" maxlength="300" rows="2" placeholder="Ex. : la table des nouveautés"></textarea></label>
+              <div class="me-actions" id="me-actions"><button class="bouton-second bouton-petit" type="button" id="me-dupliquer">Dupliquer</button><button class="bouton-danger" type="button" id="me-supprimer">Supprimer</button></div>
+            </form>
+          </aside>
+        </div>
+        <div id="me-volet-regles" hidden>
+          <p class="aide">Les règles du merch du magasin, avec tes précisions. « Ma règle » : celles que tu m'as données. L'outil les vérifie peu à peu : deux facings côte à côte, c'est déjà fait.</p>
+          <div class="me-regles" id="me-regles"></div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -2480,6 +2738,97 @@ details.groupe-pieces { display: block; }
   </div>
 </dialog>
 
+<dialog class="fenetre fenetre-mur" id="fenetre-mur" aria-labelledby="mu-titre">
+  <div class="fenetre-tete">
+    <div>
+      <h2 id="mu-titre">Mur</h2>
+      <p class="fenetre-sous" id="mu-sous"></p>
+    </div>
+    <button class="fermer" type="button" data-fermer aria-label="Fermer">×</button>
+  </div>
+  <div class="fenetre-corps">
+    <details class="mu-aide" id="mu-aide"><summary>Les équipements d'une UV</summary><ul class="mu-legende" id="mu-legende"></ul></details>
+    <p class="me-alerte" id="mu-alerte" role="status" hidden></p>
+    <div class="mu-uvs" id="mu-uvs"></div>
+  </div>
+  <div class="fenetre-pied">
+    <button class="bouton-second" type="button" id="mu-moins">Retirer la dernière UV</button>
+    <button class="bouton-second" type="button" id="mu-plus">Ajouter une UV</button>
+    <button class="bouton-principal" type="button" data-fermer>Terminé</button>
+  </div>
+</dialog>
+
+<dialog class="fenetre fenetre-petite" id="fenetre-plan-merch" aria-labelledby="mp-titre">
+  <div class="fenetre-tete">
+    <div>
+      <h2 id="mp-titre">Nouveau plan</h2>
+      <p class="fenetre-sous">Le magasin vu de dessus : l'entrée en bas, le côté Homme à gauche.</p>
+    </div>
+    <button class="fermer" type="button" data-fermer aria-label="Fermer sans enregistrer">×</button>
+  </div>
+  <form class="fenetre-corps champs-tache mp-form" id="mp-form" autocomplete="off" novalidate>
+    <div class="champs-grille" style="padding-top: 14px">
+      <label class="titre-champ large">Nom<input type="text" id="mp-nom" maxlength="60"></label>
+      <label class="titre-champ">Largeur du magasin (m)<input type="text" id="mp-largeur" inputmode="decimal" maxlength="5"></label>
+      <label class="titre-champ">Profondeur (m)<input type="text" id="mp-profondeur" inputmode="decimal" maxlength="5"></label>
+      <label class="titre-champ">Largeur du côté Homme (m)<input type="text" id="mp-homme" inputmode="decimal" maxlength="5"></label>
+      <label class="titre-champ">À partir du<input type="date" id="mp-date"></label>
+      <p class="aide large">Des mesures à peu près suffisent : les meubles se déplacent ensuite à la main. « À partir du » : pour un plan prévu (les soldes, Noël).</p>
+      <fieldset class="mp-depart large" id="mp-depart">
+        <legend>Pour commencer</legend>
+        <label class="mp-option"><input type="radio" name="mp-depart" value="depart"><span><b>Un plan de départ</b>, à ajuster : les murs (gauche, fond, centre), la table d'entrée et son buste, une petite table, un tourniquet, un portant, la caisse, l'entrée, la vitrine, les cabines.</span></label>
+        <label class="mp-option" id="mp-option-copie"><input type="radio" name="mp-depart" value="copie"><span><b>Une copie du plan affiché</b>, avec ses meubles.</span></label>
+        <label class="mp-option"><input type="radio" name="mp-depart" value="vide"><span><b>Un plan vide</b>.</span></label>
+      </fieldset>
+      <label class="titre-champ large">Note<textarea id="mp-note" maxlength="300" rows="2"></textarea></label>
+    </div>
+  </form>
+  <div class="fenetre-pied">
+    <p class="fenetre-erreur" id="mp-erreur" role="alert" hidden></p>
+    <button class="bouton-danger" type="button" id="mp-supprimer" hidden>Supprimer</button>
+    <button class="bouton-second" type="button" id="mp-dupliquer" hidden>Dupliquer</button>
+    <button class="bouton-second" type="button" id="mp-mettre" hidden>Mettre en place</button>
+    <button class="bouton-second" type="button" data-fermer>Annuler</button>
+    <button class="bouton-principal" type="button" id="mp-enregistrer">Enregistrer</button>
+  </div>
+</dialog>
+
+<dialog class="fenetre" id="fenetre-merch-reglages" aria-labelledby="mr-titre">
+  <div class="fenetre-tete">
+    <div>
+      <h2 id="mr-titre">Réglages du merch</h2>
+      <p class="fenetre-sous">Ce qui guide les alertes et les suggestions de l'outil.</p>
+    </div>
+    <button class="fermer" type="button" data-fermer aria-label="Fermer sans enregistrer">×</button>
+  </div>
+  <form class="fenetre-corps champs-tache mr-form" id="mr-form" autocomplete="off" novalidate>
+    <section class="mr-bloc">
+      <h3>Le rang des marques</h3>
+      <p class="aide">1 : mise en avant d'abord (zone chaude, hauteur des yeux). Deux marques peuvent partager un rang, comme Tommy et Calvin Klein.</p>
+      <div class="mr-grille" id="mr-marques"></div>
+    </section>
+    <section class="mr-bloc">
+      <h3>Hors saison en ce moment</h3>
+      <p class="aide">L'ancienne collection : sa place est sur le mur froid, celui du centre.</p>
+      <div class="reperes-choix" id="mr-saison"></div>
+    </section>
+    <section class="mr-bloc">
+      <h3>Plié ou cintre, par catégorie</h3>
+      <p class="aide">Chaque pièce peut faire autrement : ça se règle dans sa fiche du Dressing.</p>
+      <div class="mr-grille" id="mr-presentation"></div>
+    </section>
+    <section class="mr-bloc">
+      <h3>Les alertes</h3>
+      <label class="titre-champ mr-seuil">Un article au même endroit depuis (jours)<input type="text" id="mr-seuil" inputmode="numeric" maxlength="2"></label>
+    </section>
+  </form>
+  <div class="fenetre-pied">
+    <p class="fenetre-erreur" id="mr-erreur" role="alert" hidden></p>
+    <button class="bouton-second" type="button" data-fermer>Annuler</button>
+    <button class="bouton-principal" type="button" id="mr-enregistrer">Enregistrer</button>
+  </div>
+</dialog>
+
 <datalist id="personnes"></datalist>
 
 <dialog class="fenetre fenetre-piece" id="fenetre-piece" aria-labelledby="pi-titre">
@@ -2519,6 +2868,8 @@ details.groupe-pieces { display: block; }
         <p class="aide">Une nuance qui n'y est pas : tape-la dans le champ Couleur.</p>
       </div>
       <label class="titre-champ large">Matière<input type="text" id="pi-matiere" maxlength="120" list="matieres" placeholder="Ex. : 100 % coton"></label>
+      <div class="titre-champ large"><label for="pi-presentation">En magasin</label><select id="pi-presentation"></select>
+        <label class="pi-presentation-modele" id="pi-pres-modele-l" hidden><input type="checkbox" id="pi-pres-modele" checked><span id="pi-pres-modele-texte"></span></label></div>
       <div class="titre-champ large">Repères<div class="reperes-choix" id="pi-reperes"></div></div>
       <label class="titre-champ large">Note<textarea id="pi-note" maxlength="500" rows="2" placeholder="Ex. : tailles S à XL, se vend bien"></textarea></label>
     </div>
@@ -2596,15 +2947,15 @@ details.groupe-pieces { display: block; }
   // rend la page introuvable) ; un lien direct ouvre sa page : une rubrique (#travail, #argent,
   // #sport), un choix de rubrique (#planning, #todo, #garde-robe…) ou un choix de la garde-robe (#pieces,
   // #tenues, #comparer, #manque).
-  const VUES = ["accueil", "journee", "travail", "planning", "todo", "carriere", "garde-robe", "pieces", "tenues", "comparer", "manque", "stats", "calendrier", "objectifs", "equipe", "argent", "budget", "depenses", "epargne", "paie", "sport"];
-  const RUBRIQUE_DE = { travail: "travail", argent: "argent", sport: "sport", planning: "travail", todo: "travail", "garde-robe": "travail", pieces: "travail", tenues: "travail", comparer: "travail", manque: "travail", stats: "travail", carriere: "travail", calendrier: "travail", objectifs: "travail", equipe: "travail", budget: "argent", depenses: "argent", epargne: "argent", paie: "argent" };
+  const VUES = ["accueil", "journee", "travail", "planning", "todo", "carriere", "merch", "garde-robe", "pieces", "tenues", "comparer", "manque", "stats", "calendrier", "objectifs", "equipe", "argent", "budget", "depenses", "epargne", "paie", "sport"];
+  const RUBRIQUE_DE = { travail: "travail", argent: "argent", sport: "sport", planning: "travail", todo: "travail", "garde-robe": "travail", pieces: "travail", tenues: "travail", comparer: "travail", manque: "travail", stats: "travail", carriere: "travail", merch: "travail", calendrier: "travail", objectifs: "travail", equipe: "travail", budget: "argent", depenses: "argent", epargne: "argent", paie: "argent" };
   // La vie est une succession de choix : chaque page vient d'un choix fait sur la page d'avant.
   const PARENT = { journee: "accueil", travail: "accueil", argent: "accueil", sport: "accueil",
-    planning: "travail", todo: "travail", "garde-robe": "travail", calendrier: "travail", objectifs: "travail", equipe: "travail", carriere: "travail",
+    planning: "travail", todo: "travail", "garde-robe": "travail", calendrier: "travail", objectifs: "travail", equipe: "travail", carriere: "travail", merch: "travail",
     pieces: "garde-robe", tenues: "garde-robe", comparer: "garde-robe", manque: "garde-robe", stats: "garde-robe",
     budget: "argent", depenses: "argent", epargne: "argent", paie: "argent" };
   const NOM_VUE = { accueil: "Tableau de bord", journee: "Aujourd'hui", travail: "Travail", argent: "Argent", sport: "Sport",
-    planning: "Planning", todo: "To do list", "garde-robe": "Dressing", calendrier: "Calendrier", objectifs: "Objectifs", equipe: "Équipe", carriere: "Carrière",
+    planning: "Planning", todo: "To do list", "garde-robe": "Dressing", calendrier: "Calendrier", objectifs: "Objectifs", equipe: "Équipe", carriere: "Carrière", merch: "Merch",
     pieces: "Pièces", tenues: "Tenues", comparer: "Comparer", manque: "Ce qu'il manque", stats: "Statistiques",
     budget: "Budget du mois", depenses: "Dépenses", epargne: "Épargne et projets", paie: "Ma paie" };
   let vueActive = "accueil";
@@ -2628,6 +2979,7 @@ details.groupe-pieces { display: block; }
     document.body.classList.toggle("fond-travail", RUBRIQUE_DE[nom] === "travail");
     if (nom === "objectifs") requestAnimationFrame(rendreGraphe);   // la courbe et la frise ont besoin de leur largeur
     if (nom === "calendrier") requestAnimationFrame(rendreFrise);
+    if (nom === "merch") requestAnimationFrame(rendreMerch);   // le plan a besoin de sa largeur
     if (nom === "epargne") requestAnimationFrame(rendreHubArgent);   // la courbe de Road to 50k a besoin de sa largeur
     if (!opts.garderDefilement) window.scrollTo(0, 0);
     if (opts.focus) {
@@ -2842,7 +3194,7 @@ details.groupe-pieces { display: block; }
     tenues.chargerLocal();
     comparaisons.chargerLocal();
     demandes.chargerLocal();
-    [comptesArgent, soldes, projets, charges, operations, paies, budgets, agenda, documents, notesEntretien].forEach(c => c.chargerLocal());
+    [comptesArgent, soldes, projets, charges, operations, paies, budgets, agenda, documents, notesEntretien, merchPlans, merchElements].forEach(c => c.chargerLocal());
   }
   function sauverLocal() {
     try { localStorage.setItem(CLE_LOCALE, JSON.stringify(semaines)); return true; } catch (_) { return false; }
@@ -2886,7 +3238,7 @@ details.groupe-pieces { display: block; }
     tenues.abonner();
     comparaisons.abonner();
     demandes.abonner();
-    [comptesArgent, soldes, projets, charges, operations, paies, budgets, agenda, documents, notesEntretien].forEach(c => c.abonner());
+    [comptesArgent, soldes, projets, charges, operations, paies, budgets, agenda, documents, notesEntretien, merchPlans, merchElements].forEach(c => c.abonner());
     // Claude, pour proposer une description de tenue : seulement pour qui peut modifier.
     if (proprio) c.use("sample").then(ns => { sampleNs = ns; rendreTenues(); }, () => {});
     // Google Agenda (le connecteur de claude.ai) et l'enregistrement d'un fichier : seulement pour le propriétaire.
@@ -3102,6 +3454,7 @@ details.groupe-pieces { display: block; }
     rendreObjectifs();
     rendreEquipe();
     rendreCarriere();
+    rendreMerch();
     if ($("fenetre-semaine").open) rendreGrilleSemaines();
     rendreJournee();
     rendreArgent();
@@ -4237,7 +4590,15 @@ details.groupe-pieces { display: block; }
   const NOM_CATEGORIE = Object.fromEntries(CATEGORIES);
   const RANG_CATEGORIE = Object.fromEntries(CATEGORIES.map(([id], i) => [id, i]));
   const RAYONS = { homme: "Homme", femme: "Femme", mixte: "Mixte" };
-  const REPERES_PIECE = [["nouveaute", "Nouveauté"], ["promo", "Promo"], ["vitrine", "Idée vitrine"], ["reseaux", "À poster"]];
+  const REPERES_PIECE = [["nouveaute", "Nouveauté"], ["meilleure", "Meilleure vente"], ["promo", "Promo"], ["vitrine", "Idée vitrine"], ["reseaux", "À poster"]];
+  // En magasin, une pièce se présente pliée, sur cintre, ou les deux ; les accessoires, sur un présentoir ou dans un bac.
+  const PRESENTATIONS = [["deux", "Plié ou cintre"], ["plie", "Plié seulement"], ["cintre", "Cintre seulement"], ["presentoir", "Présentoir ou bac"]];
+  const NOM_PRESENTATION = Object.fromEntries(PRESENTATIONS);
+  const PRESENTATION_CATEGORIE = {
+    pulls: "deux", gilets: "deux", sweats: "deux", "t-shirts": "deux", chemises: "cintre", polos: "deux", vestes: "cintre", blousons: "cintre", manteaux: "cintre",
+    jeans: "plie", pantalons: "deux", shorts: "deux", chaussures: "presentoir", calecons: "presentoir", chaussettes: "presentoir", ceintures: "presentoir",
+    casquettes: "presentoir", bonnets: "presentoir", accessoires: "presentoir",
+  };
   // Familles de couleurs : le nom affiché, la pastille, et les mots qui y mènent (dans cet ordre de lecture).
   const TEINTES = [
     ["noir", "Noir", "#1c1c1f"], ["blanc", "Blanc", "#ffffff"], ["ecru", "Écru", "#efe6d2"], ["gris", "Gris", "#9ca3ad"],
@@ -4361,6 +4722,62 @@ details.groupe-pieces { display: block; }
   let pieces = Object.create(null);
   let assets = null;   // envoi des photos (propriétaire de la page publiée)
 
+  // Les réglages du merch (reglages/merch) : le rang des marques, ce qui est hors saison, plié ou cintre par catégorie, le seuil des alertes.
+  // Le rang d'une marque : 1 BOSS ; 2 Tommy, Calvin Klein ; 3 Levi's ; 4 Le Temps des Cerises ; 5 Teddy Smith ; 6 les autres.
+  const cleMarque = m => sansAccents(m).replace(/[^a-z0-9]+/g, " ").trim();
+  function rangParDefaut(marque) {
+    const m = cleMarque(marque);
+    if (/\bboss\b/.test(m)) return 1;
+    if (/\btommy\b|\bhilfiger\b|\bcalvin\b|^ck\b/.test(m)) return 2;
+    if (/\blevi/.test(m)) return 3;
+    if (/temps des cerises/.test(m)) return 4;
+    if (/\bteddy\b/.test(m)) return 5;
+    return 6;
+  }
+  const NOMS_RANGS = { 1: "1 · en avant d'abord", 2: "2", 3: "3", 4: "4", 5: "5", 6: "6 · les autres" };
+  // Hors saison par défaut : l'été (avril à septembre) range les pulls ; l'hiver range les t-shirts, les polos, les shorts.
+  const horsSaisonParDefaut = () => { const m = new Date().getMonth(); return m >= 3 && m <= 8 ? ["pulls", "gilets", "manteaux", "bonnets"] : ["t-shirts", "polos", "shorts"]; };
+  function reglagesMerch() {
+    const r = reglagesCollection.docs.merch || {};
+    const rangs = {};
+    if (r.rangs && typeof r.rangs === "object") Object.entries(r.rangs).forEach(([k, v]) => { if (Number.isInteger(v) && v >= 1 && v <= 6) rangs[k] = v; });
+    const presentation = {};
+    if (r.presentation && typeof r.presentation === "object") Object.entries(r.presentation).forEach(([k, v]) => { if (NOM_CATEGORIE[k] && NOM_PRESENTATION[v]) presentation[k] = v; });
+    return {
+      rangs, presentation,
+      horsSaison: Array.isArray(r.horsSaison) ? r.horsSaison.filter(c => NOM_CATEGORIE[c]) : horsSaisonParDefaut(),
+      seuil: Number.isInteger(r.seuil) && r.seuil >= 3 && r.seuil <= 90 ? r.seuil : 14,
+    };
+  }
+  const rangMarque = marque => reglagesMerch().rangs[cleMarque(marque)] || rangParDefaut(marque);
+  const presentationParDefaut = cat => reglagesMerch().presentation[cat] || PRESENTATION_CATEGORIE[cat] || "deux";
+  const presentationDe = x => x.presentation || presentationParDefaut(x.categorie);
+  // Un même modèle dans ses différentes couleurs a la même clé. Les noms Teddy Smith mêlent la description, le code du
+  // modèle en capitales (« C-STAN », « PASIAN 2 ») et la couleur du fabricant (« MIDDLE WHITE ») : la clé garde le code.
+  const MOTS_COULEUR = new Set("us total dark middle light deep pastel mixed melange chine fonce clair vintage bleached used wood wolf dusty mineral naturel natural cream white black navy blue pink shirt grey gray green red brown sand stone rinse raw brut heather charcoal khaki kaki olive ecru turbulence indigo fripp".split(" "));
+  const ARRET_MODELE = /^(ml|mc|rc|l\d{2}|w\d{2})$/;
+  function cleModele(x) {
+    const mots = String(x.modele || "").split(/\s+/).filter(Boolean);
+    const debut = mots.findIndex(m => /^[A-Z0-9][A-Z0-9'’\/-]*[A-Z][A-Z0-9'’\/-]*$/.test(m) && /[A-Z]{2}/.test(m));
+    let cle = "";
+    if (debut >= 0) {
+      const garde = [];
+      for (const m of mots.slice(debut)) {
+        const n = sansAccents(m);
+        if (ARRET_MODELE.test(n) || n.split("/").some(bout => MOTS_COULEUR.has(bout) || teinteDe(bout))) break;
+        garde.push(n);
+      }
+      cle = garde.join(" ");
+    }
+    if (!cle) {
+      cle = sansAccents(x.modele).replace(/\s+/g, " ").trim();
+      const c = sansAccents(x.couleur).replace(/\s+/g, " ").trim();
+      if (c && cle.endsWith(" " + c)) cle = cle.slice(0, -c.length - 1);
+    }
+    return cleMarque(x.marque) + "|" + cle;
+  }
+
+
   function lirePiece(id, d) {
     if (!d || typeof d !== "object") return null;
     const categorie = typeof d.categorie === "string" && NOM_CATEGORIE[d.categorie] ? d.categorie : null;
@@ -4377,6 +4794,7 @@ details.groupe-pieces { display: block; }
       rayon: typeof d.rayon === "string" && RAYONS[d.rayon] ? d.rayon : null,
       prix, ref: texteBorne(d.ref, 60), lien, photos, photo: photos[0] || null,
       reperes: Object.fromEntries(REPERES_PIECE.map(([k]) => [k, r[k] === true])),
+      presentation: NOM_PRESENTATION[d.presentation] ? d.presentation : null,
       note: texteBorne(d.note, 500), creeLe: texteBorne(d.creeLe, 40),
       // Plus en magasin : rangée dans les archives (gardée, avec ses photos et ses tenues).
       archive: d.archive === true, archiveLe: texteBorne(d.archiveLe, 40) || null,
@@ -4384,7 +4802,7 @@ details.groupe-pieces { display: block; }
   }
   const corpsPiece = x => ({
     marque: x.marque || null, categorie: x.categorie, modele: x.modele || null, coupe: x.coupe || null, couleur: x.couleur || null, matiere: x.matiere || null,
-    rayon: x.rayon, prix: x.prix, ref: x.ref || null, lien: x.lien, photos: [...x.photos], photo: x.photos[0] || null, reperes: { ...x.reperes }, note: x.note || null, creeLe: x.creeLe,
+    rayon: x.rayon, prix: x.prix, ref: x.ref || null, lien: x.lien, photos: [...x.photos], photo: x.photos[0] || null, reperes: { ...x.reperes }, presentation: x.presentation || null, note: x.note || null, creeLe: x.creeLe,
     ...(x.archive ? { archive: true, archiveLe: x.archiveLe || null } : {}),
   });
   const piecesEnMagasin = () => Object.values(pieces).filter(x => !x.archive);
@@ -5129,7 +5547,23 @@ details.groupe-pieces { display: block; }
     l.append(c, element("span", null, nom));
     return l;
   }));
+  $("pi-presentation").replaceChildren(new Option("Selon la catégorie", ""), ...PRESENTATIONS.map(([v, nom]) => new Option(nom, v)));
+  // Les autres couleurs du même modèle (même marque, même nom de modèle), encore en magasin.
+  function autresCouleurs() {
+    if (!$("pi-modele").value.trim()) return [];
+    const cle = cleModele({ marque: $("pi-marque").value, modele: $("pi-modele").value, couleur: $("pi-couleur").value });
+    return piecesEnMagasin().filter(x => (!pieceEditee || x.id !== pieceEditee.id) && cleModele(x) === cle);
+  }
+  function majPresentation() {
+    const cat = $("pi-categorie").value;
+    $("pi-presentation").options[0].textContent = NOM_CATEGORIE[cat] ? `Comme les ${NOM_CATEGORIE[cat].toLowerCase()} : ${NOM_PRESENTATION[presentationParDefaut(cat)].toLowerCase()}` : "Selon la catégorie";
+    const change = $("pi-presentation").value !== ((pieceEditee && pieceEditee.presentation) || "");
+    const autres = change ? autresCouleurs() : [];
+    $("pi-pres-modele-l").hidden = !autres.length;
+    $("pi-pres-modele-texte").textContent = autres.length > 1 ? `Pareil pour les ${autres.length} autres couleurs de ce modèle` : "Pareil pour l'autre couleur de ce modèle";
+  }
   function majFormulairePiece() {
+    majPresentation();
     $("pi-pastille").style.setProperty("--teinte", cssCouleur($("pi-couleur").value) || "transparent");
     if (!$("pi-nuancier").hidden) marquerNuance();
     REPERES_PIECE.forEach(([k]) => $("pi-rep-" + k).closest(".repere-choix").classList.toggle("coche", $("pi-rep-" + k).checked));
@@ -5470,6 +5904,9 @@ details.groupe-pieces { display: block; }
     $("pi-lien").value = x && x.lien ? x.lien : "";
     $("pi-note").value = x ? x.note : "";
     REPERES_PIECE.forEach(([k]) => { $("pi-rep-" + k).checked = !!(x && x.reperes[k]); });
+    $("pi-presentation").value = x && x.presentation ? x.presentation : "";
+    $("pi-pres-modele").checked = true;
+    majPresentation();
     montrerNuancier(false);
     $("pi-nuancier-bouton").hidden = !modifiable;
     $("pi-voir-lien").hidden = !(x && x.lien);
@@ -5608,6 +6045,7 @@ details.groupe-pieces { display: block; }
       rayon: "homme",
       prix, ref: val("pi-ref").slice(0, 60), lien,
       reperes: Object.fromEntries(REPERES_PIECE.map(([k]) => [k, $("pi-rep-" + k).checked])),
+      presentation: NOM_PRESENTATION[$("pi-presentation").value] ? $("pi-presentation").value : null,
       note: val("pi-note").slice(0, 500),
     } };
   }
@@ -5631,6 +6069,7 @@ details.groupe-pieces { display: block; }
     const avant = pieceEditee;
     const id = avant ? avant.id : nouvelIdPiece();
     const envoyees = [];
+    const memeModele = !$("pi-pres-modele-l").hidden && $("pi-pres-modele").checked ? autresCouleurs().filter(y => (y.presentation || null) !== lu.piece.presentation) : [];
     enregistrementPiece = true;
     const bouton = continuer ? $("pi-encore") : $("pi-enregistrer");
     const texteBouton = bouton.textContent;
@@ -5646,6 +6085,7 @@ details.groupe-pieces { display: block; }
       }
       await ecrirePiece(id, { ...lu.piece, photos, photo: photos[0] || null, creeLe: avant ? avant.creeLe : new Date().toISOString(),
         ...(avant && avant.archive ? { archive: true, archiveLe: avant.archiveLe } : {}) });
+      if (memeModele.length) await Promise.allSettled(memeModele.map(y => ecrirePiece(y.id, { ...corpsPiece(y), presentation: lu.piece.presentation })));
       // Les photos retirées de la fiche ne servent plus : elles sont effacées.
       if (assets) photosEnvoyees(avant).filter(v => !photos.includes(v)).forEach(v => assets.delete(v).catch(() => {}));
       // Ajoutée depuis une case de tenue ou du comparateur : elle y prend place.
@@ -5659,7 +6099,7 @@ details.groupe-pieces { display: block; }
         ["pi-marque", "pi-categorie"].forEach(id => { if ($(id).value) { champsAuto.add(id); $(id).classList.add("auto-rempli"); } });
         $("pi-choisir").focus();
         toast("Pièce ajoutée. À la suivante !");
-      } else toast(avant ? "Pièce enregistrée." : "Pièce ajoutée.");
+      } else toast((avant ? "Pièce enregistrée" : "Pièce ajoutée") + (memeModele.length ? ` ; ${memeModele.length > 1 ? `ses ${memeModele.length} autres couleurs aussi` : "l'autre couleur aussi"}.` : "."));
     } catch (e) {
       if (assets) envoyees.forEach(v => assets.delete(v).catch(() => {}));
       erreurPiece(messagePiece(e));
@@ -9578,6 +10018,1026 @@ details.groupe-pieces { display: block; }
       if (!reagi && document.hasFocus()) toast(MESSAGE_FICHIER, "erreur");
     }, 1500);
   });
+
+  var merchPret = false;   // var : rendreMerch peut être appelée avant que tout soit en place
+  // ---------- Merch : le plan du magasin ----------
+  // merch-plans/<id> : { nom, actif, largeur, profondeur, homme, circulation: [{ x, y }…], aPartirDu, note, creeLe } : le magasin
+  // vu de dessus, l'entrée en bas, le côté Homme à gauche (de 0 à « homme » mètres), le côté Femme à droite. Un seul plan
+  // est « en place » (actif) ; les autres sont prévus (les soldes, Noël…), avec la date d'où ils comptent.
+  // merch/<id> : un meuble d'un plan { plan, type, nom, x, y, rot, l, p, zone, note, creeLe, modifieLe } ; x, y : son centre,
+  // en mètres ; rot : en degrés, dans le sens des aiguilles d'une montre. Selon le type :
+  //  - un mur : uvL (la largeur d'une UV) et uvs, de gauche à droite vu de face ; chaque UV, ses équipements de haut en
+  //    bas : { eq: [{ id, type: facing | pressing | etagere | coudee, articles }] }. Sa face regarde vers le bas quand rot = 0 ;
+  //  - une table : hauteurs (1 à 3, le plateau puis les tables gigognes) et niveaux: [{ articles }] ;
+  //  - un portant, un présentoir, la vitrine : articles ; un buste : tenue et articles.
+  // Un article posé : { p: l'id de la pièce, d: posé le (AAAA-MM-JJ), ok: « se vend bien ici » depuis le, n, t, sup }.
+  const FAMILLES_MERCH = [["mur", "Murs"], ["table", "Tables"], ["portant", "Portants"], ["presentoir", "Présentoirs"], ["buste", "Bustes et mannequins"], ["repere", "Repères"]];
+  const TYPES_MERCH = {
+    mur: { nom: "Mur", famille: "mur", p: 0.4, porte: "uv" },
+    "grande-table": { nom: "Grande table", famille: "table", l: 1.8, p: 0.9, porte: "niveaux" },
+    "petite-table": { nom: "Petite table", famille: "table", l: 1.2, p: 0.7, porte: "niveaux" },
+    tourniquet: { nom: "Portant tourniquet", famille: "portant", l: 0.9, p: 0.9, rond: true, porte: "articles" },
+    "petit-portant": { nom: "Petit portant", famille: "portant", l: 1, p: 0.5, porte: "articles" },
+    "grand-portant": { nom: "Grand portant", famille: "portant", l: 1.6, p: 0.55, porte: "articles" },
+    bac: { nom: "Bac", famille: "presentoir", l: 0.6, p: 0.6, porte: "articles", aide: "caleçons, chaussettes" },
+    casquettes: { nom: "Présentoir casquettes", famille: "presentoir", l: 0.5, p: 0.5, rond: true, porte: "articles" },
+    ceintures: { nom: "Présentoir ceintures", famille: "presentoir", l: 0.5, p: 0.5, rond: true, porte: "articles" },
+    cube: { nom: "Podium ou cube", famille: "presentoir", l: 0.6, p: 0.6, porte: "articles" },
+    buste: { nom: "Buste", famille: "buste", l: 0.5, p: 0.5, rond: true, porte: "tenue" },
+    mannequin: { nom: "Mannequin", famille: "buste", l: 0.6, p: 0.6, rond: true, porte: "tenue" },
+    vitrine: { nom: "Vitrine", famille: "repere", l: 2.5, p: 1, porte: "articles" },
+    entree: { nom: "Entrée", famille: "repere", l: 2, p: 0.4 },
+    caisse: { nom: "Caisse", famille: "repere", l: 1.6, p: 0.7 },
+    cabines: { nom: "Cabines", famille: "repere", l: 2, p: 1.2 },
+    pilier: { nom: "Pilier", famille: "repere", l: 0.5, p: 0.5 },
+    reserve: { nom: "Réserve", famille: "repere", l: 1, p: 0.3 },
+  };
+  const EQUIPEMENTS = [
+    ["facing", "Facing", "F", "Un bras de face : un modèle, ou deux en superposition."],
+    ["pressing", "Pressing", "P", "Une barre le long du mur : les cintres côte à côte."],
+    ["etagere", "Étagère", "E", "Une étagère : des piles pliées."],
+    ["coudee", "Barre coudée", "C", "Deux facings l'un derrière l'autre, le second plus haut."],
+  ];
+  const NOM_EQUIPEMENT = Object.fromEntries(EQUIPEMENTS.map(([id, nom]) => [id, nom]));
+  const LETTRE_EQUIPEMENT = Object.fromEntries(EQUIPEMENTS.map(([id, , l]) => [id, l]));
+  const estFacing = type => type === "facing" || type === "coudee";
+  const MODELES_UV = [
+    ["pressing", "Pressing", ["pressing"]], ["facing", "Facing", ["facing"]], ["coudee", "Barre coudée", ["coudee"]],
+    ["etageres", "4 étagères", ["etagere", "etagere", "etagere", "etagere"]], ["etagere-pressing", "2 étagères et un pressing", ["etagere", "etagere", "pressing"]],
+    ["etagere-facing", "Une étagère et un facing", ["etagere", "facing"]], ["double-pressing", "2 pressings", ["pressing", "pressing"]], ["vide", "Vide", []],
+  ];
+  const ZONES_MERCH = [["chaude", "Chaude"], ["tiede", "Tiède"], ["froide", "Froide"]];
+  const NOM_ZONE = Object.fromEntries(ZONES_MERCH);
+  // Les règles du merch du magasin (celles choisies par Axel, avec ses précisions). « verif » : vérifiée par l'outil.
+  const REGLES_MERCH = [
+    ["Placement", [
+      ["mienne", "Le côté Homme est à gauche : le client regarde d'abord à gauche et y va en premier. Le mur du centre (recto Homme, verso Femme) est le mur froid."],
+      ["mienne", "L'ordre des marques mises en avant : le peu de BOSS d'abord ; Tommy et Calvin Klein au même niveau (Tommy, plus nombreux, est souvent bien en avant) ; Levi's ; Le Temps des Cerises ; Teddy Smith (le moins cher, en grande quantité : Blue Box existe pour le mettre en avant)."],
+      ["", "Les marques prioritaires en zone chaude et à hauteur des yeux."],
+      ["", "BOSS : peu de pièces, mais très bien mises en valeur."],
+      ["", "L'ancienne collection (les t-shirts en ce moment) va sur le mur du milieu, le mur froid."],
+      ["", "Les produits « destination » au fond, pour faire traverser le rayon : les chaussures sont au fond."],
+      ["", "À la caisse, à l'entrée : les chaussettes et les petits achats d'impulsion."],
+    ]],
+    ["Regrouper et associer", [
+      ["mienne", "Côté Homme, un même modèle dans toutes ses couleurs au même endroit, et une même famille ensemble (tous les pulls Tommy, tous les polos) : un homme qui achète un pull Tommy bleu prendra sûrement le noir avec."],
+      ["mienne", "Le merch sert la vente complémentaire et les associations."],
+      ["", "Les pièces qui vont ensemble côte à côte : pull et chemise, jean et ceinture, sweat et t-shirt, veste et pull."],
+      ["", "Un buste habillé, et ses pièces exposées juste à côté."],
+      ["", "Les ceintures près des jeans, les caleçons près de la caisse."],
+    ]],
+    ["Les murs", [
+      ["mienne", "Jamais deux facings côte à côte."],
+      ["", "Sur un mur, alterner facing, pressing et étagères."],
+      ["", "Un facing = un modèle, ou deux en superposition (un pull sur une chemise, un t-shirt manches longues sous une surchemise)."],
+      ["", "La barre coudée : deux facings l'un derrière l'autre, le second plus haut."],
+      ["", "Cintres tous dans le même sens et du même modèle, espacés régulièrement."],
+      ["", "Une barre ni vide ni bourrée."],
+      ["", "Tailles dans l'ordre, du S au XXL."],
+    ]],
+    ["Tables et portants", [
+      ["mienne", "Tout ne va pas sur cintre : chaque article est plié, sur cintre, ou les deux (à régler dans le Dressing)."],
+      ["", "Piles carrées, même hauteur, même pliage, logo ou détail visible."],
+      ["", "Grandes tailles en bas des piles, petites en haut."],
+      ["", "Une table = une famille ou une marque, regroupée par modèle, en dégradé de couleurs."],
+      ["", "Un tourniquet = une marque ou une famille."],
+      ["", "Portants : tailles dans l'ordre ; couleurs en dégradé quand c'est possible."],
+    ]],
+    ["Réassort et rotation", [
+      ["", "Jamais de trou : réassort immédiat depuis la réserve."],
+      ["", "Une pièce de chaque taille exposée, remise dès qu'elle est vendue ; le reste en 2e ou 3e hauteur des tables, ou en réserve."],
+      ["", "Refaire les piles plusieurs fois par jour, et ranger après chaque essayage."],
+      ["", "Les zones chaudes changent toutes les 2 semaines, la vitrine à chaque temps fort."],
+      ["", "Un article resté au même endroit depuis 2 semaines change de place (facing → pressing → étagère…), sauf s'il se vend bien là où il est."],
+    ]],
+  ];
+
+  const nombreBorne = (v, min, max, defaut) => (typeof v === "number" && isFinite(v) ? Math.min(max, Math.max(min, v)) : defaut);
+  const auCentimetre = v => Math.round(v * 100) / 100;
+  const idCourt = () => Math.random().toString(36).slice(2, 9);
+  function lireArticlesMerch(a) {
+    return (Array.isArray(a) ? a : []).filter(x => x && typeof x === "object" && typeof x.p === "string" && x.p && x.p.length <= 60).slice(0, 120).map(x => ({
+      p: x.p, d: typeof x.d === "string" && ISO_RE.test(x.d) ? x.d : null, ok: typeof x.ok === "string" && ISO_RE.test(x.ok) ? x.ok : null,
+      n: Number.isInteger(x.n) && x.n > 0 && x.n < 1000 ? x.n : null, t: texteBorne(x.t, 40) || null, sup: x.sup === true,
+    }));
+  }
+  const corpsArticles = l => l.map(a => ({ p: a.p, d: a.d, ok: a.ok, n: a.n, t: a.t, sup: a.sup }));
+  function lirePlanMerch(id, d) {
+    const nom = d && typeof d === "object" ? texteBorne(d.nom, 60) : "";
+    if (!nom) return null;
+    const largeur = nombreBorne(d.largeur, 3, 80, 14), profondeur = nombreBorne(d.profondeur, 3, 80, 15);
+    return {
+      id, nom, actif: d.actif === true, largeur, profondeur, homme: nombreBorne(d.homme, 1, largeur, largeur / 2),
+      circulation: (Array.isArray(d.circulation) ? d.circulation : []).filter(p => p && typeof p.x === "number" && isFinite(p.x) && typeof p.y === "number" && isFinite(p.y)).slice(0, 60).map(p => ({ x: p.x, y: p.y })),
+      aPartirDu: typeof d.aPartirDu === "string" && ISO_RE.test(d.aPartirDu) ? d.aPartirDu : null,
+      note: texteBorne(d.note, 300), creeLe: texteBorne(d.creeLe, 40),
+    };
+  }
+  const corpsPlanMerch = p => ({ nom: p.nom, actif: !!p.actif, largeur: p.largeur, profondeur: p.profondeur, homme: p.homme,
+    circulation: p.circulation.map(c => ({ x: c.x, y: c.y })), aPartirDu: p.aPartirDu || null, note: p.note || null, creeLe: p.creeLe || maintenant() });
+  function lireElementMerch(id, d) {
+    if (!d || typeof d !== "object" || typeof d.plan !== "string" || !TYPES_MERCH[d.type]) return null;
+    const t = TYPES_MERCH[d.type];
+    const e = {
+      id, plan: d.plan, type: d.type, nom: texteBorne(d.nom, 60), x: nombreBorne(d.x, -5, 120, 1), y: nombreBorne(d.y, -5, 120, 1),
+      rot: ((Math.round(nombreBorne(d.rot, -720, 720, 0)) % 360) + 360) % 360,
+      zone: NOM_ZONE[d.zone] ? d.zone : null, note: texteBorne(d.note, 300), creeLe: texteBorne(d.creeLe, 40), modifieLe: texteBorne(d.modifieLe, 40),
+    };
+    if (t.porte === "uv") {
+      e.uvL = nombreBorne(d.uvL, 0.4, 3, 1);
+      e.uvs = (Array.isArray(d.uvs) ? d.uvs : []).slice(0, 40).map(u => ({
+        eq: (u && Array.isArray(u.eq) ? u.eq : []).filter(q => q && NOM_EQUIPEMENT[q.type]).slice(0, 8)
+          .map((q, i) => ({ id: typeof q.id === "string" && q.id ? q.id.slice(0, 16) : `q${i}`, type: q.type, articles: lireArticlesMerch(q.articles) })),
+      }));
+      if (!e.uvs.length) e.uvs = [{ eq: [] }];
+      e.l = e.uvs.length * e.uvL;
+      e.p = t.p;
+    } else {
+      e.l = nombreBorne(d.l, 0.2, 20, t.l);
+      e.p = t.rond ? e.l : nombreBorne(d.p, 0.1, 20, t.p);
+    }
+    if (t.porte === "niveaux") {
+      e.hauteurs = Number.isInteger(d.hauteurs) && d.hauteurs >= 1 && d.hauteurs <= 3 ? d.hauteurs : 1;
+      const n = Array.isArray(d.niveaux) ? d.niveaux : [];
+      e.niveaux = Array.from({ length: e.hauteurs }, (_, i) => ({ articles: lireArticlesMerch(n[i] && n[i].articles) }));
+    }
+    if (t.porte === "articles" || t.porte === "tenue") e.articles = lireArticlesMerch(d.articles);
+    if (t.porte === "tenue") e.tenue = typeof d.tenue === "string" && d.tenue.length <= 60 ? d.tenue : null;
+    return e;
+  }
+  function corpsElementMerch(e) {
+    const t = TYPES_MERCH[e.type];
+    const c = { plan: e.plan, type: e.type, nom: e.nom || null, x: auCentimetre(e.x), y: auCentimetre(e.y), rot: e.rot, zone: e.zone || null,
+      note: e.note || null, creeLe: e.creeLe || maintenant(), modifieLe: maintenant() };
+    if (t.porte === "uv") { c.uvL = e.uvL; c.uvs = e.uvs.map(u => ({ eq: u.eq.map(q => ({ id: q.id, type: q.type, articles: corpsArticles(q.articles) })) })); }
+    else { c.l = auCentimetre(e.l); c.p = auCentimetre(e.p); }
+    if (t.porte === "niveaux") { c.hauteurs = e.hauteurs; c.niveaux = Array.from({ length: e.hauteurs }, (_, i) => ({ articles: corpsArticles((e.niveaux[i] || { articles: [] }).articles) })); }
+    if (t.porte === "articles" || t.porte === "tenue") c.articles = corpsArticles(e.articles || []);
+    if (t.porte === "tenue") c.tenue = e.tenue || null;
+    return c;
+  }
+  const merchPlans = creerCollection("merch-plans", "tableau-de-bord-axel:merch-plans", lirePlanMerch, () => rendreMerch());
+  const merchElements = creerCollection("merch", "tableau-de-bord-axel:merch", lireElementMerch, () => rendreMerch());
+
+  // ----- les plans -----
+  const CLE_PLAN_MERCH = "tableau-de-bord-axel:merch-plan";
+  let planMerchChoisi = null;
+  try { planMerchChoisi = localStorage.getItem(CLE_PLAN_MERCH); } catch (_) { /* rien */ }
+  let choixMerch = null, ongletMerch = "plan", zoomMerch = 1, glisseMerch = null, traceMerch = false;
+  const calquesMerch = { zones: false, parcours: true, noms: true, femme: !window.matchMedia("(max-width: 599px)").matches };
+  const plansMerch = () => Object.values(merchPlans.docs).sort((a, b) => (b.actif - a.actif) || (a.aPartirDu || "").localeCompare(b.aPartirDu || "") || a.nom.localeCompare(b.nom, "fr"));
+  function planAffiche() {
+    const ps = plansMerch();
+    return merchPlans.docs[planMerchChoisi] || ps.find(p => p.actif) || ps[0] || null;
+  }
+  const planEnPlace = () => plansMerch().find(p => p.actif) || null;
+  const elementsDuPlan = planId => Object.values(merchElements.docs).filter(e => e.plan === planId);
+  const ORDRE_FAMILLE = Object.fromEntries(FAMILLES_MERCH.map(([f], i) => [f, i]));
+  const trierElements = l => l.sort((a, b) => ORDRE_FAMILLE[TYPES_MERCH[a.type].famille] - ORDRE_FAMILLE[TYPES_MERCH[b.type].famille] || nomMeuble(a).localeCompare(nomMeuble(b), "fr", { numeric: true }));
+  const nomMeuble = e => e.nom || TYPES_MERCH[e.type].nom;
+
+  // Les zones : plus on est près de l'entrée (en bas) et à gauche, plus c'est chaud ; un meuble peut forcer la sienne.
+  const chaleurMerch = (plan, x, y) => 0.65 * Math.min(1, Math.max(0, y / plan.profondeur)) + 0.35 * Math.min(1, Math.max(0, 1 - x / plan.homme));
+  const zoneDeChaleur = h => (h >= 0.6 ? "chaude" : h >= 0.35 ? "tiede" : "froide");
+  // Un point du meuble (lx, ly : le long du meuble, vers sa face) dans le plan.
+  const versPlan = (e, lx, ly) => { const a = e.rot * Math.PI / 180, c = Math.cos(a), s = Math.sin(a); return [e.x + lx * c - ly * s, e.y + lx * s + ly * c]; };
+  const zoneElement = (plan, e) => e.zone || zoneDeChaleur(chaleurMerch(plan, e.x, e.y));
+  const zoneUv = (plan, e, i) => e.zone || zoneDeChaleur(chaleurMerch(plan, ...versPlan(e, -e.l / 2 + (i + 0.5) * e.uvL, e.p / 2)));
+  // Deux UV voisines qui ont chacune un facing (ou une barre coudée) : interdit.
+  const facingsCoteACote = e => e.uvs.slice(1).map((u, i) => i).filter(i => e.uvs[i].eq.some(q => estFacing(q.type)) && e.uvs[i + 1].eq.some(q => estFacing(q.type)));
+  function resumeUvs(e) {
+    const n = {};
+    e.uvs.forEach(u => u.eq.forEach(q => { n[q.type] = (n[q.type] || 0) + 1; }));
+    const parties = EQUIPEMENTS.filter(([id]) => n[id]).map(([id, nom]) => `${n[id]} ${id === "etagere" ? (n[id] > 1 ? "étagères" : "étagère") : id === "coudee" ? (n[id] > 1 ? "barres coudées" : "barre coudée") : nom.toLowerCase() + (n[id] > 1 ? "s" : "")}`);
+    return `${e.uvs.length} UV${parties.length ? " : " + parties.join(", ") : ""}`;
+  }
+  const codeUv = u => {
+    const l = [];
+    u.eq.forEach(q => { const c = LETTRE_EQUIPEMENT[q.type]; const d = l[l.length - 1]; if (d && d.c === c) d.n++; else l.push({ c, n: 1 }); });
+    return l.map(x => x.c + (x.n > 1 ? x.n : "")).join("·");
+  };
+
+  // ----- écrire -----
+  const peutModifierMerch = () => peutModifierGr();
+  function ecrireElementMerch(e) {
+    const corps = corpsElementMerch(e);
+    if (mode === "base") { const x = lireElementMerch(e.id, corps); if (x) merchElements.docs[e.id] = x; }
+    const r = merchElements.ecrire(e.id, corps);
+    if (mode === "base") rendreMerch();
+    return r.catch(err => { toast(messageEcriture(err), "erreur"); throw err; });
+  }
+  function effacerElementMerch(id) {
+    if (mode === "base") delete merchElements.docs[id];
+    const r = merchElements.ecrire(id, null);
+    if (mode === "base") rendreMerch();
+    return r.catch(err => { toast(messageEcriture(err), "erreur"); throw err; });
+  }
+  function ecrirePlanMerch(p) {
+    const corps = corpsPlanMerch(p);
+    if (mode === "base") { const x = lirePlanMerch(p.id, corps); if (x) merchPlans.docs[p.id] = x; }
+    const r = merchPlans.ecrire(p.id, corps);
+    if (mode === "base") rendreMerch();
+    return r.catch(err => { toast(messageEcriture(err), "erreur"); throw err; });
+  }
+  // Les champs du meuble choisi s'enregistrent en tapant, un peu après la dernière touche, toujours sur le bon meuble.
+  let attenteMerch = null;   // { id, champs, minuterie }
+  function viderAttenteMerch() {
+    if (!attenteMerch) return;
+    const { id, champs } = attenteMerch;
+    clearTimeout(attenteMerch.minuterie);
+    attenteMerch = null;
+    const e = merchElements.docs[id];
+    if (e && peutModifierMerch()) ecrireElementMerch({ ...e, ...champs }).catch(() => {});
+  }
+  function modifierElementMerch(id, champs, attendre) {
+    if (!peutModifierMerch()) return Promise.resolve();
+    if (attenteMerch && attenteMerch.id !== id) viderAttenteMerch();
+    if (attendre) {
+      attenteMerch = attenteMerch || { id, champs: {} };
+      Object.assign(attenteMerch.champs, champs);
+      clearTimeout(attenteMerch.minuterie);
+      attenteMerch.minuterie = setTimeout(viderAttenteMerch, 600);
+      return Promise.resolve();
+    }
+    const avant = attenteMerch ? attenteMerch.champs : {};
+    if (attenteMerch) { clearTimeout(attenteMerch.minuterie); attenteMerch = null; }
+    const e = merchElements.docs[id];
+    return e ? ecrireElementMerch({ ...e, ...avant, ...champs }).catch(() => {}) : Promise.resolve();
+  }
+  window.addEventListener("pagehide", viderAttenteMerch);
+  const nouvelEq = type => ({ id: idCourt(), type, articles: [] });
+  const copieUvs = uvs => uvs.map(u => ({ eq: u.eq.map(q => ({ ...q, articles: q.articles.map(a => ({ ...a })) })) }));
+  // Plus d'UV : la suite reprend l'alternance (une UV sur deux comme celle d'avant-avant), sinon un pressing.
+  function ajusterUvs(uvs, n) {
+    const r = copieUvs(uvs).slice(0, n);
+    while (r.length < n) {
+      const modele = r.length >= 2 ? r[r.length - 2].eq.map(q => q.type) : r.length === 1 ? (r[0].eq.some(q => estFacing(q.type)) ? ["pressing"] : ["facing"]) : ["pressing"];
+      r.push({ eq: modele.map(nouvelEq) });
+    }
+    return r;
+  }
+  const decimal = v => Number(String(v).replace(/\s/g, "").replace(",", "."));
+  const virgule = v => String(auCentimetre(v)).replace(".", ",");
+
+  // ----- dessiner le plan -----
+  const COULEUR_ZONE = { chaude: "#f4a582", tiede: "#f6d77f", froide: "#9cc3e6" };
+  const PICTO_EQ = {
+    facing: '<svg viewBox="0 0 40 32" aria-hidden="true"><path d="M20 2v4M10 10l10-4 10 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M14 10l-6 3 2.5 5 3.5-1.5V30h12V16.5l3.5 1.5 2.5-5-6-3q-6 3.5-12 0z" fill="currentColor"/></svg>',
+    pressing: '<svg viewBox="0 0 40 32" aria-hidden="true"><path d="M2 5h36" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><g fill="currentColor"><rect x="5" y="8" width="3.4" height="21" rx="1"/><rect x="11" y="8" width="3.4" height="21" rx="1"/><rect x="17" y="8" width="3.4" height="21" rx="1"/><rect x="23" y="8" width="3.4" height="21" rx="1"/><rect x="29" y="8" width="3.4" height="21" rx="1"/></g></svg>',
+    etagere: '<svg viewBox="0 0 40 32" aria-hidden="true"><path d="M2 28h36" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><g fill="currentColor"><rect x="5" y="14" width="9" height="13" rx="1"/><rect x="16" y="11" width="9" height="16" rx="1"/><rect x="27" y="16" width="9" height="11" rx="1"/></g><path d="M5 18.5h9M5 22.5h9M16 15h9M16 19h9M16 23h9M27 20h9M27 23.5h9" stroke="#fff" stroke-width="1"/></svg>',
+    coudee: '<svg viewBox="0 0 40 32" aria-hidden="true"><path d="M3 4h11l5 6h18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.5 6.5l-3.5 2 1.5 3 2-1V20h8v-9.5l2 1 1.5-3-3.5-2q-4 2.5-8 0z" fill="currentColor" opacity=".55"/><path d="M23 12.5l-4.5 2.4 2 4 2.5-1.2V30h11V17.7l2.5 1.2 2-4-4.5-2.4q-5.5 3.2-11 0z" fill="currentColor"/></svg>',
+  };
+  const ORDRE_DESSIN = { repere: 0, mur: 1, table: 2, portant: 3, presentoir: 4, buste: 5 };
+  const NS_TRAIT = { "vector-effect": "non-scaling-stroke" };
+  let policeMerch = 0.3;
+  function dessinerElementMerch(plan, e) {
+    const t = TYPES_MERCH[e.type];
+    const g = svgEl("g", { class: `me-el me-f-${t.famille} me-t-${e.type}${e.id === choixMerch ? " choisi" : ""}`, transform: `translate(${e.x} ${e.y}) rotate(${e.rot})`,
+      "data-id": e.id, tabindex: "0", role: "button", "aria-label": `${nomMeuble(e)}, ${t.nom.toLowerCase()}` });
+    let forme;
+    if (t.porte === "uv") {
+      forme = svgEl("rect", { class: "me-forme", x: -e.l / 2, y: -e.p / 2, width: e.l, height: e.p, ...NS_TRAIT });
+      g.append(forme);
+      const cote = new Set(facingsCoteACote(e).flatMap(i => [i, i + 1]));
+      e.uvs.forEach((u, i) => {
+        const x0 = -e.l / 2 + i * e.uvL;
+        const c = svgEl("rect", { class: "me-uv" + (cote.has(i) ? " alerte" : ""), x: x0, y: -e.p / 2, width: e.uvL, height: e.p, ...NS_TRAIT });
+        if (calquesMerch.zones) c.style.fill = COULEUR_ZONE[zoneUv(plan, e, i)];
+        g.append(c);
+        const code = codeUv(u);
+        if (code) g.append(svgEl("text", { class: "me-uv-code", transform: `translate(${x0 + e.uvL / 2} 0) rotate(${-e.rot})`, "font-size": Math.min(policeMerch * 0.9, e.p * 0.62, e.uvL / Math.max(1.6, code.length * 0.62)) }, code));
+      });
+      g.append(svgEl("line", { class: "me-face", x1: -e.l / 2, y1: e.p / 2, x2: e.l / 2, y2: e.p / 2, ...NS_TRAIT }));
+    } else if (t.rond) {
+      forme = svgEl("ellipse", { class: "me-forme", cx: 0, cy: 0, rx: e.l / 2, ry: e.p / 2, ...NS_TRAIT });
+      g.append(forme);
+      if (e.type === "tourniquet") g.append(svgEl("circle", { class: "me-detail", r: e.l * 0.3, ...NS_TRAIT }));
+      if (t.famille === "buste") g.append(svgEl("circle", { class: "me-detail plein", r: e.l * 0.16, ...NS_TRAIT }));
+    } else {
+      forme = svgEl("rect", { class: "me-forme", x: -e.l / 2, y: -e.p / 2, width: e.l, height: e.p, rx: Math.min(0.06, e.p / 4), ...NS_TRAIT });
+      g.append(forme);
+      if (t.famille === "portant") g.append(svgEl("line", { class: "me-detail", x1: -e.l / 2 + 0.08, y1: 0, x2: e.l / 2 - 0.08, y2: 0, ...NS_TRAIT }));
+      if (t.porte === "niveaux") for (let k = 1; k < e.hauteurs && e.p - k * 0.26 > 0.1; k++) g.append(svgEl("rect", { class: "me-detail", x: -e.l / 2 + k * 0.13, y: -e.p / 2 + k * 0.13, width: e.l - k * 0.26, height: e.p - k * 0.26, ...NS_TRAIT }));
+      if (e.type === "entree") g.append(svgEl("path", { class: "me-fleche-entree", d: `M0 ${e.p / 2}V${-e.p / 2 - 0.55}M-0.28 ${-e.p / 2 - 0.27}L0 ${-e.p / 2 - 0.55}L0.28 ${-e.p / 2 - 0.27}`, ...NS_TRAIT }));
+    }
+    if (calquesMerch.zones && t.porte !== "uv" && t.famille !== "repere") forme.style.fill = COULEUR_ZONE[zoneElement(plan, e)];
+    return g;
+  }
+  function dessinerPlanMerch(plan, els) {
+    const svg = $("me-svg"), cadre = $("me-plan-zone");
+    const L = plan.largeur, D = plan.profondeur, H = Math.min(plan.homme, L), m = 0.6, bas = 1.1;
+    const femme = calquesMerch.femme && H < L, W = (femme ? L : H) + 2 * m, Hv = D + m + bas;
+    svg.setAttribute("viewBox", `${-m} ${-m} ${W} ${Hv}`);
+    // Au zoom 1, le plan tient en entier dans son cadre (l'entrée, en bas, reste visible).
+    const hauteurMax = parseFloat(getComputedStyle(cadre).maxHeight) || window.innerHeight * 0.76;
+    const largeurPx = Math.max(240, Math.min(cadre.clientWidth || 640, (hauteurMax - 4) * W / Hv) * zoomMerch);
+    svg.style.width = `${Math.round(largeurPx)}px`;
+    const px = largeurPx / W;   // pixels par mètre
+    policeMerch = Math.max(0.16, (largeurPx < 500 ? 10.5 : 12.5) / px);
+    const defs = svgEl("defs", {});
+    const grille = svgEl("pattern", { id: "me-grille", width: 1, height: 1, patternUnits: "userSpaceOnUse" });
+    grille.append(svgEl("path", { d: "M1 0H0V1", fill: "none", stroke: "#e2e6ee", "stroke-width": 0.025 }));
+    const hachures = svgEl("pattern", { id: "me-hachures", width: 0.4, height: 0.4, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" });
+    hachures.append(svgEl("path", { d: "M0 0V0.4", stroke: "#e4e7ed", "stroke-width": 0.08 }));
+    // La chaleur va en ligne droite : de froide (en haut à droite du côté Homme) à chaude (en bas à gauche).
+    const g1 = 0.35 / H, g2 = 0.65 / D, n2 = g1 * g1 + g2 * g2;
+    const degrade = svgEl("linearGradient", { id: "me-chaleur", gradientUnits: "userSpaceOnUse", x1: H, y1: 0, x2: H - g1 / n2, y2: g2 / n2 });
+    [[0, "froide"], [0.35, "froide"], [0.35, "tiede"], [0.6, "tiede"], [0.6, "chaude"], [1, "chaude"]].forEach(([o, z]) => degrade.append(svgEl("stop", { offset: o, "stop-color": COULEUR_ZONE[z] })));
+    const fleche = svgEl("marker", { id: "me-fleche", viewBox: "0 0 10 10", refX: 6, refY: 5, markerWidth: 0.45, markerHeight: 0.45, markerUnits: "userSpaceOnUse", orient: "auto" });
+    fleche.append(svgEl("path", { d: "M0 0L10 5L0 10z", fill: "#c4501a" }));
+    defs.append(grille, hachures, degrade, fleche);
+    const f = [defs, svgEl("rect", { class: "me-sol", x: 0, y: 0, width: femme ? L : H, height: D }), svgEl("rect", { x: 0, y: 0, width: H, height: D, fill: "url(#me-grille)" })];
+    if (calquesMerch.zones) f.push(svgEl("rect", { x: 0, y: 0, width: H, height: D, fill: "url(#me-chaleur)", opacity: 0.4 }));
+    if (femme) {
+      f.push(svgEl("rect", { x: H, y: 0, width: L - H, height: D, fill: "url(#me-hachures)" }));
+      f.push(svgEl("line", { class: "me-separation", x1: H, y1: 0, x2: H, y2: D, ...NS_TRAIT }));
+    }
+    f.push(svgEl("rect", { class: "me-murs", x: 0, y: 0, width: femme ? L : H, height: D, ...NS_TRAIT }));
+    const legende = (x, texte) => svgEl("text", { class: "me-legende", x, y: D + bas * 0.55, "font-size": policeMerch * 1.05 }, texte);
+    f.push(legende(H / 2, "Côté Homme"));
+    if (femme) f.push(legende((H + L) / 2, "Côté Femme"));
+    if (calquesMerch.parcours && plan.circulation.length >= 2) {
+      f.push(svgEl("polyline", { class: "me-parcours", points: plan.circulation.map(p => `${p.x},${p.y}`).join(" "), "marker-mid": "url(#me-fleche)", "marker-end": "url(#me-fleche)", ...NS_TRAIT }));
+    }
+    const calque = svgEl("g", { class: "me-els" });
+    [...els].sort((a, b) => ORDRE_DESSIN[TYPES_MERCH[a.type].famille] - ORDRE_DESSIN[TYPES_MERCH[b.type].famille]).forEach(e => calque.append(dessinerElementMerch(plan, e)));
+    f.push(calque);
+    if (calquesMerch.noms) {
+      const noms = svgEl("g", { class: "me-noms", "font-size": policeMerch });
+      els.forEach(e => {
+        // Le nom d'un mur se lit devant sa face ; ailleurs, sur le meuble.
+        let x = e.x, y = e.y, ancre = "middle";
+        if (TYPES_MERCH[e.type].porte === "uv") {
+          const a = e.rot * Math.PI / 180, fx = -Math.sin(a), fy = Math.cos(a);
+          [x, y] = versPlan(e, 0, e.p / 2 + policeMerch * 0.5);
+          if (Math.abs(fx) > 0.7) ancre = fx > 0 ? "start" : "end";
+          else y += fy * policeMerch * 0.55;
+        }
+        const texte = nomMeuble(e);
+        noms.append(svgEl("text", { class: "me-nom", x, y, "text-anchor": ancre, "data-nom": e.id }, texte.length > 26 ? texte.slice(0, 25) + "…" : texte));
+      });
+      f.push(noms);
+    }
+    if (traceMerch) {
+      const pts = svgEl("g", { class: "me-points" });
+      plan.circulation.forEach((p, i) => pts.append(svgEl("circle", { cx: p.x, cy: p.y, r: Math.max(0.09, policeMerch * 0.4), class: i ? "" : "premier" })));
+      f.push(pts);
+    }
+    const actif = document.activeElement && document.activeElement.closest ? document.activeElement.closest("#me-svg .me-el") : null;
+    svg.replaceChildren(...f);
+    svg.classList.toggle("trace", traceMerch);
+    if (actif) { const g = svg.querySelector(`.me-el[data-id="${actif.dataset.id}"]`); if (g) g.focus({ preventScroll: true }); }
+  }
+  function marquerChoixMerch() {
+    document.querySelectorAll("#me-svg .me-el").forEach(g => g.classList.toggle("choisi", g.dataset.id === choixMerch));
+    document.querySelectorAll("#me-liste .me-item").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.id === choixMerch)));
+    rendrePanneauMerch();
+  }
+  function choisirElementMerch(id, voir) {
+    if (id === choixMerch) return;
+    viderAttenteMerch();
+    choixMerch = id;
+    marquerChoixMerch();
+    if (id && voir && window.matchMedia("(max-width: 899px)").matches) $("me-panneau").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  // ----- la liste des meubles (pratique sur téléphone) -----
+  function detailElement(e) {
+    const t = TYPES_MERCH[e.type];
+    if (t.porte === "uv") return resumeUvs(e);
+    if (t.porte === "niveaux") return e.hauteurs > 1 ? `${e.hauteurs} hauteurs` : "le plateau";
+    return t.rond ? `${virgule(e.l)} m de diamètre` : `${virgule(e.l)} × ${virgule(e.p)} m`;
+  }
+  function rendreListeMerch(plan, els) {
+    const blocs = FAMILLES_MERCH.map(([f, nomF]) => {
+      const dedans = trierElements(els.filter(e => TYPES_MERCH[e.type].famille === f));
+      if (!dedans.length) return null;
+      const s = element("section", "me-groupe");
+      s.append(element("h3", null, `${nomF} `), element("ul", "me-items"));
+      s.firstChild.append(element("span", "nombre", String(dedans.length)));
+      s.lastChild.append(...dedans.map(e => {
+        const li = element("li"), b = element("button", "me-item");
+        b.type = "button";
+        b.dataset.id = e.id;
+        b.setAttribute("aria-pressed", String(e.id === choixMerch));
+        const texte = element("span", "me-item-texte");
+        texte.append(element("span", "me-item-nom", nomMeuble(e)), element("span", "me-item-detail", [e.nom ? TYPES_MERCH[e.type].nom : "", detailElement(e)].filter(Boolean).join(" · ")));
+        b.append(texte);
+        if (TYPES_MERCH[e.type].famille !== "repere") {
+          const z = TYPES_MERCH[e.type].porte === "uv" ? null : zoneElement(plan, e);
+          if (z) b.append(element("span", `zone-pastille z-${z}`, NOM_ZONE[z]));
+          else if (facingsCoteACote(e).length) b.append(element("span", "zone-pastille z-alerte", "2 facings côte à côte"));
+        }
+        li.append(b);
+        return li;
+      }));
+      return s;
+    }).filter(Boolean);
+    $("me-liste").replaceChildren(...blocs);
+    $("me-liste-vide").hidden = blocs.length > 0;
+  }
+
+  // ----- le meuble choisi -----
+  function optionsRotation(mur, rot) {
+    const faces = { 0: "face vers l'entrée", 90: "face vers la gauche", 180: "face vers le fond", 270: "face vers la droite" };
+    const angles = [0, 45, 90, 135, 180, 225, 270, 315];
+    if (!angles.includes(rot)) angles.push(rot);
+    return angles.sort((a, b) => a - b).map(a => new Option(mur && faces[a] ? `${a}° · ${faces[a]}` : `${a}°`, String(a)));
+  }
+  function rendrePanneauMerch() {
+    const plan = planAffiche(), e = choixMerch && merchElements.docs[choixMerch];
+    const modifiable = peutModifierMerch();
+    $("me-form").hidden = !e;
+    $("me-resume").hidden = !!e;
+    if (!e || !plan) {
+      $("me-form").dataset.id = "";
+      if (!plan) return;
+      const els = elementsDuPlan(plan.id), murs = els.filter(x => x.type === "mur");
+      const meubles = els.filter(x => !["mur", "repere"].includes(TYPES_MERCH[x.type].famille));
+      $("me-resume-texte").textContent = !els.length ? (modifiable ? "Le plan est vide : « Ajouter » pour poser les murs, les tables, les portants…" : "Le plan est vide.")
+        : `${murs.length} mur${murs.length > 1 ? "s" : ""} (${murs.reduce((n, x) => n + x.uvs.length, 0)} UV) et ${meubles.length} meuble${meubles.length > 1 ? "s" : ""}. ${modifiable ? "Touche un meuble pour le régler ; sur ordinateur, fais-le glisser." : ""}`;
+      $("me-compte").replaceChildren(...FAMILLES_MERCH.map(([f, nomF]) => [nomF, els.filter(x => TYPES_MERCH[x.type].famille === f).length]).filter(([, n]) => n)
+        .map(([nomF, n]) => { const li = element("li"); li.append(element("span", null, nomF), element("span", "nombre", String(n))); return li; }));
+      return;
+    }
+    const t = TYPES_MERCH[e.type], mur = t.porte === "uv";
+    const nouveau = $("me-form").dataset.id !== e.id;
+    $("me-form").dataset.id = e.id;
+    const poser = (id, v) => { const el = $(id); if (nouveau || document.activeElement !== el) el.value = v; };
+    $("me-type").textContent = t.nom + (t.aide ? ` (${t.aide})` : "");
+    poser("me-nom", e.nom);
+    $("me-nom").placeholder = t.nom;
+    $("me-g-mur").hidden = !mur;
+    $("me-equiper").hidden = !mur;
+    $("me-equiper").textContent = modifiable ? "Équiper les UV" : "Voir les UV";
+    if (mur) { poser("me-uvn", String(e.uvs.length)); poser("me-uvl", virgule(e.uvL)); }
+    $("me-g-taille").hidden = mur;
+    if (!mur) {
+      $("me-l-nom").textContent = t.rond ? "Diamètre (m)" : "Largeur (m)";
+      $("me-p-champ").hidden = !!t.rond;
+      poser("me-l", virgule(e.l));
+      poser("me-p", virgule(e.p));
+    }
+    $("me-g-hauteurs").hidden = t.porte !== "niveaux";
+    if (t.porte === "niveaux") poser("me-hauteurs", String(e.hauteurs));
+    if (nouveau || document.activeElement !== $("me-rot")) { $("me-rot").replaceChildren(...optionsRotation(mur, e.rot)); $("me-rot").value = String(e.rot); }
+    poser("me-x", virgule(e.x));
+    poser("me-y", virgule(e.y));
+    $("me-g-zone").hidden = t.famille === "repere";
+    if (nouveau || document.activeElement !== $("me-zone")) {
+      const auto = mur ? null : zoneDeChaleur(chaleurMerch(plan, e.x, e.y));
+      $("me-zone").replaceChildren(new Option(auto ? `Automatique (${NOM_ZONE[auto].toLowerCase()})` : "Automatique (UV par UV)", ""), ...ZONES_MERCH.map(([z, nom]) => new Option(nom, z)));
+      $("me-zone").value = e.zone || "";
+    }
+    poser("me-note", e.note);
+    const cote = mur ? facingsCoteACote(e) : [];
+    $("me-alerte").hidden = !cote.length;
+    $("me-alerte").textContent = cote.length ? `Deux facings côte à côte : ${listeFr(cote.map(i => `UV ${i + 1} et ${i + 2}`))}.` : "";
+    $("me-info").textContent = mur ? resumeUvs(e) : "";
+    $("me-info").hidden = !mur;
+    [...$("me-form").elements].forEach(el => { if (el.id !== "me-equiper" && el.id !== "me-deselect") el.disabled = !modifiable; });
+    $("me-actions").hidden = !modifiable;
+  }
+  $("me-form").addEventListener("submit", e => e.preventDefault());
+  $("me-form").addEventListener("input", ev => {
+    const id = $("me-form").dataset.id, e = merchElements.docs[id], el = ev.target;
+    if (!e || !peutModifierMerch()) return;
+    const v = el.value, n = decimal(v), plan = merchPlans.docs[e.plan];
+    const dansPlan = (val, max) => Math.min(max + 2, Math.max(-2, auCentimetre(val)));
+    switch (el.id) {
+      case "me-nom": modifierElementMerch(id, { nom: v.trim().slice(0, 60) }, true); break;
+      case "me-note": modifierElementMerch(id, { note: v.trim().slice(0, 300) }, true); break;
+      case "me-uvn": if (Number.isInteger(n) && n >= 1 && n <= 40) modifierElementMerch(id, { uvs: ajusterUvs(e.uvs, n) }, true); break;
+      case "me-uvl": if (n >= 0.4 && n <= 3) modifierElementMerch(id, { uvL: auCentimetre(n) }, true); break;
+      case "me-l": if (n >= 0.2 && n <= 20) modifierElementMerch(id, TYPES_MERCH[e.type].rond ? { l: n, p: n } : { l: n }, true); break;
+      case "me-p": if (n >= 0.1 && n <= 20) modifierElementMerch(id, { p: n }, true); break;
+      case "me-x": if (v.trim() && isFinite(n) && plan) modifierElementMerch(id, { x: dansPlan(n, plan.largeur) }, true); break;
+      case "me-y": if (v.trim() && isFinite(n) && plan) modifierElementMerch(id, { y: dansPlan(n, plan.profondeur) }, true); break;
+    }
+  });
+  $("me-form").addEventListener("change", ev => {
+    const id = $("me-form").dataset.id, e = merchElements.docs[id], el = ev.target;
+    if (!e || !peutModifierMerch()) return;
+    if (el.id === "me-hauteurs") {
+      const h = Number(el.value);
+      modifierElementMerch(id, { hauteurs: h, niveaux: Array.from({ length: h }, (_, i) => e.niveaux[i] || { articles: [] }) });
+    } else if (el.id === "me-rot") modifierElementMerch(id, { rot: Number(el.value) });
+    else if (el.id === "me-zone") modifierElementMerch(id, { zone: el.value || null });
+    else viderAttenteMerch();
+  });
+  $("me-tourner").addEventListener("click", () => { const e = merchElements.docs[choixMerch]; if (e) modifierElementMerch(e.id, { rot: (Math.round(e.rot / 90) * 90 + 90) % 360 }); });
+  $("me-deselect").addEventListener("click", () => choisirElementMerch(null));
+  $("me-equiper").addEventListener("click", () => { if (choixMerch) { viderAttenteMerch(); ouvrirMurMerch(choixMerch); } });
+  $("me-dupliquer").addEventListener("click", async () => {
+    const e = merchElements.docs[choixMerch];
+    if (!e || !peutModifierMerch()) return;
+    viderAttenteMerch();
+    const copie = { ...e, id: merchElements.nouvelId(), nom: e.nom ? `${e.nom} (copie)`.slice(0, 60) : "", x: e.x + 0.5, y: e.y + 0.5, creeLe: maintenant() };
+    if (e.uvs) copie.uvs = copieUvs(e.uvs).map(u => ({ eq: u.eq.map(q => ({ ...q, id: idCourt() })) }));
+    if (e.niveaux) copie.niveaux = e.niveaux.map(n => ({ articles: n.articles.map(a => ({ ...a })) }));
+    if (e.articles) copie.articles = e.articles.map(a => ({ ...a }));
+    choixMerch = copie.id;
+    try { await ecrireElementMerch(copie); toast("Meuble dupliqué, avec son contenu."); } catch (_) { /* dit par ecrireElementMerch */ }
+  });
+  $("me-supprimer").addEventListener("click", async ev => {
+    const b = ev.currentTarget, e = merchElements.docs[choixMerch];
+    if (!e || !peutModifierMerch()) return;
+    if (!b.classList.contains("arme")) { armer(b, "Confirmer", "Supprimer"); return; }
+    desarmer(b, "Supprimer");
+    if (attenteMerch && attenteMerch.id === e.id) { clearTimeout(attenteMerch.minuterie); attenteMerch = null; }
+    choixMerch = null;
+    try { await effacerElementMerch(e.id); toast(`${nomMeuble(e)} : retiré du plan.`); } catch (_) { /* dit */ }
+  });
+
+  // ----- ajouter un meuble -----
+  async function ajouterElementMerch(type) {
+    const plan = planAffiche(), t = TYPES_MERCH[type];
+    if (!plan || !t || !peutModifierMerch()) return;
+    viderAttenteMerch();
+    const tous = elementsDuPlan(plan.id), memes = tous.filter(e => e.type === type).length;
+    let x = auCentimetre(Math.min(plan.homme, plan.largeur) / 2), y = auCentimetre(plan.profondeur / 2);
+    for (let k = 0; k < 30 && tous.some(e => Math.abs(e.x - x) < 0.3 && Math.abs(e.y - y) < 0.3); k++) { x += 0.5; y += 0.5; }
+    const numero = t.famille === "repere" ? (memes ? ` ${memes + 1}` : "") : ` ${memes + 1}`;
+    const e = { id: merchElements.nouvelId(), plan: plan.id, type, nom: `${t.nom}${numero}`, x, y, rot: 0, zone: null, note: "", creeLe: maintenant() };
+    if (t.porte === "uv") Object.assign(e, { uvL: 1, uvs: ajusterUvs([], 6), l: 6, p: t.p });
+    else Object.assign(e, { l: t.l, p: t.p });
+    if (t.porte === "niveaux") Object.assign(e, { hauteurs: 1, niveaux: [{ articles: [] }] });
+    if (t.porte === "articles" || t.porte === "tenue") e.articles = [];
+    if (t.porte === "tenue") e.tenue = null;
+    choixMerch = e.id;
+    try { await ecrireElementMerch(e); } catch (_) { return; }
+    marquerChoixMerch();
+    if (window.matchMedia("(max-width: 899px)").matches) $("me-panneau").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  $("me-ajouter").replaceChildren(new Option("+ Ajouter…", ""), ...FAMILLES_MERCH.map(([f, nomF]) => {
+    const g = element("optgroup");
+    g.label = nomF;
+    Object.entries(TYPES_MERCH).filter(([, t]) => t.famille === f).forEach(([id, t]) => g.append(new Option(t.nom + (t.aide ? ` (${t.aide})` : ""), id)));
+    return g;
+  }));
+  $("me-ajouter").addEventListener("change", e => { const type = e.target.value; e.target.value = ""; if (type) ajouterElementMerch(type); });
+
+  // ----- glisser, toucher, clavier -----
+  const pointPlan = (svg, ev) => { const p = svg.createSVGPoint(); p.x = ev.clientX; p.y = ev.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); };
+  $("me-svg").addEventListener("pointerdown", ev => {
+    const svg = ev.currentTarget, plan = planAffiche();
+    if (!plan || ev.button > 0) return;
+    if (traceMerch) {
+      if (!peutModifierMerch()) return;
+      const p = pointPlan(svg, ev);
+      if (p.x < 0 || p.y < 0 || p.x > plan.largeur || p.y > plan.profondeur) return;
+      ecrirePlanMerch({ ...plan, circulation: [...plan.circulation, { x: auCentimetre(p.x), y: auCentimetre(p.y) }].slice(0, 60) }).catch(() => {});
+      return;
+    }
+    const g = ev.target.closest(".me-el");
+    if (!g) { choisirElementMerch(null); return; }
+    const e = merchElements.docs[g.dataset.id];
+    if (!e) return;
+    const deja = choixMerch === e.id;
+    choisirElementMerch(e.id);
+    // Au doigt, un premier appui choisit le meuble ; il se déplace ensuite (la page défile sans le bouger par erreur).
+    if (!peutModifierMerch() || (ev.pointerType !== "mouse" && !deja)) return;
+    ev.preventDefault();
+    g.focus({ preventScroll: true });   // le clavier suit (flèches, R pour tourner)
+    const depart = pointPlan(svg, ev);
+    glisseMerch = { id: e.id, g, depart, x0: e.x, y0: e.y, x: e.x, y: e.y, bouge: false, nom: svg.querySelector(`[data-nom="${e.id}"]`), pointeur: ev.pointerId };
+    try { svg.setPointerCapture(ev.pointerId); } catch (_) { /* rien */ }
+  });
+  $("me-svg").addEventListener("pointermove", ev => {
+    const s = glisseMerch;
+    if (!s || ev.pointerId !== s.pointeur) return;
+    const plan = planAffiche(), p = pointPlan(ev.currentTarget, ev);
+    const dx = p.x - s.depart.x, dy = p.y - s.depart.y;
+    if (!s.bouge && Math.hypot(dx, dy) * (ev.currentTarget.getScreenCTM().a || 1) < 4) return;
+    s.bouge = true;
+    s.x = Math.min(plan.largeur + 1, Math.max(-1, Math.round((s.x0 + dx) * 10) / 10));
+    s.y = Math.min(plan.profondeur + 1, Math.max(-1, Math.round((s.y0 + dy) * 10) / 10));
+    const e = merchElements.docs[s.id];
+    s.g.setAttribute("transform", `translate(${s.x} ${s.y}) rotate(${e ? e.rot : 0})`);
+    if (s.nom) s.nom.setAttribute("transform", `translate(${auCentimetre(s.x - s.x0)} ${auCentimetre(s.y - s.y0)})`);
+  });
+  function finGlisseMerch(ev) {
+    const s = glisseMerch;
+    if (!s || ev.pointerId !== s.pointeur) return;
+    glisseMerch = null;
+    if (s.bouge && (s.x !== s.x0 || s.y !== s.y0)) modifierElementMerch(s.id, { x: s.x, y: s.y });
+    else if (s.bouge) rendreMerch();
+  }
+  $("me-svg").addEventListener("pointerup", finGlisseMerch);
+  $("me-svg").addEventListener("pointercancel", finGlisseMerch);
+  $("me-svg").addEventListener("focusin", ev => { const g = ev.target.closest(".me-el"); if (g && !glisseMerch) choisirElementMerch(g.dataset.id); });
+  $("me-svg").addEventListener("keydown", ev => {
+    const e = choixMerch && merchElements.docs[choixMerch];
+    if (!e) return;
+    if (ev.key === "Escape") { choisirElementMerch(null); return; }
+    if (!peutModifierMerch()) return;
+    const pas = ev.shiftKey ? 0.5 : 0.1;
+    const d = { ArrowLeft: [-pas, 0], ArrowRight: [pas, 0], ArrowUp: [0, -pas], ArrowDown: [0, pas] }[ev.key];
+    if (d) { ev.preventDefault(); modifierElementMerch(e.id, { x: auCentimetre(e.x + d[0]), y: auCentimetre(e.y + d[1]) }); return; }
+    if (ev.key === "r" || ev.key === "R") { ev.preventDefault(); modifierElementMerch(e.id, { rot: (Math.round(e.rot / 90) * 90 + 90) % 360 }); }
+  });
+
+  // ----- les calques, le parcours, le zoom -----
+  const ZOOMS_MERCH = [1, 1.5, 2, 3];
+  $("me-outils").addEventListener("click", async ev => {
+    const b = ev.target.closest("button");
+    if (!b) return;
+    const plan = planAffiche();
+    if (b.dataset.calque) { calquesMerch[b.dataset.calque] = !calquesMerch[b.dataset.calque]; if (b.dataset.calque === "parcours" && !calquesMerch.parcours) traceMerch = false; rendreMerch(); }
+    else if (b.id === "me-zoom-plus" || b.id === "me-zoom-moins") {
+      const i = ZOOMS_MERCH.indexOf(zoomMerch) + (b.id === "me-zoom-plus" ? 1 : -1);
+      zoomMerch = ZOOMS_MERCH[Math.max(0, Math.min(ZOOMS_MERCH.length - 1, i))];
+      rendreMerch();
+    } else if (b.id === "me-tracer" && plan) { traceMerch = !traceMerch; if (traceMerch) { calquesMerch.parcours = true; choisirElementMerch(null); } rendreMerch(); }
+    else if (b.id === "me-effacer-parcours" && plan && peutModifierMerch()) {
+      if (!b.classList.contains("arme")) { armer(b, "Confirmer", "Effacer le parcours"); return; }
+      desarmer(b, "Effacer le parcours");
+      try { await ecrirePlanMerch({ ...plan, circulation: [] }); } catch (_) { /* dit */ }
+    } else if (b.id === "me-annuler-point" && plan && plan.circulation.length && peutModifierMerch()) {
+      ecrirePlanMerch({ ...plan, circulation: plan.circulation.slice(0, -1) }).catch(() => {});
+    }
+  });
+  document.querySelectorAll('input[name="me-onglet"]').forEach(r => r.addEventListener("change", () => {
+    ongletMerch = r.value;
+    if (ongletMerch !== "plan") traceMerch = false;
+    rendreMerch();
+  }));
+  $("me-plan").addEventListener("change", e => {
+    viderAttenteMerch();
+    planMerchChoisi = e.target.value;
+    try { localStorage.setItem(CLE_PLAN_MERCH, planMerchChoisi); } catch (_) { /* rien */ }
+    choixMerch = null;
+    traceMerch = false;
+    rendreMerch();
+  });
+  $("me-liste").addEventListener("click", ev => { const b = ev.target.closest(".me-item"); if (b) choisirElementMerch(b.dataset.id, true); });
+
+  // ----- un mur, vu de face : ses UV et leurs équipements -----
+  let murOuvert = null;
+  function ouvrirMurMerch(id) {
+    murOuvert = id;
+    $("mu-aide").open = !window.matchMedia("(max-width: 599px)").matches;
+    rendreMurMerch();
+    ouvrir($("fenetre-mur"));
+  }
+  $("mu-legende").replaceChildren(...EQUIPEMENTS.map(([id, nom, , aide]) => {
+    const li = element("li", `mu-legende-${id}`), ic = element("span", "mu-eq-picto");
+    ic.innerHTML = PICTO_EQ[id];
+    const t = element("span");
+    t.append(element("b", null, nom), document.createTextNode(` : ${aide.charAt(0).toLowerCase()}${aide.slice(1)}`));
+    li.append(ic, t);
+    return li;
+  }));
+  function rendreMurMerch() {
+    const e = merchElements.docs[murOuvert], plan = e && merchPlans.docs[e.plan];
+    if (!e || !plan) { if ($("fenetre-mur").open) fermer($("fenetre-mur")); return; }
+    const modifiable = peutModifierMerch();
+    $("mu-titre").textContent = nomMeuble(e);
+    $("mu-sous").textContent = `${resumeUvs(e)} · ${virgule(e.uvL)} m chacune · vu de face, de gauche à droite`;
+    const cote = facingsCoteACote(e), enAlerte = new Set(cote.flatMap(i => [i, i + 1]));
+    $("mu-alerte").hidden = !cote.length;
+    $("mu-alerte").textContent = cote.length ? `Deux facings côte à côte : ${listeFr(cote.map(i => `UV ${i + 1} et ${i + 2}`))}. Mets un pressing ou des étagères entre les deux.` : "";
+    const conteneur = $("mu-uvs"), defile = conteneur.scrollLeft;
+    conteneur.replaceChildren(...e.uvs.map((u, i) => {
+      const col = element("section", "mu-uv" + (enAlerte.has(i) ? " alerte" : ""));
+      col.setAttribute("aria-label", `UV ${i + 1}`);
+      const tete = element("div", "mu-uv-tete"), z = zoneUv(plan, e, i);
+      tete.append(element("span", "mu-uv-num", `UV ${i + 1}`), element("span", `zone-pastille z-${z}`, NOM_ZONE[z]));
+      const ol = element("ol", "mu-eqs");
+      u.eq.forEach((q, k) => {
+        const li = element("li", `mu-eq mu-eq-${q.type}`), ic = element("span", "mu-eq-picto");
+        ic.innerHTML = PICTO_EQ[q.type];
+        const texte = element("span", "mu-eq-texte");
+        texte.append(element("span", "mu-eq-nom", NOM_EQUIPEMENT[q.type]));
+        if (q.articles.length) texte.append(element("span", "mu-eq-n", `${q.articles.length} article${q.articles.length > 1 ? "s" : ""}`));
+        li.append(ic, texte);
+        if (modifiable) {
+          const act = element("span", "mu-eq-actions");
+          [["haut", "↑", "Monter", k === 0], ["bas", "↓", "Descendre", k === u.eq.length - 1], ["retirer", "×", "Retirer", false]].forEach(([a, s, nomA, off]) => {
+            const b = element("button", "mu-eq-bouton", s);
+            b.type = "button";
+            b.dataset.action = a;
+            b.dataset.uv = String(i);
+            b.dataset.eq = String(k);
+            b.setAttribute("aria-label", `${nomA} : ${NOM_EQUIPEMENT[q.type]}, UV ${i + 1}`);
+            b.disabled = off;
+            act.append(b);
+          });
+          li.append(act);
+        }
+        ol.append(li);
+      });
+      if (!u.eq.length) ol.append(element("li", "mu-eq-vide", "Vide"));
+      col.append(tete, ol);
+      if (modifiable) {
+        const s = element("select", "mu-ajout");
+        s.dataset.uv = String(i);
+        s.setAttribute("aria-label", `Ajouter ou changer, UV ${i + 1}`);
+        const g1 = element("optgroup"), g2 = element("optgroup");
+        g1.label = "Ajouter en dessous";
+        EQUIPEMENTS.forEach(([id, nom]) => g1.append(new Option(nom, "+" + id)));
+        g2.label = "Remplacer l'UV par";
+        MODELES_UV.forEach(([id, nom]) => g2.append(new Option(nom, "=" + id)));
+        s.append(new Option("+ Ajouter…", ""), g1, g2);
+        col.append(s);
+      }
+      return col;
+    }));
+    conteneur.scrollLeft = defile;
+    $("mu-plus").hidden = $("mu-moins").hidden = !modifiable;
+    $("mu-moins").disabled = e.uvs.length <= 1;
+    $("mu-plus").disabled = e.uvs.length >= 40;
+  }
+  $("mu-uvs").addEventListener("click", ev => {
+    const b = ev.target.closest("button[data-action]"), e = merchElements.docs[murOuvert];
+    if (!b || !e || !peutModifierMerch()) return;
+    const uvs = copieUvs(e.uvs), i = Number(b.dataset.uv), k = Number(b.dataset.eq), eq = uvs[i] && uvs[i].eq;
+    if (!eq || !eq[k]) return;
+    if (b.dataset.action === "retirer") {
+      if (eq[k].articles.length && !b.classList.contains("arme")) { b.classList.add("arme"); b.textContent = "Sûr ?"; b.setAttribute("aria-label", "Confirmer : retirer avec ses articles"); return; }
+      eq.splice(k, 1);
+    } else {
+      const j = b.dataset.action === "haut" ? k - 1 : k + 1;
+      if (j < 0 || j >= eq.length) return;
+      [eq[k], eq[j]] = [eq[j], eq[k]];
+    }
+    modifierElementMerch(e.id, { uvs });
+  });
+  $("mu-uvs").addEventListener("change", ev => {
+    const s = ev.target.closest("select.mu-ajout"), e = merchElements.docs[murOuvert];
+    if (!s || !s.value || !e || !peutModifierMerch()) return;
+    const uvs = copieUvs(e.uvs), i = Number(s.dataset.uv), v = s.value;
+    s.value = "";
+    if (!uvs[i]) return;
+    if (v[0] === "+" && NOM_EQUIPEMENT[v.slice(1)]) { if (uvs[i].eq.length >= 8) { toast("Huit équipements au plus par UV.", "erreur"); return; } uvs[i].eq.push(nouvelEq(v.slice(1))); }
+    else {
+      const m = MODELES_UV.find(x => x[0] === v.slice(1));
+      if (!m) return;
+      if (uvs[i].eq.some(q => q.articles.length)) toast("Les articles de cette UV sont retirés du mur.");
+      uvs[i].eq = m[2].map(nouvelEq);
+    }
+    modifierElementMerch(e.id, { uvs });
+  });
+  $("mu-plus").addEventListener("click", () => { const e = merchElements.docs[murOuvert]; if (e && e.uvs.length < 40) modifierElementMerch(e.id, { uvs: ajusterUvs(e.uvs, e.uvs.length + 1) }); });
+  $("mu-moins").addEventListener("click", ev => {
+    const e = merchElements.docs[murOuvert], b = ev.currentTarget;
+    if (!e || e.uvs.length <= 1) return;
+    if (e.uvs[e.uvs.length - 1].eq.some(q => q.articles.length) && !b.classList.contains("arme")) { armer(b, "Confirmer (ses articles partent avec)", "Retirer la dernière UV"); return; }
+    desarmer(b, "Retirer la dernière UV");
+    modifierElementMerch(e.id, { uvs: ajusterUvs(e.uvs, e.uvs.length - 1) });
+  });
+  $("fenetre-mur").addEventListener("close", () => { murOuvert = null; });
+
+  // ----- un plan : créer, régler, mettre en place, dupliquer, supprimer -----
+  let planEdite = null;
+  // Un plan de départ, à ajuster : le mur de gauche (le plus chaud), le mur du fond (les chaussures), le mur du centre
+  // (recto Homme, verso Femme : le mur froid), l'entrée, la vitrine, la caisse et les chaussettes, quelques meubles.
+  function planDeDepart(planId, L, D, H) {
+    const els = [], cree = maintenant();
+    const ajouter = (type, nom, x, y, rot, plus = {}) => {
+      const t = TYPES_MERCH[type];
+      const e = { id: merchElements.nouvelId(), plan: planId, type, nom, x: auCentimetre(x), y: auCentimetre(y), rot, zone: null, note: "", creeLe: cree, l: t.l, p: t.p, ...plus };
+      if (t.porte === "niveaux" && !e.niveaux) Object.assign(e, { hauteurs: e.hauteurs || 1, niveaux: Array.from({ length: e.hauteurs || 1 }, () => ({ articles: [] })) });
+      if (t.porte === "articles" || t.porte === "tenue") e.articles = [];
+      els.push(e);
+    };
+    const mur = (nom, x, y, rot, n, modeles, zone) => ajouter("mur", nom, x, y, rot, { uvL: 1, uvs: modeles ? Array.from({ length: n }, () => ({ eq: modeles.map(nouvelEq) })) : ajusterUvs([], n), l: n, p: 0.4, zone: zone || null });
+    const nG = Math.max(3, Math.floor(D - 3)), nF = Math.max(2, Math.floor(H - 1.2)), nC = Math.max(2, Math.floor(D * 0.45));
+    mur("Mur gauche", 0.2, 0.7 + nG / 2, 270, nG);
+    mur("Mur du fond (chaussures)", 0.5 + nF / 2, 0.2, 0, nF, ["etagere", "etagere", "etagere"]);
+    if (H < L - 0.5) mur("Mur du centre", H - 0.2, D * 0.45, 90, nC, null, "froide");
+    ajouter("entree", "Entrée", H < L - 0.5 ? H : L / 2, D - 0.2, 0);
+    ajouter("vitrine", "Vitrine Homme", Math.min(H - 1.3, 0.5 + Math.min(3, H - 2.5) / 2 + 0.3), D - 0.6, 0, { l: Math.max(1.2, Math.min(3, H - 2.5)) });
+    ajouter("caisse", "Caisse", H - 1.3, D - 2.4, 0);
+    ajouter("bac", "Bac chaussettes", H - 3.1, D - 2.4, 0);
+    ajouter("grande-table", "Table d'entrée", H / 2 - 0.4, D - 4, 0);
+    ajouter("buste", "Buste d'entrée", H / 2 + 1.7, D - 4, 0, { tenue: null });
+    ajouter("petite-table", "Petite table", H / 2 - 0.4, D * 0.5, 0);
+    ajouter("tourniquet", "Tourniquet", 1.9, D * 0.32, 0);
+    ajouter("grand-portant", "Grand portant", H / 2 + 0.4, D * 0.24, 90);
+    ajouter("cabines", "Cabines", Math.max(2, H - 1.3), 1.2, 0);
+    return els;
+  }
+  function libellePlan(p) {
+    return p.actif ? `${p.nom} (en place)` : `${p.nom}${p.aPartirDu ? ` (prévu le ${dateLongue(p.aPartirDu)})` : " (prévu)"}`;
+  }
+  function ouvrirPlanMerch(p) {
+    const ref = p || planAffiche();
+    planEdite = p;
+    $("mp-titre").textContent = p ? "Le plan" : "Nouveau plan";
+    $("mp-nom").value = p ? p.nom : plansMerch().length ? "" : "Le magasin";
+    $("mp-nom").placeholder = "Ex. : Le magasin, Soldes d'hiver";
+    $("mp-largeur").value = virgule(ref ? ref.largeur : 14);
+    $("mp-profondeur").value = virgule(ref ? ref.profondeur : 15);
+    $("mp-homme").value = virgule(ref ? ref.homme : 7);
+    $("mp-date").value = p && p.aPartirDu ? p.aPartirDu : "";
+    $("mp-note").value = p ? p.note : "";
+    $("mp-depart").hidden = !!p;
+    $("mp-option-copie").hidden = !ref;
+    const depart = document.querySelector(`input[name="mp-depart"][value="${ref ? "copie" : "depart"}"]`);
+    if (depart) depart.checked = true;
+    $("mp-mettre").hidden = !p || p.actif;
+    $("mp-dupliquer").hidden = !p;
+    $("mp-supprimer").hidden = !p;
+    $("mp-erreur").hidden = true;
+    ouvrir($("fenetre-plan-merch"));
+  }
+  const erreurPlanMerch = (texte, champ) => { $("mp-erreur").textContent = texte; $("mp-erreur").hidden = false; if (champ) champ.focus(); };
+  async function ecrireTout(promesses) { const r = await Promise.allSettled(promesses); if (r.some(x => x.status === "rejected")) throw new Error("ecriture"); }
+  $("mp-enregistrer").addEventListener("click", async ev => {
+    if (!peutModifierMerch()) return;
+    const nom = $("mp-nom").value.trim().slice(0, 60), L = decimal($("mp-largeur").value), D = decimal($("mp-profondeur").value), H = decimal($("mp-homme").value);
+    if (!nom) { erreurPlanMerch("Donne un nom au plan.", $("mp-nom")); return; }
+    if (!(L >= 3 && L <= 80)) { erreurPlanMerch("La largeur du magasin : entre 3 et 80 m.", $("mp-largeur")); return; }
+    if (!(D >= 3 && D <= 80)) { erreurPlanMerch("La profondeur : entre 3 et 80 m.", $("mp-profondeur")); return; }
+    if (!(H >= 1 && H <= L)) { erreurPlanMerch("Le côté Homme : entre 1 m et la largeur du magasin.", $("mp-homme")); return; }
+    const date = $("mp-date").value;
+    const b = ev.currentTarget;
+    b.disabled = true;
+    try {
+      if (planEdite) {
+        await ecrirePlanMerch({ ...planEdite, nom, largeur: auCentimetre(L), profondeur: auCentimetre(D), homme: auCentimetre(H), aPartirDu: ISO_RE.test(date) ? date : null, note: $("mp-note").value.trim().slice(0, 300) });
+      } else {
+        const source = planAffiche(), choix = (document.querySelector('input[name="mp-depart"]:checked') || {}).value || "vide";
+        const p = { id: merchPlans.nouvelId(), nom, actif: !plansMerch().some(x => x.actif), largeur: auCentimetre(L), profondeur: auCentimetre(D), homme: auCentimetre(H),
+          circulation: choix === "copie" && source ? source.circulation : [], aPartirDu: ISO_RE.test(date) ? date : null, note: $("mp-note").value.trim().slice(0, 300), creeLe: maintenant() };
+        await ecrirePlanMerch(p);
+        const els = choix === "depart" ? planDeDepart(p.id, p.largeur, p.profondeur, p.homme)
+          : choix === "copie" && source ? elementsDuPlan(source.id).map(e => ({ ...e, id: merchElements.nouvelId(), plan: p.id, ...(e.uvs ? { uvs: copieUvs(e.uvs) } : {}) })) : [];
+        planMerchChoisi = p.id;
+        try { localStorage.setItem(CLE_PLAN_MERCH, p.id); } catch (_) { /* rien */ }
+        choixMerch = null;
+        await ecrireTout(els.map(e => ecrireElementMerch(e)));
+      }
+      fermer($("fenetre-plan-merch"));
+      toast(planEdite ? "Plan enregistré." : "Plan créé.");
+    } catch (_) { erreurPlanMerch("Le plan n'a pas été entièrement enregistré. Vérifie ta connexion et réessaie."); }
+    finally { b.disabled = false; }
+  });
+  $("mp-mettre").addEventListener("click", async () => {
+    const p = planEdite;
+    if (!p || !peutModifierMerch()) return;
+    try {
+      await ecrireTout(plansMerch().filter(x => x.actif !== (x.id === p.id)).map(x => ecrirePlanMerch({ ...x, actif: x.id === p.id })));
+      fermer($("fenetre-plan-merch"));
+      toast(`« ${p.nom} » est maintenant le plan en place.`);
+    } catch (_) { erreurPlanMerch("Ce n'a pas été enregistré. Réessaie."); }
+  });
+  $("mp-dupliquer").addEventListener("click", async () => {
+    const p = planEdite;
+    if (!p || !peutModifierMerch()) return;
+    const copie = { ...p, id: merchPlans.nouvelId(), nom: `${p.nom} (copie)`.slice(0, 60), actif: false, creeLe: maintenant() };
+    try {
+      await ecrirePlanMerch(copie);
+      await ecrireTout(elementsDuPlan(p.id).map(e => ecrireElementMerch({ ...e, id: merchElements.nouvelId(), plan: copie.id, ...(e.uvs ? { uvs: copieUvs(e.uvs) } : {}) })));
+      planMerchChoisi = copie.id;
+      try { localStorage.setItem(CLE_PLAN_MERCH, copie.id); } catch (_) { /* rien */ }
+      choixMerch = null;
+      fermer($("fenetre-plan-merch"));
+      toast("Plan dupliqué : la copie est affichée, prête à modifier.");
+    } catch (_) { erreurPlanMerch("La copie n'a pas été entièrement enregistrée. Réessaie."); }
+  });
+  $("mp-supprimer").addEventListener("click", async ev => {
+    const p = planEdite, b = ev.currentTarget;
+    if (!p || !peutModifierMerch()) return;
+    if (!b.classList.contains("arme")) { armer(b, "Confirmer : le plan et ses meubles", "Supprimer"); return; }
+    desarmer(b, "Supprimer");
+    try {
+      await ecrireTout(elementsDuPlan(p.id).map(e => effacerElementMerch(e.id)));
+      if (mode === "base") delete merchPlans.docs[p.id];
+      await merchPlans.ecrire(p.id, null);
+      choixMerch = null;
+      if (planMerchChoisi === p.id) planMerchChoisi = null;
+      fermer($("fenetre-plan-merch"));
+      rendreMerch();
+      toast("Plan supprimé.");
+    } catch (_) { erreurPlanMerch("Le plan n'a pas été entièrement supprimé. Réessaie."); }
+  });
+  $("me-plan-modifier").addEventListener("click", () => { const p = planAffiche(); if (p) ouvrirPlanMerch(p); });
+  $("me-nouveau").addEventListener("click", () => ouvrirPlanMerch(null));
+  $("me-vide-creer").addEventListener("click", () => ouvrirPlanMerch(null));
+
+  // ----- les réglages du merch -----
+  const MARQUES_REFERENCE = ["BOSS", "Tommy Hilfiger", "Calvin Klein", "Levi's", "Le Temps des Cerises", "Teddy Smith"];
+  function ouvrirReglagesMerch() {
+    const r = reglagesMerch(), marques = new Map();
+    [...MARQUES_REFERENCE, ...piecesEnMagasin().map(x => x.marque)].forEach(m => { const k = cleMarque(m); if (k && !marques.has(k)) marques.set(k, m); });
+    $("mr-marques").replaceChildren(...[...marques].sort((a, b) => rangMarque(a[1]) - rangMarque(b[1]) || a[1].localeCompare(b[1], "fr")).map(([k, m]) => {
+      const l = element("label", "mr-marque"), s = element("select");
+      s.dataset.marque = k;
+      [1, 2, 3, 4, 5, 6].forEach(n => s.append(new Option(NOMS_RANGS[n], String(n))));
+      s.value = String(r.rangs[k] || rangParDefaut(m));
+      l.append(element("span", null, m), s);
+      return l;
+    }));
+    $("mr-saison").replaceChildren(...CATEGORIES.map(([id, nom]) => {
+      const l = element("label", "repere-choix"), c = element("input");
+      c.type = "checkbox";
+      c.value = id;
+      c.checked = r.horsSaison.includes(id);
+      l.classList.toggle("coche", c.checked);
+      l.append(c, element("span", null, nom));
+      return l;
+    }));
+    $("mr-presentation").replaceChildren(...CATEGORIES.map(([id, nom]) => {
+      const l = element("label", "mr-marque"), s = element("select");
+      s.dataset.categorie = id;
+      PRESENTATIONS.forEach(([v, n]) => s.append(new Option(n, v)));
+      s.value = r.presentation[id] || PRESENTATION_CATEGORIE[id] || "deux";
+      l.append(element("span", null, nom), s);
+      return l;
+    }));
+    $("mr-seuil").value = String(r.seuil);
+    $("mr-erreur").hidden = true;
+    ouvrir($("fenetre-merch-reglages"));
+  }
+  $("mr-saison").addEventListener("change", e => { const l = e.target.closest(".repere-choix"); if (l) l.classList.toggle("coche", e.target.checked); });
+  $("me-reglages").addEventListener("click", ouvrirReglagesMerch);
+  $("mr-enregistrer").addEventListener("click", async ev => {
+    if (!peutModifierMerch()) return;
+    const seuil = Number($("mr-seuil").value.trim());
+    if (!Number.isInteger(seuil) || seuil < 3 || seuil > 90) { $("mr-erreur").textContent = "Le délai : un nombre de jours entre 3 et 90."; $("mr-erreur").hidden = false; $("mr-seuil").focus(); return; }
+    const rangs = {}, presentation = {};
+    $("mr-marques").querySelectorAll("select").forEach(s => { rangs[s.dataset.marque] = Number(s.value); });
+    $("mr-presentation").querySelectorAll("select").forEach(s => { presentation[s.dataset.categorie] = s.value; });
+    const horsSaison = [...$("mr-saison").querySelectorAll("input:checked")].map(c => c.value);
+    ev.currentTarget.disabled = true;
+    try {
+      await reglagesCollection.ecrire("merch", { rangs, presentation, horsSaison, seuil, modifieLe: maintenant() });
+      fermer($("fenetre-merch-reglages"));
+      toast("Réglages du merch enregistrés.");
+    } catch (e) { $("mr-erreur").textContent = messageEcriture(e); $("mr-erreur").hidden = false; }
+    finally { ev.currentTarget.disabled = false; }
+  });
+
+  // ----- mes règles -----
+  $("me-regles").replaceChildren(...REGLES_MERCH.map(([groupe, regles]) => {
+    const s = element("section", "me-regles-groupe");
+    s.append(element("h3", null, groupe));
+    const ol = element("ul", "me-regles-liste");
+    ol.append(...regles.map(([genre, texte]) => {
+      const li = element("li", genre ? "mienne" : "");
+      if (genre) li.append(element("span", "me-regle-tag", "Ma règle"));
+      li.append(element("span", null, texte));
+      return li;
+    }));
+    s.append(ol);
+    return s;
+  }));
+
+  // ----- tout redessiner -----
+  function rendreResumeMerch() {
+    const p = planEnPlace() || planAffiche();
+    if (!p) { $("resume-merch").textContent = "Le plan du magasin, à dessiner"; return; }
+    const els = elementsDuPlan(p.id), murs = els.filter(e => e.type === "mur");
+    $("resume-merch").textContent = `${p.nom} · ${murs.length} mur${murs.length > 1 ? "s" : ""}, ${murs.reduce((n, e) => n + e.uvs.length, 0)} UV, ${els.length - murs.length} autre${els.length - murs.length > 1 ? "s" : ""}`;
+  }
+  let renduMerchPrevu = 0;
+  function rendreMerch() {
+    if (!merchPret) return;
+    rendreResumeMerch();
+    if (vueActive !== "merch") return;
+    const plans = plansMerch(), plan = planAffiche(), modifiable = peutModifierMerch();
+    $("me-plan").replaceChildren(...plans.map(p => new Option(libellePlan(p), p.id)));
+    if (plan) $("me-plan").value = plan.id;
+    $("me-plan-choix").hidden = !plans.length;
+    $("me-etat").hidden = !plan;
+    $("me-plan-modifier").hidden = !plan || !modifiable;
+    $("me-nouveau").hidden = !modifiable || !plan;
+    $("me-reglages").hidden = !modifiable;
+    $("me-vide").hidden = !!plan;
+    $("me-vide-creer").hidden = !modifiable;
+    $("me-contenu").hidden = !plan;
+    if (!plan) { if ($("fenetre-mur").open) fermer($("fenetre-mur")); return; }
+    if (choixMerch && !(merchElements.docs[choixMerch] && merchElements.docs[choixMerch].plan === plan.id)) choixMerch = null;
+    const els = elementsDuPlan(plan.id);
+    document.querySelectorAll('input[name="me-onglet"]').forEach(r => { r.checked = r.value === ongletMerch; });
+    $("me-volet-plan").hidden = ongletMerch !== "plan";
+    $("me-volet-liste").hidden = ongletMerch !== "liste";
+    $("me-volet-regles").hidden = ongletMerch !== "regles";
+    $("me-espace").hidden = ongletMerch === "regles";
+    $("me-ajouter").hidden = !modifiable || ongletMerch === "regles";
+    document.querySelectorAll("#me-outils [data-calque]").forEach(b => b.setAttribute("aria-pressed", String(!!calquesMerch[b.dataset.calque])));
+    $("me-tracer").hidden = !modifiable;
+    $("me-tracer").textContent = traceMerch ? "Terminer le parcours" : "Tracer le parcours";
+    $("me-tracer").setAttribute("aria-pressed", String(traceMerch));
+    $("me-annuler-point").hidden = !traceMerch || !plan.circulation.length;
+    $("me-effacer-parcours").hidden = !modifiable || traceMerch || !plan.circulation.length || !calquesMerch.parcours;
+    $("me-zoom-moins").disabled = zoomMerch <= ZOOMS_MERCH[0];
+    $("me-zoom-plus").disabled = zoomMerch >= ZOOMS_MERCH[ZOOMS_MERCH.length - 1];
+    $("me-zones-legende").hidden = !calquesMerch.zones;
+    $("me-aide-trace").hidden = !traceMerch;
+    $("me-etat").textContent = plan.actif ? "En place" : plan.aPartirDu ? `Prévu le ${dateLongue(plan.aPartirDu)}` : "Prévu";
+    $("me-etat").classList.toggle("prevu", !plan.actif);
+    if (ongletMerch === "plan" && !glisseMerch) dessinerPlanMerch(plan, els);
+    if (ongletMerch === "liste") rendreListeMerch(plan, els);
+    rendrePanneauMerch();
+    if ($("fenetre-mur").open) rendreMurMerch();
+  }
+  const planifierRenduMerch = () => { cancelAnimationFrame(renduMerchPrevu); renduMerchPrevu = requestAnimationFrame(rendreMerch); };
+  window.addEventListener("resize", () => { if (vueActive === "merch") planifierRenduMerch(); });
+  merchPret = true;
+
 
   // ---------- démarrage ----------
   construireSaisie();
