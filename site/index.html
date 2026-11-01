@@ -1319,12 +1319,19 @@ details.groupe-pieces { display: block; }
 .me-f-repere .me-forme { fill: #eef0f3; stroke: #8a93a5; stroke-dasharray: 5 4; }
 .me-t-vitrine .me-forme { fill: #e2f1f7; stroke: #3b8fb0; stroke-dasharray: none; }
 .me-t-caisse .me-forme { fill: #e9e3f3; stroke: #5b4f86; stroke-dasharray: none; }
+.me-t-table-travail .me-forme { fill: #f4efe4; stroke: #8a7a5a; stroke-dasharray: 3 3; }
 .me-t-pilier .me-forme { fill: #c9ced8; stroke: #5b6478; stroke-dasharray: none; }
 .me-t-entree .me-forme { fill: #ffffff; stroke: #c4501a; }
 .me-fleche-entree { fill: none; stroke: #c4501a; stroke-width: 3px; stroke-linecap: round; stroke-linejoin: round; }
 .me-el:hover .me-forme { filter: brightness(.96); }
 .me-el:focus-visible .me-forme, .me-el.choisi .me-forme { stroke: #e07a35; stroke-width: 3.5px; stroke-dasharray: none; }
 .me-noms { pointer-events: none; }
+.me-lien { stroke: #c4501a; stroke-width: 1.6px; stroke-dasharray: 5 4; opacity: .75; pointer-events: none; }
+.me-presente { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; font-weight: 400; }
+.me-presente-item { display: inline-flex; align-items: center; gap: 4px; padding: 3px 4px 3px 10px; border-radius: 999px; background: var(--sport-doux); color: var(--encre); font-size: .9rem; }
+.me-presente-retirer { display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--gris); font-size: 1.1rem; line-height: 1; }
+.me-presente-retirer:hover { background: rgba(0, 0, 0, .08); color: var(--encre); }
+.me-presente-vide { color: var(--gris); font-size: .9rem; }
 .me-nom { fill: var(--encre); font-weight: 700; dominant-baseline: middle; paint-order: stroke; stroke: rgba(255, 255, 255, .92); stroke-width: .09em; stroke-linejoin: round; }
 .me-parcours { fill: none; stroke: #c4501a; stroke-width: 2.5px; stroke-dasharray: 8 6; stroke-linejoin: round; opacity: .85; pointer-events: none; }
 .me-points circle { fill: #c4501a; stroke: #ffffff; stroke-width: 2px; vector-effect: non-scaling-stroke; }
@@ -1956,6 +1963,11 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
                 <label class="titre-champ">Depuis le fond (m)<input type="text" id="me-y" inputmode="decimal" maxlength="6"></label>
               </div>
               <label class="titre-champ" id="me-g-zone">Zone<select id="me-zone"></select></label>
+              <div class="titre-champ" id="me-g-presente" hidden>
+                <span>Présente les articles de</span>
+                <ul class="me-presente" id="me-presente"></ul>
+                <select id="me-presente-ajout" aria-label="Ajouter un meuble présenté par ce mannequin"></select>
+              </div>
               <label class="titre-champ">Note<textarea id="me-note" maxlength="300" rows="2" placeholder="Ex. : la table des nouveautés"></textarea></label>
               <div class="me-actions" id="me-actions"><button class="bouton-second bouton-petit" type="button" id="me-dupliquer">Dupliquer</button><button class="bouton-danger" type="button" id="me-supprimer">Supprimer</button></div>
             </form>
@@ -4683,7 +4695,7 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
   const PRESENTATIONS = [["deux", "Plié ou cintre"], ["plie", "Plié seulement"], ["cintre", "Cintre seulement"], ["presentoir", "Présentoir ou bac"]];
   const NOM_PRESENTATION = Object.fromEntries(PRESENTATIONS);
   const PRESENTATION_CATEGORIE = {
-    pulls: "deux", gilets: "deux", sweats: "deux", "t-shirts": "deux", chemises: "cintre", polos: "deux", vestes: "cintre", blousons: "cintre", manteaux: "cintre",
+    pulls: "plie", gilets: "deux", sweats: "deux", "t-shirts": "deux", chemises: "cintre", polos: "deux", vestes: "cintre", blousons: "cintre", manteaux: "cintre",
     jeans: "plie", pantalons: "deux", shorts: "deux", chaussures: "presentoir", calecons: "presentoir", chaussettes: "presentoir", ceintures: "presentoir",
     casquettes: "presentoir", bonnets: "presentoir", accessoires: "presentoir",
   };
@@ -10139,6 +10151,7 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     cabines: { nom: "Cabines", famille: "repere", l: 2, p: 1.2 },
     pilier: { nom: "Pilier", famille: "repere", l: 0.5, p: 0.5 },
     reserve: { nom: "Réserve", famille: "repere", l: 1, p: 0.3 },
+    "table-travail": { nom: "Table de travail (sur roues)", famille: "repere", l: 1.2, p: 0.6 },
   };
   const EQUIPEMENTS = [
     ["facing", "Facing", "F", "Un bras de face : un modèle, ou deux en superposition."],
@@ -10180,9 +10193,13 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
   const REGLES_MERCH = [
     ["Placement", [
       ["mienne", "Le côté Homme est à gauche : le client regarde d'abord à gauche et y va en premier. Le mur du centre (recto Homme, verso Femme) est le mur froid."],
+      ["mienne", "Le Mur 5, caché par les présentoirs caleçons et chaussettes et presque à la caisse, est froid : il ne prend que des accessoires (casquettes et claquettes l'été ; écharpes et bonnets l'hiver)."],
+      ["mienne", "La table de travail sur roues (livraison, pliage) reste entre le Mur 2 et la table pull chaud : de là, on voit tout le côté Homme, les cabines pour la vente et la caisse."],
       ["mienne", "L'ordre des marques mises en avant : le peu de BOSS d'abord ; Tommy et Calvin Klein au même niveau (Tommy, plus nombreux, est souvent bien en avant) ; Levi's ; Le Temps des Cerises ; Teddy Smith (le moins cher, en grande quantité : Blue Box existe pour le mettre en avant)."],
       ["", "Les marques prioritaires en zone chaude et à hauteur des yeux."],
       ["", "BOSS : peu de pièces, mais très bien mises en valeur."],
+      ["mienne", "Les pièces de grande valeur (les pulls BOSS) ne vont pas sur une table d'entrée."],
+      ["mienne", "La table promo des t-shirts (le 2e à −50 %) va devant la caisse quand c'est leur saison ; l'hiver, les gilets prennent sa place."],
       ["", "L'ancienne collection (les t-shirts en ce moment) va sur le mur du milieu, le mur froid."],
       ["", "Les produits « destination » au fond, pour faire traverser le rayon : les chaussures sont au fond."],
       ["", "À la caisse, à l'entrée : les chaussettes et les petits achats d'impulsion."],
@@ -10191,11 +10208,12 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
       ["mienne", "Côté Homme, un même modèle dans toutes ses couleurs au même endroit, et une même famille ensemble (tous les pulls Tommy, tous les polos) : un homme qui achète un pull Tommy bleu prendra sûrement le noir avec."],
       ["mienne", "Le merch sert la vente complémentaire et les associations."],
       ["", "Les pièces qui vont ensemble côte à côte : pull et chemise, jean et ceinture, sweat et t-shirt, veste et pull."],
-      ["", "Un buste habillé, et ses pièces exposées juste à côté."],
+      ["mienne", "Un mannequin présente les articles d'un meuble à côté (le mannequin 1 : la table Calvin Klein et les chinos Levi's)."],
       ["", "Les ceintures près des jeans, les caleçons près de la caisse."],
     ]],
     ["Les murs", [
       ["mienne", "Jamais deux facings côte à côte."],
+      ["mienne", "Les murs prennent surtout ce qui va sur cintre (chemises, surchemises) ; une famille en grande quantité a son mur (les sweats, les t-shirts)."],
       ["", "Sur un mur, alterner facing, pressing et étagères."],
       ["", "Un facing = un modèle, ou deux en superposition (un pull sur une chemise, un t-shirt manches longues sous une surchemise)."],
       ["", "La barre coudée : deux facings l'un derrière l'autre, le second plus haut."],
@@ -10205,6 +10223,9 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     ]],
     ["Tables et portants", [
       ["mienne", "Tout ne va pas sur cintre : chaque article est plié, sur cintre, ou les deux (à régler dans le Dressing)."],
+      ["mienne", "Les pulls restent pliés : les cintres les marquent."],
+      ["mienne", "Ce qui se vend le mieux : les articles sur table."],
+      ["mienne", "Un portant double a toujours un côté plus vu que l'autre ; de grosses pièces (les sherpas) le font remarquer."],
       ["", "Piles carrées, même hauteur, même pliage, logo ou détail visible."],
       ["", "Grandes tailles en bas des piles, petites en haut."],
       ["", "Une table = une famille ou une marque, regroupée par modèle, en dégradé de couleurs."],
@@ -10277,7 +10298,10 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
       e.niveaux = Array.from({ length: e.hauteurs }, (_, i) => ({ articles: lireArticlesMerch(n[i] && n[i].articles) }));
     }
     if (t.porte === "articles" || t.porte === "tenue") e.articles = lireArticlesMerch(d.articles);
-    if (t.porte === "tenue") e.tenue = typeof d.tenue === "string" && d.tenue.length <= 60 ? d.tenue : null;
+    if (t.porte === "tenue") {
+      e.tenue = typeof d.tenue === "string" && d.tenue.length <= 60 ? d.tenue : null;
+      e.presente = (Array.isArray(d.presente) ? d.presente : []).filter(x => typeof x === "string" && x && x.length <= 60).slice(0, 6);
+    }
     return e;
   }
   function corpsElementMerch(e) {
@@ -10292,7 +10316,7 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     else { c.l = auCentimetre(e.l); c.p = auCentimetre(e.p); }
     if (t.porte === "niveaux") { c.hauteurs = e.hauteurs; c.niveaux = Array.from({ length: e.hauteurs }, (_, i) => ({ articles: corpsArticles((e.niveaux[i] || { articles: [] }).articles) })); }
     if (t.porte === "articles" || t.porte === "tenue") c.articles = corpsArticles(e.articles || []);
-    if (t.porte === "tenue") c.tenue = e.tenue || null;
+    if (t.porte === "tenue") { c.tenue = e.tenue || null; c.presente = [...(e.presente || [])]; }
     return c;
   }
   const merchPlans = creerCollection("merch-plans", "tableau-de-bord-axel:merch-plans", lirePlanMerch, () => rendreMerch());
@@ -10530,6 +10554,9 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     if (calquesMerch.parcours && plan.circulation.length >= 2) {
       f.push(svgEl("polyline", { class: "me-parcours", points: plan.circulation.map(p => `${p.x},${p.y}`).join(" "), "marker-mid": "url(#me-fleche)", "marker-end": "url(#me-fleche)", ...NS_TRAIT }));
     }
+    const liens = svgEl("g", { class: "me-liens" });
+    els.filter(e => TYPES_MERCH[e.type].famille === "buste").forEach(e => presentesPar(e).forEach(x => liens.append(svgEl("line", { class: "me-lien", x1: e.x, y1: e.y, x2: x.x, y2: x.y, ...NS_TRAIT }))));
+    f.push(liens);
     const calque = svgEl("g", { class: "me-els" });
     [...els].sort((a, b) => ORDRE_DESSIN[TYPES_MERCH[a.type].famille] - ORDRE_DESSIN[TYPES_MERCH[b.type].famille]).forEach(e => calque.append(dessinerElementMerch(plan, e)));
     f.push(calque);
@@ -10573,8 +10600,11 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
   }
 
   // ----- la liste des meubles (pratique sur téléphone) -----
+  // Les meubles qu'un mannequin présente, encore sur le même plan.
+  const presentesPar = e => (e.presente || []).map(id => merchElements.docs[id]).filter(x => x && x.plan === e.plan);
   function detailElement(e) {
     const t = TYPES_MERCH[e.type];
+    if (t.porte === "tenue" && presentesPar(e).length) return `présente ${listeFr(presentesPar(e).map(nomMeuble))}`;
     if (t.porte === "uv") return resumeUvs(e);
     if (t.porte === "niveaux") return e.hauteurs > 1 ? `${e.hauteurs} hauteurs` : "le plateau";
     return t.rond ? `${virgule(e.l)} m de diamètre` : `${virgule(e.l)} × ${virgule(e.p)} m`;
@@ -10657,6 +10687,21 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     poser("me-x", virgule(e.x));
     poser("me-y", virgule(e.y));
     $("me-g-zone").hidden = t.famille === "repere";
+    // Un mannequin ou un buste : les meubles dont il porte les articles (les plus proches d'abord dans la liste).
+    $("me-g-presente").hidden = t.famille !== "buste";
+    if (t.famille === "buste") {
+      const presentes = presentesPar(e);
+      $("me-presente").replaceChildren(...(presentes.length ? presentes.map(x => {
+        const li = element("li", "me-presente-item");
+        li.append(element("span", null, nomMeuble(x)));
+        if (modifiable) { const b = element("button", "me-presente-retirer", "×"); b.type = "button"; b.dataset.id = x.id; b.setAttribute("aria-label", `Retirer : ${nomMeuble(x)}`); li.append(b); }
+        return li;
+      }) : [element("li", "me-presente-vide", "Aucun meuble pour l'instant.")]));
+      const candidats = elementsDuPlan(e.plan).filter(x => x.id !== e.id && !["repere", "buste"].includes(TYPES_MERCH[x.type].famille) && !(TYPES_MERCH[x.type].porte === "uv" && estUnMiroir(x)) && !e.presente.includes(x.id))
+        .sort((a, b) => Math.hypot(a.x - e.x, a.y - e.y) - Math.hypot(b.x - e.x, b.y - e.y));
+      if (nouveau || document.activeElement !== $("me-presente-ajout")) $("me-presente-ajout").replaceChildren(new Option("+ Ajouter un meuble…", ""), ...candidats.map(x => new Option(nomMeuble(x), x.id)));
+      $("me-presente-ajout").hidden = !modifiable || !candidats.length || e.presente.length >= 6;
+    }
     if (nouveau || document.activeElement !== $("me-zone")) {
       const auto = mur ? null : zoneDeChaleur(chaleurMerch(plan, e.x, e.y));
       $("me-zone").replaceChildren(new Option(auto ? `Automatique (${NOM_ZONE[auto].toLowerCase()})` : "Automatique (UV par UV)", ""), ...ZONES_MERCH.map(([z, nom]) => new Option(nom, z)));
@@ -10698,7 +10743,12 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
       modifierElementMerch(id, { hauteurs: h, niveaux: Array.from({ length: h }, (_, i) => e.niveaux[i] || { articles: [] }) });
     } else if (el.id === "me-rot") modifierElementMerch(id, { rot: Number(el.value) });
     else if (el.id === "me-zone") modifierElementMerch(id, { zone: el.value || null });
+    else if (el.id === "me-presente-ajout") { const v = el.value; el.value = ""; if (v && merchElements.docs[v]) modifierElementMerch(id, { presente: [...(e.presente || []), v].slice(0, 6) }); }
     else viderAttenteMerch();
+  });
+  $("me-presente").addEventListener("click", ev => {
+    const b = ev.target.closest(".me-presente-retirer"), e = merchElements.docs[$("me-form").dataset.id];
+    if (b && e && peutModifierMerch()) modifierElementMerch(e.id, { presente: (e.presente || []).filter(x => x !== b.dataset.id) });
   });
   $("me-tourner").addEventListener("click", () => { const e = merchElements.docs[choixMerch]; if (e) modifierElementMerch(e.id, { rot: (Math.round(e.rot / 90) * 90 + 90) % 360 }); });
   $("me-deselect").addEventListener("click", () => choisirElementMerch(null));
@@ -10743,7 +10793,7 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     else Object.assign(e, { l: t.l, p: t.p });
     if (t.porte === "niveaux") Object.assign(e, { hauteurs: 1, niveaux: [{ articles: [] }] });
     if (t.porte === "articles" || t.porte === "tenue") e.articles = [];
-    if (t.porte === "tenue") e.tenue = null;
+    if (t.porte === "tenue") { e.tenue = null; e.presente = []; }
     choixMerch = e.id;
     try { await ecrireElementMerch(e); } catch (_) { return; }
     marquerChoixMerch();
