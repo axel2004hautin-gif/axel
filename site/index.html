@@ -119,6 +119,10 @@ body.fond-travail { background: var(--marine); }
 .choix-cases[data-n="4"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .choix-cases[data-n="5"] { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 .choix-cases[data-n="6"] { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+/* Sept choix : quatre en haut, trois en bas, qui prennent toute la largeur. */
+.choix-cases[data-n="7"] { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+.choix-cases[data-n="7"] > li { grid-column: span 3; }
+.choix-cases[data-n="7"] > li:nth-child(n+5) { grid-column: span 4; }
 .choix-case { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px; height: 100%; min-height: 300px; padding: 20px 14px; text-decoration: none; transition: background-color .15s ease; }
 a.choix-case:hover { background: var(--c-doux); }
 .choix-case:focus-visible { outline: 3px solid var(--c); outline-offset: 3px; }
@@ -128,12 +132,15 @@ a.choix-case:hover { background: var(--c-doux); }
 @media (max-width: 1099px) {
   .choix-cases[data-n="5"], .choix-cases[data-n="6"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .choix-cases[data-n="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .choix-cases[data-n="7"] > li, .choix-cases[data-n="7"] > li:nth-child(n+5) { grid-column: span 4; }
+  .choix-cases[data-n="7"] > li:nth-child(7) { grid-column: span 12; }
   .choix-case { min-height: 180px; }
 }
 @media (max-width: 599px) {
   .choix { gap: 16px; padding-block: 20px; }
   .choix.sous-choix { padding-top: 16px; }
   .choix-cases, .choix-cases[data-n] { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .choix-cases[data-n="7"] > li, .choix-cases[data-n="7"] > li:nth-child(n+5), .choix-cases[data-n="7"] > li:nth-child(7) { grid-column: auto; }
   .choix-case { min-height: 84px; padding-block: 14px; }
   .choix-info { font-size: .88rem; }
 }
@@ -577,6 +584,35 @@ a.choix-case:hover { background: var(--c-doux); }
 .rep-reassort { background: var(--or-doux); color: var(--or); box-shadow: inset 0 0 0 1px var(--or); }
 .rep-archive { background: var(--gris); color: var(--sur-marine); }
 .gr-archives-ligne { padding-top: 14px; text-align: center; }
+/* Carrière : le contrat et les documents côte à côte, puis l'entretien. */
+.carriere-grille { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 24px 36px; }
+.carriere-bloc { display: grid; align-content: start; gap: 8px; min-width: 0; }
+.contrat { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 16px; margin: 6px 0 0; }
+.contrat dt { color: var(--gris); font-weight: 600; }
+.contrat dd { margin: 0; overflow-wrap: anywhere; }
+.contrat dd small { display: block; color: var(--gris); font-size: .86rem; }
+.documents { list-style: none; margin: 0; padding: 0; display: grid; }
+.document { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 4px 10px; padding: 10px 0; border-bottom: 1px solid var(--trait); }
+.document-texte { display: grid; gap: 2px; min-width: 0; }
+.document-titre { font-weight: 600; overflow-wrap: anywhere; }
+.document-meta { color: var(--gris); font-size: .86rem; }
+.doc-fichier-ligne { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.entretien { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; margin-top: 28px; }
+.en-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.en-date { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: var(--gris); }
+.en-date input { min-height: 40px; padding: 6px 10px; border: 1.5px solid var(--trait); border-radius: 8px; background: var(--fond); color: var(--encre); font: inherit; }
+.entretien-colonnes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 36px; }
+.entretien-colonnes h3 { display: flex; align-items: baseline; gap: 8px; padding-bottom: 6px; border-bottom: 2px solid var(--marine); font-weight: 800; color: var(--marine); }
+.entretien-colonnes .tache { grid-template-columns: minmax(0, 1fr) auto auto; }
+.en-vide { padding: 10px 0; color: var(--gris); }
+.en-resultat { padding: 14px 16px; border: 1.5px solid var(--marine); border-radius: 12px; background: var(--marine-doux); }
+.en-texte { white-space: pre-wrap; line-height: 1.5; }
+.aide.alerte { color: var(--repos); font-weight: 600; }
+@media (max-width: 799px) { .carriere-grille, .entretien-colonnes { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 599px) {
+  .contrat { grid-template-columns: minmax(0, 1fr); gap: 2px; } .contrat dd { margin-bottom: 8px; }
+  #en-form .type-tache { width: 100%; } #en-form .type-tache span { padding-inline: 4px; font-size: .9rem; }
+}
 /* Les statistiques du Dressing : des chiffres, puis des barres (une ligne par catégorie, marque, couleur). */
 .st-chiffres { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 .st-chiffres .chiffre { padding: 12px 14px; border: 1.5px solid var(--trait); border-radius: 12px; }
@@ -1291,13 +1327,14 @@ details.groupe-pieces { display: block; }
   <section class="r-travail page-choix" data-vue="travail" aria-labelledby="titre-travail" hidden>
     <div class="cadre choix sous-choix">
       <h1 class="invisible" id="titre-travail" tabindex="-1">Travail</h1>
-      <ul class="choix-cases" data-n="6">
+      <ul class="choix-cases" data-n="7">
         <li><a class="choix-case" href="#planning"><span class="choix-nom">Planning</span><span class="choix-info"><span id="aujourdhui-planning"></span><span id="resume-planning"></span></span></a></li>
         <li><a class="choix-case" href="#todo"><span class="choix-nom">To do list</span><span class="choix-info"><span id="resume-todo"></span></span></a></li>
         <li><a class="choix-case" href="#garde-robe"><span class="choix-nom">Dressing</span><span class="choix-info"><span id="resume-pieces"></span></span></a></li>
         <li><a class="choix-case" href="#objectifs"><span class="choix-nom">Objectifs</span><span class="choix-info"><span id="ligne-objectifs"></span><span id="resume-objectifs"></span></span></a></li>
         <li><a class="choix-case" href="#calendrier"><span class="choix-nom">Calendrier</span><span class="choix-info"><span id="ligne-calendrier"></span><span id="resume-calendrier"></span></span></a></li>
         <li><a class="choix-case" href="#equipe"><span class="choix-nom">Équipe</span><span class="choix-info"><span id="resume-equipe"></span></span></a></li>
+        <li><a class="choix-case" href="#carriere"><span class="choix-nom">Carrière</span><span class="choix-info"><span id="resume-carriere"></span></span></a></li>
       </ul>
     </div>
   </section>
@@ -1546,6 +1583,59 @@ details.groupe-pieces { display: block; }
       </div>
       <ul class="liste-comparaisons" id="co-liste"></ul>
       <p class="liste-vide" id="co-vide-liste" hidden></p>
+    </div>
+  </section>
+
+  <section class="r-travail" data-vue="carriere" aria-labelledby="titre-carriere" hidden>
+    <div class="cadre carriere">
+      <div class="page-tete">
+        <div>
+          <h1 id="titre-carriere" tabindex="-1">Carrière</h1>
+        </div>
+      </div>
+      <div class="carriere-grille">
+        <section class="carriere-bloc" aria-labelledby="ct-titre">
+          <div class="section-tete-ligne"><h2 id="ct-titre">Mon contrat</h2><button class="lien-discret" type="button" id="ct-modifier">Modifier</button></div>
+          <dl class="contrat" id="ct-fiche"></dl>
+          <p class="liste-vide" id="ct-vide" hidden>Les infos de ton contrat : « Modifier » pour les noter.</p>
+          <p class="aide" id="ct-accord"></p>
+        </section>
+        <section class="carriere-bloc" aria-labelledby="doc-titre">
+          <div class="section-tete-ligne"><h2 id="doc-titre">Mes documents</h2><button class="bouton-second bouton-petit" type="button" id="doc-ajouter">Ajouter</button></div>
+          <ul class="documents" id="doc-liste"></ul>
+          <p class="liste-vide" id="doc-vide">Ton contrat, tes avenants, tes fiches de paie, tes attestations : un lien (Google Drive) ou un fichier.</p>
+        </section>
+      </div>
+      <section class="entretien" aria-labelledby="en-titre">
+        <div class="section-tete-ligne">
+          <h2 id="en-titre">Mon entretien</h2>
+          <div class="en-actions">
+            <label class="en-date">Le prochain<input type="date" id="en-date"></label>
+            <button class="bouton-second bouton-petit" type="button" id="en-claude" hidden>Préparer avec Claude</button>
+          </div>
+        </div>
+        <p class="aide" id="en-info"></p>
+        <form class="ajout-tache champs-tache" id="en-form" autocomplete="off" novalidate>
+          <div class="type-tache" role="radiogroup" aria-label="Quoi ?">
+            <label><input type="radio" name="en-genre" value="reussite" checked><span>Réussite</span></label>
+            <label><input type="radio" name="en-genre" value="objectif"><span>Objectif</span></label>
+            <label><input type="radio" name="en-genre" value="demande"><span>Demande</span></label>
+            <label><input type="radio" name="en-genre" value="question"><span>Question</span></label>
+          </div>
+          <input class="champ-texte" type="text" id="en-texte" maxlength="300" placeholder="Ex. : la vitrine Black Friday, montée seul" aria-label="Quoi ?">
+          <button class="bouton-principal" type="submit">Noter</button>
+        </form>
+        <div class="entretien-colonnes">
+          <section aria-labelledby="en-t-reussite"><h3 id="en-t-reussite">Mes réussites <span class="nombre" id="en-n-reussite"></span></h3><ul class="taches" id="en-reussite"></ul></section>
+          <section aria-labelledby="en-t-objectif"><h3 id="en-t-objectif">Mes objectifs <span class="nombre" id="en-n-objectif"></span></h3><ul class="taches" id="en-objectif"></ul></section>
+          <section aria-labelledby="en-t-demande"><h3 id="en-t-demande">Ce que je veux demander <span class="nombre" id="en-n-demande"></span></h3><ul class="taches" id="en-demande"></ul></section>
+          <section aria-labelledby="en-t-question"><h3 id="en-t-question">Mes questions <span class="nombre" id="en-n-question"></span></h3><ul class="taches" id="en-question"></ul></section>
+        </div>
+        <div class="en-resultat" id="en-resultat" hidden>
+          <div class="section-tete-ligne"><h3>Ton entretien, préparé par Claude</h3><button class="lien-discret" type="button" id="en-copier">Copier</button></div>
+          <div class="en-texte" id="en-texte-claude"></div>
+        </div>
+      </section>
     </div>
   </section>
 
@@ -2094,6 +2184,64 @@ details.groupe-pieces { display: block; }
   </div>
 </dialog>
 
+<dialog class="fenetre fenetre-petite" id="fenetre-contrat" aria-labelledby="ct-f-titre">
+  <div class="fenetre-tete">
+    <h2 id="ct-f-titre">Mon contrat</h2>
+    <button class="fermer" type="button" data-fermer aria-label="Fermer sans enregistrer">×</button>
+  </div>
+  <form class="fenetre-corps edition champs-tache" id="ct-form" autocomplete="off" novalidate>
+    <div class="ligne-champs">
+      <label class="titre-champ">Employeur<input type="text" id="ct-employeur" maxlength="80" placeholder="Le nom écrit sur ton contrat"></label>
+      <label class="titre-champ">Poste<input type="text" id="ct-poste" maxlength="60" placeholder="Ex. : Vendeur"></label>
+    </div>
+    <div class="ligne-champs">
+      <label class="titre-champ">Contrat<input type="text" id="ct-type" maxlength="60" placeholder="Ex. : CDI à temps complet"></label>
+      <label class="titre-champ">Depuis le<input type="date" id="ct-debut"></label>
+    </div>
+    <div class="ligne-champs">
+      <label class="titre-champ">Heures par semaine<input type="text" inputmode="decimal" id="ct-heures" placeholder="35"></label>
+      <label class="titre-champ">Brut par mois (€)<input type="text" inputmode="decimal" id="ct-brut" placeholder="Ex. : 1800,00"></label>
+      <label class="titre-champ">Période d'essai (mois)<input type="text" inputmode="decimal" id="ct-essai" placeholder="2"></label>
+    </div>
+    <div class="ligne-champs">
+      <label class="titre-champ">Convention collective<input type="text" id="ct-convention" maxlength="120" placeholder="Ex. : IDCC 1483, commerce de détail de l'habillement"></label>
+      <label class="titre-champ">Lieu de travail<input type="text" id="ct-lieu" maxlength="60"></label>
+    </div>
+    <label class="titre-champ">Missions<textarea id="ct-missions" maxlength="400" rows="2"></textarea></label>
+    <label class="titre-champ">Mutuelle et prévoyance<input type="text" id="ct-mutuelle" maxlength="120"></label>
+  </form>
+  <div class="fenetre-pied">
+    <p class="fenetre-erreur" id="ct-erreur" role="alert" hidden></p>
+    <button class="bouton-second" type="button" data-fermer>Annuler</button>
+    <button class="bouton-principal" type="button" id="ct-enregistrer">Enregistrer</button>
+  </div>
+</dialog>
+
+<dialog class="fenetre fenetre-petite" id="fenetre-document" aria-labelledby="doc-f-titre">
+  <div class="fenetre-tete">
+    <h2 id="doc-f-titre">Ajouter un document</h2>
+    <button class="fermer" type="button" data-fermer aria-label="Fermer sans enregistrer">×</button>
+  </div>
+  <form class="fenetre-corps edition champs-tache" id="doc-form" autocomplete="off" novalidate>
+    <label class="titre-champ">Titre<input class="champ-texte" type="text" id="doc-titre-champ" maxlength="100" placeholder="Ex. : Contrat de travail (CDI)"></label>
+    <div class="ligne-champs">
+      <label class="titre-champ">Genre<select id="doc-type"></select></label>
+      <label class="titre-champ">Date<input type="date" id="doc-date"></label>
+    </div>
+    <label class="titre-champ">Lien (Google Drive…)<input type="url" id="doc-lien" maxlength="500" placeholder="https://drive.google.com/…"></label>
+    <div class="titre-champ" id="doc-fichier-bloc">Ou un fichier (PDF, photo)
+      <span class="doc-fichier-ligne"><label class="bouton-second bouton-fichier"><span>Choisir</span><input class="invisible" type="file" id="doc-fichier" accept="application/pdf,image/*"></label><span class="aide" id="doc-fichier-nom"></span></span>
+    </div>
+    <label class="titre-champ">Note<textarea id="doc-note" maxlength="300" rows="2"></textarea></label>
+  </form>
+  <div class="fenetre-pied">
+    <p class="fenetre-erreur" id="doc-erreur" role="alert" hidden></p>
+    <button class="bouton-danger" type="button" id="doc-supprimer" hidden>Supprimer</button>
+    <button class="bouton-second" type="button" data-fermer>Annuler</button>
+    <button class="bouton-principal" type="button" id="doc-enregistrer">Enregistrer</button>
+  </div>
+</dialog>
+
 <dialog class="fenetre fenetre-petite" id="fenetre-collegue" aria-labelledby="cl-titre">
   <div class="fenetre-tete">
     <h2 id="cl-titre">Ajouter quelqu'un</h2>
@@ -2106,6 +2254,7 @@ details.groupe-pieces { display: block; }
     </div>
     <label class="titre-champ">Téléphone<input type="tel" id="cl-tel" maxlength="20" placeholder="Ex. : 06 12 34 56 78"></label>
     <div class="titre-champ">Repos habituels<div class="jt-rubriques cl-repos" id="cl-repos"></div></div>
+    <label class="urgent-choix repete-choix"><input type="checkbox" id="cl-hors-planning"><span>Pas sur le planning (la direction, horaires libres)</span></label>
     <label class="titre-champ">Note<textarea id="cl-note" maxlength="300" rows="2" placeholder="Ex. : s'occupe des vitrines femme"></textarea></label>
   </form>
   <div class="fenetre-pied">
@@ -2447,15 +2596,15 @@ details.groupe-pieces { display: block; }
   // rend la page introuvable) ; un lien direct ouvre sa page : une rubrique (#travail, #argent,
   // #sport), un choix de rubrique (#planning, #todo, #garde-robe…) ou un choix de la garde-robe (#pieces,
   // #tenues, #comparer, #manque).
-  const VUES = ["accueil", "journee", "travail", "planning", "todo", "garde-robe", "pieces", "tenues", "comparer", "manque", "stats", "calendrier", "objectifs", "equipe", "argent", "budget", "depenses", "epargne", "paie", "sport"];
-  const RUBRIQUE_DE = { travail: "travail", argent: "argent", sport: "sport", planning: "travail", todo: "travail", "garde-robe": "travail", pieces: "travail", tenues: "travail", comparer: "travail", manque: "travail", stats: "travail", calendrier: "travail", objectifs: "travail", equipe: "travail", budget: "argent", depenses: "argent", epargne: "argent", paie: "argent" };
+  const VUES = ["accueil", "journee", "travail", "planning", "todo", "carriere", "garde-robe", "pieces", "tenues", "comparer", "manque", "stats", "calendrier", "objectifs", "equipe", "argent", "budget", "depenses", "epargne", "paie", "sport"];
+  const RUBRIQUE_DE = { travail: "travail", argent: "argent", sport: "sport", planning: "travail", todo: "travail", "garde-robe": "travail", pieces: "travail", tenues: "travail", comparer: "travail", manque: "travail", stats: "travail", carriere: "travail", calendrier: "travail", objectifs: "travail", equipe: "travail", budget: "argent", depenses: "argent", epargne: "argent", paie: "argent" };
   // La vie est une succession de choix : chaque page vient d'un choix fait sur la page d'avant.
   const PARENT = { journee: "accueil", travail: "accueil", argent: "accueil", sport: "accueil",
-    planning: "travail", todo: "travail", "garde-robe": "travail", calendrier: "travail", objectifs: "travail", equipe: "travail",
+    planning: "travail", todo: "travail", "garde-robe": "travail", calendrier: "travail", objectifs: "travail", equipe: "travail", carriere: "travail",
     pieces: "garde-robe", tenues: "garde-robe", comparer: "garde-robe", manque: "garde-robe", stats: "garde-robe",
     budget: "argent", depenses: "argent", epargne: "argent", paie: "argent" };
   const NOM_VUE = { accueil: "Tableau de bord", journee: "Aujourd'hui", travail: "Travail", argent: "Argent", sport: "Sport",
-    planning: "Planning", todo: "To do list", "garde-robe": "Dressing", calendrier: "Calendrier", objectifs: "Objectifs", equipe: "Équipe",
+    planning: "Planning", todo: "To do list", "garde-robe": "Dressing", calendrier: "Calendrier", objectifs: "Objectifs", equipe: "Équipe", carriere: "Carrière",
     pieces: "Pièces", tenues: "Tenues", comparer: "Comparer", manque: "Ce qu'il manque", stats: "Statistiques",
     budget: "Budget du mois", depenses: "Dépenses", epargne: "Épargne et projets", paie: "Ma paie" };
   let vueActive = "accueil";
@@ -2693,7 +2842,7 @@ details.groupe-pieces { display: block; }
     tenues.chargerLocal();
     comparaisons.chargerLocal();
     demandes.chargerLocal();
-    [comptesArgent, soldes, projets, charges, operations, paies, budgets, agenda].forEach(c => c.chargerLocal());
+    [comptesArgent, soldes, projets, charges, operations, paies, budgets, agenda, documents, notesEntretien].forEach(c => c.chargerLocal());
   }
   function sauverLocal() {
     try { localStorage.setItem(CLE_LOCALE, JSON.stringify(semaines)); return true; } catch (_) { return false; }
@@ -2737,7 +2886,7 @@ details.groupe-pieces { display: block; }
     tenues.abonner();
     comparaisons.abonner();
     demandes.abonner();
-    [comptesArgent, soldes, projets, charges, operations, paies, budgets, agenda].forEach(c => c.abonner());
+    [comptesArgent, soldes, projets, charges, operations, paies, budgets, agenda, documents, notesEntretien].forEach(c => c.abonner());
     // Claude, pour proposer une description de tenue : seulement pour qui peut modifier.
     if (proprio) c.use("sample").then(ns => { sampleNs = ns; rendreTenues(); }, () => {});
     // Google Agenda (le connecteur de claude.ai) et l'enregistrement d'un fichier : seulement pour le propriétaire.
@@ -2952,6 +3101,7 @@ details.groupe-pieces { display: block; }
     rendreCalendrier();
     rendreObjectifs();
     rendreEquipe();
+    rendreCarriere();
     if ($("fenetre-semaine").open) rendreGrilleSemaines();
     rendreJournee();
     rendreArgent();
@@ -3197,7 +3347,7 @@ details.groupe-pieces { display: block; }
         if (image.size > limites.images.maxInputBytes) throw { code: "too_large" };
         images.push(image);
       }
-      const prenom = (reglagesArgent().titulaire || "").split(/\s+/)[0], lst = collegues();
+      const prenom = (reglagesArgent().titulaire || "").split(/\s+/)[0], lst = auPlanning();
       const jourDate = i => `${JOURS[i]} ${new Date(lundi + i * JOUR_MS).getUTCDate()} ${MOIS[new Date(lundi + i * JOUR_MS).getUTCMonth()]}`;
       const consigne = `Tu lis ${images.length > 1 ? `${images.length} photos d'un même planning (des morceaux à assembler)` : "la photo du planning"} d'un magasin de vêtements (Blue Box). Il donne, jour par jour, les horaires de chaque vendeur pour la semaine ${info.num} (${JOURS.map((_, i) => jourDate(i)).join(", ")}).`
         + `\n\nLe planning Blue Box (« Planning hebdomadaire ») a un bloc par jour, l'un sous l'autre (le nom du jour écrit à la verticale à gauche, la date en haut du bloc ; parfois sur deux pages, une photo chacune). Dans chaque bloc : une ligne par vendeur (le prénom à gauche), des colonnes de 8h à 21h avec QUATRE cases par heure (des quarts d'heure ; le chiffre de l'heure est écrit au début de sa première case), et des cases grisées pour le temps travaillé. À droite : « Total H. » (les heures du jour du vendeur), « Motifs Abs. » (« rh » = repos hebdomadaire, donc statut "repos") et « Cumul H » (le cumul de la semaine).`
@@ -4470,6 +4620,255 @@ details.groupe-pieces { display: block; }
   $("gr-filtres-bouton").addEventListener("click", () => {
     const ouverts = $("gr-filtres").classList.toggle("ouverts");
     $("gr-filtres-bouton").setAttribute("aria-expanded", String(ouverts));
+  });
+
+  // ---------- Carrière : mon contrat, mes documents, mon entretien ----------
+  // reglages/contrat : ce que dit mon contrat ; documents/<id> : { titre, type, date, lien, fichier, note } ;
+  // entretien/<id> : { genre (reussite, objectif, demande, question), texte, fait, creeLe } ; reglages/entretien : { date }.
+  const TYPES_DOC = [["contrat", "Contrat"], ["avenant", "Avenant"], ["paie", "Fiche de paie"], ["attestation", "Attestation"], ["autre", "Autre"]];
+  const NOM_TYPE_DOC = Object.fromEntries(TYPES_DOC);
+  const lireDocument = (id, d) => {
+    if (!d || typeof d !== "object" || !texteBorne(d.titre, 100)) return null;
+    const lien = typeof d.lien === "string" && /^https?:\/\/[^\s"<>]+$/i.test(d.lien.trim()) ? d.lien.trim().slice(0, 500) : null;
+    const fichier = typeof d.fichier === "string" && (PHOTO_ASSET_RE.test(d.fichier) || (mode === "local" && /^data:/.test(d.fichier))) ? d.fichier : null;
+    return { id, titre: texteBorne(d.titre, 100), type: NOM_TYPE_DOC[d.type] ? d.type : "autre", date: typeof d.date === "string" && ISO_RE.test(d.date) ? d.date : null,
+      lien, fichier, note: texteBorne(d.note, 300), creeLe: texteBorne(d.creeLe, 40) };
+  };
+  const documents = creerCollection("documents", "tableau-de-bord-axel:documents", lireDocument, () => rendreCarriere());
+  const GENRES_ENTRETIEN = ["reussite", "objectif", "demande", "question"];
+  const lireNoteEntretien = (id, d) => (d && GENRES_ENTRETIEN.includes(d.genre) && texteBorne(d.texte, 300)
+    ? { id, genre: d.genre, texte: texteBorne(d.texte, 300), fait: d.fait === true, creeLe: texteBorne(d.creeLe, 40) } : null);
+  const notesEntretien = creerCollection("entretien", "tableau-de-bord-axel:entretien", lireNoteEntretien, () => rendreCarriere());
+  const contrat = () => reglagesCollection.docs.contrat || null;
+  const nombreOu = v => (typeof v === "number" && isFinite(v) && v > 0 ? v : null);
+  function anciennete(depuis) {
+    const a = new Date(depuisIso(depuis)), b = new Date(aujourdhui());
+    let mois = (b.getUTCFullYear() - a.getUTCFullYear()) * 12 + b.getUTCMonth() - a.getUTCMonth() - (b.getUTCDate() < a.getUTCDate() ? 1 : 0);
+    if (mois < 0) return "pas encore commencé";
+    const ans = Math.floor(mois / 12); mois %= 12;
+    return [ans ? `${ans} an${ans > 1 ? "s" : ""}` : "", mois ? `${mois} mois` : ""].filter(Boolean).join(" et ") || "moins d'un mois";
+  }
+  const finEssai = c => { if (!c.debut || !nombreOu(c.essaiMois)) return null; const d = new Date(depuisIso(c.debut)); return versIso(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + Math.round(c.essaiMois), d.getUTCDate()) - JOUR_MS); };
+  function rendreCarriere() {
+    const c = contrat(), dl = $("ct-fiche");
+    $("ct-vide").hidden = !!c;
+    $("ct-modifier").hidden = !peutModifierGr();
+    const lignes = [];
+    if (c) {
+      const brut = nombreOu(c.brut), heuresMois = nombreOu(c.heuresMois) || 151.67;
+      if (c.employeur) lignes.push(["Employeur", c.employeur]);
+      if (c.poste || c.type) lignes.push(["Poste", [c.poste, c.type].filter(Boolean).join(" · ")]);
+      if (c.debut) lignes.push(["Depuis", dateLongue(c.debut), anciennete(c.debut)]);
+      const fe = finEssai(c);
+      if (fe) lignes.push(["Période d'essai", `${c.essaiMois} mois`, fe < versIso(aujourdhui()) ? `terminée le ${dateLongue(fe)}` : `jusqu'au ${dateLongue(fe)}`]);
+      if (nombreOu(c.heures)) lignes.push(["Temps de travail", `${String(c.heures).replace(".", ",")} h par semaine`]);
+      if (brut) lignes.push(["Salaire", `${eur(brut)} brut par mois`, `soit ${eur(Math.round(brut / heuresMois * 100) / 100)} de l'heure, pour ${String(heuresMois).replace(".", ",")} h`]);
+      if (c.convention) lignes.push(["Convention", c.convention, /1483/.test(c.convention) ? "Jours fériés travaillés payés +100 %, 1er mai chômé et payé" : ""]);
+      if (c.lieu) lignes.push(["Lieu", c.lieu]);
+      if (c.missions) lignes.push(["Missions", c.missions]);
+      if (c.mutuelle) lignes.push(["Mutuelle", c.mutuelle]);
+    }
+    dl.replaceChildren(...lignes.flatMap(([t, v, detail]) => { const dt = element("dt", null, t), dd = element("dd", null, v); if (detail) dd.append(element("small", null, detail)); return [dt, dd]; }));
+    // Le tableau de bord compte-t-il comme le contrat ? (le compteur d'heures, la paie)
+    const accord = $("ct-accord"), ecarts = [];
+    if (c) {
+      const t = reglagesTravail(), a = reglagesArgent(), brut = nombreOu(c.brut), heuresMois = nombreOu(c.heuresMois) || 151.67;
+      if (nombreOu(c.heures) && Math.abs(c.heures - t.heures) > 0.01) ecarts.push(`le compteur d'heures compte ${t.heures} h par semaine`);
+      if (c.debut && t.debut && c.debut !== t.debut) ecarts.push(`le compteur part du ${dateLongue(t.debut)}`);
+      if (brut && Math.abs(brut / heuresMois - a.taux) > 0.01) ecarts.push(`la paie estimée compte ${eur(a.taux)} de l'heure`);
+    }
+    accord.textContent = !c ? "" : ecarts.length ? `À corriger : ${listeFr(ecarts)} (réglages du compteur, dans Planning, et de la paie, dans Argent).` : "Le compteur d'heures et la paie estimée comptent comme ton contrat.";
+    accord.classList.toggle("alerte", ecarts.length > 0);
+    // Les documents, du plus récent au plus ancien.
+    const docs = Object.values(documents.docs).sort((x, y) => (y.date || "").localeCompare(x.date || "") || x.titre.localeCompare(y.titre, "fr"));
+    $("doc-liste").replaceChildren(...docs.map(d => {
+      const li = element("li", "document"), texte = element("div", "document-texte");
+      texte.append(element("span", "document-titre", d.titre), element("span", "document-meta", [NOM_TYPE_DOC[d.type], d.date ? dateLongue(d.date) : "", d.note].filter(Boolean).join(" · ")));
+      li.append(texte);
+      const url = d.fichier ? (PHOTO_ASSET_RE.test(d.fichier) ? "/_blob/" + d.fichier : d.fichier) : d.lien;
+      if (url) { const a = element("a", "bouton-second bouton-petit", "Ouvrir ↗"); a.href = url; a.target = "_blank"; a.rel = "noopener"; li.append(a); }
+      if (peutModifierGr()) { const m = element("button", "tache-modifier"); m.type = "button"; m.dataset.document = d.id; m.setAttribute("aria-label", `Modifier : ${d.titre}`); m.innerHTML = PICTO_CRAYON; li.append(m); }
+      return li;
+    }));
+    $("doc-vide").hidden = docs.length > 0;
+    $("doc-ajouter").hidden = !peutModifierGr();
+    // L'entretien : la date, les notes par genre.
+    const date = (reglagesCollection.docs.entretien || {}).date || "";
+    if (document.activeElement !== $("en-date")) $("en-date").value = ISO_RE.test(date) ? date : "";
+    $("en-date").disabled = !peutModifierGr();
+    const t0 = aujourdhui();
+    $("en-info").textContent = ISO_RE.test(date) && depuisIso(date) >= t0
+      ? `Ton entretien est ${dansJours(depuisIso(date))} (${dateCourte(depuisIso(date))}). ` + (depuisIso(date) - t0 <= 7 * JOUR_MS ? "Le rappel « Préparer mon entretien » est sur l'accueil." : "Une semaine avant, un rappel arrive sur l'accueil.")
+      : "Note au fil de l'année ce qui compte : tes réussites, tes objectifs, ce que tu veux demander, tes questions. L'entretien professionnel est au moins tous les deux ans" + (c && c.debut ? ` (le premier vers ${MOIS[new Date(depuisIso(c.debut)).getUTCMonth()]} ${new Date(depuisIso(c.debut)).getUTCFullYear() + 2})` : "") + ".";
+    const notes = Object.values(notesEntretien.docs).sort((x, y) => (x.creeLe || "").localeCompare(y.creeLe || ""));
+    const VIDES = { reussite: "Une vente difficile, une vitrine, une idée reprise, un client fidélisé…", objectif: "Ce que tu vises pour l'année qui vient.", demande: "Une formation, plus de responsabilités, une augmentation, des horaires…", question: "Ce que tu veux savoir de la direction." };
+    GENRES_ENTRETIEN.forEach(g => {
+      const l = notes.filter(n => n.genre === g);
+      $("en-n-" + g).textContent = l.length ? String(l.length) : "";
+      $("en-" + g).replaceChildren(...(l.length ? l.map(n => {
+        const li = element("li", "tache" + (n.fait ? " faite" : ""));
+        if (g === "objectif") {
+          const lab = element("label", "tache-case"), cb = element("input");
+          cb.type = "checkbox"; cb.checked = n.fait; cb.dataset.noteAtteint = n.id; cb.disabled = !peutModifierGr();
+          cb.setAttribute("aria-label", `Atteint : ${n.texte}`);
+          lab.append(cb, element("span", "tache-texte", n.texte));
+          li.append(lab);
+        } else li.append(element("span", "tache-texte", n.texte));
+        const meta = element("span", "tache-meta");
+        if (n.creeLe && !isNaN(Date.parse(n.creeLe))) { const d = new Date(n.creeLe); meta.append(element("span", "puce fait", `${d.getDate()} ${MOIS_COURTS[d.getMonth()]}`)); }
+        li.append(meta);
+        if (peutModifierGr()) { const b = element("button", "tache-modifier", "×"); b.type = "button"; b.dataset.noteSuppr = n.id; b.setAttribute("aria-label", `Retirer : ${n.texte}`); li.append(b); }
+        return li;
+      }) : [element("li", "en-vide", VIDES[g])]));
+    });
+    $("en-form").hidden = !peutModifierGr();
+    $("en-claude").hidden = !sampleNs || !notes.length;
+    // Le choix « Carrière » de Travail.
+    $("resume-carriere").textContent = [c && c.debut ? `${c.poste || "En poste"} depuis ${anciennete(c.debut)}` : "Mon contrat, mes documents",
+      ISO_RE.test(date) && depuisIso(date) >= t0 ? `Entretien ${dansJours(depuisIso(date))}` : notes.length ? `${notes.length} note${notes.length > 1 ? "s" : ""} pour l'entretien` : ""].filter(Boolean).join(" · ");
+  }
+  // Le contrat.
+  const champsContrat = [["ct-employeur", "employeur"], ["ct-poste", "poste"], ["ct-type", "type"], ["ct-convention", "convention"], ["ct-lieu", "lieu"], ["ct-missions", "missions"], ["ct-mutuelle", "mutuelle"]];
+  $("ct-modifier").addEventListener("click", () => {
+    const c = contrat() || {};
+    champsContrat.forEach(([id, k]) => { $(id).value = c[k] || ""; });
+    $("ct-debut").value = c.debut || reglagesTravail().debut || "";
+    $("ct-heures").value = String(nombreOu(c.heures) || reglagesTravail().heures).replace(".", ",");
+    $("ct-brut").value = nombreOu(c.brut) ? String(c.brut).replace(".", ",") : "";
+    $("ct-essai").value = nombreOu(c.essaiMois) ? String(c.essaiMois).replace(".", ",") : "";
+    $("ct-erreur").hidden = true;
+    ouvrir($("fenetre-contrat"));
+  });
+  $("ct-enregistrer").addEventListener("click", async () => {
+    const nb = id => { const v = $(id).value.trim(); if (!v) return null; const n = lireMontant(v); return n == null ? undefined : n; };
+    const heures = nb("ct-heures"), brut = nb("ct-brut"), essai = nb("ct-essai");
+    if ([heures, brut, essai].some(v => v === undefined)) { $("ct-erreur").textContent = "Vérifie les nombres (heures, salaire, essai)."; $("ct-erreur").hidden = false; return; }
+    const corps = { ...Object.fromEntries(champsContrat.map(([id, k]) => [k, $(id).value.trim() || null])), debut: ISO_RE.test($("ct-debut").value) ? $("ct-debut").value : null,
+      heures, brut, heuresMois: (contrat() || {}).heuresMois || 151.67, essaiMois: essai, modifieLe: maintenant() };
+    try { await reglagesCollection.ecrire("contrat", corps); fermer($("fenetre-contrat")); toast("Contrat enregistré."); }
+    catch (err) { $("ct-erreur").textContent = messageEcriture(err); $("ct-erreur").hidden = false; }
+  });
+  // Les documents.
+  $("doc-type").replaceChildren(...TYPES_DOC.map(([k, nom]) => new Option(nom, k)));
+  let documentEdite = null, fichierDocument = null;
+  function ouvrirDocument(id) {
+    const d = id ? documents.docs[id] : null;
+    documentEdite = d; fichierDocument = null;
+    $("doc-f-titre").textContent = d ? "Modifier le document" : "Ajouter un document";
+    $("doc-titre-champ").value = d ? d.titre : "";
+    $("doc-type").value = d ? d.type : "contrat";
+    $("doc-date").value = d && d.date ? d.date : "";
+    $("doc-lien").value = d && d.lien ? d.lien : "";
+    $("doc-note").value = d ? d.note : "";
+    $("doc-fichier-bloc").hidden = !(mode === "base" && assets);
+    $("doc-fichier-nom").textContent = d && d.fichier ? "Un fichier est enregistré." : "";
+    $("doc-supprimer").hidden = !d;
+    desarmer($("doc-supprimer"), "Supprimer");
+    $("doc-erreur").hidden = true;
+    ouvrir($("fenetre-document"));
+  }
+  $("doc-ajouter").addEventListener("click", () => ouvrirDocument(null));
+  $("doc-fichier").addEventListener("change", e => {
+    const f = e.target.files[0];
+    e.target.value = "";
+    if (!f) return;
+    if (f.size > 15 * 1024 * 1024) { $("doc-erreur").textContent = "Fichier trop lourd (15 Mo au plus)."; $("doc-erreur").hidden = false; return; }
+    fichierDocument = f;
+    $("doc-fichier-nom").textContent = f.name;
+    if (!$("doc-titre-champ").value.trim()) $("doc-titre-champ").value = f.name.replace(/\.[a-z0-9]+$/i, "").slice(0, 100);
+  });
+  $("doc-enregistrer").addEventListener("click", async () => {
+    const titre = $("doc-titre-champ").value.trim(), lien = $("doc-lien").value.trim();
+    const erreur = m => { $("doc-erreur").textContent = m; $("doc-erreur").hidden = false; };
+    if (!titre) return erreur("Donne un titre au document.");
+    if (lien && !/^https?:\/\/[^\s"<>]+$/i.test(lien)) return erreur("Le lien doit commencer par https://");
+    const avant = documentEdite, id = avant ? avant.id : documents.nouvelId(), b = $("doc-enregistrer");
+    b.disabled = true;
+    try {
+      let fichier = avant ? avant.fichier : null;
+      if (fichierDocument && mode === "base" && assets) fichier = (await assets.upload(fichierDocument, { type: fichierDocument.type || "application/pdf" })).id;
+      if (!lien && !fichier) { b.disabled = false; return erreur("Ajoute un lien ou un fichier."); }
+      await documents.ecrire(id, { titre: titre.slice(0, 100), type: $("doc-type").value, date: ISO_RE.test($("doc-date").value) ? $("doc-date").value : null,
+        lien: lien || null, fichier, note: $("doc-note").value.trim().slice(0, 300) || null, creeLe: avant ? avant.creeLe : maintenant() });
+      if (assets && avant && avant.fichier && avant.fichier !== fichier && PHOTO_ASSET_RE.test(avant.fichier)) assets.delete(avant.fichier).catch(() => {});
+      fermer($("fenetre-document"));
+      toast(avant ? "Document enregistré." : "Document ajouté.");
+    } catch (err) { erreur(messageEcriture(err)); }
+    finally { b.disabled = false; }
+  });
+  $("doc-supprimer").addEventListener("click", async e => {
+    const b = e.currentTarget, d = documentEdite;
+    if (!d) return;
+    if (!b.classList.contains("arme")) { armer(b, "Confirmer la suppression", "Supprimer"); return; }
+    desarmer(b, "Supprimer");
+    try {
+      await documents.ecrire(d.id, null);
+      if (assets && d.fichier && PHOTO_ASSET_RE.test(d.fichier)) assets.delete(d.fichier).catch(() => {});
+      fermer($("fenetre-document"));
+      toast("Document supprimé.");
+    } catch (err) { $("doc-erreur").textContent = messageEcriture(err); $("doc-erreur").hidden = false; }
+  });
+  $("doc-liste").addEventListener("click", e => { const b = e.target.closest("[data-document]"); if (b) ouvrirDocument(b.dataset.document); });
+  // L'entretien.
+  $("en-date").addEventListener("change", async () => {
+    const v = $("en-date").value;
+    try { await reglagesCollection.ecrire("entretien", { date: ISO_RE.test(v) ? v : null, modifieLe: maintenant() }); } catch (err) { toast(messageEcriture(err), "erreur"); }
+  });
+  $("en-form").addEventListener("submit", async e => {
+    e.preventDefault();
+    const texte = $("en-texte").value.trim(), genre = (document.querySelector('input[name="en-genre"]:checked') || {}).value || "reussite";
+    if (!texte || !peutModifierGr()) { $("en-texte").focus(); return; }
+    $("en-texte").value = "";
+    $("en-texte").focus();
+    try { await notesEntretien.ecrire(notesEntretien.nouvelId(), { genre, texte: texte.slice(0, 300), fait: false, creeLe: maintenant() }); } catch (err) { toast(messageEcriture(err), "erreur"); }
+  });
+  $("en-form").addEventListener("change", () => {
+    const g = (document.querySelector('input[name="en-genre"]:checked') || {}).value;
+    $("en-texte").placeholder = { reussite: "Ex. : la vitrine Black Friday, montée seul", objectif: "Ex. : prendre en charge les vitrines homme", demande: "Ex. : une formation au visuel merchandising", question: "Ex. : comment évoluer vers responsable adjoint ?" }[g] || "";
+  });
+  document.querySelector('[data-vue="carriere"] .entretien').addEventListener("click", async e => {
+    const b = e.target.closest("[data-note-suppr]");
+    if (!b) return;
+    if (!b.classList.contains("arme")) { armer(b, "?", "×"); return; }
+    try { await notesEntretien.ecrire(b.dataset.noteSuppr, null); } catch (err) { toast(messageEcriture(err), "erreur"); }
+  });
+  document.querySelector('[data-vue="carriere"] .entretien').addEventListener("change", async e => {
+    const cb = e.target.closest("[data-note-atteint]");
+    const n = cb && notesEntretien.docs[cb.dataset.noteAtteint];
+    if (!n) return;
+    try { await notesEntretien.ecrire(n.id, { genre: n.genre, texte: n.texte, fait: cb.checked, creeLe: n.creeLe }); } catch (err) { cb.checked = !cb.checked; toast(messageEcriture(err), "erreur"); }
+  });
+  // Préparer avec Claude : seulement mes notes et mon contrat (jamais les chiffres des objectifs).
+  $("en-claude").addEventListener("click", async () => {
+    if (!sampleNs) return;
+    const b = $("en-claude"), c = contrat() || {}, notes = Object.values(notesEntretien.docs);
+    const liste = g => notes.filter(n => n.genre === g).map(n => `- ${n.texte}${g === "objectif" ? (n.fait ? " (atteint)" : " (en cours)") : ""}`).join("\n") || "(rien de noté)";
+    const date = (reglagesCollection.docs.entretien || {}).date;
+    const consigne = `Tu aides un vendeur en magasin de vêtements à préparer son entretien avec sa direction${ISO_RE.test(date || "") ? ` (le ${dateLongue(date)})` : ""}.`
+      + `\nSon poste : ${c.poste || "vendeur"}${c.type ? `, ${c.type}` : ""}${c.debut ? `, depuis ${anciennete(c.debut)}` : ""}.`
+      + `\n\nSes réussites :\n${liste("reussite")}\n\nSes objectifs :\n${liste("objectif")}\n\nCe qu'il veut demander :\n${liste("demande")}\n\nSes questions :\n${liste("question")}`
+      + `\n\nÉcris-lui, en français simple et en le tutoyant, un plan d'entretien court, en texte brut (pas de markdown, pas de titres avec #) :`
+      + `\n1. Une phrase pour ouvrir l'entretien.\n2. Ses points forts : 3 à 5, chacun appuyé sur une réussite notée.\n3. Ses objectifs pour l'année, formulés clairement.`
+      + `\n4. Ses demandes, chacune avec l'argument tiré de ses réussites, et comment la formuler.\n5. Ses questions.\n6. Une phrase pour conclure.`
+      + `\nN'invente aucun fait : appuie-toi seulement sur ce qui est noté.`;
+    b.disabled = true;
+    b.textContent = "Claude prépare…";
+    try {
+      const r = await sampleNs(consigne, { modelTier: "default" });
+      $("en-texte-claude").textContent = (r && r.text || "").trim();
+      $("en-resultat").hidden = !$("en-texte-claude").textContent;
+      $("en-resultat").scrollIntoView({ block: "nearest" });
+    } catch (err) {
+      toast(err && err.code === "rate_limited" ? "Trop de demandes d'un coup : réessaie dans un moment." : "Claude n'a pas pu préparer l'entretien. Réessaie dans un moment.", "erreur");
+    } finally { b.disabled = false; b.textContent = "Préparer avec Claude"; }
+  });
+  $("en-copier").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText($("en-texte-claude").textContent); toast("Copié."); }
+    catch (_) {
+      const r = document.createRange(); r.selectNodeContents($("en-texte-claude"));
+      const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+      toast("Le texte est sélectionné : copie-le avec le menu du téléphone.");
+    }
   });
 
   // ---------- les statistiques du Dressing : les pièces en magasin, par catégorie, marque et couleur ----------
@@ -6416,7 +6815,9 @@ details.groupe-pieces { display: block; }
   // ----- ce qu'il manque : les demandes des clients -----
   // Un document par demande dans « demandes » : { quoi, categorie, nombre, derniereLe, statut, creeLe }.
   // À qui proposer ce qui manque : la personne de l'équipe dont le rôle dit responsable (ou gérant, directeur…).
-  const responsable = () => (collegues().find(c => /respons|g[ée]rant|direct|manag|chef/i.test(c.role)) || {}).prenom || "";
+  // À qui faire remonter ce qui manque : la direction et les responsables de l'équipe (d'après leur rôle).
+  const responsables = () => collegues().filter(c => /respons|g[ée]rant|direct|manag|chef|patron|pr[ée]sident/i.test(c.role)).slice(0, 3);
+  const responsable = () => responsables().map(c => c.prenom).join(" ou ");
   const STATUTS = [["a-proposer", "À proposer"], ["propose", "Proposé"], ["commande", "Commandé"], ["refuse", "Pas retenu"]];
   function lireDemande(id, d) {
     if (!d || typeof d !== "object") return null;
@@ -6477,14 +6878,18 @@ details.groupe-pieces { display: block; }
         statut.setAttribute("aria-label", `Où en est la demande : ${x.quoi}`);
         STATUTS.forEach(([k, nom]) => statut.append(new Option(k === "propose" && responsable() ? `Proposé à ${responsable()}` : nom, k)));
         statut.value = x.statut;
-        const dire = element("button", "bouton-second bouton-petit", responsable() ? `À dire à ${responsable()}` : "À dire");
-        dire.type = "button";
-        dire.dataset.dire = x.id;
-        dire.title = "L'ajoute à ta to-do, dans « À dire »";
+        const dires = (responsables().length ? responsables() : [null]).map(c => {
+          const d = element("button", "bouton-second bouton-petit", c ? `À dire à ${c.prenom}` : "À dire");
+          d.type = "button";
+          d.dataset.dire = x.id;
+          if (c) d.dataset.qui = c.prenom;
+          d.title = "L'ajoute à ta to-do, dans « À dire »";
+          return d;
+        });
         const suppr = element("button", "bouton-danger bouton-petit", "Supprimer");
         suppr.type = "button";
         suppr.dataset.supprimer = x.id;
-        actions.append(plus, statut, dire, suppr);
+        actions.append(plus, statut, ...dires, suppr);
       } else actions.append(element("span", "puce", STATUTS.find(([k]) => k === x.statut)[1]));
       li.append(n, texte, actions);
       return li;
@@ -6507,7 +6912,7 @@ details.groupe-pieces { display: block; }
     if (t.dataset.dire) {
       const texte = `Des clients demandent : ${x.quoi}` + (x.nombre > 1 ? ` (${x.nombre} demandes)` : "");
       try {
-        const qui = responsable() || "Responsable";
+        const qui = t.dataset.qui || "Responsable";
         await ecrireTache(nouvelId(), nouvelleTache({ texte: texte.slice(0, 300), type: "dire", personne: qui }));
         toast(`Ajouté à ta to-do : à dire à ${qui}.`);
       } catch (err) { echecEcriture(err); }
@@ -7449,6 +7854,7 @@ details.groupe-pieces { display: block; }
   const lireCollegue = (id, d) => (d && texteBorne(d.prenom, 40) ? {
     id, prenom: texteBorne(d.prenom, 40), role: texteBorne(d.role, 40), tel: texteBorne(d.tel, 20), note: texteBorne(d.note, 300),
     repos: Array.isArray(d.repos) ? JOURS.filter(j => d.repos.includes(j)) : [], ordre: typeof d.ordre === "number" ? d.ordre : 99,
+    horsPlanning: d.horsPlanning === true,   // la direction : des horaires libres, pas sur le planning du magasin
   } : null);
   const lireSemaineEquipe = (id, d) => {
     if (!CLE_RE.test(id) || !d || !d.jours || typeof d.jours !== "object") return null;
@@ -7459,6 +7865,7 @@ details.groupe-pieces { display: block; }
   const equipe = creerCollection("equipe", "tableau-de-bord-axel:equipe", lireCollegue, () => { rendreEquipe(); rendrePlanning(); rendreManque(); rendreTodo(); });
   const equipeSemaines = creerCollection("equipe-semaines", "tableau-de-bord-axel:equipe-semaines", lireSemaineEquipe, () => { rendreEquipe(); rendrePlanning(); });
   const collegues = () => Object.values(equipe.docs).sort((a, b) => a.ordre - b.ordre || a.prenom.localeCompare(b.prenom, "fr"));
+  const auPlanning = () => collegues().filter(c => !c.horsPlanning);
   const estRepos = v => /^repos$|^r$/i.test(v.trim());
   // Ce que fait une personne un jour donné : ce qui est noté pour la semaine, sinon son repos habituel.
   function journeeCollegue(c, cle, jour) {
@@ -7467,11 +7874,11 @@ details.groupe-pieces { display: block; }
     return c.repos.includes(jour) ? { texte: "Repos", repos: true, habituel: true } : null;
   }
   // Avec qui je travaille un jour : les personnes qui ont des horaires notés ce jour-là.
-  const avecQui = (cle, jour) => collegues().filter(c => { const x = journeeCollegue(c, cle, jour); return x && !x.repos; });
+  const avecQui = (cle, jour) => auPlanning().filter(c => { const x = journeeCollegue(c, cle, jour); return x && !x.repos; });
   let lundiEquipe = null;
   function rendreEquipe() {
     if (lundiEquipe == null) lundiEquipe = lundiDe(aujourdhui());
-    const info = infoSemaine(lundiEquipe), lst = collegues(), moi = semaines[info.cle], modifiable = peutModifierTodo();
+    const info = infoSemaine(lundiEquipe), lst = collegues(), auPlan = auPlanning(), moi = semaines[info.cle], modifiable = peutModifierTodo();
     $("eq-semaine").textContent = `Semaine ${info.num}`;
     const jours = JOURS.slice(0, avecDimanche(lundiEquipe, moi) ? 7 : 6), auj = lundiEquipe === lundiDe(aujourdhui()) ? (new Date(aujourdhui()).getUTCDay() || 7) - 1 : -1;
     const tete = element("thead"), tr = element("tr");
@@ -7485,9 +7892,9 @@ details.groupe-pieces { display: block; }
       corps.append(r);
     };
     ligne("Moi", "moi", jours.map(j => { const x = moi ? moi.jours[j] : null, t = x ? periodesTravaillees(x) : []; return !x ? null : statutDe(x) ? { texte: NOM_STATUT[statutDe(x)], repos: true } : t.length ? { texte: t.map(p => `${formatHeure(p.debut)}-${formatHeure(p.fin)}`).join(" ") } : null; }));
-    lst.forEach(c => ligne(c.prenom, null, jours.map(j => journeeCollegue(c, info.cle, j))));
+    auPlan.forEach(c => ligne(c.prenom, null, jours.map(j => journeeCollegue(c, info.cle, j))));
     $("eq-table").replaceChildren(tete, corps);
-    $("eq-modifier-semaine").hidden = !modifiable || !lst.length;
+    $("eq-modifier-semaine").hidden = !modifiable || !auPlan.length;
     $("eq-ajouter").hidden = !modifiable;
     // Les fiches.
     $("eq-liste").replaceChildren(...(lst.length ? lst.map(c => {
@@ -7500,6 +7907,7 @@ details.groupe-pieces { display: block; }
       if (c.tel) { const a = element("a", null, c.tel); a.href = "tel:" + c.tel.replace(/[^\d+]/g, ""); li.append(a); }
       if (c.repos.length) li.append(element("span", "collegue-repos", `Repos habituel : ${listeFr(c.repos)}`));
       if (c.note) li.append(element("span", "collegue-repos", c.note));
+      if (c.horsPlanning) li.append(element("span", "collegue-repos", "Pas sur le planning"));
       return li;
     }) : [element("li", "liste-vide", "Personne pour l'instant : ajoute tes collègues (prénom, rôle, téléphone, repos habituels).")]));
     // La ligne du choix « Équipe » : avec qui aujourd'hui.
@@ -7516,6 +7924,7 @@ details.groupe-pieces { display: block; }
     $("cl-titre").textContent = c ? `Modifier ${c.prenom}` : "Ajouter quelqu'un";
     $("cl-prenom").value = c ? c.prenom : ""; $("cl-role").value = c ? c.role : ""; $("cl-tel").value = c ? c.tel : ""; $("cl-note").value = c ? c.note : "";
     $("cl-repos").querySelectorAll("input").forEach(x => { x.checked = !!(c && c.repos.includes(x.value)); });
+    $("cl-hors-planning").checked = !!(c && c.horsPlanning);
     $("cl-supprimer").hidden = !c;
     desarmer($("cl-supprimer"), "Supprimer");
     $("cl-erreur").hidden = true;
@@ -7530,7 +7939,8 @@ details.groupe-pieces { display: block; }
     const avant = collegueEdite ? equipe.docs[collegueEdite] : null, id = avant ? avant.id : equipe.nouvelId();
     try {
       await equipe.ecrire(id, { prenom: prenom.slice(0, 40), role: $("cl-role").value.trim().slice(0, 40), tel: $("cl-tel").value.trim().slice(0, 20), note: $("cl-note").value.trim().slice(0, 300),
-        repos: [...$("cl-repos").querySelectorAll("input:checked")].map(x => x.value), ordre: avant ? avant.ordre : collegues().length, modifieLe: maintenant() });
+        repos: [...$("cl-repos").querySelectorAll("input:checked")].map(x => x.value), ordre: avant ? avant.ordre : collegues().length,
+        ...($("cl-hors-planning").checked ? { horsPlanning: true } : {}), modifieLe: maintenant() });
       fermer($("fenetre-collegue"));
       toast(avant ? `${prenom} : fiche enregistrée.` : `${prenom} rejoint ton équipe.`);
     } catch (err) { $("cl-erreur").textContent = messageEcriture(err); $("cl-erreur").hidden = false; }
@@ -7550,7 +7960,7 @@ details.groupe-pieces { display: block; }
     jours.forEach((j, i) => { const th = element("th", null, `${JOURS_COURTS[i]} ${new Date(lundiEquipe + i * JOUR_MS).getUTCDate()}`); th.scope = "col"; tr.append(th); });
     tete.append(tr);
     const corps = element("tbody");
-    collegues().forEach(c => {
+    auPlanning().forEach(c => {
       const r = element("tr"), th = element("th", null, c.prenom);
       th.scope = "row"; r.append(th);
       jours.forEach(j => {
@@ -7644,6 +8054,10 @@ details.groupe-pieces { display: block; }
       if ((!dernierSolde || dernierSolde.le < doc.le) && t - depuisIso(doc.le) >= 2 * JOUR_MS)
         ajouter(`argent:comptes:${cle}`, "argent", "Mettre à jour mes comptes (Trade Republic et livrets)", "epargne", { action: "comptes", libelleAction: "Mettre à jour" });
     }
+    // L'entretien approche : la semaine d'avant, le préparer.
+    const dateEntretien = (reglagesCollection.docs.entretien || {}).date;
+    if (ISO_RE.test(dateEntretien || "") && depuisIso(dateEntretien) >= t && depuisIso(dateEntretien) - t <= 7 * JOUR_MS)
+      ajouter(`travail:entretien:${dateEntretien}`, "travail", `Préparer mon entretien (${dansJours(depuisIso(dateEntretien))})`, "carriere", { libelleAction: "Ouvrir" });
     // Un temps fort approche : des tâches à préparer sont proposées dans la to-do (rien n'y est ajouté sans moi).
     suggestionsRetro().forEach(({ e, etapes }) => ajouter(`travail:retro:${e.id}`, "travail",
       `${e.nom} ${dansJours(depuisIso(e.debut))} : ${etapes.length} tâche${etapes.length > 1 ? "s" : ""} à préparer ${etapes.length > 1 ? "te sont proposées" : "t'est proposée"}`, "todo", { libelleAction: "Voir" }));
