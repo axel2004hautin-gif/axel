@@ -1307,6 +1307,18 @@ details.groupe-pieces { display: block; }
 .me-porte { fill: none; stroke: #5b6478; stroke-width: 2px; stroke-linecap: round; stroke-linejoin: round; }
 .zone-pastille.z-miroir { background: #e1f0f9; color: #2d5670; }
 .me-f-mur .me-face { stroke: #9aa3b2; stroke-width: 4px; stroke-linecap: round; }
+.me-f-portant .me-uv { fill: #b4bac4; stroke: #6b7280; stroke-width: 1px; }
+.me-f-portant .me-uv.alerte { fill: var(--erreur-doux); stroke: var(--erreur); stroke-width: 2px; }
+.me-f-portant .me-uv.gene { stroke: #e07a35; stroke-width: 2px; }
+.me-f-portant .me-face { stroke: #4f5764; stroke-width: 3px; stroke-linecap: round; }
+.me-f-portant .me-uv-code { fill: #1f2430; }
+.mu-face-nom { fill: var(--marine); font-weight: 800; text-anchor: middle; letter-spacing: .06em; text-transform: uppercase; }
+.mu-dessus { display: grid; gap: 10px; padding: 12px 14px; border: 1.5px solid var(--trait); border-radius: 12px; }
+.mu-dessus h3 { margin: 0; font-size: 1rem; }
+.mu-dessus-etageres { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.mu-dessus-etagere { display: grid; gap: 8px; padding: 10px; border-radius: 10px; background: #eef0f3; }
+.mu-dessus-tete { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; }
+.mu-dessus .aide { margin: 0; }
 .me-uv-code { fill: #ffffff; font-weight: 800; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 .me-f-table .me-forme { fill: #efe2cb; stroke: #9a7b4f; }
 .me-f-table { color: #9a7b4f; }
@@ -1322,6 +1334,7 @@ details.groupe-pieces { display: block; }
 .me-t-table-travail .me-forme { fill: #f4efe4; stroke: #8a7a5a; stroke-dasharray: 3 3; }
 .me-t-ecran .me-forme { fill: #15161a; stroke: #000000; stroke-dasharray: none; }
 .me-t-porte .me-forme { fill: #a07850; stroke: #5b4128; stroke-dasharray: none; }
+.me-poste { fill: #2b2e36; stroke: none; }
 .me-porte-arc { fill: none; stroke: #8a6a45; stroke-width: 1.2px; stroke-dasharray: 4 3; }
 .me-cab-mur { stroke: #8a93a5; stroke-width: 2px; }
 .me-cab-rideau { stroke: #3d4659; stroke-width: 3px; stroke-dasharray: 4 3; }
@@ -1565,6 +1578,10 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
 .mb-plateau { display: grid; gap: 6px; padding: 14px; border: 2px solid #9a7b4f; border-radius: 12px; background: #efe2cb; }
 .mb-rangee { display: grid; gap: 6px; }
 .mb-rangee-nom { font: 700 .72rem/1.2 var(--f-mono); letter-spacing: .05em; text-transform: uppercase; color: #6f5631; }
+.mb-nombres { display: flex; flex-wrap: wrap; gap: 8px 22px; }
+.mb-pliage { margin: 0; }
+.mb-reglages [hidden] { display: none !important; }
+.mb-plateau.milieu .mb-pile-visuel { aspect-ratio: 1 / 1.7; }
 .mb-milieu { height: 2px; margin: 2px 0; background: repeating-linear-gradient(90deg, #9a7b4f 0 8px, transparent 8px 14px); }
 .mb-piles-grille { display: grid; grid-template-columns: repeat(var(--n, 5), minmax(0, 1fr)); gap: 6px; }
 .mb-pile { display: grid; gap: 4px; justify-items: center; min-width: 0; padding: 4px; border: 1.5px dashed #b59b6e; border-radius: 8px; background: rgba(255, 255, 255, .55); }
@@ -1638,6 +1655,47 @@ body.me-plein { overflow: hidden; }
 .me-espace.plein .me-3d-canvas { position: absolute; inset: 0; }
 .me-espace.plein .me-panneau { position: static; max-height: calc(100dvh - 20px); overflow: auto; }
 .me-3d-agrandir { margin-left: auto; }
+.me-3d-sim-bouton { margin-left: auto; }
+.me-3d-sim-bouton + .me-3d-agrandir { margin-left: 0; }
+.me-3d-sim-bouton[aria-pressed="true"] { border-color: #2f9e5b; color: #1f6b3d; }
+.me-3d-zone.en-vente .me-3d-pad, .me-3d-zone.en-vente .me-3d-carte { display: none; }
+.me-sim { position: absolute; top: 10px; right: 10px; display: grid; gap: 8px; width: min(420px, calc(100% - 20px)); max-height: calc(100% - 20px); padding: 12px 14px; overflow: hidden; border-radius: 14px; background: rgba(255, 255, 255, .97); box-shadow: 0 10px 30px rgba(15, 25, 50, .25); grid-template-rows: auto auto minmax(0, 1fr) auto auto auto auto; }
+.me-sim[hidden] { display: none; }
+.me-sim-tete { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.me-sim-qui-est { display: grid; }
+.me-sim-qui-est b { color: var(--marine); font-size: 1.05rem; }
+.me-sim-qui-est span { color: var(--gris); font-size: .82rem; }
+.me-sim-envie { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; font-size: .78rem; font-weight: 600; }
+.me-sim-jauge { height: 8px; overflow: hidden; border-radius: 99px; background: #e6e9ef; }
+.me-sim-jauge i { display: block; height: 100%; border-radius: 99px; transition: width .4s ease, background-color .4s ease; }
+.me-sim-fil { display: grid; align-content: start; gap: 6px; min-height: 60px; margin: 0; padding: 0; overflow: auto; list-style: none; }
+.me-sim-msg { display: grid; gap: 1px; max-width: 88%; padding: 7px 10px; border-radius: 12px; font-size: .9rem; line-height: 1.35; }
+.me-sim-msg.client { justify-self: start; background: #eef0f4; border-bottom-left-radius: 4px; }
+.me-sim-msg.vendeur { justify-self: end; background: var(--marine); color: #ffffff; border-bottom-right-radius: 4px; }
+.me-sim-msg.attente { color: #5a6275; font-style: italic; }
+.me-sim-qui { font-size: .68rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; opacity: .7; }
+.me-sim-conseil { margin: 0; padding: 7px 10px; border-left: 4px solid #e0a030; border-radius: 6px; background: #fdf6e7; font-size: .84rem; }
+.me-sim-conseil.bien { border-color: #2f9e5b; background: #eaf6ee; }
+.me-sim-conseil.mal { border-color: #d64545; background: #fbecec; }
+.me-sim-mode { justify-self: start; }
+.me-sim-mode[hidden] { display: none; }
+.me-sim-choix { display: grid; gap: 6px; }
+.me-sim-choix[hidden] { display: none; }
+.me-sim-phrase { padding: 8px 10px; border: 1.5px solid var(--trait); border-radius: 10px; background: var(--fond); color: var(--encre); font: inherit; font-size: .88rem; line-height: 1.3; text-align: left; cursor: pointer; }
+.me-sim-phrase:hover { border-color: var(--marine); }
+.me-sim-libre { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 8px; }
+.me-sim-libre[hidden] { display: none; }
+.me-sim-libre textarea { width: 100%; min-height: 44px; padding: 8px 10px; border: 1.5px solid var(--trait); border-radius: 10px; font: inherit; font-size: .9rem; resize: vertical; }
+.me-sim-fin { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.me-sim-fin[hidden] { display: none; }
+.me-sim-resultat { margin: 0; font-weight: 700; }
+.me-sim-resultat.achat { color: #1f6b3d; }
+.me-sim-resultat.reviendra { color: #9a6a10; }
+.me-sim-resultat.depart { color: #a12f2f; }
+@media (max-width: 599px) {
+  .me-sim { position: fixed; top: auto; bottom: 8px; right: 8px; left: 8px; z-index: 320; width: auto; max-height: 78dvh; overflow: auto; grid-template-rows: none; }
+  .me-sim-fil { max-height: 34dvh; }
+}
 .me-espace.plein .me-panneau { align-content: start; }
 .me-3d-pad { position: absolute; right: 10px; bottom: 10px; display: grid; grid-template-columns: repeat(3, 44px); grid-template-rows: repeat(2, 44px); gap: 6px; }
 .me-3d-pad[hidden] { display: none; }
@@ -2095,11 +2153,34 @@ body.me-plein { overflow: hidden; }
                   <button class="puce-filtre" type="button" data-calque3d="noms" aria-pressed="true">Noms</button>
                   <button class="puce-filtre" type="button" data-calque3d="photos" aria-pressed="true">Photos</button>
                 </div>
+                <button class="bouton-second bouton-petit me-3d-sim-bouton" type="button" id="me-3d-sim" aria-pressed="false">Simulateur de vente</button>
                 <button class="bouton-second bouton-petit me-3d-agrandir" type="button" id="me-3d-plein" aria-pressed="false">Agrandir</button>
               </div>
               <div class="me-3d-zone" id="me-3d-zone">
                 <p class="me-3d-etat" id="me-3d-etat">Chargement de la 3D…</p>
                 <canvas class="me-3d-carte" id="me-3d-carte" hidden aria-label="La mini-carte : où tu es ; touche-la pour y aller"></canvas>
+                <section class="me-sim" id="me-sim" hidden aria-label="La vente en cours">
+                  <div class="me-sim-tete">
+                    <div class="me-sim-qui-est"><b id="me-sim-nom"></b><span id="me-sim-titre"></span></div>
+                    <button class="fermer" type="button" id="me-sim-quitter" aria-label="Laisser le client">×</button>
+                  </div>
+                  <div class="me-sim-envie" id="me-sim-envie" role="meter" aria-valuemin="0" aria-valuemax="100"><span id="me-sim-envie-nom">Envie d'acheter</span><span class="me-sim-jauge"><i id="me-sim-jauge"></i></span><b id="me-sim-pct"></b></div>
+                  <ol class="me-sim-fil" id="me-sim-fil" aria-live="polite"></ol>
+                  <p class="me-sim-conseil" id="me-sim-conseil" hidden></p>
+                  <div class="type-tache me-sim-mode" role="radiogroup" aria-label="Comment répondre" id="me-sim-mode">
+                    <label><input type="radio" name="me-sim-mode" value="phrases" checked><span>Phrases toutes faites</span></label>
+                    <label><input type="radio" name="me-sim-mode" value="libre"><span>Avec mes mots</span></label>
+                  </div>
+                  <div class="me-sim-choix" id="me-sim-choix"></div>
+                  <form class="me-sim-libre" id="me-sim-libre" hidden>
+                    <textarea id="me-sim-texte" rows="2" maxlength="600" placeholder="Ce que tu lui dis… (Entrée pour envoyer)" aria-label="Ce que tu dis au client"></textarea>
+                    <button class="bouton-principal bouton-petit" type="submit" id="me-sim-dire">Dire</button>
+                  </form>
+                  <div class="me-sim-fin" id="me-sim-fin" hidden>
+                    <p class="me-sim-resultat" id="me-sim-resultat"></p>
+                    <button class="bouton-principal bouton-petit" type="button" id="me-sim-suivant">Client suivant</button>
+                  </div>
+                </section>
                 <div class="me-3d-pad" id="me-3d-pad" role="group" aria-label="Se déplacer" hidden>
                   <button type="button" data-pas3d="gauche" aria-label="Tourner à gauche" title="Tourner à gauche">↺</button>
                   <button type="button" data-pas3d="avant" aria-label="Avancer" title="Avancer">↑</button>
@@ -2129,7 +2210,7 @@ body.me-plein { overflow: hidden; }
               <div class="me-form-tete"><h2 class="me-panneau-titre" id="me-type"></h2><button class="fermer" type="button" id="me-deselect" aria-label="Fermer le meuble">×</button></div>
               <label class="titre-champ">Nom<input type="text" id="me-nom" maxlength="60"></label>
               <div class="me-ligne" id="me-g-mur">
-                <label class="titre-champ">Nombre d'UV<input type="text" id="me-uvn" inputmode="numeric" maxlength="2"></label>
+                <label class="titre-champ"><span id="me-uvn-nom">Nombre d'UV</span><input type="text" id="me-uvn" inputmode="numeric" maxlength="2"></label>
                 <label class="titre-champ">Une UV (m)<input type="text" id="me-uvl" inputmode="decimal" maxlength="5"></label>
                 <label class="titre-champ">Hauteur des plaques (m)<input type="text" id="me-hmur" inputmode="decimal" maxlength="5"></label>
               </div>
@@ -3077,6 +3158,11 @@ body.me-plein { overflow: hidden; }
       <button class="lien-discret" type="button" id="mu-fermer" hidden>Fermer la descente (une étagère au-dessus, sans rien dessus)</button>
       <p class="aide" id="mu-aide-geste">Glisse une barre ou une étagère sur le mur pour la monter ou la descendre, cran par cran (5 cm), ou tape sa hauteur en cm ; une étagère pousse les autres pour garder 25 cm entre deux. Une étagère ou une descente ajoutée se met aux hauteurs de l'UV voisine. Les murs d'à côté s'ouvrent avec les flèches en haut.</p>
     </section>
+    <section class="mu-dessus" id="mu-dessus" hidden aria-labelledby="mu-dessus-titre">
+      <h3 id="mu-dessus-titre">Le dessus : deux étagères</h3>
+      <div class="mu-dessus-etageres" id="mu-dessus-etageres"></div>
+      <p class="aide">Selon le pliage, 2 piles (plié large) ou 4 piles (plié petit) par étagère. Touche une pile pour choisir sa réf.</p>
+    </section>
     <details class="mu-aide" id="mu-aide"><summary>Les équipements et les crans</summary><ul class="mu-legende" id="mu-legende"></ul></details>
   </div>
   <div class="fenetre-pied">
@@ -3128,11 +3214,19 @@ body.me-plein { overflow: hidden; }
   </div>
   <div class="fenetre-corps mb-corps">
     <div class="mb-reglages" id="mb-reglages-table" hidden>
-      <div class="mb-nombre"><span>Piles de chaque côté</span><button class="bouton-second bouton-petit" type="button" id="mb-moins" aria-label="Une pile de moins">−</button><b id="mb-n">5</b><button class="bouton-second bouton-petit" type="button" id="mb-plus" aria-label="Une pile de plus">+</button></div>
-      <div class="type-tache" role="radiogroup" aria-label="Le sens des piles">
+      <div class="type-tache" role="radiogroup" aria-label="La disposition des piles">
+        <label><input type="radio" name="mb-dispo" value="deux"><span>Devant et derrière</span></label>
+        <label><input type="radio" name="mb-dispo" value="milieu"><span>Une rangée au milieu</span></label>
+      </div>
+      <div class="mb-nombres">
+        <div class="mb-nombre"><span id="mb-nom-a">Côté 1</span><button class="bouton-second bouton-petit" type="button" id="mb-moins" aria-label="Une pile de moins">−</button><b id="mb-n">5</b><button class="bouton-second bouton-petit" type="button" id="mb-plus" aria-label="Une pile de plus">+</button></div>
+        <div class="mb-nombre" id="mb-nombre-b"><span id="mb-nom-b">Côté 2</span><button class="bouton-second bouton-petit" type="button" id="mb-moins-b" aria-label="Une pile de moins de ce côté">−</button><b id="mb-n-b">5</b><button class="bouton-second bouton-petit" type="button" id="mb-plus-b" aria-label="Une pile de plus de ce côté">+</button></div>
+      </div>
+      <div class="type-tache" role="radiogroup" aria-label="Le sens des piles" id="mb-sens-choix">
         <label><input type="radio" name="mb-sens" value="dos"><span>Dos à dos</span></label>
         <label><input type="radio" name="mb-sens" value="meme"><span>Même sens</span></label>
       </div>
+      <p class="aide mb-pliage">Les chinos pliés en 2 prennent toute la largeur de la table : une rangée au milieu. Pliés en carré, ils en prennent la moitié : deux piles l'une derrière l'autre, devant et derrière.</p>
     </div>
     <div class="mb-table" id="mb-table" hidden></div>
     <div id="mb-liste-bloc" hidden>
@@ -10456,7 +10550,7 @@ body.me-plein { overflow: hidden; }
     "petite-table": { nom: "Petite table", famille: "table", l: 1.2, p: 0.7, porte: "niveaux" },
     tourniquet: { nom: "Portant tourniquet", famille: "portant", l: 0.9, p: 0.9, rond: true, porte: "articles" },
     "petit-portant": { nom: "Petit portant", famille: "portant", l: 1, p: 0.5, porte: "articles" },
-    "grand-portant": { nom: "Grand portant", famille: "portant", l: 1.6, p: 0.55, porte: "articles" },
+    "grand-portant": { nom: "Grand portant (mini-mur)", famille: "portant", l: 1.6, p: 1.1, porte: "uv", faces: 2, crans: 32, aide: "recto-verso, 2 étagères dessus" },
     bac: { nom: "Bac", famille: "presentoir", l: 0.6, p: 0.6, porte: "articles", aide: "caleçons, chaussettes" },
     casquettes: { nom: "Présentoir casquettes", famille: "presentoir", l: 0.5, p: 0.5, rond: true, porte: "articles" },
     ceintures: { nom: "Présentoir ceintures", famille: "presentoir", l: 0.5, p: 0.5, rond: true, porte: "articles" },
@@ -10473,6 +10567,15 @@ body.me-plein { overflow: hidden; }
     ecran: { nom: "Écran (télé)", famille: "repere", l: 1.6, p: 0.08 },
     porte: { nom: "Porte", famille: "repere", l: 0.9, p: 0.1 },
   };
+  // Les rangées d'une table : devant et derrière (« a » et « b », chacune son nombre de piles), ou une seule au milieu (« m »).
+  function rangeesTable(e) { return e.dispo === "milieu" ? [["m", e.piles]] : [["a", e.piles], ["b", e.pilesB || e.piles]]; }
+  function resumePiles(e) {
+    const s = n => `${n} pile${n > 1 ? "s" : ""}`, b = e.pilesB || e.piles;
+    if (e.dispo === "milieu") return `${s(e.piles)} au milieu`;
+    if (b === e.piles) return `${s(e.piles)} de chaque côté`;
+    const r = nomsRangees(e);
+    return `${s(e.piles)} ${r.a.toLowerCase()}, ${s(b)} ${r.b.toLowerCase()}`;
+  }
   // Le détail des cabines, en coordonnées du meuble (l'ouverture en bas à droite) : deux cabines d'une personne à gauche,
   // un miroir pour chacune en face (à droite en sortant), la grande cabine au fond avec son miroir, un rideau à chaque
   // cabine. Des segments [x1, y1, x2, y2] ; un miroir dit aussi de quel côté il regarde.
@@ -10614,7 +10717,7 @@ body.me-plein { overflow: hidden; }
     };
     if (t.porte === "uv") {
       e.uvL = nombreBorne(d.uvL, 0.3, 3, 1);
-      e.crans = Number.isInteger(d.crans) && d.crans >= 20 && d.crans <= 80 ? d.crans : CRANS_MUR;
+      e.crans = Number.isInteger(d.crans) && d.crans >= 20 && d.crans <= 80 ? d.crans : t.crans || CRANS_MUR;
       e.uvs = (Array.isArray(d.uvs) ? d.uvs : []).slice(0, 40).map(u => {
         const brut = (u && Array.isArray(u.eq) ? u.eq : []).filter(q => q && NOM_EQUIPEMENT[q.type]).slice(0, 12);
         const defauts = cransParDefaut(brut.map(q => q.type));
@@ -10629,8 +10732,13 @@ body.me-plein { overflow: hidden; }
       });
       if (!e.uvs.length) e.uvs = [{ eq: [], miroir: false, condamne: false }];
       e.voulus = (Array.isArray(d.voulus) ? d.voulus : []).filter(x => typeof x === "string" && x.length <= 40).slice(0, 20);
-      e.l = e.uvs.length * e.uvL;
-      e.p = t.p;
+      if (t.faces === 2) {
+        // Autant d'UV au recto qu'au verso ; le dessus : deux étagères, de 2 ou 4 piles (selon le pliage).
+        while (e.uvs.length < 2 || e.uvs.length % 2) e.uvs.push({ eq: [], miroir: false, condamne: false });
+        e.dessus = [0, 1].map(k => { const x = (Array.isArray(d.dessus) && d.dessus[k]) || {}; return { piles: x.piles === 4 ? 4 : 2, articles: lireArticlesMerch(x.articles) }; });
+      }
+      e.l = uvsParFace(e) * e.uvL;
+      e.p = t.faces === 2 ? nombreBorne(d.p, 0.5, 2.5, t.p) : t.p;
     } else {
       e.l = nombreBorne(d.l, 0.2, 20, t.l);
       e.p = t.rond ? e.l : nombreBorne(d.p, 0.1, 20, t.p);
@@ -10639,12 +10747,16 @@ body.me-plein { overflow: hidden; }
       e.hauteurs = Number.isInteger(d.hauteurs) && d.hauteurs >= 1 && d.hauteurs <= 3 ? d.hauteurs : 1;
       const n = Array.isArray(d.niveaux) ? d.niveaux : [];
       e.niveaux = Array.from({ length: e.hauteurs }, (_, i) => ({ articles: lireArticlesMerch(n[i] && n[i].articles) }));
-      // Le plateau : de chaque côté, de 1 à 7 piles (grande table) ou de 1 à 5 (petite), dos à dos ou dans le même sens.
-      const max = d.type === "grande-table" ? 7 : 5;
-      e.piles = Number.isInteger(d.piles) && d.piles >= 1 && d.piles <= max ? d.piles : d.type === "grande-table" ? 5 : 3;
+      // Le plateau : devant et derrière, de 1 à 7 piles (grande table) ou de 1 à 5 (petite) de chaque côté, pas forcément
+      // autant des deux ; ou une seule rangée au milieu (toute la largeur : des chinos pliés en 2, par exemple).
+      const max = d.type === "grande-table" ? 7 : 5, bon = n => Number.isInteger(n) && n >= 1 && n <= max;
+      e.piles = bon(d.piles) ? d.piles : d.type === "grande-table" ? 5 : 3;
+      e.pilesB = bon(d.pilesB) ? d.pilesB : e.piles;
+      e.dispo = d.dispo === "milieu" ? "milieu" : "deux";
       e.sens = d.sens === "meme" ? "meme" : "dos";
     }
     if (t.porte === "articles" || t.porte === "tenue") e.articles = lireArticlesMerch(d.articles);
+    if (d.type === "caisse") e.postes = (Array.isArray(d.postes) ? d.postes : []).filter(f => typeof f === "number" && f >= 0 && f <= 1).slice(0, 4);
     if (t.porte === "tenue") {
       e.tenue = typeof d.tenue === "string" && d.tenue.length <= 60 ? d.tenue : null;
       e.presente = (Array.isArray(d.presente) ? d.presente : []).filter(x => typeof x === "string" && x && x.length <= 60).slice(0, 6);
@@ -10659,13 +10771,15 @@ body.me-plein { overflow: hidden; }
       c.uvL = e.uvL;
       c.crans = e.crans || CRANS_MUR;
       c.voulus = e.voulus || [];
-      c.uvs = e.uvs.map(u => ({ ...(u.miroir ? { miroir: true, condamne: !!u.condamne } : {}),
+      c.uvs = (e.uvs || []).map(u => ({ ...(u.miroir ? { miroir: true, condamne: !!u.condamne } : {}),
         eq: u.eq.map(q => ({ id: q.id, type: q.type, cran: q.cran, ...(q.type === "etagere" ? { refs: q.refs, ferme: !!q.ferme } : {}), articles: corpsArticles(q.articles) })) }));
+      if (t.faces === 2) { c.p = auCentimetre(e.p); c.dessus = (e.dessus || dessusVide()).map(x => ({ piles: x.piles === 4 ? 4 : 2, articles: corpsArticles(x.articles) })); }
     }
     else { c.l = auCentimetre(e.l); c.p = auCentimetre(e.p); }
-    if (t.porte === "niveaux") { c.piles = e.piles || (e.type === "grande-table" ? 5 : 3); c.sens = e.sens || "dos"; c.hauteurs = e.hauteurs; c.niveaux = Array.from({ length: e.hauteurs }, (_, i) => ({ articles: corpsArticles((e.niveaux[i] || { articles: [] }).articles) })); }
+    if (t.porte === "niveaux") { c.piles = e.piles || (e.type === "grande-table" ? 5 : 3); c.pilesB = e.pilesB || c.piles; c.dispo = e.dispo === "milieu" ? "milieu" : "deux"; c.sens = e.sens || "dos"; c.hauteurs = e.hauteurs; c.niveaux = Array.from({ length: e.hauteurs }, (_, i) => ({ articles: corpsArticles((e.niveaux[i] || { articles: [] }).articles) })); }
     if (t.porte === "articles" || t.porte === "tenue") c.articles = corpsArticles(e.articles || []);
     if (t.porte === "tenue") { c.tenue = e.tenue || null; c.presente = [...(e.presente || [])]; }
+    if (e.type === "caisse") c.postes = [...(e.postes || [])];
     return c;
   }
   const merchPlans = creerCollection("merch-plans", "tableau-de-bord-axel:merch-plans", lirePlanMerch, () => rendreMerch());
@@ -10695,16 +10809,24 @@ body.me-plein { overflow: hidden; }
   // Un point du meuble (lx, ly : le long du meuble, vers sa face) dans le plan.
   const versPlan = (e, lx, ly) => { const a = e.rot * Math.PI / 180, c = Math.cos(a), s = Math.sin(a); return [e.x + lx * c - ly * s, e.y + lx * s + ly * c]; };
   const zoneElement = (plan, e) => e.zone || zoneDeChaleur(chaleurMerch(plan, e.x, e.y));
-  const zoneUv = (plan, e, i) => e.zone || zoneDeChaleur(chaleurMerch(plan, ...versPlan(e, -e.l / 2 + (i + 0.5) * e.uvL, e.p / 2)));
+  const zoneUv = (plan, e, i) => e.zone || zoneDeChaleur(chaleurMerch(plan, ...versPlan(e, xUv(e, i), auVerso(e, i) ? -e.p / 2 : e.p / 2)));
   const estMiroir = u => u.miroir && !u.condamne;
   const estUnMiroir = e => TYPES_MERCH[e.type].porte === "uv" && e.uvs.every(estMiroir);
   const aUnFacing = u => !estMiroir(u) && u.eq.some(q => estFacing(q.type));
+  // Un mini-mur (le grand portant) : recto-verso ; ses UV du recto, puis celles du verso, qu'on lit de l'autre côté.
+  const facesDe = e => TYPES_MERCH[e.type].faces || 1;
+  const uvsParFace = e => Math.max(1, Math.ceil(e.uvs.length / facesDe(e)));
+  const auVerso = (e, i) => facesDe(e) === 2 && i >= uvsParFace(e);
+  const rangUv = (e, i) => i % uvsParFace(e);
+  const nomUv = (e, i) => (facesDe(e) === 2 ? `${auVerso(e, i) ? "Verso" : "Recto"} UV ${rangUv(e, i) + 1}` : `UV ${i + 1}`);
+  const xUv = (e, i) => (auVerso(e, i) ? e.l / 2 - (rangUv(e, i) + 0.5) * e.uvL : -e.l / 2 + (rangUv(e, i) + 0.5) * e.uvL);
   // Le mur qui prolonge celui-ci à droite (cote = 1) ou à gauche (-1), vu de face : leurs bouts se touchent (à 60 cm près).
   function murVoisin(e, cote) {
+    if (facesDe(e) === 2) return null;
     const [x, y] = versPlan(e, cote * e.l / 2, 0);
     let mieux = null, dMin = 0.6;
     elementsDuPlan(e.plan).forEach(f => {
-      if (f.id === e.id || TYPES_MERCH[f.type].porte !== "uv") return;
+      if (f.id === e.id || TYPES_MERCH[f.type].porte !== "uv" || facesDe(f) === 2) return;
       const [fx, fy] = versPlan(f, -cote * f.l / 2, 0), d = Math.hypot(fx - x, fy - y);
       if (d < dMin) { dMin = d; mieux = f; }
     });
@@ -10727,8 +10849,8 @@ body.me-plein { overflow: hidden; }
   function alertesMur(e) {
     const uvs = new Set(), facings = [], voulus = [], hauteurs = [];
     e.uvs.forEach((u, i) => {
-      if (!i || !aUnFacing(u) || !aUnFacing(e.uvs[i - 1])) return;
-      const cle = cleFacings(e, i - 1), texte = `UV ${i} et ${i + 1}`;
+      if (!i || (facesDe(e) === 2 && i === uvsParFace(e)) || !aUnFacing(u) || !aUnFacing(e.uvs[i - 1])) return;
+      const cle = cleFacings(e, i - 1), texte = facesDe(e) === 2 ? `${nomUv(e, i - 1)} et ${rangUv(e, i) + 1}` : `UV ${i} et ${i + 1}`;
       if ((e.voulus || []).includes(cle)) voulus.push({ texte, cle });
       else { uvs.add(i - 1); uvs.add(i); facings.push({ texte, cle }); }
     });
@@ -10750,7 +10872,7 @@ body.me-plein { overflow: hidden; }
     e.uvs.forEach(u => u.eq.forEach(q => { n[q.type] = (n[q.type] || 0) + 1; }));
     const parties = EQUIPEMENTS.filter(([id]) => n[id]).map(([id, nom]) => `${n[id]} ${id === "etagere" ? (n[id] > 1 ? "étagères" : "étagère") : id === "coudee" ? (n[id] > 1 ? "barres coudées" : "barre coudée") : nom.toLowerCase() + (n[id] > 1 ? "s" : "")}`);
     if (miroirs) parties.push(miroirs > 1 ? `${miroirs} miroirs` : "un miroir");
-    return `${e.uvs.length} UV${parties.length ? " : " + parties.join(", ") : ""}`;
+    return `${facesDe(e) === 2 ? `${uvsParFace(e)} UV de chaque côté` : `${e.uvs.length} UV`}${parties.length ? " : " + parties.join(", ") : ""}`;
   }
   const codeUv = u => {
     if (estMiroir(u)) return "M";
@@ -10821,6 +10943,14 @@ body.me-plein { overflow: hidden; }
     }
     return r;
   }
+  // Un mini-mur : n UV de chaque côté (le recto puis le verso).
+  function ajusterUvsDe(e, n) {
+    if (facesDe(e) !== 2) return ajusterUvs(e.uvs, n);
+    const k = uvsParFace(e);
+    return [...ajusterUvs(e.uvs.slice(0, k), n), ...ajusterUvs(e.uvs.slice(k), n)];
+  }
+  const dessusVide = () => [{ piles: 2, articles: [] }, { piles: 2, articles: [] }];
+  const copieDessus = d => (d || dessusVide()).map(x => ({ piles: x.piles, articles: x.articles.map(a => ({ ...a })) }));
   const decimal = v => Number(String(v).replace(/\s/g, "").replace(",", "."));
   const virgule = v => String(auCentimetre(v)).replace(".", ",");
 
@@ -10844,15 +10974,17 @@ body.me-plein { overflow: hidden; }
       forme = svgEl("rect", { class: "me-forme", x: -e.l / 2, y: -e.p / 2, width: e.l, height: e.p, ...NS_TRAIT });
       g.append(forme);
       const al = alertesMur(e), cote = al.uvs, gene = new Set(al.hauteurs.map(h => h.uv));
+      const deux = facesDe(e) === 2, hh = deux ? e.p / 2 : e.p;
       e.uvs.forEach((u, i) => {
-        const x0 = -e.l / 2 + i * e.uvL;
-        const c = svgEl("rect", { class: "me-uv" + (cote.has(i) ? " alerte" : gene.has(i) ? " gene" : "") + (estMiroir(u) ? " miroir" : ""), x: x0, y: -e.p / 2, width: e.uvL, height: e.p, ...NS_TRAIT });
+        const x0 = xUv(e, i) - e.uvL / 2, y0 = deux ? (auVerso(e, i) ? -e.p / 2 : 0) : -e.p / 2;
+        const c = svgEl("rect", { class: "me-uv" + (cote.has(i) ? " alerte" : gene.has(i) ? " gene" : "") + (estMiroir(u) ? " miroir" : ""), x: x0, y: y0, width: e.uvL, height: hh, ...NS_TRAIT });
         if (calquesMerch.zones && !estMiroir(u)) c.style.fill = COULEUR_ZONE[zoneUv(plan, e, i)];
         g.append(c);
         const code = codeUv(u);
-        if (code) g.append(svgEl("text", { class: "me-uv-code", transform: `translate(${x0 + e.uvL / 2} 0) rotate(${-e.rot})`, "font-size": Math.min(policeMerch * 0.9, e.p * 0.62, e.uvL / Math.max(1.6, code.length * 0.62)) }, code));
+        if (code) g.append(svgEl("text", { class: "me-uv-code", transform: `translate(${x0 + e.uvL / 2} ${y0 + hh / 2}) rotate(${-e.rot})`, "font-size": Math.min(policeMerch * 0.9, hh * 0.62, e.uvL / Math.max(1.6, code.length * 0.62)) }, code));
       });
       g.append(svgEl("line", { class: "me-face", x1: -e.l / 2, y1: e.p / 2, x2: e.l / 2, y2: e.p / 2, ...NS_TRAIT }));
+      if (deux) g.append(svgEl("line", { class: "me-face", x1: -e.l / 2, y1: -e.p / 2, x2: e.l / 2, y2: -e.p / 2, ...NS_TRAIT }));
     } else if (t.rond) {
       forme = svgEl("ellipse", { class: "me-forme", cx: 0, cy: 0, rx: e.l / 2, ry: e.p / 2, ...NS_TRAIT });
       g.append(forme);
@@ -10863,11 +10995,14 @@ body.me-plein { overflow: hidden; }
       g.append(forme);
       if (t.famille === "portant") g.append(svgEl("line", { class: "me-detail", x1: -e.l / 2 + 0.08, y1: 0, x2: e.l / 2 - 0.08, y2: 0, ...NS_TRAIT }));
       if (t.porte === "niveaux") {
-        const n = e.piles, cote = Math.min((e.l - 0.1) / n * 0.78, e.p * 0.36);
-        ["a", "b"].forEach((r, ri) => { for (let k = 1; k <= n; k++) {
-          const a = e.niveaux[0].articles.find(x => x.pos === r + k), cx = -e.l / 2 + 0.05 + (e.l - 0.1) * (k - 0.5) / n, cy = (ri ? 1 : -1) * e.p / 4;
-          g.append(svgEl("rect", { class: "me-pile" + (a ? " pleine" : ""), x: cx - cote / 2, y: cy - cote / 2, width: cote, height: cote, rx: cote * 0.12, ...(a ? { fill: couleurPiece(pieces[a.p]) || "#c9ced8" } : {}), ...NS_TRAIT }));
-        } });
+        const milieu = e.dispo === "milieu";
+        rangeesTable(e).forEach(([r, n], ri) => {
+          const cote = Math.min((e.l - 0.1) / n * 0.78, e.p * 0.36), prof = milieu ? Math.min(e.p * 0.74, cote * 2.2) : cote;
+          for (let k = 1; k <= n; k++) {
+            const a = e.niveaux[0].articles.find(x => x.pos === r + k), cx = -e.l / 2 + 0.05 + (e.l - 0.1) * (k - 0.5) / n, cy = milieu ? 0 : (ri ? 1 : -1) * e.p / 4;
+            g.append(svgEl("rect", { class: "me-pile" + (a ? " pleine" : ""), x: cx - cote / 2, y: cy - prof / 2, width: cote, height: prof, rx: cote * 0.12, ...(a ? { fill: couleurPiece(pieces[a.p]) || "#c9ced8" } : {}), ...NS_TRAIT }));
+          }
+        });
       }
       if (t.porte === "niveaux") for (let k = 1; k < e.hauteurs && e.p - k * 0.26 > 0.1; k++) g.append(svgEl("rect", { class: "me-detail", x: -e.l / 2 + k * 0.13, y: -e.p / 2 + k * 0.13, width: e.l - k * 0.26, height: e.p - k * 0.26, ...NS_TRAIT }));
       if (e.type === "cabines") {
@@ -10876,6 +11011,7 @@ body.me-plein { overflow: hidden; }
         pl.rideaux.forEach(([x1, y1, x2, y2]) => g.append(svgEl("line", { class: "me-cab-rideau", x1, y1, x2, y2, ...NS_TRAIT })));
         pl.miroirs.forEach(([x1, y1, x2, y2, nx, ny]) => g.append(svgEl("line", { class: "me-cab-miroir", x1: x1 + nx * 0.06, y1: y1 + ny * 0.06, x2: x2 + nx * 0.06, y2: y2 + ny * 0.06, ...NS_TRAIT })));
       }
+      if (e.type === "caisse") (e.postes || []).forEach(f => g.append(svgEl("rect", { class: "me-poste", x: -e.l / 2 + Math.max(0.3, Math.min(e.l - 0.3, f * e.l)) - 0.18, y: -e.p / 2 + 0.06, width: 0.36, height: 0.3, rx: 0.05, ...NS_TRAIT })));
       if (e.type === "porte") g.append(svgEl("path", { class: "me-porte-arc", d: `M${-e.l / 2} ${e.p / 2}V${e.p / 2 + e.l}A${e.l} ${e.l} 0 0 0 ${e.l / 2} ${e.p / 2}`, ...NS_TRAIT }));
       if (e.type === "cabines") {   // l'ouverture, en bas à droite (vue de face)
         const w = Math.min(1, e.l * 0.4), x2 = e.l / 2 - 0.1, x1 = x2 - w, y0 = e.p / 2, xc = (x1 + x2) / 2;
@@ -10975,7 +11111,7 @@ body.me-plein { overflow: hidden; }
     const t = TYPES_MERCH[e.type];
     if (t.porte === "tenue" && presentesPar(e).length) return `présente ${listeFr(presentesPar(e).map(nomMeuble))}`;
     if (t.porte === "uv") return resumeUvs(e);
-    if (t.porte === "niveaux") { const n = e.niveaux[0].articles.length; return `${e.piles} pile${e.piles > 1 ? "s" : ""} de chaque côté${e.hauteurs > 1 ? `, ${e.hauteurs} hauteurs` : ""}${n ? ` · ${n} réf.` : ""}`; }
+    if (t.porte === "niveaux") { const n = e.niveaux[0].articles.length; return `${resumePiles(e)}${e.hauteurs > 1 ? `, ${e.hauteurs} hauteurs` : ""}${n ? ` · ${n} réf.` : ""}`; }
     if (t.porte === "articles" && e.articles.length) return `${e.articles.length} réf.`;
     return t.rond ? `${virgule(e.l)} m de diamètre` : `${virgule(e.l)} × ${virgule(e.p)} m`;
   }
@@ -11045,7 +11181,7 @@ body.me-plein { overflow: hidden; }
     $("me-equiper").textContent = modifiable ? "Équiper les UV" : "Voir les UV";
     $("me-articles").hidden = !["niveaux", "articles", "tenue"].includes(t.porte);
     $("me-articles").textContent = t.porte === "niveaux" ? "Les piles et leurs réfs" : t.porte === "tenue" ? "Ce qu'il porte" : "Les réfs";
-    if (mur) { poser("me-uvn", String(e.uvs.length)); poser("me-uvl", virgule(e.uvL)); poser("me-hmur", virgule(e.crans * CRAN_CM / 100)); }
+    if (mur) { $("me-uvn-nom").textContent = facesDe(e) === 2 ? "UV de chaque côté" : "Nombre d'UV"; poser("me-uvn", String(uvsParFace(e))); poser("me-uvl", virgule(e.uvL)); poser("me-hmur", virgule(e.crans * CRAN_CM / 100)); }
     $("me-g-taille").hidden = mur;
     if (!mur) {
       $("me-l-nom").textContent = t.rond ? "Diamètre (m)" : "Largeur (m)";
@@ -11081,7 +11217,7 @@ body.me-plein { overflow: hidden; }
     }
     poser("me-note", e.note);
     const al = mur ? alertesMur(e) : { facings: [], hauteurs: [] };
-    const alertes = [...(al.facings.length ? [`Deux facings côte à côte : ${listeFr(al.facings.map(f => f.texte))}.`] : []), ...al.hauteurs.map(h => `UV ${h.uv + 1} : ${h.texte}.`)];
+    const alertes = [...(al.facings.length ? [`Deux facings côte à côte : ${listeFr(al.facings.map(f => f.texte))}.`] : []), ...al.hauteurs.map(h => `${nomUv(e, h.uv)} : ${h.texte}.`)];
     $("me-alerte").hidden = !alertes.length;
     $("me-alerte").textContent = alertes.join(" ");
     $("me-info").textContent = mur ? resumeUvs(e) : "";
@@ -11098,7 +11234,7 @@ body.me-plein { overflow: hidden; }
     switch (el.id) {
       case "me-nom": modifierElementMerch(id, { nom: v.trim().slice(0, 60) }, true); break;
       case "me-note": modifierElementMerch(id, { note: v.trim().slice(0, 300) }, true); break;
-      case "me-uvn": if (Number.isInteger(n) && n >= 1 && n <= 40) modifierElementMerch(id, { uvs: ajusterUvs(e.uvs, n) }, true); break;
+      case "me-uvn": if (Number.isInteger(n) && n >= 1 && n <= 40 / facesDe(e)) modifierElementMerch(id, { uvs: ajusterUvsDe(e, n) }, true); break;
       case "me-uvl": if (n >= 0.3 && n <= 3) modifierElementMerch(id, { uvL: auCentimetre(n) }, true); break;
       case "me-hmur": if (n >= 1 && n <= 4) modifierElementMerch(id, { crans: Math.round(n * 100 / CRAN_CM) }, true); break;
       case "me-l": if (n >= 0.2 && n <= 20) modifierElementMerch(id, TYPES_MERCH[e.type].rond ? { l: n, p: n } : { l: n }, true); break;
@@ -11160,11 +11296,14 @@ body.me-plein { overflow: hidden; }
     const numero = t.famille === "repere" ? (memes ? ` ${memes + 1}` : "") : ` ${memes + 1}`;
     const e = { id: merchElements.nouvelId(), plan: plan.id, type, nom: `${miroir ? "Miroir" : t.nom}${numero}`, x, y, rot: 0, zone: null, note: "", creeLe: maintenant() };
     if (t.porte === "uv") {
-      const uvL = unMur ? unMur.uvL : 1, uvs = miroir ? [{ miroir: true, condamne: false, eq: [] }] : ajusterUvs([], 6);
-      Object.assign(e, { uvL, crans: unMur ? unMur.crans : CRANS_MUR, uvs, l: uvs.length * uvL, p: t.p });
+      if (t.faces === 2) Object.assign(e, { uvL: 0.6, crans: t.crans, uvs: [...ajusterUvs([], 3), ...ajusterUvs([], 3)], l: 1.8, p: t.p, dessus: dessusVide() });
+      else {
+        const uvL = unMur ? unMur.uvL : 1, uvs = miroir ? [{ miroir: true, condamne: false, eq: [] }] : ajusterUvs([], 6);
+        Object.assign(e, { uvL, crans: unMur ? unMur.crans : CRANS_MUR, uvs, l: uvs.length * uvL, p: t.p });
+      }
     }
     else Object.assign(e, { l: t.l, p: t.p });
-    if (t.porte === "niveaux") Object.assign(e, { hauteurs: 1, niveaux: [{ articles: [] }], piles: type === "grande-table" ? 5 : 3, sens: "dos" });
+    if (t.porte === "niveaux") Object.assign(e, { hauteurs: 1, niveaux: [{ articles: [] }], piles: type === "grande-table" ? 5 : 3, pilesB: type === "grande-table" ? 5 : 3, dispo: "deux", sens: "dos" });
     if (t.porte === "articles" || t.porte === "tenue") e.articles = [];
     if (t.porte === "tenue") { e.tenue = null; e.presente = []; }
     choixMerch = e.id;
@@ -11383,7 +11522,7 @@ body.me-plein { overflow: hidden; }
       if (modifiableMur) { const b = element("button", "lien-discret", "C'est voulu"); b.type = "button"; b.dataset.voulu = f.cle; l.append(" ", b); }
       return l;
     });
-    al.hauteurs.forEach(h => lignes.push(element("span", null, `UV ${h.uv + 1} : ${h.texte}.`)));
+    al.hauteurs.forEach(h => lignes.push(element("span", null, `${nomUv(e, h.uv)} : ${h.texte}.`)));
     $("mu-alerte").hidden = !lignes.length;
     $("mu-alerte").replaceChildren(...lignes);
     $("mu-voulus").hidden = !al.voulus.length;
@@ -11393,8 +11532,9 @@ body.me-plein { overflow: hidden; }
       return l;
     }));
     // Le mur, en centimètres.
-    const w = e.uvL * 100, H = e.crans * CRAN_CM, n = e.uvs.length;
-    const vbW = G_MUR + n * w + 24, vbH = HAUT_MUR + H + BAS_MUR, plancher = HAUT_MUR + H;
+    const w = e.uvL * 100, H = e.crans * CRAN_CM, n = e.uvs.length, deux = facesDe(e) === 2, ecart = deux ? 48 : 0, kf = uvsParFace(e);
+    const xCol = i => G_MUR + i * w + (deux && i >= kf ? ecart : 0);
+    const vbW = G_MUR + n * w + ecart + 24, vbH = HAUT_MUR + H + BAS_MUR, plancher = HAUT_MUR + H;
     const telephone = window.matchMedia("(max-width: 599px)").matches;
     const K = Math.max(0.95, Math.min(2.1, (window.innerHeight * (telephone ? 0.44 : 0.52)) / vbH));
     const svg = $("mu-svg");
@@ -11425,8 +11565,9 @@ body.me-plein { overflow: hidden; }
       svgEl("text", { x: hx, y: plancher + 16, "font-size": 10 / K }, "1,80 m"));
     f.push(hom);
     const enAlerte = al.uvs, gene = new Set(al.hauteurs.map(h => h.uv));
+    if (deux) [["Recto", 0], ["Verso", kf]].forEach(([nomF, i0]) => f.push(svgEl("text", { class: "mu-face-nom", x: xCol(i0) + kf * w / 2, y: 11, "font-size": 11 / K }, nomF)));
     e.uvs.forEach((u, i) => {
-      const x0 = G_MUR + i * w;
+      const x0 = xCol(i);
       const colonne = svgEl("g", { class: "mu-uv-g" });
       const panneau = svgEl("rect", { class: "mu-panneau" + (i === uvMur ? " choisie" : "") + (enAlerte.has(i) ? " alerte" : ""), "data-uv": i, x: x0, y: HAUT_MUR, width: w, height: H });
       colonne.append(panneau);
@@ -11450,12 +11591,15 @@ body.me-plein { overflow: hidden; }
         colonne.append(svgEl("rect", { class: "mu-gene", x: x0 + 2, y: yb, width: w - 4, height: Math.max(3, yh - yb) }));
       });
       u.eq.forEach(q => colonne.append(dessinerEqMur(u, q, i, x0, w, plancher)));
-      colonne.append(svgEl("text", { class: "mu-uv-nom" + (i === uvMur ? " choisie" : "") + (gene.has(i) || enAlerte.has(i) ? " alerte" : ""), x: x0 + w / 2, y: plancher + 22, "font-size": 11 / K, "data-uv": i }, `UV ${i + 1}`));
+      colonne.append(svgEl("text", { class: "mu-uv-nom" + (i === uvMur ? " choisie" : "") + (gene.has(i) || enAlerte.has(i) ? " alerte" : ""), x: x0 + w / 2, y: plancher + 22, "font-size": 11 / K, "data-uv": i }, facesDe(e) === 2 ? `UV ${rangUv(e, i) + 1}` : `UV ${i + 1}`));
       f.push(colonne);
     });
     // Les montants entre les UV, devant tout.
     const montants = svgEl("g", { class: "mu-montants" });
-    for (let i = 0; i <= n; i++) montants.append(svgEl("line", { x1: G_MUR + i * w, y1: HAUT_MUR - 2, x2: G_MUR + i * w, y2: plancher }));
+    for (let i = 0; i <= n; i++) {
+      const xs = deux && i === kf ? [G_MUR + i * w, G_MUR + i * w + ecart] : [xCol(i)];
+      xs.forEach(x => montants.append(svgEl("line", { x1: x, y1: HAUT_MUR - 2, x2: x, y2: plancher })));
+    }
     f.push(montants);
     const focus = document.activeElement && document.activeElement.closest ? document.activeElement.closest("#mu-svg .mu-q") : null;
     const defile = $("mu-scene").scrollLeft;
@@ -11463,10 +11607,78 @@ body.me-plein { overflow: hidden; }
     $("mu-scene").scrollLeft = defile;
     if (focus) { const q = svg.querySelector(`.mu-q[data-id="${focus.dataset.id}"]`); if (q) q.focus({ preventScroll: true }); }
     rendreDetailMur(e, plan, modifiable);
+    rendreDessusMur(e, modifiable);
     $("mu-plus").hidden = $("mu-moins").hidden = !modifiable;
-    $("mu-moins").disabled = n <= 1;
-    $("mu-plus").disabled = n >= 40;
+    $("mu-moins").disabled = kf <= 1;
+    $("mu-plus").disabled = n + facesDe(e) > 40;
+    $("mu-plus").textContent = deux ? "Une UV de plus de chaque côté" : "Ajouter une UV";
   }
+  // Le dessus d'un mini-mur : deux étagères, de 2 ou 4 piles chacune, une réf. par pile.
+  function rendreDessusMur(e, modifiable) {
+    $("mu-dessus").hidden = !e.dessus;
+    if (!e.dessus) return;
+    $("mu-dessus-etageres").replaceChildren(...e.dessus.map((d, k) => {
+      const bloc = element("div", "mu-dessus-etagere"), tete = element("div", "mu-dessus-tete");
+      tete.append(element("b", null, `Étagère ${k + 1} · ${k ? "à droite" : "à gauche"}, vue du recto`));
+      const choix = element("div", "type-tache");
+      choix.setAttribute("role", "radiogroup");
+      choix.setAttribute("aria-label", `Étagère ${k + 1} : combien de piles`);
+      [2, 4].forEach(n => {
+        const l = element("label"), r = element("input");
+        r.type = "radio"; r.name = `mu-dessus-${k}`; r.value = String(n); r.checked = d.piles === n; r.disabled = !modifiable; r.dataset.dessus = String(k);
+        l.append(r, element("span", null, `${n} piles`));
+        choix.append(l);
+      });
+      tete.append(choix);
+      const piles = element("div", "mb-piles-grille");
+      piles.style.setProperty("--n", d.piles);
+      for (let j = 1; j <= d.piles; j++) {
+        const a = d.articles.find(x => x.pos === String(j)), x = a && pieces[a.p];
+        const b = element("button", "mb-pile" + (a ? " pleine" : ""));
+        b.type = "button"; b.dataset.dessus = String(k); b.dataset.pos = String(j);
+        b.setAttribute("aria-label", `Étagère ${k + 1} du dessus, pile ${j} : ${a ? nomRef(x) : "vide"}`);
+        b.disabled = !modifiable && !a;
+        const vis = element("span", "mb-pile-visuel");
+        if (a) vis.style.background = couleurPiece(x) || "#c9ced8";
+        if (x && srcPhoto(x.photo)) { const img = element("img"); img.alt = ""; img.loading = "lazy"; img.addEventListener("error", () => img.remove(), { once: true }); img.src = srcPhoto(x.photo); vis.append(img); }
+        else vis.append(element("span", "mb-pile-plus", "+"));
+        b.append(vis, element("span", "mb-pile-nom", a ? nomRef(x) : `Pile ${j}`));
+        piles.append(b);
+      }
+      bloc.append(tete, piles);
+      return bloc;
+    }));
+  }
+  $("mu-dessus").addEventListener("change", ev => {
+    const r = ev.target.closest("input[data-dessus]"), e = merchElements.docs[murOuvert];
+    if (!r || !e || !e.dessus || !peutModifierMerch()) return;
+    const dessus = copieDessus(e.dessus), d = dessus[Number(r.dataset.dessus)], n = Number(r.value) === 4 ? 4 : 2;
+    const garde = d.articles.filter(a => Number(a.pos) <= n);
+    if (garde.length < d.articles.length) toast("Les réfs des piles en trop ont quitté l'étagère.");
+    Object.assign(d, { piles: n, articles: garde });
+    modifierElementMerch(e.id, { dessus });
+  });
+  $("mu-dessus").addEventListener("click", ev => {
+    const b = ev.target.closest(".mb-pile"), e = merchElements.docs[murOuvert];
+    if (!b || !e || !e.dessus || !peutModifierMerch()) return;
+    const k = Number(b.dataset.dessus), pos = b.dataset.pos, actuel = e.dessus[k].articles.find(a => a.pos === pos);
+    choisirRefs({
+      titre: `${nomMeuble(e)} · dessus, étagère ${k + 1}, pile ${pos}`, sous: actuel ? `Aujourd'hui : ${nomRef(pieces[actuel.p])}. Choisis la réf. qui la remplace.` : "Une réf. par pile.",
+      besoin: "plie", deja: new Set(actuel ? [actuel.p] : []), vider: !!actuel,
+      valider: ([p]) => {
+        const dessus = copieDessus(e.dessus);
+        dessus[k].articles = [...dessus[k].articles.filter(a => a.pos !== pos), nouvelArticle(p, pos)];
+        modifierElementMerch(e.id, { dessus });
+      },
+    });
+    $("rf-vider").hidden = !actuel;
+    $("rf-vider").onclick = () => {
+      fermer($("fenetre-refs"));
+      const dessus = copieDessus(e.dessus);
+      dessus[k].articles = dessus[k].articles.filter(a => a.pos !== pos);
+      modifierElementMerch(e.id, { dessus });
+    };
+  });
   // L'UV choisie, en détail : ses équipements du haut vers le bas, leur hauteur (en cm), leurs réfs, ▲ ▼ ×, et de quoi en ajouter.
   function carteEqMur(e, u, q, modifiable) {
     const li = element("li", `mu-eq mu-eq-${q.type}${q.id === eqMur ? " choisi" : ""}`), ic = element("span", "mu-eq-picto");
@@ -11551,7 +11763,7 @@ body.me-plein { overflow: hidden; }
   }
   function rendreDetailMur(e, plan, modifiable) {
     const u = e.uvs[uvMur], z = zoneUv(plan, e, uvMur);
-    $("mu-uv-titre").textContent = `UV ${uvMur + 1}${estMiroir(u) ? " · miroir" : ""}`;
+    $("mu-uv-titre").textContent = `${nomUv(e, uvMur)}${estMiroir(u) ? " · miroir" : ""}`;
     $("mu-uv-zone").className = `zone-pastille z-${z}`;
     $("mu-uv-zone").textContent = NOM_ZONE[z];
     $("mu-remplacer").hidden = !modifiable;
@@ -11612,7 +11824,7 @@ body.me-plein { overflow: hidden; }
   $("mu-copier").addEventListener("click", () => {
     const e = merchElements.docs[murOuvert];
     if (!e) return;
-    copierDans({ genre: "uv", de: `${nomMeuble(e)}, UV ${uvMur + 1}`, uvs: [copieUvPresse(e.uvs[uvMur])] });
+    copierDans({ genre: "uv", de: `${nomMeuble(e)}, ${nomUv(e, uvMur)}`, uvs: [copieUvPresse(e.uvs[uvMur])] });
     toast("UV copiée : choisis une autre UV (de ce mur ou d'un autre), puis « Coller ici ».");
   });
   function collerUv(b, avecRefs, texteBouton) {
@@ -11755,7 +11967,7 @@ body.me-plein { overflow: hidden; }
       const pos = choisir.dataset.choisir, liste = pos === "liste";
       const nomPos = q.type === "etagere" ? (q.refs === 2 ? (pos === "1" ? " · pile de gauche" : " · pile de droite") : "") : q.type === "coudee" ? ` · ${(POSITIONS_COUDEE.find(x => x[0] === pos) || ["", ""])[1].toLowerCase()}` : pos === "2" ? " · par-dessus" : "";
       choisirRefs({
-        titre: `${nomMeuble(e)} · UV ${uvMur + 1}`, sous: `${nomEq(u, q)} à ${hauteurEq(q)}${nomPos}${liste ? " : touche les pièces à ajouter ; « Toutes les couleurs » prend tout un modèle." : ""}`,
+        titre: `${nomMeuble(e)} · ${nomUv(e, uvMur)}`, sous: `${nomEq(u, q)} à ${hauteurEq(q)}${nomPos}${liste ? " : touche les pièces à ajouter ; « Toutes les couleurs » prend tout un modèle." : ""}`,
         multiple: liste, besoin: BESOIN_EQ[q.type], deja: new Set(liste ? q.articles.map(a => a.p) : []),
         valider: ids => changerUvs(e, uvs => {
           const z = uvs[uvMur].eq.find(x => x.id === q.id);
@@ -11899,13 +12111,14 @@ body.me-plein { overflow: hidden; }
     ev.preventDefault();
     deplacerEqMur(e, q.id, q.cran + d * (ev.shiftKey ? CASE : 1));
   });
-  $("mu-plus").addEventListener("click", () => { const e = merchElements.docs[murOuvert]; if (e && e.uvs.length < 40) modifierElementMerch(e.id, { uvs: ajusterUvs(e.uvs, e.uvs.length + 1) }); });
+  $("mu-plus").addEventListener("click", () => { const e = merchElements.docs[murOuvert]; if (e && e.uvs.length + facesDe(e) <= 40) modifierElementMerch(e.id, { uvs: ajusterUvsDe(e, uvsParFace(e) + 1) }); });
   $("mu-moins").addEventListener("click", ev => {
     const e = merchElements.docs[murOuvert], b = ev.currentTarget;
-    if (!e || e.uvs.length <= 1) return;
-    if (e.uvs[e.uvs.length - 1].eq.some(q => q.articles.length) && !b.classList.contains("arme")) { armer(b, "Confirmer (ses articles partent avec)", "Retirer la dernière UV"); return; }
+    if (!e || uvsParFace(e) <= 1) return;
+    const k = uvsParFace(e), derniers = facesDe(e) === 2 ? [e.uvs[k - 1], e.uvs[2 * k - 1]] : [e.uvs[e.uvs.length - 1]];
+    if (derniers.some(u => u.eq.some(q => q.articles.length)) && !b.classList.contains("arme")) { armer(b, "Confirmer (ses articles partent avec)", "Retirer la dernière UV"); return; }
     desarmer(b, "Retirer la dernière UV");
-    modifierElementMerch(e.id, { uvs: ajusterUvs(e.uvs, e.uvs.length - 1) });
+    modifierElementMerch(e.id, { uvs: ajusterUvsDe(e, k - 1) });
   });
   $("fenetre-mur").addEventListener("close", () => { murOuvert = null; glisseMur = null; });
   window.addEventListener("resize", () => { if ($("fenetre-mur").open) rendreMurMerch(); });
@@ -11929,15 +12142,16 @@ body.me-plein { overflow: hidden; }
   const vaIci = (x, besoin) => { const pr = presentationDe(x); return !besoin || !((besoin === "cintre" && pr === "plie") || (besoin === "plie" && pr === "cintre")); };
   const POSITIONS_COUDEE = [["derriere", "Derrière (le plus haut)"], ["devant", "Devant"]];
   // Les places d'une table : deux rangées de piles ; dos à dos (un côté chacune) ou dans le même sens (derrière, devant).
-  const nomsRangees = e => (e.sens === "meme" ? { a: "Derrière", b: "Devant" } : { a: "Côté 1", b: "Côté 2" });
-  const libellePile = (e, pos) => { const m = /^([ab])(\d)$/.exec(pos || ""); return m ? `${nomsRangees(e)[m[1]]} · pile ${m[2]}` : ""; };
+  const nomsRangees = e => (e.sens === "meme" ? { a: "Derrière", b: "Devant", m: "Au milieu" } : { a: "Côté 1", b: "Côté 2", m: "Au milieu" });
+  const libellePile = (e, pos) => { const m = /^([abm])(\d)$/.exec(pos || ""); return m ? `${nomsRangees(e)[m[1]]} · pile ${m[2]}` : ""; };
   // Où sont les pièces sur un plan : pièce → [{ e, texte, uv, eq, pos }].
   function emplacementsDuPlan(planId) {
     const m = new Map();
     const noter = (a, e, texte, plus) => { if (!m.has(a.p)) m.set(a.p, []); m.get(a.p).push({ e, texte, pos: a.pos, ...plus }); };
     elementsDuPlan(planId).forEach(e => {
       const t = TYPES_MERCH[e.type];
-      if (t.porte === "uv") e.uvs.forEach((u, i) => u.eq.forEach(q => q.articles.forEach(a => noter(a, e, `${nomMeuble(e)} · UV ${i + 1} · ${nomEq(u, q).toLowerCase()} à ${hauteurEq(q)}`, { uv: i, eq: q.id }))));
+      if (t.porte === "uv") e.uvs.forEach((u, i) => u.eq.forEach(q => q.articles.forEach(a => noter(a, e, `${nomMeuble(e)} · ${nomUv(e, i)} · ${nomEq(u, q).toLowerCase()} à ${hauteurEq(q)}`, { uv: i, eq: q.id }))));
+      if (t.porte === "uv" && e.dessus) e.dessus.forEach((d, k) => d.articles.forEach(a => noter(a, e, `${nomMeuble(e)} · dessus, étagère ${k + 1}`, { dessus: k })));
       else if (t.porte === "niveaux") e.niveaux.forEach((n, k) => n.articles.forEach(a => noter(a, e, `${nomMeuble(e)}${k ? ` · ${k + 1}e hauteur` : a.pos ? ` · ${libellePile(e, a.pos).toLowerCase()}` : ""}`, { niveau: k })));
       else (e.articles || []).forEach(a => noter(a, e, nomMeuble(e), {}));
     });
@@ -12070,16 +12284,24 @@ body.me-plein { overflow: hidden; }
     $("mb-table").hidden = !table;
     $("mb-liste-bloc").hidden = table;
     if (table) {
-      const n = e.piles, rangs = nomsRangees(e), arts = e.niveaux[0].articles;
-      $("mb-sous").textContent = `${t.nom} · ${n} pile${n > 1 ? "s" : ""} de chaque côté · ${e.sens === "meme" ? "dans le même sens" : "dos à dos"} · une réf. par pile`;
-      $("mb-n").textContent = String(n);
-      $("mb-moins").disabled = !modifiable || n <= 1;
-      $("mb-plus").disabled = !modifiable || n >= MAX_PILES[e.type];
+      const milieu = e.dispo === "milieu", rangs = nomsRangees(e), arts = e.niveaux[0].articles, nb = e.pilesB || e.piles;
+      $("mb-sous").textContent = `${t.nom} · ${resumePiles(e)} · ${milieu ? "toute la largeur de la table" : e.sens === "meme" ? "dans le même sens" : "dos à dos"} · une réf. par pile`;
+      document.querySelectorAll('input[name="mb-dispo"]').forEach(r => { r.checked = r.value === e.dispo; r.disabled = !modifiable; });
+      $("mb-nom-a").textContent = milieu ? "Piles au milieu" : rangs.a;
+      $("mb-nom-b").textContent = rangs.b;
+      $("mb-nombre-b").hidden = milieu;
+      $("mb-sens-choix").hidden = milieu;
+      $("mb-n").textContent = String(e.piles);
+      $("mb-moins").disabled = !modifiable || e.piles <= 1;
+      $("mb-plus").disabled = !modifiable || e.piles >= MAX_PILES[e.type];
+      $("mb-n-b").textContent = String(nb);
+      $("mb-moins-b").disabled = !modifiable || nb <= 1;
+      $("mb-plus-b").disabled = !modifiable || nb >= MAX_PILES[e.type];
       document.querySelectorAll('input[name="mb-sens"]').forEach(r => { r.checked = r.value === e.sens; r.disabled = !modifiable; });
-      // La table vue de dessus : deux rangées de piles ; une flèche dit de quel côté on la regarde.
-      const rangee = r => {
+      // La table vue de dessus : ses rangées de piles ; une flèche dit de quel côté on la regarde.
+      const rangee = (r, n) => {
         const bloc = element("div", `mb-rangee mb-rangee-${r}`);
-        const fleche = e.sens === "meme" ? "↓" : r === "a" ? "↑" : "↓";
+        const fleche = r === "m" ? "↕" : e.sens === "meme" ? "↓" : r === "a" ? "↑" : "↓";
         bloc.append(element("span", "mb-rangee-nom", `${rangs[r]} ${fleche}`));
         const piles = element("div", "mb-piles-grille");
         piles.style.setProperty("--n", n);
@@ -12100,8 +12322,9 @@ body.me-plein { overflow: hidden; }
         bloc.append(piles);
         return bloc;
       };
-      const plateau = element("div", "mb-plateau");
-      plateau.append(rangee("a"), element("div", "mb-milieu"), rangee("b"));
+      const plateau = element("div", "mb-plateau" + (milieu ? " milieu" : ""));
+      if (milieu) plateau.append(rangee("m", e.piles));
+      else plateau.append(rangee("a", e.piles), element("div", "mb-milieu"), rangee("b", nb));
       $("mb-table").replaceChildren(plateau, element("p", "aide", modifiable ? "Touche une pile pour choisir sa réf. ; touche une pile pleine pour la changer ou la vider." : ""));
     } else {
       const arts = e.articles || [];
@@ -12123,16 +12346,36 @@ body.me-plein { overflow: hidden; }
     }
   }
   const tableEnRegle = (e, champs) => ({ ...champs, niveaux: e.niveaux.map((niv, k) => (k ? niv : { articles: (champs.articles || niv.articles) })) });
-  $("mb-moins").addEventListener("click", () => changerPiles(-1));
-  $("mb-plus").addEventListener("click", () => changerPiles(1));
-  function changerPiles(d) {
+  $("mb-moins").addEventListener("click", () => changerPiles(-1, "a"));
+  $("mb-plus").addEventListener("click", () => changerPiles(1, "a"));
+  $("mb-moins-b").addEventListener("click", () => changerPiles(-1, "b"));
+  $("mb-plus-b").addEventListener("click", () => changerPiles(1, "b"));
+  // Une pile de plus ou de moins d'un côté (ou au milieu) ; la réf. d'une pile retirée quitte la table.
+  function changerPiles(d, cote) {
     const e = merchElements.docs[meubleOuvert];
     if (!e || !peutModifierMerch()) return;
-    const n = Math.max(1, Math.min(MAX_PILES[e.type], e.piles + d));
-    const garde = e.niveaux[0].articles.filter(a => { const m = /^[ab](\d)$/.exec(a.pos || ""); return !m || Number(m[1]) <= n; });
+    const champ = cote === "b" ? "pilesB" : "piles", rang = cote === "b" ? "b" : e.dispo === "milieu" ? "m" : "a";
+    const n = Math.max(1, Math.min(MAX_PILES[e.type], (e[champ] || e.piles) + d));
+    const garde = e.niveaux[0].articles.filter(a => { const m = /^([abm])(\d)$/.exec(a.pos || ""); return !m || m[1] !== rang || Number(m[2]) <= n; });
     if (garde.length < e.niveaux[0].articles.length) toast("La réf. de la pile retirée n'est plus sur la table.");
-    modifierElementMerch(e.id, { piles: n, ...tableEnRegle(e, { articles: garde }) });
+    modifierElementMerch(e.id, { [champ]: n, ...tableEnRegle(e, { articles: garde }) });
   }
+  // Devant et derrière ↔ une rangée au milieu : les piles gardent leur réf. (devant d'abord) ; ce qui ne tient plus part.
+  document.querySelectorAll('input[name="mb-dispo"]').forEach(r => r.addEventListener("change", () => {
+    const e = merchElements.docs[meubleOuvert];
+    if (!e || !peutModifierMerch() || e.dispo === r.value) return;
+    const arts = e.niveaux[0].articles, libres = arts.filter(a => !/^[abm]\d$/.test(a.pos || ""));
+    if (r.value === "milieu") {
+      const n = Math.min(MAX_PILES[e.type], Math.max(e.piles, e.pilesB || e.piles)), mis = [];
+      for (let k = 1; k <= n; k++) { const a = arts.find(x => x.pos === "a" + k) || arts.find(x => x.pos === "b" + k); if (a) mis.push({ ...a, pos: "m" + k }); }
+      const perdues = arts.length - libres.length - mis.length;
+      if (perdues > 0) toast(perdues > 1 ? `${perdues} réfs ne tiennent plus sur la table : elles l'ont quittée.` : "Une réf. ne tient plus sur la table : elle l'a quittée.");
+      modifierElementMerch(e.id, { dispo: "milieu", piles: n, ...tableEnRegle(e, { articles: [...libres, ...mis] }) });
+    } else {
+      const mis = arts.filter(a => /^m\d$/.test(a.pos || "")).map(a => ({ ...a, pos: "a" + a.pos.slice(1) }));
+      modifierElementMerch(e.id, { dispo: "deux", pilesB: e.pilesB || e.piles, ...tableEnRegle(e, { articles: [...libres, ...mis] }) });
+    }
+  }));
   document.querySelectorAll('input[name="mb-sens"]').forEach(r => r.addEventListener("change", () => {
     const e = merchElements.docs[meubleOuvert];
     if (e && peutModifierMerch()) modifierElementMerch(e.id, { sens: r.value });
@@ -12193,7 +12436,7 @@ body.me-plein { overflow: hidden; }
     if (t.porte === "uv") e.uvs.forEach((u, i) => {
       if (estMiroir(u)) return;
       u.eq.forEach(q => {
-        const base = `UV ${i + 1} · ${nomEq(u, q)}${q.ferme ? " de fermeture" : ""} à ${hauteurEq(q)}`;
+        const base = `${nomUv(e, i)} · ${nomEq(u, q)}${q.ferme ? " de fermeture" : ""} à ${hauteurEq(q)}`;
         const occupe = pos => { const a = q.articles.find(x => x.pos === pos); return a ? ` (remplace ${nomRef(pieces[a.p])})` : ""; };
         if (q.type === "etagere") {
           if (q.refs < 2) r.push({ valeur: JSON.stringify({ uv: i, eq: q.id, pos: "1" }), texte: `${base}${q.refs ? occupe("1") : " (y mettre une réf.)"}` });
@@ -12203,7 +12446,11 @@ body.me-plein { overflow: hidden; }
         else r.push({ valeur: JSON.stringify({ uv: i, eq: q.id }), texte: `${base} (s'ajoute)` });
       });
     });
-    else if (t.porte === "niveaux") ["a", "b"].forEach(c => { for (let k = 1; k <= e.piles; k++) { const pos = c + k, a = e.niveaux[0].articles.find(x => x.pos === pos); r.push({ valeur: JSON.stringify({ pos }), texte: `${libellePile(e, pos)}${a ? ` (remplace ${nomRef(pieces[a.p])})` : ""}` }); } });
+    if (t.porte === "uv" && e.dessus) e.dessus.forEach((d, k) => { for (let j = 1; j <= d.piles; j++) {
+      const a = d.articles.find(x => x.pos === String(j));
+      r.push({ valeur: JSON.stringify({ dessus: k, pos: String(j) }), texte: `Dessus · étagère ${k + 1} · pile ${j}${a ? ` (remplace ${nomRef(pieces[a.p])})` : ""}` });
+    } });
+    else if (t.porte === "niveaux") rangeesTable(e).forEach(([c, n]) => { for (let k = 1; k <= n; k++) { const pos = c + k, a = e.niveaux[0].articles.find(x => x.pos === pos); r.push({ valeur: JSON.stringify({ pos }), texte: `${libellePile(e, pos)}${a ? ` (remplace ${nomRef(pieces[a.p])})` : ""}` }); } });
     else if (t.porte === "articles" || t.porte === "tenue") r.push({ valeur: JSON.stringify({}), texte: t.porte === "tenue" ? "Sur le mannequin" : "S'ajoute aux réfs" });
     return r;
   }
@@ -12265,7 +12512,11 @@ body.me-plein { overflow: hidden; }
     const o = (emplacementsDuPlan(plan.id).get(x.id) || [])[Number(b.dataset.k)];
     if (!o) return;
     const e = o.e, t = TYPES_MERCH[e.type];
-    if (t.porte === "uv") {
+    if (o.dessus != null && e.dessus) {
+      const dessus = copieDessus(e.dessus), d = dessus[o.dessus];
+      if (d) d.articles = d.articles.filter(a => !(a.p === x.id && (a.pos || null) === (o.pos || null)));
+      await modifierElementMerch(e.id, { dessus });
+    } else if (t.porte === "uv") {
       const uvs = copieUvs(e.uvs), q = uvs[o.uv].eq.find(z => z.id === o.eq);
       const k = q.articles.findIndex(a => a.p === x.id && (a.pos || null) === (o.pos || null));
       if (k >= 0) q.articles.splice(k, 1);
@@ -12285,7 +12536,9 @@ body.me-plein { overflow: hidden; }
     elementsDuPlan(plan.id).forEach(e => {
       const t = TYPES_MERCH[e.type];
       if (t.porte === "uv") e.uvs.forEach((u, i) => u.eq.forEach(q => q.articles.forEach(a => r.push({ e, a, uv: i, eq: q.id, q, type: q.type, besoin: BESOIN_EQ[q.type], zone: zoneUv(plan, e, i),
-        texte: `${nomMeuble(e)} · UV ${i + 1} · ${nomEq(u, q).toLowerCase()} à ${hauteurEq(q)}` }))));
+        texte: `${nomMeuble(e)} · ${nomUv(e, i)} · ${nomEq(u, q).toLowerCase()} à ${hauteurEq(q)}` }))));
+      if (t.porte === "uv" && e.dessus) e.dessus.forEach((d, k) => d.articles.forEach(a => r.push({ e, a, dessus: k, type: "etagere", besoin: "plie", zone: zoneElement(plan, e),
+        texte: `${nomMeuble(e)} · dessus, étagère ${k + 1}` })));
       else if (t.porte === "niveaux") e.niveaux.forEach((n, niv) => n.articles.forEach(a => r.push({ e, a, niveau: niv, type: "table", besoin: "plie", zone: zoneElement(plan, e),
         texte: `${nomMeuble(e)}${niv ? ` · ${niv + 1}e hauteur` : a.pos ? ` · ${libellePile(e, a.pos).toLowerCase()}` : ""}` })));
       else (e.articles || []).forEach(a => r.push({ e, a, type: t.famille, besoin: besoinMeuble(e), zone: t.famille === "repere" ? null : zoneElement(plan, e), texte: nomMeuble(e) }));
@@ -12295,12 +12548,12 @@ body.me-plein { overflow: hidden; }
   // Un brouillon d'un meuble : on y retire, on y pose, on y change des réfs, puis on l'écrit d'un coup.
   function brouillonMeuble(e) {
     const t = TYPES_MERCH[e.type];
-    if (t.porte === "uv") return { uvs: copieUvs(e.uvs) };
+    if (t.porte === "uv") return { uvs: copieUvs(e.uvs), ...(e.dessus ? { dessus: copieDessus(e.dessus) } : {}) };
     if (t.porte === "niveaux") return { niveaux: e.niveaux.map(n => ({ articles: n.articles.map(a => ({ ...a })) })) };
     return { articles: (e.articles || []).map(a => ({ ...a })) };
   }
   function trouverDansBrouillon(b, pose) {
-    const l = b.uvs ? ((b.uvs[pose.uv] && b.uvs[pose.uv].eq.find(x => x.id === pose.eq)) || {}).articles : b.niveaux ? (b.niveaux[pose.niveau] || {}).articles : b.articles;
+    const l = pose.dessus != null && b.dessus ? (b.dessus[pose.dessus] || {}).articles : b.uvs ? ((b.uvs[pose.uv] && b.uvs[pose.uv].eq.find(x => x.id === pose.eq)) || {}).articles : b.niveaux ? (b.niveaux[pose.niveau] || {}).articles : b.articles;
     return l ? [l, l.findIndex(a => a.p === pose.a.p && (a.pos || null) === (pose.a.pos || null))] : [null, -1];
   }
   // Changer une réf. posée (faire renvoie false pour la retirer).
@@ -12314,6 +12567,13 @@ body.me-plein { overflow: hidden; }
   }
   // Poser dans un brouillon : o = { uv, eq, pos } (un mur), { pos } (une table), {} (une liste).
   function poserDans(b, p, o) {
+    if (o.dessus != null) {
+      const d = b.dessus && b.dessus[o.dessus];
+      if (!d) return false;
+      d.articles = d.articles.filter(a => a.pos !== o.pos);
+      d.articles.push(nouvelArticle(p, o.pos));
+      return true;
+    }
     if (b.uvs) {
       const q = b.uvs[o.uv] && b.uvs[o.uv].eq.find(x => x.id === o.eq);
       if (!q) return false;
@@ -12351,7 +12611,7 @@ body.me-plein { overflow: hidden; }
         const voisins = [i - 1, i, i + 1].flatMap(k => (e.uvs[k] && !estMiroir(e.uvs[k]) ? e.uvs[k].eq.flatMap(q => q.articles.map(a => pieces[a.p])) : [])).filter(Boolean);
         u.eq.forEach(q => {
           if (!vaIci(x, BESOIN_EQ[q.type])) return;
-          const base = { e, genre: q.type, zone: zoneUv(plan, e, i), voisins, ferme: q.ferme }, nom = `${nomMeuble(e)} · UV ${i + 1} · ${nomEq(u, q).toLowerCase()} à ${hauteurEq(q)}`;
+          const base = { e, genre: q.type, zone: zoneUv(plan, e, i), voisins, ferme: q.ferme }, nom = `${nomMeuble(e)} · ${nomUv(e, i)} · ${nomEq(u, q).toLowerCase()} à ${hauteurEq(q)}`;
           const libre = pos => !q.articles.some(a => a.pos === pos);
           if (q.type === "etagere") {
             if (!q.refs && !q.articles.length) r.push({ ...base, o: { uv: i, eq: q.id, pos: "1" }, texte: nom });
@@ -12361,10 +12621,12 @@ body.me-plein { overflow: hidden; }
           else if (q.articles.length < Math.max(3, Math.round(e.uvL * 10))) r.push({ ...base, o: { uv: i, eq: q.id }, texte: nom });
         });
       });
+      if (t.porte === "uv" && e.dessus && vaIci(x, "plie")) e.dessus.forEach((d, k) => { for (let j = 1; j <= d.piles; j++) if (!d.articles.some(a => a.pos === String(j)))
+        r.push({ e, o: { dessus: k, pos: String(j) }, genre: "etagere", zone: zoneElement(plan, e), voisins: d.articles.map(a => pieces[a.p]).filter(Boolean), texte: `${nomMeuble(e)} · dessus, étagère ${k + 1}` }); });
       else if (t.porte === "niveaux") {
         if (!vaIci(x, "plie")) return;
         const voisins = e.niveaux[0].articles.map(a => pieces[a.p]).filter(Boolean);
-        ["a", "b"].forEach(c => { for (let k = 1; k <= e.piles; k++) if (!e.niveaux[0].articles.some(a => a.pos === c + k)) r.push({ e, o: { pos: c + k }, genre: "table", zone: zoneElement(plan, e), voisins, texte: `${nomMeuble(e)} · ${libellePile(e, c + k).toLowerCase()}` }); });
+        rangeesTable(e).forEach(([c, n]) => { for (let k = 1; k <= n; k++) if (!e.niveaux[0].articles.some(a => a.pos === c + k)) r.push({ e, o: { pos: c + k }, genre: "table", zone: zoneElement(plan, e), voisins, texte: `${nomMeuble(e)} · ${libellePile(e, c + k).toLowerCase()}` }); });
       } else if (t.porte === "articles" && t.famille !== "repere") {
         if (!vaIci(x, besoinMeuble(e))) return;
         const pour = { bac: ["calecons", "chaussettes", "accessoires", "bonnets"], casquettes: ["casquettes", "bonnets"], ceintures: ["ceintures"] }[e.type];
@@ -12398,7 +12660,7 @@ body.me-plein { overflow: hidden; }
       if (c.ferme) score -= 1;
       return { ...c, score, raisons };
     }).sort((a, b) => b.score - a.score).filter(c => {
-      const k = `${c.e.id}|${c.o.uv ?? ""}|${c.o.eq || ""}|${c.genre === "table" ? "" : c.o.pos || ""}`;
+      const k = `${c.e.id}|${c.o.uv ?? ""}|${c.o.eq || ""}|${c.o.dessus ?? ""}|${c.genre === "table" ? "" : c.o.pos || ""}`;
       if (vus.has(k)) return false;
       vus.add(k);
       return true;
@@ -12413,7 +12675,7 @@ body.me-plein { overflow: hidden; }
     elementsDuPlan(plan.id).filter(e => TYPES_MERCH[e.type].porte === "uv").forEach(e => {
       const al = alertesMur(e);
       al.facings.forEach(f => regles.push({ e, texte: `${nomMeuble(e)} : deux facings côte à côte, ${f.texte}` }));
-      al.hauteurs.forEach(h => regles.push({ e, texte: `${nomMeuble(e)}, UV ${h.uv + 1} : ${h.texte}` }));
+      al.hauteurs.forEach(h => regles.push({ e, texte: `${nomMeuble(e)}, ${nomUv(e, h.uv)} : ${h.texte}` }));
     });
     poses.forEach(p => { const x = pieces[p.a.p]; if (x && p.besoin && !vaIci(x, p.besoin)) regles.push({ e: p.e, exception: true, texte: `${nomRef(x)} (${NOM_PRESENTATION[presentationDe(x)].toLowerCase()}) : ${p.texte}` }); });
     const exposees = new Set(poses.map(p => p.a.p));
@@ -12424,7 +12686,7 @@ body.me-plein { overflow: hidden; }
   }
   let posesAffichees = [];
   const suggestionsOuvertes = new Set();
-  const clePose = p => `${p.e.id}|${p.uv ?? ""}|${p.eq || ""}|${p.niveau ?? ""}|${p.a.p}|${p.a.pos || ""}`;
+  const clePose = p => `${p.e.id}|${p.uv ?? ""}|${p.eq || ""}|${p.niveau ?? ""}|${p.dessus ?? ""}|${p.a.p}|${p.a.pos || ""}`;
   function rendreAlertesMerch() {
     const plan = planEnPlace() || planAffiche(), modifiable = peutModifierMerch();
     if (!plan) return;
@@ -12541,7 +12803,7 @@ body.me-plein { overflow: hidden; }
   // Les couleurs pour se repérer d'un coup d'œil : les murs noirs, les tables beiges, les portants gris.
   const C3D = { plaque: "#24262b", rainure: "#383b42", montant: "#121316", etagere: "#5b616b", barre: "#b4bac3", plateau: "#e6d2aa", pied: "#cdb68d",
     portant: "#8c929b", cloison: "#e4e7ec", rideau: "#3d4659", miroir: "#cfe6f3", porte: "#7b5b3b", cadre: "#4b3a28", ecran: "#0e0f12" };
-  const YEUX = 1.65, PAS_GRILLE = 0.25, CORPS = 0.25, VITESSE = 1.6, PENTE = 0.22;
+  const YEUX = 1.65, PAS_GRILLE = 0.1, CORPS = 0.15, VITESSE = 1.6, PENTE = 0.22;
   const chargerScript = src => new Promise((ok, ko) => { const s = document.createElement("script"); s.src = src; s.async = true; s.onload = ok; s.onerror = ko; document.head.append(s); });
   function charger3D() {
     if (!chargement3D) {
@@ -12635,22 +12897,71 @@ body.me-plein { overflow: hidden; }
     return m;
   }
   // La photo d'une pièce, en texture (chargée une fois) ; à défaut, sa couleur.
-  function texturePhoto(x) {
+  // « milieu » : le milieu de la photo seulement (le devant du vêtement plié, son imprimé, son logo).
+  function texturePhoto(x, milieu) {
     const src = x && calques3D.photos && srcPhoto(x.photo);
     if (!src) return null;
-    if (!t3d.textures.has(src)) {
-      const tex = new t3d.T.TextureLoader().load(src, () => rendu3D(), undefined, () => { t3d.textures.set(src, null); });
-      t3d.textures.set(src, tex);
+    const cle = milieu ? src + "#milieu" : src;
+    if (!t3d.textures.has(cle)) {
+      const tex = new t3d.T.TextureLoader().load(src, () => rendu3D(), undefined, () => { t3d.textures.set(cle, null); });
+      if (milieu) { tex.repeat.set(0.5, 0.4); tex.offset.set(0.25, 0.36); }
+      t3d.textures.set(cle, tex);
     }
-    return t3d.textures.get(src);
+    return t3d.textures.get(cle);
   }
-  const couleur3D = a => (a && couleurPiece(pieces[a.p])) || null;
+  function matPhoto(tex) {
+    const cle = "photo:" + tex.uuid;
+    if (!t3d.mats.has(cle)) t3d.mats.set(cle, new t3d.T.MeshLambertMaterial({ map: tex }));
+    return t3d.mats.get(cle);
+  }
+  const couleur3D = a => { const c = a && couleurPiece(pieces[a.p]); return c && /^#[0-9a-f]{3,8}$/i.test(c) ? c : c ? "#8a7f9c" : null; };
+  const BAS_CATEGORIES = ["jeans", "pantalons", "shorts"];
+  // Les formes des vêtements pendus, de 0 à 1 (le haut : épaules et manches ; le bas : deux jambes), extrudées une fois.
+  function geoVetement(genre, deFace) {
+    const cle = genre + (deFace ? ":face" : ":cote");
+    t3d.geos = t3d.geos || new Map();
+    if (!t3d.geos.has(cle)) {
+      const T = t3d.T, f = new T.Shape();
+      if (genre === "bas") { f.moveTo(0.08, 1); f.lineTo(0.92, 1); f.lineTo(1, 0); f.lineTo(0.57, 0); f.lineTo(0.5, 0.62); f.lineTo(0.43, 0); f.lineTo(0, 0); }
+      else {
+        f.moveTo(0.36, 1); f.quadraticCurveTo(0.5, 0.88, 0.64, 1); f.lineTo(0.84, 0.95); f.lineTo(1, 0.6); f.lineTo(0.88, 0.55); f.lineTo(0.8, 0.72);
+        f.lineTo(0.8, 0); f.lineTo(0.2, 0); f.lineTo(0.2, 0.72); f.lineTo(0.12, 0.55); f.lineTo(0, 0.6); f.lineTo(0.16, 0.95);
+      }
+      f.closePath();
+      const geo = new T.ExtrudeGeometry(f, { depth: 1, bevelEnabled: false, curveSegments: 6 });
+      geo.translate(-0.5, -0.5, -0.5);
+      if (!deFace) geo.rotateY(Math.PI / 2);   // de côté (sur une barre de pressing, un portant) : on voit sa tranche
+      geo.userData.partage = true;
+      t3d.geos.set(cle, geo);
+    }
+    return t3d.geos.get(cle);
+  }
+  // Un vêtement sur cintre, à sa forme et à sa couleur, la photo sur ses faces. De côté : épaisseur en x, largeur en z.
+  function vetementPendu(a, ep, h, l, x, y, z, k, deFace) {
+    const piece = a && pieces[a.p], coul = couleur3D(a) || GRIS_VETEMENTS[(k || 0) % 4];
+    const tex = piece ? texturePhoto(piece) : null, cote = mat3D(coul);
+    const m = new t3d.T.Mesh(geoVetement(piece && BAS_CATEGORIES.includes(piece.categorie) ? "bas" : "haut", deFace), [tex ? matPhoto(tex) : cote, cote]);
+    if (deFace) m.scale.set(l, h, ep); else m.scale.set(ep, h, l);
+    m.position.set(x, y, z);
+    return m;
+  }
+  // Une pile pliée : des épaisseurs de la couleur de la pièce (un pli sur deux plus sombre), la photo sur le dessus.
+  function pile3D(a, l, h, p, x, yBas, z) {
+    const T = t3d.T, g = new T.Group(), piece = a && pieces[a.p], coul = couleur3D(a) || GRIS_VETEMENTS[1];
+    const n = Math.max(2, Math.min(5, Math.round(h / 0.035))), ep = h / n, sombre = "#" + new T.Color(coul).multiplyScalar(0.86).getHexString();
+    for (let k = 0; k < n; k++) g.add(boite(l - (k % 2 ? 0.01 : 0), ep * 0.92, p - (k % 2 ? 0 : 0.012), k % 2 ? sombre : coul, x + (k % 2 ? 0.004 : -0.003), yBas + ep * (k + 0.5), z));
+    const tex = piece ? texturePhoto(piece, true) : null;
+    if (tex) {
+      const dessus = new T.Mesh(new T.PlaneGeometry(l * 0.94, p * 0.92), matPhoto(tex));
+      dessus.rotation.x = -Math.PI / 2;
+      dessus.position.set(x, yBas + h + 0.003, z);
+      g.add(dessus);
+    }
+    return g;
+  }
   const GRIS_VETEMENTS = ["#9aa3b2", "#aeb5c1", "#8a93a5", "#b8bec9"];
   function vetementFace(a, l, h, x, y, z) {
-    const coul = couleur3D(a) || GRIS_VETEMENTS[0], tex = a ? texturePhoto(pieces[a.p]) : null;
-    const cote = mat3D(coul);
-    const mats = tex ? [cote, cote, cote, cote, new t3d.T.MeshLambertMaterial({ map: tex }), cote] : cote;
-    return boite(l, h, 0.03, mats, x, y, z);
+    return vetementPendu(a, 0.03, h, l, x, y, z, 0, true);
   }
   function etiquette3D(texte) {
     const c = document.createElement("canvas"), ctx = c.getContext("2d"), f = 36;
@@ -12669,14 +12980,14 @@ body.me-plein { overflow: hidden; }
     return s;
   }
   // Les plaques noires à crans : une rainure tous les 5 cm.
-  function matPlaque(crans) {
-    const cle = "plaque" + crans;
+  function matPlaque(crans, gris) {
+    const cle = "plaque" + crans + (gris ? "g" : "");
     if (!t3d.mats.has(cle)) {
       const c = document.createElement("canvas");
       c.width = 32; c.height = 16;
       const ctx = c.getContext("2d");
-      ctx.fillStyle = C3D.plaque; ctx.fillRect(0, 0, 32, 16);
-      ctx.fillStyle = C3D.rainure; ctx.fillRect(0, 14, 32, 2);
+      ctx.fillStyle = gris ? "#8c929b" : C3D.plaque; ctx.fillRect(0, 0, 32, 16);
+      ctx.fillStyle = gris ? "#757b85" : C3D.rainure; ctx.fillRect(0, 14, 32, 2);
       const tex = new t3d.T.CanvasTexture(c);
       tex.wrapS = tex.wrapT = t3d.T.RepeatWrapping;
       tex.repeat.set(1, crans);
@@ -12709,53 +13020,77 @@ body.me-plein { overflow: hidden; }
     if (t.porte === "uv") {
       const H = e.crans * CRAN_CM / 100, w = e.uvL;
       haut = H;
+      // Un mini-mur : le recto d'un côté, le verso de l'autre (tourné), leurs plaques dos à dos au milieu.
+      const deux = facesDe(e) === 2, faces = deux ? [0, 1].map(f => { const fg = new T.Group(); fg.rotation.y = f ? Math.PI : 0; fg.position.z = f ? -0.17 : 0.17; g.add(fg); return fg; }) : [g];
       e.uvs.forEach((u, i) => {
-        const x0 = -e.l / 2 + i * w, xc = x0 + w / 2;
-        if (estMiroir(u)) { g.add(boite(w - 0.02, H - 0.3, 0.04, matVerre(), xc, H / 2, -0.15)); g.add(boite(0.025, H, 0.07, C3D.montant, x0, H / 2, -0.16)); return; }
+        const cible = faces[auVerso(e, i) ? 1 : 0], x0 = -e.l / 2 + (deux ? rangUv(e, i) : i) * w, xc = x0 + w / 2;
+        if (estMiroir(u)) { cible.add(boite(w - 0.02, H - 0.3, 0.04, matVerre(), xc, H / 2, -0.15)); cible.add(boite(0.025, H, 0.07, C3D.montant, x0, H / 2, -0.16)); return; }
         // Un miroir condamné reste visible derrière ses étagères, pour se repérer.
-        g.add(new T.Mesh(new T.BoxGeometry(w - 0.01, H, 0.06), u.miroir ? matVerre() : matPlaque(e.crans)));
-        g.children[g.children.length - 1].position.set(xc, H / 2, -0.17);
-        g.add(boite(0.025, H, 0.07, C3D.montant, x0, H / 2, -0.16));
+        cible.add(new T.Mesh(new T.BoxGeometry(w - 0.01, H, 0.06), u.miroir ? matVerre() : matPlaque(e.crans, deux)));
+        cible.children[cible.children.length - 1].position.set(xc, H / 2, -0.17);
+        cible.add(boite(0.025, H, 0.07, C3D.montant, x0, H / 2, -0.16));
         u.eq.forEach(q => {
           const y = q.cran * CRAN_CM / 100, coul = pos => couleur3D(q.articles.find(a => a.pos === pos));
           if (q.type === "etagere") {
-            g.add(boite(w - 0.03, 0.022, 0.34, C3D.etagere, xc, y, 0.03));
-            if (q.refs) [0, 1].forEach(k => g.add(boite(w / 2 - 0.05, 0.18, 0.27, coul(q.refs === 2 ? String(k + 1) : "1") || GRIS_VETEMENTS[k + 1], x0 + w * (k ? 0.75 : 0.25), y + 0.1, 0.04)));
+            cible.add(boite(w - 0.03, 0.022, 0.34, C3D.etagere, xc, y, 0.03));
+            if (q.refs) [0, 1].forEach(k => {
+              const a = q.articles.find(x => x.pos === (q.refs === 2 ? String(k + 1) : "1"));
+              cible.add(a ? pile3D(a, w / 2 - 0.05, 0.18, 0.27, x0 + w * (k ? 0.75 : 0.25), y + 0.011, 0.04) : boite(w / 2 - 0.05, 0.18, 0.27, GRIS_VETEMENTS[k + 1], x0 + w * (k ? 0.75 : 0.25), y + 0.1, 0.04));
+            });
           } else if (q.type === "pressing") {
             const barre = cylindre(0.012, w - 0.04, C3D.barre, xc, y, 0.1);
             barre.rotation.z = Math.PI / 2;
-            g.add(barre);
+            cible.add(barre);
             const n = Math.max(3, Math.round(w / 0.09));
             for (let k = 0; k < n; k++) {
               const a = q.articles.length ? q.articles[Math.floor(k * q.articles.length / n)] : null;
-              g.add(boite(0.035, 0.74, 0.42, couleur3D(a) || GRIS_VETEMENTS[k % 4], x0 + 0.04 + (w - 0.08) * (k + 0.5) / n, y - 0.4, 0.1));
+              cible.add(vetementPendu(a, 0.035, 0.74, 0.42, x0 + 0.04 + (w - 0.08) * (k + 0.5) / n, y - 0.4, 0.1, k));
             }
           } else {
             const bras = cylindre(0.01, 0.42, C3D.barre, xc, y, 0.06);
             bras.rotation.x = Math.PI / 2;
-            g.add(bras);
+            cible.add(bras);
             if (q.type === "coudee") {
-              g.add(vetementFace(q.articles.find(a => a.pos === "derriere"), Math.min(0.44, w - 0.1), 0.62, xc, y - 0.33, 0.12));
-              g.add(vetementFace(q.articles.find(a => a.pos === "devant"), Math.min(0.46, w - 0.08), 0.66, xc, y - 0.47, 0.3));
+              cible.add(vetementFace(q.articles.find(a => a.pos === "derriere"), Math.min(0.44, w - 0.1), 0.62, xc, y - 0.33, 0.12));
+              cible.add(vetementFace(q.articles.find(a => a.pos === "devant"), Math.min(0.46, w - 0.08), 0.66, xc, y - 0.47, 0.3));
             } else {
-              g.add(vetementFace(q.articles.find(a => a.pos === "1"), Math.min(0.46, w - 0.08), 0.7, xc, y - 0.38, 0.28));
-              if (coul("2")) g.add(vetementFace(q.articles.find(a => a.pos === "2"), Math.min(0.42, w - 0.12), 0.54, xc, y - 0.33, 0.3));
+              cible.add(vetementFace(q.articles.find(a => a.pos === "1"), Math.min(0.46, w - 0.08), 0.7, xc, y - 0.38, 0.28));
+              if (coul("2")) cible.add(vetementFace(q.articles.find(a => a.pos === "2"), Math.min(0.42, w - 0.12), 0.54, xc, y - 0.33, 0.3));
             }
           }
         });
       });
-      g.add(boite(0.025, H, 0.07, C3D.montant, e.l / 2, H / 2, -0.16));
+      faces.forEach(c => c.add(boite(0.025, H, 0.07, C3D.montant, e.l / 2, H / 2, -0.16)));
+      if (deux) {
+        // Le dessus : deux étagères (à gauche et à droite, vues du recto), de 2 ou 4 piles.
+        const yD = H + 0.03, lg = e.l / 2 - 0.08, pd = Math.min(0.56, e.p * 0.5);
+        haut = H + 0.25;
+        g.add(boite(e.l, 0.03, 0.12, C3D.montant, 0, H + 0.005, 0));
+        (e.dessus || []).forEach((d, k) => {
+          const xc = (k ? 1 : -1) * e.l / 4, deuxRangs = d.piles === 4;
+          g.add(boite(lg, 0.025, pd, C3D.etagere, xc, yD, 0));
+          for (let j = 0; j < d.piles; j++) {
+            const a = d.articles.find(x => x.pos === String(j + 1));
+            if (!a) continue;
+            const lp = Math.min(0.4, lg / 2 - 0.06), pp = Math.min(0.36, deuxRangs ? pd / 2 - 0.04 : pd - 0.08);
+            g.add(pile3D(a, lp, 0.16, pp, xc + (j % 2 ? 1 : -1) * lg / 4, yD + 0.013, deuxRangs ? (j < 2 ? 1 : -1) * pd / 4 : 0));
+          }
+        });
+      }
     } else if (t.porte === "niveaux") {
       const h = e.type === "grande-table" ? 0.78 : 0.72;
       haut = h + 0.2;
       g.add(boite(e.l - 0.12, h - 0.06, e.p - 0.12, C3D.pied, 0, (h - 0.06) / 2, 0));
       g.add(boite(e.l, 0.06, e.p, C3D.plateau, 0, h - 0.03, 0));
       for (let k = 1; k < e.hauteurs; k++) g.add(boite(e.l + 0.12 * k, 0.04, e.p + 0.1 * k, C3D.plateau, 0, h - 0.24 * k, 0));
-      const n = e.piles, lp = Math.min((e.l - 0.08) / n * 0.82, 0.34), pp = Math.min(e.p * 0.4, 0.34);
-      ["a", "b"].forEach((r, ri) => { for (let k = 1; k <= n; k++) {
-        const a = e.niveaux[0].articles.find(x => x.pos === r + k);
-        if (a) g.add(boite(lp, 0.16, pp, couleur3D(a) || GRIS_VETEMENTS[1], -e.l / 2 + 0.04 + (e.l - 0.08) * (k - 0.5) / n, h + 0.08, (ri ? 1 : -1) * e.p / 4));
-      } });
+      const milieu = e.dispo === "milieu";
+      rangeesTable(e).forEach(([r, n], ri) => {
+        const lp = Math.min((e.l - 0.08) / n * 0.82, 0.34), pp = milieu ? Math.min(e.p * 0.74, 0.62) : Math.min(e.p * 0.4, 0.34);
+        for (let k = 1; k <= n; k++) {
+          const a = e.niveaux[0].articles.find(x => x.pos === r + k);
+          if (a) g.add(pile3D(a, lp, 0.16, pp, -e.l / 2 + 0.04 + (e.l - 0.08) * (k - 0.5) / n, h, milieu ? 0 : (ri ? 1 : -1) * e.p / 4));
+        }
+      });
     } else if (t.famille === "portant") {
       // À hauteur d'une grande table : ils ne cachent plus le magasin.
       const arts = e.articles || [], hRail = 0.95, long = 0.68;
@@ -12769,7 +13104,7 @@ body.me-plein { overflow: hidden; }
         const n = Math.max(8, Math.round(e.l * Math.PI * 7));
         for (let k = 0; k < n; k++) {
           const ang = k / n * Math.PI * 2, r = e.l / 2 * 0.85, a = arts.length ? arts[Math.floor(k * arts.length / n)] : null;
-          const v = boite(0.035, long, 0.38, couleur3D(a) || GRIS_VETEMENTS[k % 4], Math.cos(ang) * r, hRail - long / 2 - 0.03, Math.sin(ang) * r);
+          const v = vetementPendu(a, 0.035, long, 0.38, Math.cos(ang) * r, hRail - long / 2 - 0.03, Math.sin(ang) * r, k);
           v.rotation.y = -ang;
           g.add(v);
         }
@@ -12783,7 +13118,7 @@ body.me-plein { overflow: hidden; }
           const n = Math.max(6, Math.floor((e.l - 0.12) / 0.07));
           for (let k = 0; k < n; k++) {
             const a = arts.length ? arts[Math.floor((k + ri * n) * arts.length / (n * rails.length))] : null;
-            g.add(boite(0.035, long, 0.42, couleur3D(a) || GRIS_VETEMENTS[k % 4], -e.l / 2 + 0.06 + (e.l - 0.12) * (k + 0.5) / n, hRail - long / 2 - 0.03, z));
+            g.add(vetementPendu(a, 0.035, long, 0.42, -e.l / 2 + 0.06 + (e.l - 0.12) * (k + 0.5) / n, hRail - long / 2 - 0.03, z, k));
           }
         });
       }
@@ -12839,6 +13174,20 @@ body.me-plein { overflow: hidden; }
       } else if (e.type === "vitrine") {
         g.add(boite(e.l, h, e.p, c, 0, h / 2, 0, { transparent: true, opacity: 0.35 }));
         (e.articles || []).slice(0, 2).forEach((a, k) => g.add(cylindre(0.16, 0.6, couleur3D(a) || "#e9e6e0", (k ? 0.4 : -0.4) * Math.min(1, e.l / 2), 1.1, 0)));
+      } else if (e.type === "caisse") {
+        // Le comptoir côté magasin, le caissier derrière ; un poste de caisse à chaque place notée (en part de la longueur).
+        const pc = Math.min(0.65, e.p * 0.62), zc = -e.p / 2 + pc / 2;
+        g.add(boite(e.l, h - 0.04, pc, "#d9d2ea", 0, (h - 0.04) / 2, zc));
+        g.add(boite(e.l + 0.04, 0.04, pc + 0.06, "#f4f1fa", 0, h - 0.02, zc));
+        (e.postes || []).forEach(f => {
+          const x = -e.l / 2 + Math.max(0.3, Math.min(e.l - 0.3, f * e.l));
+          g.add(boite(0.36, 0.08, 0.36, "#2b2e36", x, h + 0.04, zc + 0.04));
+          const pied = boite(0.04, 0.22, 0.04, "#3a3d45", x, h + 0.19, zc + 0.08);
+          const ecr = boite(0.34, 0.24, 0.03, "#15171c", x, h + 0.38, zc + 0.1);
+          ecr.rotation.x = -0.18;
+          g.add(pied, ecr);
+          g.add(boite(0.08, 0.04, 0.15, "#3a3d45", x - 0.28, h + 0.02, zc - 0.12));
+        });
       } else g.add(boite(e.l, h, e.p, c, 0, h / 2, 0));
     }
     g.traverse(o => { o.userData.id = e.id; });
@@ -12873,7 +13222,7 @@ body.me-plein { overflow: hidden; }
   function jeter3D(o) {
     const partagees = new Set(t3d.mats.values());
     o.traverse(x => {
-      if (x.geometry) x.geometry.dispose();
+      if (x.geometry && !x.geometry.userData.partage) x.geometry.dispose();
       if (x.isSprite) { x.material.map.dispose(); x.material.dispose(); }
       else if (Array.isArray(x.material)) x.material.forEach(m => { if (!partagees.has(m)) m.dispose(); });
     });
@@ -12882,9 +13231,9 @@ body.me-plein { overflow: hidden; }
   function formesDuPlan(plan) {
     return elementsDuPlan(plan.id).map(e => {
       const t = TYPES_MERCH[e.type];
-      const couleur = t.porte === "uv" ? "#24262b" : t.porte === "niveaux" ? "#e0c999" : t.famille === "portant" ? "#9aa0a9" : e.type === "entree" ? null : "#cfd4dc";
+      const couleur = t.porte === "uv" && facesDe(e) !== 2 ? "#24262b" : t.porte === "niveaux" ? "#e0c999" : t.famille === "portant" ? "#9aa0a9" : e.type === "entree" ? null : "#cfd4dc";
       if (t.rond) return { e, couleur, cercle: [e.x, e.y, e.l / 2] };
-      const p = t.porte === "uv" ? 0.4 : e.p;
+      const p = t.porte === "uv" && facesDe(e) !== 2 ? 0.4 : e.p;
       return { e, couleur, pts: [[-e.l / 2, -p / 2], [e.l / 2, -p / 2], [e.l / 2, p / 2], [-e.l / 2, p / 2]].map(([a, b]) => versPlan(e, a, b)) };
     });
   }
@@ -12951,7 +13300,7 @@ body.me-plein { overflow: hidden; }
     elementsDuPlan(plan.id).forEach(e => {
       if (e.type === "entree" || e.type === "ecran") return;
       const t = TYPES_MERCH[e.type], a = e.rot * Math.PI / 180, c = Math.cos(a), s = Math.sin(a);
-      const p = t.porte === "uv" ? 0.4 : e.p, avant = t.porte === "uv" ? 0.35 : 0;   // devant un mur : les vêtements qui dépassent
+      const mur = t.porte === "uv" && facesDe(e) !== 2, p = mur ? 0.4 : e.p, avant = mur ? 0.06 : 0;   // devant un mur : ce qui dépasse un peu
       const r = Math.hypot(e.l, p) / 2 + avant + CORPS + PAS_GRILLE;
       const i0 = Math.max(0, Math.floor((e.x - r) / PAS_GRILLE)), i1 = Math.min(nx - 1, Math.ceil((e.x + r) / PAS_GRILLE));
       const j0 = Math.max(0, Math.floor((e.y - r) / PAS_GRILLE)), j1 = Math.min(nz - 1, Math.ceil((e.y + r) / PAS_GRILLE));
@@ -13036,7 +13385,7 @@ body.me-plein { overflow: hidden; }
     return mieux;
   }
   // Marcher le long d'un chemin, en regardant devant soi ; à la fin, regarder un point (un meuble) s'il y en a un.
-  function marcher3D(points, regard) {
+  function marcher3D(points, regard, apres) {
     const T = t3d.T, c = t3d.camera, ctl = t3d.controls;
     if (t3d.anim) cancelAnimationFrame(t3d.anim.raf);
     const pts = points.map(([x, z]) => new T.Vector3(x, YEUX, z)), longueurs = [];
@@ -13063,7 +13412,7 @@ body.me-plein { overflow: hidden; }
       rendu3D();
       dessinerMiniCarte();
       if (k < 1) t3d.anim = { raf: requestAnimationFrame(pas) };
-      else { t3d.anim = null; ctl.update(); placerFleches(); rendu3D(); dessinerMiniCarte(); }
+      else { t3d.anim = null; ctl.update(); placerFleches(); rendu3D(); dessinerMiniCarte(); if (apres) apres(); }
     };
     t3d.anim = { raf: requestAnimationFrame(pas) };
   }
@@ -13129,6 +13478,7 @@ body.me-plein { overflow: hidden; }
       else f.pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
       ctx.fill();
     });
+    if (sim.actif) sim.clients.forEach(c => { ctx.fillStyle = couleurEnvie(c.envie); ctx.beginPath(); ctx.arc(c.x, c.z, 0.32, 0, Math.PI * 2); ctx.fill(); });
     const p = t3d.camera.position, d = regardActuel(), a = Math.atan2(d.z, d.x);
     ctx.fillStyle = "rgba(224, 122, 53, .3)";
     ctx.beginPath(); ctx.moveTo(p.x, p.z); ctx.arc(p.x, p.z, 2.6, a - 0.5, a + 0.5); ctx.closePath(); ctx.fill();
@@ -13186,6 +13536,7 @@ body.me-plein { overflow: hidden; }
       : "Glisse pour faire tourner le magasin, zoome avec deux doigts ou la molette ; touche un meuble pour t'en approcher.";
     $("me-3d-info").hidden = true;
     $("me-3d-pad").hidden = mode !== "promenade";
+    majAideSim();
     if (change && !sansAnimation && t3d.groupe) construireScene3D(false);
     dessinerMiniCarte();
   }
@@ -13193,8 +13544,9 @@ body.me-plein { overflow: hidden; }
   function pointDevant(e) {
     const g = t3d.grille, t = TYPES_MERCH[e.type], p = t3d.camera.position, candidats = [];
     if (t.porte === "uv") {
-      const [fx, fz] = versPlan(e, 0, 1), nx = fx - e.x, nz = fz - e.y;
-      for (let d = 1.4; d <= 3.2; d += 0.2) candidats.push([e.x + nx * d, e.y + nz * d]);
+      const [fx, fz] = versPlan(e, 0, 1), cote = facesDe(e) === 2 && (p.x - e.x) * (fx - e.x) + (p.z - e.y) * (fz - e.y) < 0 ? -1 : 1, nx = (fx - e.x) * cote, nz = (fz - e.y) * cote;
+      const d0 = facesDe(e) === 2 ? e.p / 2 + 0.7 : 1.4;
+      for (let d = d0; d <= d0 + 1.8; d += 0.2) candidats.push([e.x + nx * d, e.y + nz * d]);
     } else {
       const r = Math.max(e.l, e.p) / 2 + 0.7;
       for (let k = 0; k < 16; k++) { const a = k * Math.PI / 8; candidats.push([e.x + Math.cos(a) * r, e.y + Math.sin(a) * r]); }
@@ -13218,7 +13570,7 @@ body.me-plein { overflow: hidden; }
       allerA3D([e.x + dx / n * 2.6, 2.1, e.y + dz / n * 2.6], vise, 1100);
     }
     $("me-3d-nom").textContent = nomMeuble(e);
-    $("me-3d-ouvrir").textContent = t.porte === "uv" ? "Ouvrir le mur" : ["niveaux", "articles", "tenue"].includes(t.porte) ? "Les réfs" : "";
+    $("me-3d-ouvrir").textContent = t.porte === "uv" ? (facesDe(e) === 2 ? "Ouvrir le mini-mur" : "Ouvrir le mur") : ["niveaux", "articles", "tenue"].includes(t.porte) ? "Les réfs" : "";
     $("me-3d-ouvrir").hidden = !$("me-3d-ouvrir").textContent;
     $("me-3d-info").hidden = false;
     choisirElementMerch(e.id);
@@ -13234,6 +13586,10 @@ body.me-plein { overflow: hidden; }
     const souris = new T.Vector2((ev.clientX - r.left) / r.width * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
     const ray = new T.Raycaster();
     ray.setFromCamera(souris, t3d.camera);
+    if (sim.actif && t3d.clients) {
+      const c = ray.intersectObjects(t3d.clients.children, true)[0];
+      if (c) { allerVersClient(c.object.userData.client); return; }
+    }
     if (t3d.fleches && t3d.mode === "promenade") {
       const f = ray.intersectObjects(t3d.fleches.children, false)[0];
       if (f) { const [x, z] = f.object.userData.fleche; marcher3D([[t3d.camera.position.x, t3d.camera.position.z], [x, z]]); return; }
@@ -13286,6 +13642,483 @@ body.me-plein { overflow: hidden; }
     reconstruction3D = setTimeout(() => construireScene3D(false), 200);
   }
 
+  // ----- le Blue Box Simulator : des clients dans le magasin, des mini-scénarios de vente -----
+  // Chaque client a un besoin, un caractère et une envie d'acheter (de 0 à 100). On va le voir, il parle ; on répond avec
+  // une phrase toute faite (une seule est vraiment bonne) ou avec ses mots (Claude joue alors le client). Selon ce qu'on
+  // dit, son envie monte ou baisse : il achète, il hésite (« je repasserai ») ou il s'en va.
+  // Dans les phrases : {modele}, {couleur}, {marque}, {prix}, {matiere}, {ou} viennent d'une vraie pièce du Dressing.
+  const SCENARIOS_VENTE = [
+    {
+      id: "presse", prenom: "Karim", titre: "Pressé, il veut un jean", categories: ["jeans"], envie: 45,
+      look: { haut: "#4a5568", bas: "#1f2d50", peau: "#b07a52", cheveux: "#1c1c1f" },
+      persona: { qui: "la trentaine, en pause déjeuner, il a 15 minutes.", besoin: "un jean droit, sobre, pour aller au travail, en 32.", caractere: "pressé, direct, il déteste qu'on lui montre tout le magasin.", secret: "son jean actuel s'est déformé en moins d'un an ; il a besoin d'une ceinture aussi." },
+      etapes: [
+        { client: "Bonjour. Je cherche un jean, mais je n'ai pas beaucoup de temps.", choix: [
+          { t: "Bonjour ! Je vais faire vite : vous le portez plutôt droit ou ajusté, et c'est pour le travail ou le week-end ?", e: 20, rep: "Droit. Pour le boulot, donc rien de trop délavé.", c: "Deux questions ciblées, et tu respectes son temps : c'est la bonne découverte pour un client pressé." },
+          { t: "Les jeans sont sur le mur du fond, je vous laisse regarder.", e: -25, rep: "… D'accord.", c: "Tu le laisses seul alors qu'il t'a dit être pressé : accompagne-le jusqu'au mur et pose une question." },
+          { t: "On en a plein ! Je vous montre toute la gamme ?", e: -8, rep: "Toute la gamme ? Non, je n'ai pas le temps…", c: "Trop de choix tue la décision. Pose une ou deux questions avant de montrer quoi que ce soit." },
+        ] },
+        { client: "Il me faut un truc sobre. Je fais du 32.", choix: [
+          { t: "Le {modele}, {couleur} : sobre au bureau comme le week-end. Je vous le sors en 32 et je vous montre la cabine ?", e: 25, rep: "Allez, je l'essaie.", c: "Un produit précis, ses avantages pour lui, puis l'essayage : c'est ce qui fait avancer la vente." },
+          { t: "Celui-là est en promo sur le site en ce moment, profitez-en !", e: -15, rep: "Ah ? Il est à combien ici, alors ?", c: "Les promos du site ne valent pas en magasin : tu crées une attente que tu ne pourras pas tenir." },
+          { t: "En 32, je vais voir ce qu'il reste en réserve.", e: 0, rep: "D'accord… mais lequel ?", c: "Le stock avant le produit ? Propose d'abord UN modèle qui répond à son besoin." },
+        ] },
+        { client: "Il tombe bien. Mais {prix}, quand même…", choix: [
+          { t: "Je comprends. La toile tient sa forme lavage après lavage : vous le porterez longtemps, ça revient moins cher que deux jeans qui se déforment.", e: 20, rep: "C'est vrai que le mien n'a pas tenu un an.", c: "Tu valides son ressenti, puis tu ramènes le prix à un bénéfice concret : objection bien traitée." },
+          { t: "Sinon il y a moins cher là-bas, mais c'est moins bien.", e: -12, rep: "Donc celui-là est mieux, ou pas ?", c: "En proposant moins cher tout de suite, tu dévalorises ce qu'il a aimé. Argumente d'abord." },
+          { t: "C'est le prix de la marque.", e: -20, rep: "Mouais.", c: "Une réponse sèche ferme la discussion. Dis ce que le prix lui apporte." },
+        ] },
+        { client: "Bon. Je le prends, je crois.", choix: [
+          { t: "Très bon choix. Une ceinture en cuir marron finirait la tenue au bureau : je vous en montre une, ça prend une minute ?", e: 10, plus: "une ceinture", rep: "Vas-y, montre.", c: "La vente additionnelle se propose quand il vient de dire oui : courte, liée à son besoin. Parfait." },
+          { t: "Parfait, je vous accompagne en caisse.", e: 5, rep: "Merci.", c: "Vente conclue. Tu pouvais proposer un article complémentaire (ceinture, chaussettes)." },
+          { t: "Vous êtes sûr ? Prenez le temps d'y réfléchir.", e: -25, rep: "Euh… oui, je vais réfléchir, en fait.", c: "Quand le client dit oui, ne sème pas le doute : conclus." },
+        ] },
+      ],
+    },
+    {
+      id: "cadeau", prenom: "Léa", elle: true, titre: "Un cadeau pour son copain", categories: ["pulls", "sweats", "gilets"], envie: 40,
+      look: { haut: "#c9b6dc", bas: "#2b2e36", peau: "#e2b899", cheveux: "#6b4226" },
+      persona: { qui: "25 ans, elle cherche un cadeau d'anniversaire pour son copain.", besoin: "un pull, mais elle ne connaît ni son style exact ni sa taille.", caractere: "gentille, indécise, elle a peur de se tromper.", secret: "il porte surtout du bleu marine et du gris ; elle aimerait un paquet cadeau." },
+      etapes: [
+        { client: "Bonjour, je cherche un cadeau pour mon copain, un pull je pense… mais je ne sais pas trop ce qu'il aime.", choix: [
+          { t: "Avec plaisir ! Il s'habille comment, en général ? Plutôt classique, sport ? Il porte des couleurs ?", e: 20, rep: "Plutôt classique, souvent du bleu marine ou du gris.", c: "Des questions ouvertes sur son style : tu l'aides à dire ce qu'elle sait déjà." },
+          { t: "Les pulls sont ici, prenez votre temps.", e: -10, rep: "D'accord… mais je ne sais pas lequel prendre.", c: "Une cliente qui doute a besoin d'être guidée, pas laissée seule." },
+          { t: "Le plus vendu, c'est celui-là : prenez-le.", e: -5, rep: "Mais est-ce que ça lui irait ?", c: "La meilleure vente rassure, mais seulement après avoir compris pour qui c'est." },
+        ] },
+        { client: "Et pour la taille, je ne suis pas sûre. Il est à peu près comme vous.", choix: [
+          { t: "Je fais du M. Le {modele} taille normalement ; et s'il ne va pas, il pourra l'échanger avec le ticket cadeau.", e: 20, rep: "Ah, un ticket cadeau, ça me rassure.", c: "Tu lèves le frein de la taille avec une solution concrète : échange, ticket cadeau." },
+          { t: "Prenez un L, au pire ce sera un peu grand.", e: -10, rep: "S'il nage dedans, ce sera raté…", c: "« Au pire » inquiète. Donne un repère et une solution d'échange." },
+          { t: "Vous avez une photo de lui ?", e: 5, rep: "Oui, attendez… voilà.", c: "Bonne idée pour estimer la taille ; pense aussi à la rassurer sur l'échange." },
+        ] },
+        { client: "Il est joli. Mais il ne gratte pas, au moins ?", choix: [
+          { t: "La matière, c'est {matiere} : touchez, c'est doux. Il pourra le mettre directement sur un t-shirt.", e: 15, rep: "Oh oui, c'est doux.", c: "Faire toucher, c'est faire vivre le produit : l'argument devient une sensation." },
+          { t: "Normalement, non.", e: -15, rep: "« Normalement »…", c: "Une réponse floue fait douter. Appuie-toi sur la matière, fais toucher." },
+          { t: "Tous les pulls grattent un peu au début.", e: -5, rep: "Je ne veux pas qu'il le laisse au placard…", c: "Tu crées toi-même l'objection. Parle de ce que le produit fait bien." },
+        ] },
+        { client: "D'accord, je vais le prendre.", choix: [
+          { t: "Super ! Je vous fais un paquet cadeau ? Et comme il aime le bleu marine, ce bonnet irait très bien avec.", e: 10, plus: "un bonnet", rep: "Le paquet, oui ! Et le bonnet… allez.", c: "Service (paquet cadeau) et vente additionnelle cohérente : elle repart contente." },
+          { t: "Très bien, je vous encaisse.", e: 5, rep: "Merci.", c: "Pense au paquet cadeau et au ticket : c'est ce qui fait revenir une cliente." },
+          { t: "Vous ne voulez pas plutôt revenir avec lui ?", e: -20, rep: "Ah… c'est vrai, ce sera peut-être mieux.", c: "Tu as cassé une vente faite. Rassure-la plutôt : ticket cadeau, échange." },
+        ] },
+      ],
+    },
+    {
+      id: "fidele", prenom: "Thomas", titre: "Fidèle à sa marque", categories: ["jeans"], autreMarque: /levi/i, envie: 50,
+      look: { haut: "#7b2d26", bas: "#2f4a7a", peau: "#e8c4a6", cheveux: "#8a6a45" },
+      persona: { qui: "40 ans, il ne porte que du Levi's depuis vingt ans.", besoin: "un 501 brut en 33.", caractere: "sympathique mais attaché à ses habitudes ; il se braque si on critique sa marque.", secret: "il est curieux d'essayer autre chose si on le lui propose sans forcer ; il manque de chaussettes." },
+      etapes: [
+        { client: "Bonjour. Vous avez le 501 ? Je ne porte que du Levi's.", choix: [
+          { t: "Oui, il est au mur des jeans. Vous le prenez dans quel délavage, d'habitude ?", e: 15, rep: "Brut, le 501 classique.", c: "Tu réponds d'abord à sa demande, puis tu découvres : il se sent écouté." },
+          { t: "Levi's, c'est surcoté : prenez plutôt autre chose.", e: -15, rep: "Euh, c'est ma marque, hein.", c: "Ne critique jamais la marque d'un client : c'est son choix que tu critiques." },
+          { t: "On l'a. Je vous le donne en quelle taille ?", e: 0, rep: "En 33.", c: "Efficace, mais tu passes à côté de la découverte." },
+        ] },
+        { client: "En 33, en brut.", choix: [
+          { t: "Je vous le sors. Et juste pour comparer, je vous mets à côté le {modele} de {marque} : même esprit, coupe un peu plus actuelle.", e: 15, rep: "Pourquoi pas, comparer ne coûte rien.", c: "Tu proposes une alternative sans dénigrer : il garde la main sur le choix." },
+          { t: "Le 501, tout le monde l'a. Osez autre chose !", e: -15, rep: "J'aime bien ce que tout le monde a, justement.", c: "Pousser la nouveauté contre son goût le braque. Propose, ne force pas." },
+          { t: "Je vous l'apporte en cabine.", e: 5, rep: "Merci.", c: "Bon service. Tu pouvais lui proposer de comparer avec un autre modèle." },
+        ] },
+        { client: "Le 501 me va. L'autre… pas mal, mais je ne connais pas la marque.", choix: [
+          { t: "C'est normal d'hésiter. Beaucoup d'habitués du 501 ont adopté celui-là pour sa coupe. Sur vous, honnêtement, lequel vous préférez ?", e: 15, rep: "Franchement… l'autre tombe mieux.", c: "Tu rassures avec ce que vivent les autres clients, puis tu le laisses décider par une question." },
+          { t: "Prenez celui que vous connaissez, c'est plus sûr.", e: -10, rep: "Oui… c'est ce que je pensais.", c: "Tu abandonnes ta proposition. Rassure-le plutôt : la preuve, c'est le miroir." },
+          { t: "Et pourquoi pas les deux ? Un pour le travail, un pour le week-end.", e: 5, rep: "Les deux, ça fait beaucoup.", c: "Proposer les deux est osé ; ça marche si le budget suit. Ici, il fallait d'abord l'aider à choisir." },
+        ] },
+        { client: "Bon, je prends celui qui me va le mieux.", choix: [
+          { t: "Super. On a des chaussettes à la caisse, c'est souvent l'oubli : je vous en mets une paire avec ?", e: 10, plus: "des chaussettes", rep: "Ah oui, il m'en faut.", c: "Vente additionnelle simple, au bon endroit (les chaussettes sont à la caisse)." },
+          { t: "Je vous encaisse.", e: 5, rep: "Merci.", c: "Bien conclu. Une petite vente additionnelle était possible." },
+          { t: "Vous ne voulez pas réessayer l'autre, pour être sûr ?", e: -20, rep: "Non… en fait, je vais réfléchir.", c: "Revenir en arrière après une décision fait douter. Conclus." },
+        ] },
+      ],
+    },
+    {
+      id: "regarde", prenom: "Mehdi", titre: "« Je regarde juste »", categories: ["t-shirts", "sweats", "polos"], envie: 30,
+      look: { haut: "#2f6f4f", bas: "#1c1c1f", peau: "#8d5a3b", cheveux: "#1c1c1f" },
+      persona: { qui: "20 ans, étudiant, il flâne entre deux cours.", besoin: "rien de précis ; un haut s'il a un coup de cœur.", caractere: "réservé, il fuit les vendeurs insistants.", secret: "il hésite entre deux couleurs d'un même modèle ; il a un petit budget." },
+      etapes: [
+        { client: "Bonjour. Je regarde, merci.", choix: [
+          { t: "Pas de souci, je vous laisse regarder. Les nouveautés sont sur cette table, et je suis là si besoin.", e: 15, rep: "D'accord, merci.", c: "Tu respectes son « je regarde » et tu laisses une porte ouverte avec une info utile." },
+          { t: "Vous cherchez quoi exactement ? Une taille ? Une couleur ?", e: -20, rep: "Je viens de vous dire que je regarde…", c: "Insister après un « je regarde » met la pression. Laisse respirer, reviens plus tard." },
+          { t: "D'accord.", e: -5, rep: "…", c: "Poli, mais tu n'as rien donné : une info (les nouveautés, une offre du magasin) ouvre le dialogue." },
+        ] },
+        { client: "(quelques minutes plus tard, le {modele} à la main) Il existe en d'autres couleurs ?", choix: [
+          { t: "Oui, je vous montre. Vous le mettriez avec quoi ?", e: 20, rep: "Avec un jean brut, plutôt.", c: "Sa question est le signal pour revenir : tu réponds et tu relances par une question ouverte." },
+          { t: "Tout ce qu'on a est sur la table.", e: 0, rep: "OK…", c: "Une question du client, c'est une invitation : accompagne-le." },
+          { t: "Oui, mais celui-là est plus beau en vrai : prenez-le.", e: -10, rep: "Je préfère voir les autres.", c: "Ne tranche pas à sa place avant de savoir ce qu'il veut." },
+        ] },
+        { client: "Je ne sais pas… je ne suis pas venu pour acheter.", choix: [
+          { t: "Aucun souci. Essayez-le, ça ne vous engage à rien : au moins, vous saurez quelle taille vous va.", e: 15, rep: "Bon, allez, je l'essaie.", c: "L'essayage sans engagement fait tomber la barrière." },
+          { t: "Il ne restera peut-être plus votre taille demain…", e: -15, rep: "Je n'aime pas qu'on me presse.", c: "La fausse urgence se voit. Propose plutôt l'essayage." },
+          { t: "D'accord, revenez quand vous voulez.", e: -5, rep: "Oui, peut-être.", c: "Tu lâches trop vite : il s'intéressait au produit." },
+        ] },
+        { client: "Il me va bien, en fait.", choix: [
+          { t: "Il vous va très bien. Vous hésitiez sur la couleur : vous voulez le prendre aussi dans l'autre ?", e: 12, plus: "le deuxième coloris", rep: "Allez… les deux.", c: "Il hésitait entre deux couleurs : proposer les deux était naturel." },
+          { t: "Je vous le mets en caisse ?", e: 8, rep: "Oui, merci.", c: "Vente conclue en douceur." },
+          { t: "Vous voyez, il fallait l'essayer !", e: -10, rep: "Mouais…", c: "Avoir raison n'aide pas à vendre. Reste sur ce qu'il ressent." },
+        ] },
+      ],
+    },
+    {
+      id: "mecontent", prenom: "Patrick", titre: "Mécontent, il rapporte un pull", categories: ["pulls", "gilets", "sweats"], envie: 25, sav: true,
+      look: { haut: "#5b616b", bas: "#3a3326", peau: "#e9c9ad", cheveux: "#b8bec9" },
+      persona: { qui: "55 ans, il a acheté un pull ici il y a trois semaines.", besoin: "une solution : son pull est déjà bouloché ; il veut d'abord être remboursé.", caractere: "agacé mais pas méchant ; il se calme si on l'écoute.", secret: "il accepterait un échange contre un modèle plus résistant, s'il est rassuré." },
+      etapes: [
+        { client: "Bonjour. J'ai acheté ce pull il y a trois semaines, et il est déjà tout bouloché.", choix: [
+          { t: "Je suis désolé, je comprends que ce soit agaçant. Vous permettez que je regarde ? Vous avez le ticket ?", e: 20, rep: "Oui, tenez.", c: "Tu accueilles l'émotion avant de parler de solution : il se calme." },
+          { t: "Ça, c'est l'usure normale, on n'y peut rien.", e: -20, rep: "L'usure normale ? En trois semaines ?!", c: "Ne minimise jamais une plainte : écoute d'abord, vérifie ensuite." },
+          { t: "Il faut voir avec la responsable.", e: -10, rep: "Elle est où ?", c: "Renvoyer tout de suite vers quelqu'un d'autre donne l'impression qu'on se débarrasse de lui. Commence par écouter." },
+        ] },
+        { client: "Je veux être remboursé.", choix: [
+          { t: "Je vérifie ce qu'on peut faire selon les conditions du magasin. En attendant, je peux vous proposer un échange contre un modèle dans une maille plus résistante.", e: 15, rep: "Un échange… pourquoi pas, si c'est mieux.", c: "Tu ne promets pas ce que tu ne décides pas, et tu proposes une solution concrète." },
+          { t: "On ne rembourse jamais.", e: -15, rep: "Super, merci du service…", c: "Une règle dite sèchement braque. Explique et propose une autre solution." },
+          { t: "Oui, oui, bien sûr.", e: -5, rep: "Bon, alors on y va ?", c: "Ne promets pas ce que tu ne peux pas tenir : vérifie d'abord les conditions de retour." },
+        ] },
+        { client: "Et celui-là, il ne va pas boulocher aussi ?", choix: [
+          { t: "Le {modele} est en {matiere} : la maille est plus serrée, elle bouloche beaucoup moins. Et une astuce : lavage à l'envers, à 30°.", e: 20, rep: "Ah, je ne savais pas, pour l'envers.", c: "Argument produit et conseil d'entretien : tu lui redonnes confiance." },
+          { t: "Aucun pull ne bouloche jamais chez nous.", e: -10, rep: "Le mien, si.", c: "Une promesse absolue sonne faux. Donne une raison (la matière) et un conseil." },
+          { t: "Je ne sais pas trop.", e: 0, rep: "…", c: "Si tu ne sais pas, appuie-toi sur l'étiquette (la matière) pour répondre." },
+        ] },
+        { client: "D'accord. Je fais l'échange.", choix: [
+          { t: "Merci de votre confiance. Je vous fais l'échange, et au moindre souci, revenez me voir directement.", e: 15, rep: "Merci, c'est sympa.", c: "Tu transformes un mécontent en client fidèle : c'est la meilleure fin possible." },
+          { t: "Voilà, c'est fait.", e: 5, rep: "Merci.", c: "Correct. Une phrase pour le rassurer l'aurait fait revenir." },
+          { t: "Par contre, la prochaine fois, faites attention au lavage.", e: -15, rep: "Donc c'est de ma faute ?", c: "Le conseil d'entretien se donne avant, pas comme un reproche." },
+        ] },
+      ],
+    },
+  ];
+  // Le jeu : trois clients à la fois dans le magasin ; le score reste dans ce navigateur (rien n'est envoyé ni partagé).
+  const CLE_SIM = "tableau-de-bord-axel:simulateur";
+  const sim = { actif: false, clients: [], courant: null, fil: [], envie: 0, etape: 0, ordre: [], libre: false, fini: false, issue: null, plus: null, conseil: null, vus: [], ctl: null, attente: false, echanges: 0 };
+  let numeroClient = 0;
+  function statsSim() {
+    try { const s = JSON.parse(localStorage.getItem(CLE_SIM) || "null"); if (s && typeof s.essais === "number") return s; } catch (_) { /* pas de stockage */ }
+    return { essais: 0, ventes: 0, parcours: [] };
+  }
+  function noterSim(c, issue) {
+    const s = statsSim();
+    s.essais += 1;
+    if (issue === "achat") s.ventes += 1;
+    s.parcours = [{ le: maintenant(), client: c.sc.id, issue, envie: sim.envie, libre: sim.libre }, ...(s.parcours || [])].slice(0, 30);
+    try { localStorage.setItem(CLE_SIM, JSON.stringify(s)); } catch (_) { /* tant pis */ }
+  }
+  const couleurEnvie = v => (v >= 70 ? "#2f9e5b" : v >= 40 ? "#e0a030" : "#d64545");
+  const melange = n => { const a = Array.from({ length: n }, (_, i) => i); for (let i = n - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  // La pièce dont parle le client : une vraie pièce du Dressing de sa catégorie, posée sur le plan si possible.
+  function pieceDuScenario(sc, plan) {
+    const ou = emplacementsDuPlan(plan.id);
+    let xs = piecesEnMagasin().filter(x => sc.categories.includes(x.categorie));
+    if (sc.autreMarque) { const autres = xs.filter(x => !sc.autreMarque.test(x.marque || "")); if (autres.length) xs = autres; }
+    const posees = xs.filter(x => ou.has(x.id)), choix = posees.length ? posees : xs;
+    const x = choix.length ? choix[Math.floor(Math.random() * choix.length)] : null, place = x && (ou.get(x.id) || [])[0];
+    return {
+      piece: x, e: place ? place.e : null,
+      modele: x ? x.modele || NOM_CATEGORIE[x.categorie] : "ce modèle", couleur: x && x.couleur ? x.couleur.toLowerCase() : "cette couleur",
+      marque: x && x.marque ? x.marque : "cette marque", prix: x && x.prix ? formatPrix(x.prix) : "ce prix-là",
+      matiere: x && x.matiere ? x.matiere.toLowerCase() : "une maille douce", ou: place ? place.texte : "",
+    };
+  }
+  const remplirSim = (texte, ctx) => texte.replace(/\{(modele|couleur|marque|prix|matiere|ou)\}/g, (_, k) => ctx[k]);
+  // Une silhouette de client : jambes, corps, bras, tête ; un anneau au sol, de la couleur de son envie.
+  function figureClient(c) {
+    const T = t3d.T, g = new T.Group(), l = c.sc.look;
+    [-0.09, 0.09].forEach(x => g.add(boite(0.13, 0.82, 0.15, l.bas, x, 0.41, 0)));
+    g.add(boite(0.44, 0.62, 0.25, l.haut, 0, 1.13, 0));
+    [-0.28, 0.28].forEach(x => { const b = boite(0.11, 0.58, 0.13, l.haut, x, 1.1, 0); b.rotation.z = x > 0 ? 0.08 : -0.08; g.add(b); });
+    const tete = new T.Mesh(new T.SphereGeometry(0.12, 16, 12), mat3D(l.peau));
+    tete.position.set(0, 1.58, 0);
+    const cheveux = new T.Mesh(new T.SphereGeometry(0.125, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), mat3D(l.cheveux));
+    cheveux.position.set(0, 1.6, -0.01);
+    g.add(tete, cheveux);
+    const anneau = new T.Mesh(new T.RingGeometry(0.34, 0.44, 32), new T.MeshBasicMaterial({ color: couleurEnvie(c.envie), side: T.DoubleSide }));
+    anneau.rotation.x = -Math.PI / 2;
+    anneau.position.y = 0.015;
+    g.add(anneau);
+    g.position.set(c.x, 0, c.z);
+    g.rotation.y = c.angle;
+    g.traverse(o => { o.userData.client = c.id; });
+    c.anneau = anneau;
+    return g;
+  }
+  // Où il se tient : devant le meuble de sa pièce, sinon n'importe où de libre ; jamais collé à un autre client ni à nous.
+  function placeClient(ctx) {
+    const g = t3d.grille, cam = t3d.camera.position, loin = (x, z) => sim.clients.every(o => Math.hypot(o.x - x, o.z - z) > 1.6) && Math.hypot(cam.x - x, cam.z - z) > 2;
+    const autour = [];
+    if (ctx.e) {
+      const e = ctx.e, t = TYPES_MERCH[e.type];
+      if (t.porte === "uv") {
+        const [fx, fz] = versPlan(e, 0, 1), nx = fx - e.x, nz = fz - e.y;
+        for (let k = 0; k < 12; k++) { const d = (facesDe(e) === 2 ? e.p / 2 : 0.4) + 0.6 + (k % 3) * 0.2, s = (Math.floor(k / 3) - 1.5) * Math.min(1, e.l / 3); autour.push([e.x + nx * d - nz * s, e.y + nz * d + nx * s, e.x, e.y]); }
+      } else for (let k = 0; k < 12; k++) { const a = k * Math.PI / 6, r = Math.max(e.l, e.p) / 2 + 0.5; autour.push([e.x + Math.cos(a) * r, e.y + Math.sin(a) * r, e.x, e.y]); }
+    }
+    for (const [x, z, vx, vz] of melange(autour.length).map(i => autour[i])) if (estLibre3D(g, x, z) && loin(x, z)) return [x, z, Math.atan2(vx - x, vz - z)];
+    for (let k = 0; k < 300; k++) {
+      const x = 0.5 + Math.random() * (g.H - 1), z = 1 + Math.random() * (g.D - 3);
+      if (estLibre3D(g, x, z) && loin(x, z)) return [x, z, Math.random() * Math.PI * 2];
+    }
+    return null;
+  }
+  function nouveauClient() {
+    if (!t3d || !t3d.plan || !t3d.grille) return;
+    const presents = new Set(sim.clients.map(c => c.sc.id)), recents = sim.vus.slice(-2);
+    const libres = SCENARIOS_VENTE.filter(s => !presents.has(s.id)), frais = libres.filter(s => !recents.includes(s.id));
+    const pool = frais.length ? frais : libres;
+    if (!pool.length) return;
+    const sc = pool[Math.floor(Math.random() * pool.length)], ctx = pieceDuScenario(sc, t3d.plan), ou = placeClient(ctx);
+    if (!ou) return;
+    const c = { id: "c" + (++numeroClient), sc, ctx, x: ou[0], z: ou[1], angle: ou[2], envie: sc.envie };
+    if (!t3d.clients) { t3d.clients = new t3d.T.Group(); t3d.scene.add(t3d.clients); }
+    c.objet = figureClient(c);
+    t3d.clients.add(c.objet);
+    sim.clients.push(c);
+  }
+  function retirerClient(c) {
+    sim.clients = sim.clients.filter(o => o !== c);
+    if (c.objet && c.objet.parent) { c.objet.parent.remove(c.objet); c.objet.traverse(o => { if (o.geometry) o.geometry.dispose(); }); if (c.anneau) c.anneau.material.dispose(); }
+    rendu3D();
+    dessinerMiniCarte();
+  }
+  function majAnneau(c) {
+    if (c.anneau) c.anneau.material.color.set(couleurEnvie(c.envie));
+    rendu3D();
+  }
+  // Un client qui s'en va (vers l'entrée) ou qui va payer (vers la caisse), en contournant les meubles.
+  function faireMarcherClient(c, cible, apres) {
+    const ch = (t3d.grille && chemin3D(t3d.grille, [c.x, c.z], cible)) || [[c.x, c.z], cible];
+    let i = 1, t0 = performance.now();
+    const pas = now => {
+      if (!t3d || !c.objet || !c.objet.parent) return;
+      let reste = Math.min(0.05, (now - t0) / 1000) * 1.3;
+      t0 = now;
+      while (reste > 0 && i < ch.length) {
+        const [tx, tz] = ch[i], dx = tx - c.x, dz = tz - c.z, d = Math.hypot(dx, dz);
+        if (d > 1e-6) c.angle = Math.atan2(dx, dz);
+        if (d <= reste) { c.x = tx; c.z = tz; reste -= d; i++; } else { c.x += dx / d * reste; c.z += dz / d * reste; reste = 0; }
+      }
+      c.objet.position.set(c.x, 0, c.z);
+      c.objet.rotation.y = c.angle;
+      rendu3D();
+      if (i < ch.length) requestAnimationFrame(pas); else if (apres) apres();
+    };
+    requestAnimationFrame(pas);
+  }
+  function basculerSimulateur(oui) {
+    if (!t3d || !t3d.plan) return;
+    sim.actif = oui;
+    $("me-3d-sim").textContent = oui ? "Arrêter le simulateur" : "Simulateur de vente";
+    $("me-3d-sim").setAttribute("aria-pressed", String(oui));
+    if (oui) {
+      if (t3d.mode !== "promenade") { document.querySelector('input[name="me-vue3d"][value="promenade"]').checked = true; vue3D("promenade"); }
+      for (let k = 0; k < 3; k++) nouveauClient();
+      // On se tourne vers le client le plus proche.
+      const cam = t3d.camera.position, proche = [...sim.clients].sort((a, b) => Math.hypot(a.x - cam.x, a.z - cam.z) - Math.hypot(b.x - cam.x, b.z - cam.z))[0];
+      if (proche && !t3d.anim) { marcher3D([[cam.x, cam.z]], [proche.x, 1.2, proche.z]); $("me-3d-info").hidden = true; }
+      rendu3D();
+    } else {
+      fermerVente();
+      [...sim.clients].forEach(retirerClient);
+    }
+    majAideSim();
+    dessinerMiniCarte();
+  }
+  function majAideSim() {
+    if (!sim.actif) return;
+    const s = statsSim();
+    $("me-3d-aide").textContent = `Simulateur de vente : touche un client pour aller lui parler (son anneau : vert, il a envie d'acheter ; orange, il hésite ; rouge, il va partir). ${s.essais ? `Tes ventes : ${s.ventes} sur ${s.essais}.` : "Ta première vente t'attend."}`;
+  }
+  // Aller voir un client : on marche jusqu'à lui, il se tourne vers nous, la conversation s'ouvre.
+  function allerVersClient(id) {
+    const c = sim.clients.find(o => o.id === id);
+    if (!c || c.parti) return;
+    if (sim.courant && sim.courant !== c && !sim.fini) { toast(`Termine d'abord avec ${sim.courant.sc.prenom}.`); return; }
+    const cam = t3d.camera.position, dx = cam.x - c.x, dz = cam.z - c.z, n = Math.hypot(dx, dz) || 1;
+    let la = null;
+    for (const d of [1.5, 1.8, 1.2, 2.2]) for (const a of [0, 0.5, -0.5, 1, -1, 1.6, -1.6, Math.PI]) {
+      const ux = dx / n, uz = dz / n, ca = Math.cos(a), sa = Math.sin(a), x = c.x + (ux * ca - uz * sa) * d, z = c.z + (ux * sa + uz * ca) * d;
+      if (!la && estLibre3D(t3d.grille, x, z)) la = [x, z];
+    }
+    const ch = la && chemin3D(t3d.grille, [cam.x, cam.z], la);
+    const ouvrirApres = () => {
+      c.angle = Math.atan2(t3d.camera.position.x - c.x, t3d.camera.position.z - c.z);
+      c.objet.rotation.y = c.angle;
+      rendu3D();
+      ouvrirVente(c);
+    };
+    if (t3d.mode !== "promenade") { document.querySelector('input[name="me-vue3d"][value="promenade"]').checked = true; t3d.mode = "promenade"; reglerControles3D(); }
+    marcher3D(ch || [[cam.x, cam.z]], [c.x, 1.35, c.z], ouvrirApres);
+    $("me-3d-info").hidden = true;
+  }
+  function ouvrirVente(c) {
+    sim.courant = c;
+    Object.assign(sim, { fil: [{ qui: "client", texte: remplirSim(c.sc.etapes[0].client, c.ctx) }], envie: c.envie, etape: 0, ordre: melange(c.sc.etapes[0].choix.length), libre: false, fini: false, issue: null, plus: null, achat: null, conseil: null, attente: false, echanges: 0 });
+    document.querySelector('input[name="me-sim-mode"][value="phrases"]').checked = true;
+    $("me-3d-zone").classList.add("en-vente");
+    $("me-sim").hidden = false;
+    rendreVente();
+  }
+  function fermerVente() {
+    if (sim.ctl) sim.ctl.abort();
+    sim.courant = null;
+    $("me-sim").hidden = true;
+    $("me-3d-zone").classList.remove("en-vente");
+  }
+  function rendreVente() {
+    const c = sim.courant;
+    if (!c) return;
+    $("me-sim-nom").textContent = c.sc.prenom;
+    $("me-sim-titre").textContent = c.sc.titre;
+    $("me-sim-jauge").style.width = sim.envie + "%";
+    $("me-sim-jauge").style.background = couleurEnvie(sim.envie);
+    $("me-sim-pct").textContent = `${sim.envie} %`;
+    $("me-sim-envie").setAttribute("aria-label", `${c.sc.sav ? "Satisfaction" : "Envie d'acheter"} : ${sim.envie} sur 100`);
+    $("me-sim-envie-nom").textContent = c.sc.sav ? "Satisfaction" : "Envie d'acheter";
+    $("me-sim-fil").replaceChildren(...sim.fil.map(m => {
+      const li = element("li", `me-sim-msg ${m.qui}`);
+      if (m.qui !== "info") li.append(element("span", "me-sim-qui", m.qui === "client" ? c.sc.prenom : "Toi"));
+      li.append(element("span", "me-sim-texte", m.texte));
+      return li;
+    }), ...(sim.attente ? [element("li", "me-sim-msg client attente", `${c.sc.prenom} réfléchit…`)] : []));
+    $("me-sim-fil").scrollTop = $("me-sim-fil").scrollHeight;
+    $("me-sim-conseil").hidden = !sim.conseil;
+    if (sim.conseil) { $("me-sim-conseil").className = `me-sim-conseil ${sim.conseil.ton}`; $("me-sim-conseil").textContent = sim.conseil.texte; }
+    const claude = !!sampleNs;
+    $("me-sim-mode").hidden = sim.fini || !claude;
+    document.querySelectorAll('input[name="me-sim-mode"]').forEach(r => { r.disabled = r.value === "phrases" && sim.libre && sim.echanges > 0; });
+    const libre = claude && document.querySelector('input[name="me-sim-mode"]:checked').value === "libre";
+    const etape = c.sc.etapes[sim.etape];
+    $("me-sim-choix").hidden = sim.fini || libre || !etape;
+    if (!$("me-sim-choix").hidden) $("me-sim-choix").replaceChildren(...sim.ordre.map(k => {
+      const b = element("button", "me-sim-phrase", remplirSim(etape.choix[k].t, c.ctx));
+      b.type = "button";
+      b.dataset.k = String(k);
+      return b;
+    }));
+    $("me-sim-libre").hidden = sim.fini || !libre;
+    $("me-sim-dire").disabled = sim.attente;
+    $("me-sim-fin").hidden = !sim.fini;
+    if (sim.fini) {
+      const p = c.sc.prenom, ach = sim.achat || c.ctx.modele;
+      $("me-sim-resultat").className = `me-sim-resultat ${sim.issue}`;
+      $("me-sim-resultat").textContent = sim.issue === "achat"
+        ? (c.sc.sav ? `Réussi : ${p} repart avec un échange, et content.` : `Vendu ! ${p} achète ${ach}${sim.plus ? `, avec ${sim.plus}` : ""}.`)
+        : sim.issue === "reviendra" ? `${p} hésite : « Je repasserai. » Pas de vente cette fois.` : `${p} est parti${c.sc.elle ? "e" : ""} sans acheter.`;
+    }
+  }
+  // Une phrase choisie : l'envie bouge, le client réagit, le coach commente ; à la dernière étape, il décide.
+  function choisirPhrase(k) {
+    const c = sim.courant, etape = c && c.sc.etapes[sim.etape], ch = etape && etape.choix[k];
+    if (!ch || sim.fini) return;
+    sim.fil.push({ qui: "vendeur", texte: remplirSim(ch.t, c.ctx) });
+    sim.envie = Math.max(0, Math.min(100, sim.envie + ch.e));
+    sim.conseil = { texte: ch.c, ton: ch.e >= 10 ? "bien" : ch.e <= -10 ? "mal" : "moyen" };
+    if (ch.plus) sim.plus = ch.plus;
+    c.envie = sim.envie;
+    majAnneau(c);
+    sim.fil.push({ qui: "client", texte: remplirSim(ch.rep, c.ctx) });
+    if (ch.fin === "depart" || sim.envie <= 0) return terminerVente("depart");
+    if (sim.etape + 1 < c.sc.etapes.length) {
+      sim.etape += 1;
+      sim.ordre = melange(c.sc.etapes[sim.etape].choix.length);
+      sim.fil.push({ qui: "client", texte: remplirSim(c.sc.etapes[sim.etape].client, c.ctx) });
+      rendreVente();
+    } else terminerVente(sim.envie >= 70 ? "achat" : sim.envie >= 45 ? "reviendra" : "depart");
+  }
+  function terminerVente(issue) {
+    const c = sim.courant;
+    if (!c || sim.fini) return;
+    Object.assign(sim, { fini: true, issue });
+    c.parti = true;
+    sim.vus.push(c.sc.id);
+    noterSim(c, issue);
+    if (issue !== "achat") sim.plus = null;
+    rendreVente();
+    majAideSim();
+    // Il s'en va : à la caisse s'il achète, vers la sortie sinon ; un autre client arrive.
+    const plan = t3d.plan, els = elementsDuPlan(plan.id), caisse = els.find(e => e.type === "caisse"), entree = els.find(e => e.type === "entree");
+    const cible = issue === "achat" && caisse ? versPlan(caisse, 0, -caisse.p / 2 - 0.5) : entree ? [entree.x, Math.min(entree.y, plan.profondeur - 0.3)] : [Math.min(plan.homme, plan.largeur) / 2, plan.profondeur - 0.4];
+    setTimeout(() => faireMarcherClient(c, cible, () => {
+      retirerClient(c);
+      if (sim.actif) setTimeout(() => { if (sim.actif) { nouveauClient(); rendu3D(); dessinerMiniCarte(); } }, 1200);
+    }), 900);
+  }
+  // Avec ses mots : Claude joue le client (son caractère, ce qu'il cherche, les vraies réfs du magasin) et le coach.
+  function consigneClient(c) {
+    const sc = c.sc, p = sc.persona, ou = emplacementsDuPlan(t3d.plan.id);
+    const refs = piecesEnMagasin().filter(x => sc.categories.includes(x.categorie) || ["ceintures", "chaussettes", "bonnets", "casquettes"].includes(x.categorie)).slice(0, 40)
+      .map(x => `- ${[x.marque, x.modele, x.couleur].filter(Boolean).join(" · ")}${x.prix ? `, ${formatPrix(x.prix)}` : ""}${x.matiere ? `, ${x.matiere}` : ""}${(ou.get(x.id) || [])[0] ? ` (${ou.get(x.id)[0].texte})` : ""}`);
+    const fil = sim.fil.filter(m => m.qui !== "info").map(m => `${m.qui === "client" ? "Client" : "Vendeur"} : ${m.texte}`).join("\n");
+    return [
+      "Tu joues un client dans un magasin de prêt-à-porter homme multimarque (jeans et casual). Un vendeur s'entraîne à vendre avec toi : c'est un jeu d'entraînement.",
+      "Reste dans ton personnage. Réponds comme un vrai client, en français parlé, en une à trois phrases courtes, sans jamais dire que tu es une IA ni commenter le jeu dans ta réplique.",
+      "Sois exigeant mais juste : ton envie d'acheter baisse si le vendeur est vague, insistant, te laisse seul, dévalorise un produit ou ta marque, invente une promotion, ne pose pas de questions ou parle trop ; elle monte s'il t'écoute, pose des questions ouvertes, reformule, montre un produit précis avec ses bénéfices pour toi, propose l'essayage, traite tes objections avec calme et propose au bon moment un article complémentaire pertinent.",
+      "À savoir sur le magasin : les promotions du site internet ne s'appliquent pas en magasin ; les chaussettes sont à la caisse ; un ticket cadeau permet d'échanger.",
+      "",
+      `Ton personnage : ${sc.prenom}, ${p.qui}`,
+      `Ce que tu viens chercher : ${p.besoin}`,
+      `Ton caractère : ${p.caractere}`,
+      `Ce que tu ne dis pas tout de suite : ${p.secret}`,
+      sc.sav ? "Ici, « envie » veut dire ta satisfaction : « achat » veut dire que tu repars satisfait (un échange accepté, par exemple)." : null,
+      "",
+      "Ce que le magasin a vraiment (marque · modèle · couleur, prix, matière, et où c'est) :",
+      ...(refs.length ? refs : ["- (la liste n'est pas disponible : reste général)"]),
+      "",
+      "L'échange jusqu'ici :",
+      fil,
+      "",
+      `Ton envie d'acheter avant le dernier message du vendeur : ${sim.envie}/100.`,
+      'Réponds avec seulement un objet JSON : {"client": "ta réplique", "envie": ta nouvelle envie de 0 à 100, "conseil": "une phrase de coach qui tutoie le vendeur, sur son dernier message : ce qui était bien, ou ce qu\'il aurait mieux valu dire", "ton": "bien" | "moyen" | "mal", "fin": null, "achat": ""}',
+      'Mets "fin" à "achat" quand tu décides d\'acheter (et dans "achat", ce que tu prends, en quelques mots), à "depart" quand tu t\'en vas sans acheter, à "reviendra" quand tu pars en disant que tu repasseras ; sinon laisse null. Ne termine la visite que si c\'est naturel.',
+    ].filter(l => l !== null).join("\n");
+  }
+  async function direLibre(texte) {
+    const c = sim.courant;
+    if (!c || sim.fini || sim.attente || !sampleNs || !texte.trim()) return;
+    sim.libre = true;
+    sim.echanges += 1;
+    sim.fil.push({ qui: "vendeur", texte: texte.trim().slice(0, 600) });
+    sim.attente = true;
+    $("me-sim-texte").value = "";
+    rendreVente();
+    sim.ctl = new AbortController();
+    try {
+      const r = await sampleNs.json(consigneClient(c), { modelTier: "quick", cache: false, signal: sim.ctl.signal });
+      if (sim.courant !== c) return;
+      const reponse = String((r && r.client) || "").trim().slice(0, 500), envie = Math.round(Number(r && r.envie));
+      if (reponse) sim.fil.push({ qui: "client", texte: reponse });
+      if (Number.isFinite(envie)) sim.envie = Math.max(0, Math.min(100, envie));
+      const conseil = String((r && r.conseil) || "").trim().slice(0, 300);
+      sim.conseil = conseil ? { texte: conseil, ton: ["bien", "moyen", "mal"].includes(r.ton) ? r.ton : "moyen" } : null;
+      c.envie = sim.envie;
+      majAnneau(c);
+      sim.attente = false;
+      const fin = ["achat", "depart", "reviendra"].includes(r && r.fin) ? r.fin : sim.envie <= 0 ? "depart" : sim.echanges >= 12 ? (sim.envie >= 70 ? "achat" : sim.envie >= 45 ? "reviendra" : "depart") : null;
+      if (fin) { sim.achat = fin === "achat" ? String(r.achat || "").trim().slice(0, 120) || null : null; terminerVente(fin); } else rendreVente();
+    } catch (e) {
+      sim.attente = false;
+      if (sim.courant !== c) return;
+      sim.fil.pop();
+      sim.echanges -= 1;
+      $("me-sim-texte").value = texte;
+      const code = e && e.code;
+      if (code === "cancelled") return;
+      if (["not_granted", "sampling_disabled", "not_declared", "capability_disabled", "capability_removed"].includes(code)) {
+        sampleNs = null;
+        toast("Claude n'est pas disponible ici : continue avec les phrases toutes faites.");
+        if (!sim.echanges) document.querySelector('input[name="me-sim-mode"][value="phrases"]').checked = true;
+      } else toast(code === "rate_limited" ? "Claude est très demandé : réessaie dans un moment." : code === "refused" ? "Claude n'a pas voulu répondre à ça : dis-le autrement." : "Le client n'a pas répondu. Réessaie.");
+      rendreVente();
+    }
+  }
+  $("me-3d-sim").addEventListener("click", () => basculerSimulateur(!sim.actif));
+  $("me-sim-choix").addEventListener("click", ev => { const b = ev.target.closest("[data-k]"); if (b) choisirPhrase(Number(b.dataset.k)); });
+  $("me-sim-mode").addEventListener("change", () => { rendreVente(); if (!$("me-sim-libre").hidden) $("me-sim-texte").focus(); });
+  $("me-sim-libre").addEventListener("submit", ev => { ev.preventDefault(); direLibre($("me-sim-texte").value); });
+  $("me-sim-texte").addEventListener("keydown", ev => { if (ev.key === "Enter" && !ev.shiftKey) { ev.preventDefault(); direLibre($("me-sim-texte").value); } });
+  $("me-sim-quitter").addEventListener("click", () => {
+    // Laisser le client en plein échange : il reste où il est, la visite ne compte pas.
+    if (sim.courant && !sim.fini) { sim.courant.envie = sim.courant.sc.envie; majAnneau(sim.courant); }
+    fermerVente();
+    majAideSim();
+  });
+  $("me-sim-suivant").addEventListener("click", () => { fermerVente(); majAideSim(); });
+
   // ----- un plan : créer, régler, mettre en place, dupliquer, supprimer -----
   let planEdite = null;
   // Un plan de départ, à ajuster : le mur de gauche (le plus chaud), le mur du fond (les chaussures), le mur du centre
@@ -13312,7 +14145,7 @@ body.me-plein { overflow: hidden; }
     ajouter("buste", "Buste d'entrée", H / 2 + 1.7, D - 4, 0, { tenue: null });
     ajouter("petite-table", "Petite table", H / 2 - 0.4, D * 0.5, 0);
     ajouter("tourniquet", "Tourniquet", 1.9, D * 0.32, 0);
-    ajouter("grand-portant", "Grand portant", H / 2 + 0.4, D * 0.24, 90);
+    ajouter("grand-portant", "Grand portant", H / 2 + 0.4, D * 0.24, 90, { uvL: 0.6, crans: TYPES_MERCH["grand-portant"].crans, uvs: [...ajusterUvs([], 3), ...ajusterUvs([], 3)], dessus: dessusVide(), l: 1.8 });
     ajouter("cabines", "Cabines", Math.max(2, H - 1.3), 1.2, 0);
     return els;
   }
@@ -13486,7 +14319,7 @@ body.me-plein { overflow: hidden; }
   // ----- tout redessiner -----
   // Les murs (sans les miroirs), les miroirs, et les UV qui portent des articles (sans les miroirs).
   function compteMurs(els) {
-    const murs = els.filter(e => TYPES_MERCH[e.type].porte === "uv");
+    const murs = els.filter(e => TYPES_MERCH[e.type].porte === "uv" && facesDe(e) !== 2);   // un mini-mur (le grand portant) reste un meuble
     return { murs: murs.filter(e => !estUnMiroir(e)).length, miroirs: murs.filter(estUnMiroir).length, uv: murs.reduce((n, e) => n + e.uvs.filter(u => !estMiroir(u)).length, 0), tous: murs.length };
   }
   function rendreResumeMerch() {
