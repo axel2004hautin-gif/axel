@@ -347,6 +347,7 @@ a.choix-case:hover { background: var(--c-doux); }
 .reprendre.erreur { border-color: var(--erreur); background: var(--erreur-doux); }
 .reprendre.erreur span { color: var(--erreur); }
 #fp-photo { margin-top: 0; }
+#fp-photo-bouton.occupe { opacity: .6; pointer-events: none; }
 @media (max-width: 479px) { .reprendre .bouton-second { flex: 1 1 100%; } }
 /* Sur téléphone, les pastilles passent sous le nom du jour quand elles n'ont plus la place à côté. */
 .jour-tete { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 12px; padding-bottom: 8px; border-bottom: 1px solid var(--trait); }
@@ -1815,8 +1816,8 @@ details.groupe-pieces { display: block; }
   </div>
   <div class="fenetre-corps">
     <div class="reprendre" id="fp-photo" hidden>
-      <span id="fp-photo-texte">Le planning du magasin en photo : Claude remplit ta semaine, et celle de l'équipe.</span>
-      <label class="bouton-second bouton-fichier"><span>Lire une photo</span><input class="invisible" type="file" id="fp-photo-fichier" accept="image/*"></label>
+      <span id="fp-photo-texte">Le planning du magasin en photo (jusqu'à 3 photos, bien en face et d'assez près) : Claude remplit ta semaine, et celle de l'équipe.</span>
+      <label class="bouton-second bouton-fichier" id="fp-photo-bouton"><span id="fp-photo-bouton-texte">Lire une photo</span><input class="invisible" type="file" id="fp-photo-fichier" accept="image/*" multiple></label>
     </div>
     <div class="reprendre" id="fp-reprendre" hidden>
       <span id="fp-reprendre-texte"></span>
@@ -2981,29 +2982,46 @@ details.groupe-pieces { display: block; }
     return debut && fin && minutes(fin) > minutes(debut) ? { debut, fin } : null;
   }
   const simplifier = t => sansAccents(t).replace(/[^a-z]/g, "");
+  let photoEnCours = false;
+  // Une remarque de Claude, entière : coupée à la fin d'une phrase si elle est trop longue.
+  function phraseEntiere(t, max) {
+    t = (typeof t === "string" ? t : "").replace(/\s+/g, " ").trim();
+    if (t.length <= max) return t;
+    const coupe = t.slice(0, max), fin = Math.max(coupe.lastIndexOf(". "), coupe.lastIndexOf(" : "), coupe.lastIndexOf("; "));
+    return fin > max / 3 ? coupe.slice(0, fin + 1).trim() : coupe.replace(/\s+\S*$/, "") + "…";
+  }
   $("fp-photo-fichier").addEventListener("change", async e => {
-    const fichier = e.target.files[0];
+    const fichiers = [...e.target.files];
     e.target.value = "";
-    if (!fichier || !sampleNs || lundiEdite == null) return;
+    if (!fichiers.length || !sampleNs || lundiEdite == null || photoEnCours) return;
     const dire = (texte, erreur) => { $("fp-photo-texte").textContent = texte; $("fp-photo").classList.toggle("erreur", !!erreur); };
     const lundi = lundiEdite, info = infoSemaine(lundi);
-    dire("Claude lit la photo…");
+    photoEnCours = true;
+    $("fp-photo-bouton").classList.add("occupe");
+    $("fp-photo-bouton-texte").textContent = "Lecture…";
     try {
       const limites = await sampleNs.limits();
       if (!limites.images) throw { code: "images_unavailable" };
-      const image = await versJpeg(fichier, 1568);
-      if (image.size > limites.images.maxInputBytes) throw { code: "too_large" };
+      const choisies = fichiers.slice(0, Math.min(3, limites.images.maxCount || 1));
+      dire(choisies.length > 1 ? `Claude lit les ${choisies.length} photos… (une minute environ)` : "Claude lit la photo… (une minute environ)");
+      const images = [];
+      for (const f of choisies) {
+        const image = await versJpeg(f, 1568);
+        if (image.size > limites.images.maxInputBytes) throw { code: "too_large" };
+        images.push(image);
+      }
       const prenom = (reglagesArgent().titulaire || "").split(/\s+/)[0], lst = collegues();
       const jourDate = i => `${JOURS[i]} ${new Date(lundi + i * JOUR_MS).getUTCDate()} ${MOIS[new Date(lundi + i * JOUR_MS).getUTCMonth()]}`;
-      const consigne = `Tu lis la photo du planning d'un magasin de vêtements (Blue Box). Il donne, jour par jour, les horaires de chaque vendeur pour la semaine ${info.num} (${JOURS.map((_, i) => jourDate(i)).join(", ")}).`
+      const consigne = `Tu lis ${images.length > 1 ? `${images.length} photos d'un même planning (des morceaux à assembler)` : "la photo du planning"} d'un magasin de vêtements (Blue Box). Il donne, jour par jour, les horaires de chaque vendeur pour la semaine ${info.num} (${JOURS.map((_, i) => jourDate(i)).join(", ")}).`
+        + `\n\nCe planning est souvent une grille : une ligne par vendeur (parfois une par jour et par vendeur), des colonnes pour les heures (par heure, demi-heure ou quart d'heure), et des cases grisées, colorées ou hachurées pour le temps travaillé ; ou bien des horaires écrits dans les cases. Repère d'abord les heures en tête des colonnes et le nom de chaque ligne, puis, pour chaque vendeur et chaque jour, lis où commence et où finit chaque bloc de cases remplies (une coupure au milieu, c'est la pause du midi). Suis chaque ligne d'un bout à l'autre pour ne pas mélanger les vendeurs ; une photo prise un peu de biais se lit quand même en suivant les lignes.`
         + `\n\nLe vendeur qui utilise ce tableau ${prenom ? `s'appelle ${prenom} (le planning peut l'écrire en majuscules, en initiale ou abrégé)` : "est sur la ligne marquée comme la sienne"}.`
         + (lst.length ? `\nSes collègues déjà connus, à écrire pareil : ${lst.map(c => c.prenom).join(", ")}.` : "")
         + `\n\nRéponds seulement avec un objet JSON : {"moi": {"lundi": {"statut": "", "matin": {"debut": "10:00", "fin": "12:30"}, "apresMidi": {"debut": "14:00", "fin": "19:00"}}, "mardi": {…}, …, "dimanche": {…}}, "equipe": [{"prenom": "", "jours": {"lundi": "", "mardi": "", "mercredi": "", "jeudi": "", "vendredi": "", "samedi": "", "dimanche": ""}}], "remarque": ""}.`
         + `\n- moi : ses horaires à lui. statut : "repos", "conge" ou "ferie" si le jour n'est pas travaillé, sinon "". matin et apresMidi au format HH:MM sur 24 heures ; null si la période n'est pas travaillée. Une journée sans coupure (10h à 19h) : tout dans matin, apresMidi null. Un jour absent du planning : statut "" et les deux à null.`
         + `\n- equipe : chacun des autres vendeurs du planning, avec son prénom tel qu'écrit, et ses horaires jour par jour en texte court (« 10h-19h », « 10h-12h30 14h-19h ») ou « repos » ; "" si rien n'est noté.`
-        + `\n- remarque : une phrase courte sur ce qui est illisible ou incertain (une autre semaine que celle-ci, une case floue), ou "".`
+        + `\n- remarque : UNE phrase de moins de 160 caractères sur ce qui est illisible ou incertain (une autre semaine que celle-ci, une case floue, une ligne coupée), ou "". Donne quand même tout ce que tu arrives à lire.`
         + `\nN'invente rien : une case illisible reste "" ou null.`;
-      const r = await sampleNs.json(consigne, { images: [image] });
+      const r = await sampleNs.json(consigne, { images, modelTier: "complex" });
       if (lundiEdite !== lundi) return;
       // Ma semaine : dans la fenêtre, à vérifier.
       const sem = semaineVide(), moi = r && typeof r.moi === "object" && r.moi ? r.moi : {};
@@ -3016,7 +3034,8 @@ details.groupe-pieces { display: block; }
       });
       if (lus) remplirSaisie(sem);
       // L'équipe : ses horaires de la semaine, enregistrés tout de suite.
-      const lues = Array.isArray(r && r.equipe) ? r.equipe.filter(x => x && typeof x.prenom === "string" && simplifier(x.prenom) && (!prenom || simplifier(x.prenom) !== simplifier(prenom)) && x.jours && typeof x.jours === "object").slice(0, 30) : [];
+      const lues = Array.isArray(r && r.equipe) ? r.equipe.filter(x => x && typeof x.prenom === "string" && simplifier(x.prenom) && (!prenom || simplifier(x.prenom) !== simplifier(prenom)) && x.jours && typeof x.jours === "object"
+        && JOURS.some(j => typeof x.jours[j] === "string" && x.jours[j].trim())).slice(0, 30) : [];
       const avant = (equipeSemaines.docs[info.cle] || {}).jours || {}, jours = Object.fromEntries(JOURS.map(j => [j, { ...(avant[j] || {}) }]));
       const nouveaux = [];
       for (const x of lues) {
@@ -3031,9 +3050,9 @@ details.groupe-pieces { display: block; }
         JOURS.forEach(j => { const v = typeof x.jours[j] === "string" ? x.jours[j].trim().slice(0, 24) : ""; if (v) jours[j][c.id] = v; });
       }
       if (lues.length) await equipeSemaines.ecrire(info.cle, { jours, modifieLe: maintenant() });
-      const remarque = r && typeof r.remarque === "string" ? r.remarque.trim().slice(0, 200) : "";
-      dire([lus ? "Lu sur la photo : vérifie tes horaires, puis enregistre." : "Je n'ai pas trouvé tes horaires sur la photo.",
-        lues.length ? `Équipe : ${lues.length} personne${lues.length > 1 ? "s" : ""} lue${lues.length > 1 ? "s" : ""}${nouveaux.length ? ` (${listeFr(nouveaux)} ajouté${nouveaux.length > 1 ? "s" : ""} à l'équipe)` : ""}.` : "",
+      const remarque = phraseEntiere(r && r.remarque, 260);
+      dire([lus ? "Lu sur la photo : vérifie tes horaires, puis enregistre." : "Je n'ai pas trouvé tes horaires sur la photo. Reprends-la plus près et bien en face, ou en 2 ou 3 morceaux choisis ensemble.",
+        lues.length ? `Équipe : les horaires de ${lues.length} personne${lues.length > 1 ? "s" : ""} lus${nouveaux.length ? ` (${listeFr(nouveaux)} ajouté${nouveaux.length > 1 ? "s" : ""} à l'équipe)` : ""}.` : "",
         remarque].filter(Boolean).join(" "), !lus);
     } catch (err) {
       const code = err && err.code;
@@ -3042,7 +3061,12 @@ details.groupe-pieces { display: block; }
       else if (code === "too_large") dire("Photo trop lourde pour Claude.", true);
       else if (code === "images_unavailable") dire("Claude ne peut pas regarder les images ici.", true);
       else if (code === "rate_limited") dire("Trop de demandes d'un coup : réessaie dans un moment.", true);
+      else if (code === "image_rejected") dire("Ce format de photo n'est pas accepté : prends une photo ou une capture d'écran classique.", true);
       else dire("Claude n'a pas pu lire cette photo. Réessaie avec une photo plus nette, prise bien en face.", true);
+    } finally {
+      photoEnCours = false;
+      $("fp-photo-bouton").classList.remove("occupe");
+      $("fp-photo-bouton-texte").textContent = "Lire une photo";
     }
   });
 
@@ -3083,7 +3107,7 @@ details.groupe-pieces { display: block; }
     if (modele) $("fp-reprendre-texte").textContent = `Les mêmes horaires que la semaine ${infoSemaine(modele.lundi).num} ?`;
     $("fp-photo").hidden = !sampleNs;
     $("fp-photo").classList.remove("erreur");
-    $("fp-photo-texte").textContent = "Le planning du magasin en photo : Claude remplit ta semaine, et celle de l'équipe.";
+    $("fp-photo-texte").textContent = "Le planning du magasin en photo (jusqu'à 3 photos, bien en face et d'assez près) : Claude remplit ta semaine, et celle de l'équipe.";
     ouvrir($("fenetre-planning"));
     $("fenetre-planning").querySelector(".fenetre-corps").scrollTop = 0;
     $("fp-0-conge").focus();
