@@ -12811,18 +12811,26 @@ body.me-plein { overflow: hidden; }
     renderer.domElement.tabIndex = 0;
     renderer.domElement.setAttribute("aria-label", "Le magasin en 3D");
     zone.prepend(renderer.domElement);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = T.PCFSoftShadowMap;
     const scene = new T.Scene();
-    scene.background = new T.Color("#e9edf3");
-    scene.add(new T.HemisphereLight(0xffffff, 0xb9ad98, 0.72));
-    const soleil = new T.DirectionalLight(0xffffff, 0.5);
-    soleil.position.set(-8, 14, 10);
-    scene.add(soleil);
+    scene.background = new T.Color("#e4e6ea");
+    scene.fog = new T.Fog("#e4e6ea", 28, 70);
+    scene.add(new T.HemisphereLight(0xffffff, 0xcfcac2, 0.46));
+    scene.add(new T.AmbientLight(0xffffff, 0.08));
+    const soleil = new T.DirectionalLight(0xfffaf3, 0.7);
+    soleil.castShadow = true;
+    soleil.shadow.mapSize.set(2048, 2048);
+    soleil.shadow.bias = -0.0004;
+    soleil.shadow.normalBias = 0.02;
+    soleil.shadow.radius = 3;
+    scene.add(soleil, soleil.target);
     const camera = new T.PerspectiveCamera(55, 1, 0.05, 300);
     const controls = new T.OrbitControls(camera, renderer.domElement);
     controls.screenSpacePanning = true;
     controls.addEventListener("change", () => { if (!t3d.anim) { rendu3D(); dessinerMiniCarte(); } });
     controls.addEventListener("end", () => { if (t3d.mode === "promenade") placerFleches(); });
-    t3d = { T, renderer, scene, camera, controls, groupe: null, fleches: null, mode: "ensemble", anim: null, mats: new Map(), textures: new Map(), choisi: null, posees: false, grille: null, formes: [] };
+    t3d = { T, renderer, scene, camera, controls, soleil, groupe: null, fleches: null, mode: "ensemble", anim: null, mats: new Map(), textures: new Map(), choisi: null, posees: false, grille: null, formes: [] };
     // Toucher sans glisser : une flèche ou le sol (on y va), un meuble (on s'en approche).
     let depart = null;
     renderer.domElement.addEventListener("pointerdown", ev => { depart = { x: ev.clientX, y: ev.clientY }; });
@@ -12953,7 +12961,7 @@ body.me-plein { overflow: hidden; }
     ctx.fillText(texte, 14, (f + 22) / 2 + 1);
     const s = new t3d.T.Sprite(new t3d.T.SpriteMaterial({ map: new t3d.T.CanvasTexture(c), depthTest: false }));
     s.renderOrder = 10;
-    s.scale.set(0.32 * w / (f + 22), 0.32, 1);
+    s.scale.set(0.26 * w / (f + 22), 0.26, 1);
     return s;
   }
   // Les plaques noires à crans : une rainure tous les 5 cm.
@@ -13037,7 +13045,11 @@ body.me-plein { overflow: hidden; }
           }
         });
       });
-      faces.forEach(c => c.add(boite(0.025, H, 0.07, C3D.montant, e.l / 2, H / 2, -0.16)));
+      faces.forEach(c => {
+        c.add(boite(0.025, H, 0.07, C3D.montant, e.l / 2, H / 2, -0.16));
+        c.add(boite(e.l + 0.02, 0.1, 0.05, C3D.montant, 0, 0.05, -0.12));          // la plinthe
+        c.add(boite(e.l + 0.03, 0.045, 0.11, C3D.montant, 0, H + 0.022, -0.16));   // la corniche
+      });
       if (deux) {
         // Le dessus : deux étagères (à gauche et à droite, vues du recto), de 2 ou 4 piles.
         const yD = H + 0.03, lg = e.l / 2 - 0.08, pd = Math.min(0.56, e.p * 0.5);
@@ -13057,9 +13069,20 @@ body.me-plein { overflow: hidden; }
     } else if (t.porte === "niveaux") {
       const h = e.type === "grande-table" ? 0.78 : 0.72;
       haut = h + 0.2;
-      g.add(boite(e.l - 0.12, h - 0.06, e.p - 0.12, C3D.pied, 0, (h - 0.06) / 2, 0));
-      g.add(boite(e.l, 0.06, e.p, C3D.plateau, 0, h - 0.03, 0));
-      for (let k = 1; k < e.hauteurs; k++) g.add(boite(e.l + 0.12 * k, 0.04, e.p + 0.1 * k, C3D.plateau, 0, h - 0.24 * k, 0));
+      const ep = 0.045;
+      g.add(boite(e.l, ep, e.p, C3D.plateau, 0, h - ep / 2, 0));
+      if (e.hauteurs > 1) {
+        // Des tables gigognes : chaque étage plus large et plus bas, sur un socle de bois plus sombre.
+        for (let k = 1; k < e.hauteurs; k++) {
+          const hk = h - 0.24 * k, lk = e.l + 0.12 * k, pk = e.p + 0.1 * k;
+          g.add(boite(lk, ep, pk, C3D.plateau, 0, hk - ep / 2, 0));
+          g.add(boite(lk - 0.06, hk - ep, pk - 0.06, C3D.pied, 0, (hk - ep) / 2, 0));
+        }
+        g.add(boite(e.l - 0.06, h - ep, e.p - 0.06, C3D.pied, 0, (h - ep) / 2, 0));
+      } else {
+        g.add(boite(e.l - 0.1, 0.08, e.p - 0.1, C3D.pied, 0, h - ep - 0.04, 0));
+        [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sz]) => g.add(boite(0.055, h - ep, 0.055, C3D.pied, sx * (e.l / 2 - 0.07), (h - ep) / 2, sz * (e.p / 2 - 0.07))));
+      }
       const milieu = e.dispo === "milieu";
       rangeesTable(e).forEach(([r, n], ri) => {
         const lp = Math.min((e.l - 0.08) / n * 0.82, 0.34), pp = milieu ? Math.min(e.p * 0.74, 0.62) : Math.min(e.p * 0.4, 0.34);
@@ -13074,7 +13097,8 @@ body.me-plein { overflow: hidden; }
       haut = hRail + 0.1;
       if (e.type === "tourniquet") {
         g.add(cylindre(0.02, hRail, C3D.portant, 0, hRail / 2, 0));
-        const anneau = new T.Mesh(new T.TorusGeometry(e.l / 2 * 0.85, 0.012, 8, 40), mat3D(C3D.portant));
+        [0, 1, 2].forEach(k => { const pied = boite(0.5, 0.025, 0.04, C3D.portant, 0, 0.0125, 0); pied.rotation.y = k * Math.PI / 3; g.add(pied); });
+        const anneau = new T.Mesh(new T.TorusGeometry(e.l / 2 * 0.85, 0.012, 8, 40), matMetal());
         anneau.rotation.x = Math.PI / 2;
         anneau.position.y = hRail;
         g.add(anneau);
@@ -13087,9 +13111,15 @@ body.me-plein { overflow: hidden; }
         }
       } else {
         const rails = e.p > 1 ? [-e.p / 4, e.p / 4] : [0];
-        [-1, 1].forEach(s => g.add(boite(0.04, hRail, Math.max(0.4, e.p * 0.8), C3D.portant, s * (e.l / 2 - 0.03), hRail / 2, 0)));
+        [-1, 1].forEach(s => {
+          const x = s * (e.l / 2 - 0.03), large = Math.max(0.45, e.p * 0.85);
+          rails.forEach(z => { const m = cylindre(0.016, hRail, C3D.portant, x, hRail / 2, z); m.material = matMetal(); g.add(m); });
+          g.add(boite(0.045, 0.03, large, C3D.portant, x, 0.015, 0));                 // le pied
+          [-1, 1].forEach(t => g.add(cylindre(0.022, 0.02, "#2b2e36", x, 0.011, t * (large / 2 - 0.03))));   // les roulettes
+        });
         rails.forEach((z, ri) => {
           const rail = cylindre(0.014, e.l - 0.06, C3D.portant, 0, hRail, z);
+          rail.material = matMetal();
           rail.rotation.z = Math.PI / 2;
           g.add(rail);
           const n = Math.max(6, Math.floor((e.l - 0.12) / 0.07));
@@ -13100,12 +13130,28 @@ body.me-plein { overflow: hidden; }
         });
       }
     } else if (t.famille === "buste") {
-      const a = (e.articles || [])[0], c = couleur3D(a) || "#e9e6e0", grand = e.type === "mannequin";
-      haut = grand ? 1.9 : 1.4;
-      g.add(cylindre(e.l / 2 * 0.7, 0.04, "#5b6478", 0, 0.02, 0));
-      g.add(cylindre(0.02, grand ? 0.9 : 0.75, "#5b6478", 0, grand ? 0.45 : 0.38, 0));
-      g.add(cylindre(0.17, 0.62, c, 0, grand ? 1.22 : 1.05, 0));
-      if (grand) { const tete = new T.Mesh(new T.SphereGeometry(0.11, 16, 12), mat3D("#e9e6e0")); tete.position.set(0, 1.68, 0); g.add(tete); }
+      // Ce qu'il porte : le haut et le bas à la couleur de leurs réfs ; sinon le blanc cassé du mannequin.
+      const arts = e.articles || [], estBas = a => { const x = pieces[a.p]; return !!x && BAS_CATEGORIES.includes(x.categorie); };
+      const peau = "#ece8e1", grand = e.type === "mannequin", base = grand ? 0.03 : 0.03;
+      const cHaut = couleur3D(arts.find(a => !estBas(a))) || peau, cBas = couleur3D(arts.find(estBas)) || peau;
+      haut = grand ? 1.9 : 1.6;
+      g.add(cylindre(0.2, base, "#2b2e36", 0, base / 2, 0));
+      const membre = (r1, r2, h, coul, x, y, z, rz) => { const m = new T.Mesh(new T.CylinderGeometry(r1, r2, h, 14), mat3D(coul)); m.position.set(x, y, z); if (rz) m.rotation.z = rz; g.add(m); return m; };
+      if (grand) {
+        [-0.085, 0.085].forEach(x => membre(0.065, 0.045, 0.86, cBas, x, base + 0.43, 0));
+        const bassin = membre(0.15, 0.15, 0.16, cBas, 0, 0.98, 0); bassin.scale.z = 0.62;
+        const buste = membre(0.18, 0.14, 0.5, cHaut, 0, 1.31, 0); buste.scale.z = 0.6;
+        [-1, 1].forEach(s => membre(0.045, 0.035, 0.6, cHaut, s * 0.215, 1.27, 0, s * 0.09));
+        membre(0.045, 0.05, 0.09, peau, 0, 1.6, 0);
+        const tete = new T.Mesh(new T.SphereGeometry(0.1, 18, 14), mat3D(peau));
+        tete.scale.set(0.85, 1.12, 0.95);
+        tete.position.set(0, 1.74, 0);
+        g.add(tete);
+      } else {
+        membre(0.012, 0.012, 1.0, "#2b2e36", 0, base + 0.5, 0);
+        const buste = membre(0.18, 0.14, 0.52, cHaut, 0, 1.26, 0); buste.scale.z = 0.6;
+        membre(0.045, 0.05, 0.08, peau, 0, 1.56, 0);
+      }
     } else if (t.famille === "presentoir") {
       const h = e.type === "bac" ? 0.75 : e.type === "cube" ? 0.45 : 1.5;
       haut = h + 0.1;
@@ -13214,6 +13260,70 @@ body.me-plein { overflow: hidden; }
       return { e, couleur, pts: [[-e.l / 2, -p / 2], [e.l / 2, -p / 2], [e.l / 2, p / 2], [-e.l / 2, p / 2]].map(([a, b]) => versPlan(e, a, b)) };
     });
   }
+  // Le parquet : des lames de chêne clair (une texture dessinée une fois, répétée tous les 1,2 m).
+  function matParquet(H, D) {
+    const cle = "parquet";
+    if (!t3d.mats.has(cle)) {
+      const c = document.createElement("canvas"), n = 6;
+      c.width = 256; c.height = 256;
+      const ctx = c.getContext("2d"), tons = ["#d0c4ae", "#c9bca5", "#d5c9b4", "#c5b8a1", "#cec1ab", "#c2b49c"];
+      for (let i = 0; i < n; i++) {
+        const y = i * 256 / n, decal = (i * 97) % 256;
+        [[0, decal], [decal, 256]].forEach(([x0, x1], k) => { ctx.fillStyle = tons[(i + k * 3) % tons.length]; ctx.fillRect(x0, y, x1 - x0, 256 / n); });
+        ctx.fillStyle = "rgba(120, 95, 60, .18)";
+        ctx.fillRect(0, y, 256, 1.5);
+        ctx.fillRect(decal, y, 1.5, 256 / n);
+        for (let f = 0; f < 6; f++) { ctx.fillStyle = "rgba(150, 120, 80, .06)"; ctx.fillRect(0, y + 3 + f * 6.5, 256, 1); }
+      }
+      const tex = new t3d.T.CanvasTexture(c);
+      tex.wrapS = tex.wrapT = t3d.T.RepeatWrapping;
+      t3d.mats.set(cle, new t3d.T.MeshLambertMaterial({ map: tex }));
+    }
+    const m = t3d.mats.get(cle);
+    m.map.repeat.set(H / 1.2, D / 1.2);
+    return m;
+  }
+  // La coque du magasin : les murs du fond et des côtés (blanc cassé, avec leur plinthe), la devanture vitrée à l'entrée.
+  function coque3D(g, plan, L, D) {
+    const blanc = "#f1efea", plinthe = "#c9c4ba", Hm = 3, ep = 0.1;
+    const mur = (x, z, l, p) => {
+      const m = boite(l, Hm, p, blanc, x, Hm / 2, z);
+      m.userData.recoit = true;
+      g.add(m);
+      const b = boite(l + 0.002, 0.1, p + 0.02, plinthe, x, 0.05, z);
+      b.userData.recoit = true;
+      g.add(b);
+    };
+    mur(L / 2, -ep / 2, L + 2 * ep, ep);
+    mur(-ep / 2, D / 2, ep, D);
+    mur(L + ep / 2, D / 2, ep, D);
+    // La devanture : du verre du sol à 2,6 m, coupé à l'entrée ; un bandeau sombre au-dessus.
+    const entree = elementsDuPlan(plan.id).find(e => e.type === "entree"), trou = entree ? [entree.x - entree.l / 2, entree.x + entree.l / 2] : [L / 2 - 1, L / 2 + 1];
+    const verre = mat3D("#cfe6f3", { transparent: true, opacity: 0.16, depthWrite: false });
+    [[0, trou[0]], [trou[1], L]].forEach(([a, b]) => { if (b - a > 0.05) g.add(boite(b - a, 2.6, 0.03, verre, (a + b) / 2, 1.3, D + 0.02)); });
+    // Le plafond (vu seulement d'en dessous, en se promenant) et ses dalles lumineuses.
+    const plafond = new t3d.T.Mesh(new t3d.T.PlaneGeometry(L, D), mat3D("#ecebe7", { emissive: "#7e7c78" }));
+    plafond.rotation.x = Math.PI / 2;
+    plafond.position.set(L / 2, Hm, D / 2);
+    plafond.userData.recoit = true;
+    g.add(plafond);
+    if (!t3d.mats.has("dalle")) t3d.mats.set("dalle", new t3d.T.MeshBasicMaterial({ color: "#ffffff" }));
+    for (let x = 1.5; x < L; x += 3) for (let z = 2; z < D; z += 4) {
+      const dalle = new t3d.T.Mesh(new t3d.T.PlaneGeometry(1.2, 0.3), t3d.mats.get("dalle"));
+      dalle.rotation.x = Math.PI / 2;
+      dalle.position.set(x, Hm - 0.01, z);
+      dalle.userData.recoit = true;
+      g.add(dalle);
+    }
+    const bandeau = boite(L + 2 * ep, 0.4, 0.12, "#2b2e36", L / 2, 2.8, D + 0.04);
+    bandeau.userData.recoit = true;
+    g.add(bandeau);
+    [0, trou[0], trou[1], L].forEach(x => { const m = boite(0.05, 2.6, 0.06, "#2b2e36", x, 1.3, D + 0.03); m.userData.recoit = true; g.add(m); });
+  }
+  function matMetal() {
+    if (!t3d.mats.has("metal")) t3d.mats.set("metal", new t3d.T.MeshPhongMaterial({ color: "#aeb4bd", specular: 0x9aa0a8, shininess: 70 }));
+    return t3d.mats.get("metal");
+  }
   function construireScene3D(cadrer) {
     if (!t3d) return;
     const T = t3d.T, plan = planAffiche();
@@ -13222,22 +13332,20 @@ body.me-plein { overflow: hidden; }
     const g = new T.Group(), L = plan.largeur, D = plan.profondeur, H = Math.min(plan.homme, L);
     t3d.groupe = g;
     t3d.plan = plan;
-    const sol = new T.Mesh(new T.PlaneGeometry(H, D), mat3D("#efe6d6"));
+    const sol = new T.Mesh(new T.PlaneGeometry(H, D), matParquet(H, D));
     sol.rotation.x = -Math.PI / 2;
     sol.position.set(H / 2, 0, D / 2);
     sol.userData.sol = true;
+    sol.userData.recoit = true;
     g.add(sol);
-    const grille = new T.GridHelper(Math.max(H, D), Math.max(H, D), 0xd9cdb6, 0xe2d8c6);
-    grille.position.set(Math.max(H, D) / 2, 0.003, Math.max(H, D) / 2);
-    grille.scale.set(H / Math.max(H, D), 1, D / Math.max(H, D));
-    g.add(grille);
     if (H < L) {
-      const femme = new T.Mesh(new T.PlaneGeometry(L - H, D), mat3D("#dfe3e9"));
+      const femme = new T.Mesh(new T.PlaneGeometry(L - H, D), mat3D("#c4c9d1"));
       femme.rotation.x = -Math.PI / 2;
       femme.position.set(H + (L - H) / 2, 0, D / 2);
+      femme.userData.recoit = true;
       g.add(femme);
     }
-    [[L / 2, 0, L, 0.08], [L / 2, D, L, 0.08], [0, D / 2, 0.08, D], [L, D / 2, 0.08, D]].forEach(([x, z, l, p]) => g.add(boite(l, 0.12, p, "#5b6478", x, 0.06, z)));
+    coque3D(g, plan, L, D);
     const els = elementsDuPlan(plan.id), alertes = new Set();
     // Les meubles avec une alerte (une réf. qui n'a pas bougé, une règle à revoir) : une pastille rouge au-dessus.
     try { const al = alertesDuPlan(plan); al.immobiles.forEach(p => alertes.add(p.e.id)); al.regles.filter(r => !r.exception).forEach(r => alertes.add(r.e.id)); } catch (_) { /* rien */ }
@@ -13258,6 +13366,18 @@ body.me-plein { overflow: hidden; }
         g.add(p);
       }
     });
+    // Les ombres : chaque meuble en porte une ; le sol, les murs et les meubles les reçoivent (pas les verres ni les étiquettes).
+    g.traverse(o => {
+      if (!o.isMesh) return;
+      const transparent = [].concat(o.material).some(m => m && m.transparent);
+      o.castShadow = !transparent && !o.userData.sol && !o.userData.recoit && !o.userData.sansOmbre;
+      o.receiveShadow = !transparent;
+    });
+    const so = t3d.soleil, R = Math.max(L, D) * 0.62;
+    so.position.set(L * 0.38, 15, D * 0.62);
+    so.target.position.set(L * 0.5, 0, D * 0.45);
+    Object.assign(so.shadow.camera, { left: -R, right: R, top: R, bottom: -R, near: 1, far: 45 });
+    so.shadow.camera.updateProjectionMatrix();
     t3d.scene.add(g);
     t3d.formes = formesDuPlan(plan);
     t3d.grille = grilleMarche(plan);
