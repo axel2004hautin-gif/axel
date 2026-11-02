@@ -1655,47 +1655,32 @@ body.me-plein { overflow: hidden; }
 .me-espace.plein .me-3d-canvas { position: absolute; inset: 0; }
 .me-espace.plein .me-panneau { position: static; max-height: calc(100dvh - 20px); overflow: auto; }
 .me-3d-agrandir { margin-left: auto; }
-.me-3d-sim-bouton { margin-left: auto; }
-.me-3d-sim-bouton + .me-3d-agrandir { margin-left: 0; }
-.me-3d-sim-bouton[aria-pressed="true"] { border-color: #2f9e5b; color: #1f6b3d; }
-.me-3d-zone.en-vente .me-3d-pad, .me-3d-zone.en-vente .me-3d-carte { display: none; }
-.me-sim { position: absolute; top: 10px; right: 10px; display: grid; gap: 8px; width: min(420px, calc(100% - 20px)); max-height: calc(100% - 20px); padding: 12px 14px; overflow: hidden; border-radius: 14px; background: rgba(255, 255, 255, .97); box-shadow: 0 10px 30px rgba(15, 25, 50, .25); grid-template-rows: auto auto minmax(0, 1fr) auto auto auto auto; }
-.me-sim[hidden] { display: none; }
-.me-sim-tete { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
-.me-sim-qui-est { display: grid; }
-.me-sim-qui-est b { color: var(--marine); font-size: 1.05rem; }
-.me-sim-qui-est span { color: var(--gris); font-size: .82rem; }
-.me-sim-envie { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; font-size: .78rem; font-weight: 600; }
-.me-sim-jauge { height: 8px; overflow: hidden; border-radius: 99px; background: #e6e9ef; }
-.me-sim-jauge i { display: block; height: 100%; border-radius: 99px; transition: width .4s ease, background-color .4s ease; }
-.me-sim-fil { display: grid; align-content: start; gap: 6px; min-height: 60px; margin: 0; padding: 0; overflow: auto; list-style: none; }
-.me-sim-msg { display: grid; gap: 1px; max-width: 88%; padding: 7px 10px; border-radius: 12px; font-size: .9rem; line-height: 1.35; }
-.me-sim-msg.client { justify-self: start; background: #eef0f4; border-bottom-left-radius: 4px; }
-.me-sim-msg.vendeur { justify-self: end; background: var(--marine); color: #ffffff; border-bottom-right-radius: 4px; }
-.me-sim-msg.attente { color: #5a6275; font-style: italic; }
-.me-sim-qui { font-size: .68rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; opacity: .7; }
-.me-sim-conseil { margin: 0; padding: 7px 10px; border-left: 4px solid #e0a030; border-radius: 6px; background: #fdf6e7; font-size: .84rem; }
-.me-sim-conseil.bien { border-color: #2f9e5b; background: #eaf6ee; }
-.me-sim-conseil.mal { border-color: #d64545; background: #fbecec; }
-.me-sim-mode { justify-self: start; }
-.me-sim-mode[hidden] { display: none; }
-.me-sim-choix { display: grid; gap: 6px; }
-.me-sim-choix[hidden] { display: none; }
-.me-sim-phrase { padding: 8px 10px; border: 1.5px solid var(--trait); border-radius: 10px; background: var(--fond); color: var(--encre); font: inherit; font-size: .88rem; line-height: 1.3; text-align: left; cursor: pointer; }
-.me-sim-phrase:hover { border-color: var(--marine); }
-.me-sim-libre { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 8px; }
-.me-sim-libre[hidden] { display: none; }
-.me-sim-libre textarea { width: 100%; min-height: 44px; padding: 8px 10px; border: 1.5px solid var(--trait); border-radius: 10px; font: inherit; font-size: .9rem; resize: vertical; }
-.me-sim-fin { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
-.me-sim-fin[hidden] { display: none; }
-.me-sim-resultat { margin: 0; font-weight: 700; }
-.me-sim-resultat.achat { color: #1f6b3d; }
-.me-sim-resultat.reviendra { color: #9a6a10; }
-.me-sim-resultat.depart { color: #a12f2f; }
-@media (max-width: 599px) {
-  .me-sim { position: fixed; top: auto; bottom: 8px; right: 8px; left: 8px; z-index: 320; width: auto; max-height: 78dvh; overflow: auto; grid-template-rows: none; }
-  .me-sim-fil { max-height: 34dvh; }
-}
+/* Claude, à côté du plan : un onglet du panneau. */
+.me-panneau-onglets { justify-self: start; }
+.me-panneau-onglets[hidden] { display: none; }
+.me-panneau.avec-claude > #me-resume, .me-panneau.avec-claude > #me-form { display: none !important; }
+.me-panneau:not(.avec-claude) > #me-claude { display: none; }
+.me-claude { display: grid; gap: 10px; min-width: 0; }
+.me-claude-tete { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.me-claude .aide { margin: 0; }
+.me-claude-idees { display: flex; flex-wrap: wrap; gap: 6px; }
+.me-claude-idee { max-width: 100%; padding: 5px 11px; overflow: hidden; border: 1.5px solid var(--trait); border-radius: 99px; background: var(--fond); color: var(--marine); font: inherit; font-size: .8rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+.me-claude-idee:hover:not(:disabled) { border-color: var(--marine); background: var(--marine-doux); }
+.me-claude-idee:disabled { opacity: .5; cursor: default; }
+.me-claude-fil { display: grid; align-content: start; gap: 8px; max-height: min(52vh, 560px); margin: 0; padding: 0; overflow: auto; list-style: none; }
+.me-claude-fil:empty { display: none; }
+.me-claude-msg { max-width: 94%; padding: 8px 11px; border-radius: 12px; font-size: .9rem; line-height: 1.4; }
+.me-claude-msg p { margin: 0; }
+.me-claude-msg p + p, .me-claude-msg p + ul, .me-claude-msg ul + p { margin-top: 6px; }
+.me-claude-msg ul { margin: 0; padding-left: 18px; }
+.me-claude-msg li + li { margin-top: 3px; }
+.me-claude-msg.moi { justify-self: end; background: var(--marine); color: var(--sur-marine); border-bottom-right-radius: 4px; white-space: pre-wrap; }
+.me-claude-msg.claude { justify-self: start; background: var(--trait-doux); color: var(--encre); border-bottom-left-radius: 4px; }
+.me-claude-attente { color: var(--gris); font-style: italic; }
+.me-claude-lien { display: inline; padding: 0; border: 0; background: none; color: var(--bleu); font: inherit; font-weight: 700; text-align: left; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.me-claude-form { display: grid; gap: 6px; }
+.me-claude-form textarea { width: 100%; min-height: 48px; padding: 8px 10px; border: 1.5px solid var(--trait); border-radius: 10px; font: inherit; font-size: .9rem; resize: vertical; }
+.me-claude-boutons { display: flex; justify-content: flex-end; gap: 6px; }
 .me-espace.plein .me-panneau { align-content: start; }
 .me-3d-pad { position: absolute; right: 10px; bottom: 10px; display: grid; grid-template-columns: repeat(3, 44px); grid-template-rows: repeat(2, 44px); gap: 6px; }
 .me-3d-pad[hidden] { display: none; }
@@ -2153,34 +2138,11 @@ body.me-plein { overflow: hidden; }
                   <button class="puce-filtre" type="button" data-calque3d="noms" aria-pressed="true">Noms</button>
                   <button class="puce-filtre" type="button" data-calque3d="photos" aria-pressed="true">Photos</button>
                 </div>
-                <button class="bouton-second bouton-petit me-3d-sim-bouton" type="button" id="me-3d-sim" aria-pressed="false">Simulateur de vente</button>
                 <button class="bouton-second bouton-petit me-3d-agrandir" type="button" id="me-3d-plein" aria-pressed="false">Agrandir</button>
               </div>
               <div class="me-3d-zone" id="me-3d-zone">
                 <p class="me-3d-etat" id="me-3d-etat">Chargement de la 3D…</p>
                 <canvas class="me-3d-carte" id="me-3d-carte" hidden aria-label="La mini-carte : où tu es ; touche-la pour y aller"></canvas>
-                <section class="me-sim" id="me-sim" hidden aria-label="La vente en cours">
-                  <div class="me-sim-tete">
-                    <div class="me-sim-qui-est"><b id="me-sim-nom"></b><span id="me-sim-titre"></span></div>
-                    <button class="fermer" type="button" id="me-sim-quitter" aria-label="Laisser le client">×</button>
-                  </div>
-                  <div class="me-sim-envie" id="me-sim-envie" role="meter" aria-valuemin="0" aria-valuemax="100"><span id="me-sim-envie-nom">Envie d'acheter</span><span class="me-sim-jauge"><i id="me-sim-jauge"></i></span><b id="me-sim-pct"></b></div>
-                  <ol class="me-sim-fil" id="me-sim-fil" aria-live="polite"></ol>
-                  <p class="me-sim-conseil" id="me-sim-conseil" hidden></p>
-                  <div class="type-tache me-sim-mode" role="radiogroup" aria-label="Comment répondre" id="me-sim-mode">
-                    <label><input type="radio" name="me-sim-mode" value="phrases" checked><span>Phrases toutes faites</span></label>
-                    <label><input type="radio" name="me-sim-mode" value="libre"><span>Avec mes mots</span></label>
-                  </div>
-                  <div class="me-sim-choix" id="me-sim-choix"></div>
-                  <form class="me-sim-libre" id="me-sim-libre" hidden>
-                    <textarea id="me-sim-texte" rows="2" maxlength="600" placeholder="Ce que tu lui dis… (Entrée pour envoyer)" aria-label="Ce que tu dis au client"></textarea>
-                    <button class="bouton-principal bouton-petit" type="submit" id="me-sim-dire">Dire</button>
-                  </form>
-                  <div class="me-sim-fin" id="me-sim-fin" hidden>
-                    <p class="me-sim-resultat" id="me-sim-resultat"></p>
-                    <button class="bouton-principal bouton-petit" type="button" id="me-sim-suivant">Client suivant</button>
-                  </div>
-                </section>
                 <div class="me-3d-pad" id="me-3d-pad" role="group" aria-label="Se déplacer" hidden>
                   <button type="button" data-pas3d="gauche" aria-label="Tourner à gauche" title="Tourner à gauche">↺</button>
                   <button type="button" data-pas3d="avant" aria-label="Avancer" title="Avancer">↑</button>
@@ -2201,6 +2163,20 @@ body.me-plein { overflow: hidden; }
             </div>
           </div>
           <aside class="me-panneau" id="me-panneau" aria-label="Le meuble choisi">
+            <div class="type-tache me-panneau-onglets" role="radiogroup" aria-label="Le panneau" id="me-panneau-onglets" hidden>
+              <label><input type="radio" name="me-panneau-vue" value="plan" checked><span>Le plan</span></label>
+              <label><input type="radio" name="me-panneau-vue" value="claude"><span>Claude</span></label>
+            </div>
+            <section class="me-claude" id="me-claude" aria-labelledby="me-claude-titre">
+              <div class="me-claude-tete"><h2 class="me-panneau-titre" id="me-claude-titre">Des pistes pour le merch</h2><button class="lien-discret" type="button" id="me-claude-effacer" hidden>Effacer</button></div>
+              <p class="aide" id="me-claude-aide">Claude voit le plan affiché : les meubles, les réfs et depuis quand elles sont là, les zones, tes règles et les alertes. Pose-lui une question ou touche une idée ; dans ses réponses, touche le nom d'un meuble pour le voir sur le plan.</p>
+              <div class="me-claude-idees" id="me-claude-idees"></div>
+              <ol class="me-claude-fil" id="me-claude-fil" aria-live="polite"></ol>
+              <form class="me-claude-form" id="me-claude-form">
+                <textarea id="me-claude-texte" rows="2" maxlength="1000" placeholder="Ta question… (Entrée pour envoyer)" aria-label="Ta question à Claude"></textarea>
+                <div class="me-claude-boutons"><button class="bouton-second bouton-petit" type="button" id="me-claude-stop" hidden>Arrêter</button><button class="bouton-principal bouton-petit" type="submit" id="me-claude-envoyer">Envoyer</button></div>
+              </form>
+            </section>
             <div class="me-resume" id="me-resume">
               <h2 class="me-panneau-titre">Le plan</h2>
               <p class="aide" id="me-resume-texte"></p>
@@ -3750,7 +3726,7 @@ body.me-plein { overflow: hidden; }
     demandes.abonner();
     [comptesArgent, soldes, projets, charges, operations, paies, budgets, agenda, documents, notesEntretien, merchPlans, merchElements].forEach(c => c.abonner());
     // Claude, pour proposer une description de tenue : seulement pour qui peut modifier.
-    if (proprio) c.use("sample").then(ns => { sampleNs = ns; rendreTenues(); }, () => {});
+    if (proprio) c.use("sample").then(ns => { sampleNs = ns; rendreTenues(); majClaudeMerch(); }, () => {});
     // Google Agenda (le connecteur de claude.ai) et l'enregistrement d'un fichier : seulement pour le propriétaire.
     if (proprio) c.use("mcp").then(ns => { mcpNs = ns; majBoutonsSemaine(); majBoutonAgendaCalendrier(); }, () => {});
     if (proprio) c.use("downloads").then(ns => { downloadsNs = ns; }, () => {});
@@ -10789,7 +10765,7 @@ body.me-plein { overflow: hidden; }
   const CLE_PLAN_MERCH = "tableau-de-bord-axel:merch-plan";
   let planMerchChoisi = null;
   try { planMerchChoisi = localStorage.getItem(CLE_PLAN_MERCH); } catch (_) { /* rien */ }
-  let choixMerch = null, ongletMerch = "plan", zoomMerch = 1, glisseMerch = null, traceMerch = false;
+  let choixMerch = null, ongletMerch = "plan", zoomMerch = 1, glisseMerch = null, traceMerch = false, vuePanneauMerch = "plan";
   const calquesMerch = { zones: false, parcours: true, noms: true, femme: !window.matchMedia("(max-width: 599px)").matches };
   const plansMerch = () => Object.values(merchPlans.docs).sort((a, b) => (b.actif - a.actif) || (a.aPartirDu || "").localeCompare(b.aPartirDu || "") || a.nom.localeCompare(b.nom, "fr"));
   function planAffiche() {
@@ -11154,6 +11130,7 @@ body.me-plein { overflow: hidden; }
     return angles.sort((a, b) => a - b).map(a => new Option(mur && faces[a] ? `${a}° · ${faces[a]}` : `${a}°`, String(a)));
   }
   function rendrePanneauMerch() {
+    if (vuePanneauMerch === "claude") majIdeesClaude();
     const plan = planAffiche(), e = choixMerch && merchElements.docs[choixMerch];
     const modifiable = peutModifierMerch();
     $("me-form").hidden = !e;
@@ -13478,7 +13455,6 @@ body.me-plein { overflow: hidden; }
       else f.pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
       ctx.fill();
     });
-    if (sim.actif) sim.clients.forEach(c => { ctx.fillStyle = couleurEnvie(c.envie); ctx.beginPath(); ctx.arc(c.x, c.z, 0.32, 0, Math.PI * 2); ctx.fill(); });
     const p = t3d.camera.position, d = regardActuel(), a = Math.atan2(d.z, d.x);
     ctx.fillStyle = "rgba(224, 122, 53, .3)";
     ctx.beginPath(); ctx.moveTo(p.x, p.z); ctx.arc(p.x, p.z, 2.6, a - 0.5, a + 0.5); ctx.closePath(); ctx.fill();
@@ -13536,7 +13512,6 @@ body.me-plein { overflow: hidden; }
       : "Glisse pour faire tourner le magasin, zoome avec deux doigts ou la molette ; touche un meuble pour t'en approcher.";
     $("me-3d-info").hidden = true;
     $("me-3d-pad").hidden = mode !== "promenade";
-    majAideSim();
     if (change && !sansAnimation && t3d.groupe) construireScene3D(false);
     dessinerMiniCarte();
   }
@@ -13586,10 +13561,6 @@ body.me-plein { overflow: hidden; }
     const souris = new T.Vector2((ev.clientX - r.left) / r.width * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
     const ray = new T.Raycaster();
     ray.setFromCamera(souris, t3d.camera);
-    if (sim.actif && t3d.clients) {
-      const c = ray.intersectObjects(t3d.clients.children, true)[0];
-      if (c) { allerVersClient(c.object.userData.client); return; }
-    }
     if (t3d.fleches && t3d.mode === "promenade") {
       const f = ray.intersectObjects(t3d.fleches.children, false)[0];
       if (f) { const [x, z] = f.object.userData.fleche; marcher3D([[t3d.camera.position.x, t3d.camera.position.z], [x, z]]); return; }
@@ -13642,482 +13613,239 @@ body.me-plein { overflow: hidden; }
     reconstruction3D = setTimeout(() => construireScene3D(false), 200);
   }
 
-  // ----- le Blue Box Simulator : des clients dans le magasin, des mini-scénarios de vente -----
-  // Chaque client a un besoin, un caractère et une envie d'acheter (de 0 à 100). On va le voir, il parle ; on répond avec
-  // une phrase toute faite (une seule est vraiment bonne) ou avec ses mots (Claude joue alors le client). Selon ce qu'on
-  // dit, son envie monte ou baisse : il achète, il hésite (« je repasserai ») ou il s'en va.
-  // Dans les phrases : {modele}, {couleur}, {marque}, {prix}, {matiere}, {ou} viennent d'une vraie pièce du Dressing.
-  const SCENARIOS_VENTE = [
-    {
-      id: "presse", prenom: "Karim", titre: "Pressé, il veut un jean", categories: ["jeans"], envie: 45,
-      look: { haut: "#4a5568", bas: "#1f2d50", peau: "#b07a52", cheveux: "#1c1c1f" },
-      persona: { qui: "la trentaine, en pause déjeuner, il a 15 minutes.", besoin: "un jean droit, sobre, pour aller au travail, en 32.", caractere: "pressé, direct, il déteste qu'on lui montre tout le magasin.", secret: "son jean actuel s'est déformé en moins d'un an ; il a besoin d'une ceinture aussi." },
-      etapes: [
-        { client: "Bonjour. Je cherche un jean, mais je n'ai pas beaucoup de temps.", choix: [
-          { t: "Bonjour ! Je vais faire vite : vous le portez plutôt droit ou ajusté, et c'est pour le travail ou le week-end ?", e: 20, rep: "Droit. Pour le boulot, donc rien de trop délavé.", c: "Deux questions ciblées, et tu respectes son temps : c'est la bonne découverte pour un client pressé." },
-          { t: "Les jeans sont sur le mur du fond, je vous laisse regarder.", e: -25, rep: "… D'accord.", c: "Tu le laisses seul alors qu'il t'a dit être pressé : accompagne-le jusqu'au mur et pose une question." },
-          { t: "On en a plein ! Je vous montre toute la gamme ?", e: -8, rep: "Toute la gamme ? Non, je n'ai pas le temps…", c: "Trop de choix tue la décision. Pose une ou deux questions avant de montrer quoi que ce soit." },
-        ] },
-        { client: "Il me faut un truc sobre. Je fais du 32.", choix: [
-          { t: "Le {modele}, {couleur} : sobre au bureau comme le week-end. Je vous le sors en 32 et je vous montre la cabine ?", e: 25, rep: "Allez, je l'essaie.", c: "Un produit précis, ses avantages pour lui, puis l'essayage : c'est ce qui fait avancer la vente." },
-          { t: "Celui-là est en promo sur le site en ce moment, profitez-en !", e: -15, rep: "Ah ? Il est à combien ici, alors ?", c: "Les promos du site ne valent pas en magasin : tu crées une attente que tu ne pourras pas tenir." },
-          { t: "En 32, je vais voir ce qu'il reste en réserve.", e: 0, rep: "D'accord… mais lequel ?", c: "Le stock avant le produit ? Propose d'abord UN modèle qui répond à son besoin." },
-        ] },
-        { client: "Il tombe bien. Mais {prix}, quand même…", choix: [
-          { t: "Je comprends. La toile tient sa forme lavage après lavage : vous le porterez longtemps, ça revient moins cher que deux jeans qui se déforment.", e: 20, rep: "C'est vrai que le mien n'a pas tenu un an.", c: "Tu valides son ressenti, puis tu ramènes le prix à un bénéfice concret : objection bien traitée." },
-          { t: "Sinon il y a moins cher là-bas, mais c'est moins bien.", e: -12, rep: "Donc celui-là est mieux, ou pas ?", c: "En proposant moins cher tout de suite, tu dévalorises ce qu'il a aimé. Argumente d'abord." },
-          { t: "C'est le prix de la marque.", e: -20, rep: "Mouais.", c: "Une réponse sèche ferme la discussion. Dis ce que le prix lui apporte." },
-        ] },
-        { client: "Bon. Je le prends, je crois.", choix: [
-          { t: "Très bon choix. Une ceinture en cuir marron finirait la tenue au bureau : je vous en montre une, ça prend une minute ?", e: 10, plus: "une ceinture", rep: "Vas-y, montre.", c: "La vente additionnelle se propose quand il vient de dire oui : courte, liée à son besoin. Parfait." },
-          { t: "Parfait, je vous accompagne en caisse.", e: 5, rep: "Merci.", c: "Vente conclue. Tu pouvais proposer un article complémentaire (ceinture, chaussettes)." },
-          { t: "Vous êtes sûr ? Prenez le temps d'y réfléchir.", e: -25, rep: "Euh… oui, je vais réfléchir, en fait.", c: "Quand le client dit oui, ne sème pas le doute : conclus." },
-        ] },
-      ],
-    },
-    {
-      id: "cadeau", prenom: "Léa", elle: true, titre: "Un cadeau pour son copain", categories: ["pulls", "sweats", "gilets"], envie: 40,
-      look: { haut: "#c9b6dc", bas: "#2b2e36", peau: "#e2b899", cheveux: "#6b4226" },
-      persona: { qui: "25 ans, elle cherche un cadeau d'anniversaire pour son copain.", besoin: "un pull, mais elle ne connaît ni son style exact ni sa taille.", caractere: "gentille, indécise, elle a peur de se tromper.", secret: "il porte surtout du bleu marine et du gris ; elle aimerait un paquet cadeau." },
-      etapes: [
-        { client: "Bonjour, je cherche un cadeau pour mon copain, un pull je pense… mais je ne sais pas trop ce qu'il aime.", choix: [
-          { t: "Avec plaisir ! Il s'habille comment, en général ? Plutôt classique, sport ? Il porte des couleurs ?", e: 20, rep: "Plutôt classique, souvent du bleu marine ou du gris.", c: "Des questions ouvertes sur son style : tu l'aides à dire ce qu'elle sait déjà." },
-          { t: "Les pulls sont ici, prenez votre temps.", e: -10, rep: "D'accord… mais je ne sais pas lequel prendre.", c: "Une cliente qui doute a besoin d'être guidée, pas laissée seule." },
-          { t: "Le plus vendu, c'est celui-là : prenez-le.", e: -5, rep: "Mais est-ce que ça lui irait ?", c: "La meilleure vente rassure, mais seulement après avoir compris pour qui c'est." },
-        ] },
-        { client: "Et pour la taille, je ne suis pas sûre. Il est à peu près comme vous.", choix: [
-          { t: "Je fais du M. Le {modele} taille normalement ; et s'il ne va pas, il pourra l'échanger avec le ticket cadeau.", e: 20, rep: "Ah, un ticket cadeau, ça me rassure.", c: "Tu lèves le frein de la taille avec une solution concrète : échange, ticket cadeau." },
-          { t: "Prenez un L, au pire ce sera un peu grand.", e: -10, rep: "S'il nage dedans, ce sera raté…", c: "« Au pire » inquiète. Donne un repère et une solution d'échange." },
-          { t: "Vous avez une photo de lui ?", e: 5, rep: "Oui, attendez… voilà.", c: "Bonne idée pour estimer la taille ; pense aussi à la rassurer sur l'échange." },
-        ] },
-        { client: "Il est joli. Mais il ne gratte pas, au moins ?", choix: [
-          { t: "La matière, c'est {matiere} : touchez, c'est doux. Il pourra le mettre directement sur un t-shirt.", e: 15, rep: "Oh oui, c'est doux.", c: "Faire toucher, c'est faire vivre le produit : l'argument devient une sensation." },
-          { t: "Normalement, non.", e: -15, rep: "« Normalement »…", c: "Une réponse floue fait douter. Appuie-toi sur la matière, fais toucher." },
-          { t: "Tous les pulls grattent un peu au début.", e: -5, rep: "Je ne veux pas qu'il le laisse au placard…", c: "Tu crées toi-même l'objection. Parle de ce que le produit fait bien." },
-        ] },
-        { client: "D'accord, je vais le prendre.", choix: [
-          { t: "Super ! Je vous fais un paquet cadeau ? Et comme il aime le bleu marine, ce bonnet irait très bien avec.", e: 10, plus: "un bonnet", rep: "Le paquet, oui ! Et le bonnet… allez.", c: "Service (paquet cadeau) et vente additionnelle cohérente : elle repart contente." },
-          { t: "Très bien, je vous encaisse.", e: 5, rep: "Merci.", c: "Pense au paquet cadeau et au ticket : c'est ce qui fait revenir une cliente." },
-          { t: "Vous ne voulez pas plutôt revenir avec lui ?", e: -20, rep: "Ah… c'est vrai, ce sera peut-être mieux.", c: "Tu as cassé une vente faite. Rassure-la plutôt : ticket cadeau, échange." },
-        ] },
-      ],
-    },
-    {
-      id: "fidele", prenom: "Thomas", titre: "Fidèle à sa marque", categories: ["jeans"], autreMarque: /levi/i, envie: 50,
-      look: { haut: "#7b2d26", bas: "#2f4a7a", peau: "#e8c4a6", cheveux: "#8a6a45" },
-      persona: { qui: "40 ans, il ne porte que du Levi's depuis vingt ans.", besoin: "un 501 brut en 33.", caractere: "sympathique mais attaché à ses habitudes ; il se braque si on critique sa marque.", secret: "il est curieux d'essayer autre chose si on le lui propose sans forcer ; il manque de chaussettes." },
-      etapes: [
-        { client: "Bonjour. Vous avez le 501 ? Je ne porte que du Levi's.", choix: [
-          { t: "Oui, il est au mur des jeans. Vous le prenez dans quel délavage, d'habitude ?", e: 15, rep: "Brut, le 501 classique.", c: "Tu réponds d'abord à sa demande, puis tu découvres : il se sent écouté." },
-          { t: "Levi's, c'est surcoté : prenez plutôt autre chose.", e: -15, rep: "Euh, c'est ma marque, hein.", c: "Ne critique jamais la marque d'un client : c'est son choix que tu critiques." },
-          { t: "On l'a. Je vous le donne en quelle taille ?", e: 0, rep: "En 33.", c: "Efficace, mais tu passes à côté de la découverte." },
-        ] },
-        { client: "En 33, en brut.", choix: [
-          { t: "Je vous le sors. Et juste pour comparer, je vous mets à côté le {modele} de {marque} : même esprit, coupe un peu plus actuelle.", e: 15, rep: "Pourquoi pas, comparer ne coûte rien.", c: "Tu proposes une alternative sans dénigrer : il garde la main sur le choix." },
-          { t: "Le 501, tout le monde l'a. Osez autre chose !", e: -15, rep: "J'aime bien ce que tout le monde a, justement.", c: "Pousser la nouveauté contre son goût le braque. Propose, ne force pas." },
-          { t: "Je vous l'apporte en cabine.", e: 5, rep: "Merci.", c: "Bon service. Tu pouvais lui proposer de comparer avec un autre modèle." },
-        ] },
-        { client: "Le 501 me va. L'autre… pas mal, mais je ne connais pas la marque.", choix: [
-          { t: "C'est normal d'hésiter. Beaucoup d'habitués du 501 ont adopté celui-là pour sa coupe. Sur vous, honnêtement, lequel vous préférez ?", e: 15, rep: "Franchement… l'autre tombe mieux.", c: "Tu rassures avec ce que vivent les autres clients, puis tu le laisses décider par une question." },
-          { t: "Prenez celui que vous connaissez, c'est plus sûr.", e: -10, rep: "Oui… c'est ce que je pensais.", c: "Tu abandonnes ta proposition. Rassure-le plutôt : la preuve, c'est le miroir." },
-          { t: "Et pourquoi pas les deux ? Un pour le travail, un pour le week-end.", e: 5, rep: "Les deux, ça fait beaucoup.", c: "Proposer les deux est osé ; ça marche si le budget suit. Ici, il fallait d'abord l'aider à choisir." },
-        ] },
-        { client: "Bon, je prends celui qui me va le mieux.", choix: [
-          { t: "Super. On a des chaussettes à la caisse, c'est souvent l'oubli : je vous en mets une paire avec ?", e: 10, plus: "des chaussettes", rep: "Ah oui, il m'en faut.", c: "Vente additionnelle simple, au bon endroit (les chaussettes sont à la caisse)." },
-          { t: "Je vous encaisse.", e: 5, rep: "Merci.", c: "Bien conclu. Une petite vente additionnelle était possible." },
-          { t: "Vous ne voulez pas réessayer l'autre, pour être sûr ?", e: -20, rep: "Non… en fait, je vais réfléchir.", c: "Revenir en arrière après une décision fait douter. Conclus." },
-        ] },
-      ],
-    },
-    {
-      id: "regarde", prenom: "Mehdi", titre: "« Je regarde juste »", categories: ["t-shirts", "sweats", "polos"], envie: 30,
-      look: { haut: "#2f6f4f", bas: "#1c1c1f", peau: "#8d5a3b", cheveux: "#1c1c1f" },
-      persona: { qui: "20 ans, étudiant, il flâne entre deux cours.", besoin: "rien de précis ; un haut s'il a un coup de cœur.", caractere: "réservé, il fuit les vendeurs insistants.", secret: "il hésite entre deux couleurs d'un même modèle ; il a un petit budget." },
-      etapes: [
-        { client: "Bonjour. Je regarde, merci.", choix: [
-          { t: "Pas de souci, je vous laisse regarder. Les nouveautés sont sur cette table, et je suis là si besoin.", e: 15, rep: "D'accord, merci.", c: "Tu respectes son « je regarde » et tu laisses une porte ouverte avec une info utile." },
-          { t: "Vous cherchez quoi exactement ? Une taille ? Une couleur ?", e: -20, rep: "Je viens de vous dire que je regarde…", c: "Insister après un « je regarde » met la pression. Laisse respirer, reviens plus tard." },
-          { t: "D'accord.", e: -5, rep: "…", c: "Poli, mais tu n'as rien donné : une info (les nouveautés, une offre du magasin) ouvre le dialogue." },
-        ] },
-        { client: "(quelques minutes plus tard, le {modele} à la main) Il existe en d'autres couleurs ?", choix: [
-          { t: "Oui, je vous montre. Vous le mettriez avec quoi ?", e: 20, rep: "Avec un jean brut, plutôt.", c: "Sa question est le signal pour revenir : tu réponds et tu relances par une question ouverte." },
-          { t: "Tout ce qu'on a est sur la table.", e: 0, rep: "OK…", c: "Une question du client, c'est une invitation : accompagne-le." },
-          { t: "Oui, mais celui-là est plus beau en vrai : prenez-le.", e: -10, rep: "Je préfère voir les autres.", c: "Ne tranche pas à sa place avant de savoir ce qu'il veut." },
-        ] },
-        { client: "Je ne sais pas… je ne suis pas venu pour acheter.", choix: [
-          { t: "Aucun souci. Essayez-le, ça ne vous engage à rien : au moins, vous saurez quelle taille vous va.", e: 15, rep: "Bon, allez, je l'essaie.", c: "L'essayage sans engagement fait tomber la barrière." },
-          { t: "Il ne restera peut-être plus votre taille demain…", e: -15, rep: "Je n'aime pas qu'on me presse.", c: "La fausse urgence se voit. Propose plutôt l'essayage." },
-          { t: "D'accord, revenez quand vous voulez.", e: -5, rep: "Oui, peut-être.", c: "Tu lâches trop vite : il s'intéressait au produit." },
-        ] },
-        { client: "Il me va bien, en fait.", choix: [
-          { t: "Il vous va très bien. Vous hésitiez sur la couleur : vous voulez le prendre aussi dans l'autre ?", e: 12, plus: "le deuxième coloris", rep: "Allez… les deux.", c: "Il hésitait entre deux couleurs : proposer les deux était naturel." },
-          { t: "Je vous le mets en caisse ?", e: 8, rep: "Oui, merci.", c: "Vente conclue en douceur." },
-          { t: "Vous voyez, il fallait l'essayer !", e: -10, rep: "Mouais…", c: "Avoir raison n'aide pas à vendre. Reste sur ce qu'il ressent." },
-        ] },
-      ],
-    },
-    {
-      id: "mecontent", prenom: "Patrick", titre: "Mécontent, il rapporte un pull", categories: ["pulls", "gilets", "sweats"], envie: 25, sav: true,
-      look: { haut: "#5b616b", bas: "#3a3326", peau: "#e9c9ad", cheveux: "#b8bec9" },
-      persona: { qui: "55 ans, il a acheté un pull ici il y a trois semaines.", besoin: "une solution : son pull est déjà bouloché ; il veut d'abord être remboursé.", caractere: "agacé mais pas méchant ; il se calme si on l'écoute.", secret: "il accepterait un échange contre un modèle plus résistant, s'il est rassuré." },
-      etapes: [
-        { client: "Bonjour. J'ai acheté ce pull il y a trois semaines, et il est déjà tout bouloché.", choix: [
-          { t: "Je suis désolé, je comprends que ce soit agaçant. Vous permettez que je regarde ? Vous avez le ticket ?", e: 20, rep: "Oui, tenez.", c: "Tu accueilles l'émotion avant de parler de solution : il se calme." },
-          { t: "Ça, c'est l'usure normale, on n'y peut rien.", e: -20, rep: "L'usure normale ? En trois semaines ?!", c: "Ne minimise jamais une plainte : écoute d'abord, vérifie ensuite." },
-          { t: "Il faut voir avec la responsable.", e: -10, rep: "Elle est où ?", c: "Renvoyer tout de suite vers quelqu'un d'autre donne l'impression qu'on se débarrasse de lui. Commence par écouter." },
-        ] },
-        { client: "Je veux être remboursé.", choix: [
-          { t: "Je vérifie ce qu'on peut faire selon les conditions du magasin. En attendant, je peux vous proposer un échange contre un modèle dans une maille plus résistante.", e: 15, rep: "Un échange… pourquoi pas, si c'est mieux.", c: "Tu ne promets pas ce que tu ne décides pas, et tu proposes une solution concrète." },
-          { t: "On ne rembourse jamais.", e: -15, rep: "Super, merci du service…", c: "Une règle dite sèchement braque. Explique et propose une autre solution." },
-          { t: "Oui, oui, bien sûr.", e: -5, rep: "Bon, alors on y va ?", c: "Ne promets pas ce que tu ne peux pas tenir : vérifie d'abord les conditions de retour." },
-        ] },
-        { client: "Et celui-là, il ne va pas boulocher aussi ?", choix: [
-          { t: "Le {modele} est en {matiere} : la maille est plus serrée, elle bouloche beaucoup moins. Et une astuce : lavage à l'envers, à 30°.", e: 20, rep: "Ah, je ne savais pas, pour l'envers.", c: "Argument produit et conseil d'entretien : tu lui redonnes confiance." },
-          { t: "Aucun pull ne bouloche jamais chez nous.", e: -10, rep: "Le mien, si.", c: "Une promesse absolue sonne faux. Donne une raison (la matière) et un conseil." },
-          { t: "Je ne sais pas trop.", e: 0, rep: "…", c: "Si tu ne sais pas, appuie-toi sur l'étiquette (la matière) pour répondre." },
-        ] },
-        { client: "D'accord. Je fais l'échange.", choix: [
-          { t: "Merci de votre confiance. Je vous fais l'échange, et au moindre souci, revenez me voir directement.", e: 15, rep: "Merci, c'est sympa.", c: "Tu transformes un mécontent en client fidèle : c'est la meilleure fin possible." },
-          { t: "Voilà, c'est fait.", e: 5, rep: "Merci.", c: "Correct. Une phrase pour le rassurer l'aurait fait revenir." },
-          { t: "Par contre, la prochaine fois, faites attention au lavage.", e: -15, rep: "Donc c'est de ma faute ?", c: "Le conseil d'entretien se donne avant, pas comme un reproche." },
-        ] },
-      ],
-    },
-  ];
-  // Le jeu : trois clients à la fois dans le magasin ; le score reste dans ce navigateur (rien n'est envoyé ni partagé).
-  const CLE_SIM = "tableau-de-bord-axel:simulateur";
-  const sim = { actif: false, clients: [], courant: null, fil: [], envie: 0, etape: 0, ordre: [], libre: false, fini: false, issue: null, plus: null, conseil: null, vus: [], ctl: null, attente: false, echanges: 0 };
-  let numeroClient = 0;
-  function statsSim() {
-    try { const s = JSON.parse(localStorage.getItem(CLE_SIM) || "null"); if (s && typeof s.essais === "number") return s; } catch (_) { /* pas de stockage */ }
-    return { essais: 0, ventes: 0, parcours: [] };
+  // ----- Claude, à côté du plan : des pistes de réflexion pour le merch -----
+  // Claude voit le plan affiché (les meubles, les réfs posées et depuis quand, les zones), tes règles et les alertes ; il
+  // propose, tu décides. La conversation reste dans ce navigateur. Seulement pour le propriétaire (Claude utilise son compte).
+  const CLE_CLAUDE_MERCH = "tableau-de-bord-axel:merch-claude";
+  const claudeMerch = { tours: [], ctl: null, enCours: false, direct: "" };
+  try {
+    const t = JSON.parse(localStorage.getItem(CLE_CLAUDE_MERCH) || "[]");
+    if (Array.isArray(t)) claudeMerch.tours = t.filter(x => x && (x.role === "user" || x.role === "assistant") && typeof x.content === "string" && x.content).slice(-20);
+    localStorage.removeItem("tableau-de-bord-axel:simulateur");   // l'ancien simulateur de vente, retiré
+  } catch (_) { /* pas de stockage : la conversation ne survivra pas au rechargement */ }
+  const garderToursClaude = () => { try { localStorage.setItem(CLE_CLAUDE_MERCH, JSON.stringify(claudeMerch.tours.slice(-20))); } catch (_) { /* tant pis */ } };
+  // Une réf., pour Claude : marque · modèle · couleur (catégorie, prix, repères, depuis quand elle est là).
+  function refPourClaude(a) {
+    const x = pieces[a.p];
+    if (!x) return "pièce introuvable";
+    const r = x.reperes || {};
+    const infos = [NOM_CATEGORIE[x.categorie], x.prix ? formatPrix(x.prix) : null, r.nouveaute ? "nouveauté" : null, r.meilleure ? "meilleure vente" : null,
+      x.archive ? "plus en magasin" : null, a.sup ? "par-dessus" : null, a.ok ? "se vend bien ici" : a.d ? `là depuis ${joursDepuis(a.d)} j` : null].filter(Boolean);
+    return `${[x.marque, x.modele, x.couleur].filter(Boolean).join(" · ")} (${infos.join(", ")})`;
   }
-  function noterSim(c, issue) {
-    const s = statsSim();
-    s.essais += 1;
-    if (issue === "achat") s.ventes += 1;
-    s.parcours = [{ le: maintenant(), client: c.sc.id, issue, envie: sim.envie, libre: sim.libre }, ...(s.parcours || [])].slice(0, 30);
-    try { localStorage.setItem(CLE_SIM, JSON.stringify(s)); } catch (_) { /* tant pis */ }
-  }
-  const couleurEnvie = v => (v >= 70 ? "#2f9e5b" : v >= 40 ? "#e0a030" : "#d64545");
-  const melange = n => { const a = Array.from({ length: n }, (_, i) => i); for (let i = n - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
-  // La pièce dont parle le client : une vraie pièce du Dressing de sa catégorie, posée sur le plan si possible.
-  function pieceDuScenario(sc, plan) {
-    const ou = emplacementsDuPlan(plan.id);
-    let xs = piecesEnMagasin().filter(x => sc.categories.includes(x.categorie));
-    if (sc.autreMarque) { const autres = xs.filter(x => !sc.autreMarque.test(x.marque || "")); if (autres.length) xs = autres; }
-    const posees = xs.filter(x => ou.has(x.id)), choix = posees.length ? posees : xs;
-    const x = choix.length ? choix[Math.floor(Math.random() * choix.length)] : null, place = x && (ou.get(x.id) || [])[0];
-    return {
-      piece: x, e: place ? place.e : null,
-      modele: x ? x.modele || NOM_CATEGORIE[x.categorie] : "ce modèle", couleur: x && x.couleur ? x.couleur.toLowerCase() : "cette couleur",
-      marque: x && x.marque ? x.marque : "cette marque", prix: x && x.prix ? formatPrix(x.prix) : "ce prix-là",
-      matiere: x && x.matiere ? x.matiere.toLowerCase() : "une maille douce", ou: place ? place.texte : "",
-    };
-  }
-  const remplirSim = (texte, ctx) => texte.replace(/\{(modele|couleur|marque|prix|matiere|ou)\}/g, (_, k) => ctx[k]);
-  // Une silhouette de client : jambes, corps, bras, tête ; un anneau au sol, de la couleur de son envie.
-  function figureClient(c) {
-    const T = t3d.T, g = new T.Group(), l = c.sc.look;
-    [-0.09, 0.09].forEach(x => g.add(boite(0.13, 0.82, 0.15, l.bas, x, 0.41, 0)));
-    g.add(boite(0.44, 0.62, 0.25, l.haut, 0, 1.13, 0));
-    [-0.28, 0.28].forEach(x => { const b = boite(0.11, 0.58, 0.13, l.haut, x, 1.1, 0); b.rotation.z = x > 0 ? 0.08 : -0.08; g.add(b); });
-    const tete = new T.Mesh(new T.SphereGeometry(0.12, 16, 12), mat3D(l.peau));
-    tete.position.set(0, 1.58, 0);
-    const cheveux = new T.Mesh(new T.SphereGeometry(0.125, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), mat3D(l.cheveux));
-    cheveux.position.set(0, 1.6, -0.01);
-    g.add(tete, cheveux);
-    const anneau = new T.Mesh(new T.RingGeometry(0.34, 0.44, 32), new T.MeshBasicMaterial({ color: couleurEnvie(c.envie), side: T.DoubleSide }));
-    anneau.rotation.x = -Math.PI / 2;
-    anneau.position.y = 0.015;
-    g.add(anneau);
-    g.position.set(c.x, 0, c.z);
-    g.rotation.y = c.angle;
-    g.traverse(o => { o.userData.client = c.id; });
-    c.anneau = anneau;
-    return g;
-  }
-  // Où il se tient : devant le meuble de sa pièce, sinon n'importe où de libre ; jamais collé à un autre client ni à nous.
-  function placeClient(ctx) {
-    const g = t3d.grille, cam = t3d.camera.position, loin = (x, z) => sim.clients.every(o => Math.hypot(o.x - x, o.z - z) > 1.6) && Math.hypot(cam.x - x, cam.z - z) > 2;
-    const autour = [];
-    if (ctx.e) {
-      const e = ctx.e, t = TYPES_MERCH[e.type];
+  const listeRefsClaude = l => (l.length ? l.map(refPourClaude).join(" ; ") : "vide");
+  const ouClaude = e => `x ${virgule(e.x)}, y ${virgule(e.y)}`;
+  function contexteMerchClaude(plan) {
+    const L = [], H = Math.min(plan.homme, plan.largeur), rg = reglagesMerch(), zone = z => NOM_ZONE[z].toLowerCase();
+    L.push(`Le plan « ${plan.nom} »${plan.actif ? " (en place)" : " (prévu)"} : ${virgule(plan.largeur)} m de large, ${virgule(plan.profondeur)} m de profondeur ; le côté Homme fait ${virgule(H)} m, à gauche en entrant.`,
+      "Les positions sont en mètres depuis le coin du fond à gauche : x vers la droite, y vers l'entrée (en bas). La zone (chaude, tiède, froide) vient de la distance à l'entrée et au parcours des clients, ou du choix du vendeur.");
+    L.push("", "Ses règles de merch (à respecter) :");
+    REGLES_MERCH.forEach(([, regles]) => regles.forEach(([, t]) => L.push(`- ${t}`)));
+    L.push(`- Une réf. qui reste au même endroit ${rg.seuil} jours ou plus doit bouger (facing ↔ pressing ↔ étagère ↔ table), sauf si elle « se vend bien ici ».`);
+    L.push("", "Les meubles et ce qu'ils portent :");
+    trierElements(elementsDuPlan(plan.id)).forEach(e => {
+      const t = TYPES_MERCH[e.type];
       if (t.porte === "uv") {
-        const [fx, fz] = versPlan(e, 0, 1), nx = fx - e.x, nz = fz - e.y;
-        for (let k = 0; k < 12; k++) { const d = (facesDe(e) === 2 ? e.p / 2 : 0.4) + 0.6 + (k % 3) * 0.2, s = (Math.floor(k / 3) - 1.5) * Math.min(1, e.l / 3); autour.push([e.x + nx * d - nz * s, e.y + nz * d + nx * s, e.x, e.y]); }
-      } else for (let k = 0; k < 12; k++) { const a = k * Math.PI / 6, r = Math.max(e.l, e.p) / 2 + 0.5; autour.push([e.x + Math.cos(a) * r, e.y + Math.sin(a) * r, e.x, e.y]); }
-    }
-    for (const [x, z, vx, vz] of melange(autour.length).map(i => autour[i])) if (estLibre3D(g, x, z) && loin(x, z)) return [x, z, Math.atan2(vx - x, vz - z)];
-    for (let k = 0; k < 300; k++) {
-      const x = 0.5 + Math.random() * (g.H - 1), z = 1 + Math.random() * (g.D - 3);
-      if (estLibre3D(g, x, z) && loin(x, z)) return [x, z, Math.random() * Math.PI * 2];
-    }
-    return null;
+        L.push(`- ${nomMeuble(e)} (${facesDe(e) === 2 ? "grand portant en mini-mur recto-verso" : estUnMiroir(e) ? "miroir" : "mur"}, ${facesDe(e) === 2 ? `${uvsParFace(e)} UV de chaque côté` : `${e.uvs.length} UV`} de ${Math.round(e.uvL * 100)} cm, ${ouClaude(e)}) :`);
+        e.uvs.forEach((u, i) => {
+          const tete = `  ${nomUv(e, i)} (zone ${zone(zoneUv(plan, e, i))})`;
+          if (estMiroir(u)) { L.push(`${tete} : un miroir`); return; }
+          L.push(`${tete}${u.miroir ? ", miroir condamné derrière" : ""} : ${u.eq.length ? u.eq.map(q => `${nomEq(u, q).toLowerCase()} à ${hauteurEq(q)}${q.ferme ? " (fermeture)" : ""} : ${listeRefsClaude(q.articles)}`).join(" | ") : "rien"}`);
+        });
+        if (e.dessus) e.dessus.forEach((d, k) => L.push(`  dessus, étagère ${k + 1} (${d.piles} piles) : ${listeRefsClaude(d.articles)}`));
+      } else if (t.porte === "niveaux") {
+        const rangs = nomsRangees(e);
+        L.push(`- ${nomMeuble(e)} (${t.nom.toLowerCase()}, ${resumePiles(e)}${e.dispo === "milieu" ? "" : e.sens === "meme" ? ", dans le même sens" : ", dos à dos"}${e.hauteurs > 1 ? `, ${e.hauteurs} hauteurs` : ""}, zone ${zone(zoneElement(plan, e))}, ${ouClaude(e)}) :`);
+        rangeesTable(e).forEach(([r, n]) => {
+          const piles = [];
+          for (let k = 1; k <= n; k++) { const a = e.niveaux[0].articles.find(x => x.pos === r + k); piles.push(`pile ${k} : ${a ? refPourClaude(a) : "vide"}`); }
+          L.push(`  ${rangs[r]} : ${piles.join(" ; ")}`);
+        });
+        e.niveaux.forEach((niv, k) => { if (k && niv.articles.length) L.push(`  ${k + 1}e hauteur : ${listeRefsClaude(niv.articles)}`); });
+      } else if (t.porte === "tenue") {
+        const presente = presentesPar(e).map(nomMeuble);
+        L.push(`- ${nomMeuble(e)} (${t.nom.toLowerCase()}, zone ${zone(zoneElement(plan, e))}, ${ouClaude(e)}) : ${e.tenue ? `tenue « ${e.tenue} », ` : ""}porte ${listeRefsClaude(e.articles || [])}${presente.length ? ` ; présente ${presente.join(", ")}` : ""}`);
+      } else if (t.porte === "articles") {
+        L.push(`- ${nomMeuble(e)} (${t.nom.toLowerCase()}${t.famille === "repere" ? "" : `, zone ${zone(zoneElement(plan, e))}`}, ${ouClaude(e)}) : ${listeRefsClaude(e.articles || [])}`);
+      } else L.push(`- ${nomMeuble(e)} (${t.nom.toLowerCase()}, ${ouClaude(e)})`);
+    });
+    const al = alertesDuPlan(plan), ou = emplacementsDuPlan(plan.id);
+    const bloc = (titre, lignes, max) => { if (lignes.length) L.push("", `${titre} :`, ...lignes.slice(0, max).map(x => `- ${x}`), ...(lignes.length > max ? [`- … et ${lignes.length - max} autres`] : [])); };
+    bloc(`Les réfs qui n'ont pas bougé depuis ${al.seuil} jours ou plus`, al.immobiles.map(p => `${refPourClaude(p.a)} — ${p.texte}`), 30);
+    bloc("Les règles à revoir", al.regles.map(r => r.texte), 20);
+    bloc("Nouveautés et meilleures ventes pas encore exposées", al.aExposer.map(x => refPourClaude({ p: x.id })), 25);
+    bloc("À réassortir", al.reassort.map(p => `${refPourClaude(p.a)} — ${p.texte}`), 15);
+    bloc("Le reste du Dressing, en magasin mais pas encore posé", piecesEnMagasin().filter(x => !ou.has(x.id)).map(x => refPourClaude({ p: x.id })), 70);
+    return L.join("\n");
   }
-  function nouveauClient() {
-    if (!t3d || !t3d.plan || !t3d.grille) return;
-    const presents = new Set(sim.clients.map(c => c.sc.id)), recents = sim.vus.slice(-2);
-    const libres = SCENARIOS_VENTE.filter(s => !presents.has(s.id)), frais = libres.filter(s => !recents.includes(s.id));
-    const pool = frais.length ? frais : libres;
-    if (!pool.length) return;
-    const sc = pool[Math.floor(Math.random() * pool.length)], ctx = pieceDuScenario(sc, t3d.plan), ou = placeClient(ctx);
-    if (!ou) return;
-    const c = { id: "c" + (++numeroClient), sc, ctx, x: ou[0], z: ou[1], angle: ou[2], envie: sc.envie };
-    if (!t3d.clients) { t3d.clients = new t3d.T.Group(); t3d.scene.add(t3d.clients); }
-    c.objet = figureClient(c);
-    t3d.clients.add(c.objet);
-    sim.clients.push(c);
+  function consigneMerchClaude(plan) {
+    return [
+      "Tu es un conseiller en merchandising visuel. Tu aides un vendeur d'un magasin de prêt-à-porter homme multimarque (jeans et casual) à réfléchir à l'implantation de son magasin. Voici son plan tel qu'il est en ce moment.",
+      "",
+      "Ce que tu fais : tu donnes des pistes de réflexion concrètes et argumentées, en français, en tutoyant. Dis quoi changer, où, et pourquoi : zone chaude ou froide, hauteur des yeux, facing, pressing, étagère ou table, dégradés de couleurs, associations de marques et de modèles, mannequins, rotation des réfs qui ne bougent pas, nouveautés et meilleures ventes à exposer. Cite les meubles et les UV par leur nom exact (par exemple « Mur 3 - Bleu / Beige, UV 2 »), pour qu'il les retrouve sur le plan.",
+      "Respecte ses règles. Ne propose pas de déplacer une réf. marquée « se vend bien ici ». Ne parle pas de promotions : celles du site internet ne valent pas en magasin. Ne parle ni de chiffre d'affaires ni d'objectifs. Si une information te manque (une taille de meuble, un stock), dis-le en une phrase plutôt que de l'inventer. Ce sont des pistes : c'est lui qui décide.",
+      "Forme : du texte simple, des listes à puces « - », du gras avec **…** pour l'essentiel, pas de tableau ni de titre ; une dizaine de lignes au plus, sauf si on te demande plus.",
+      "",
+      contexteMerchClaude(plan),
+    ].join("\n");
   }
-  function retirerClient(c) {
-    sim.clients = sim.clients.filter(o => o !== c);
-    if (c.objet && c.objet.parent) { c.objet.parent.remove(c.objet); c.objet.traverse(o => { if (o.geometry) o.geometry.dispose(); }); if (c.anneau) c.anneau.material.dispose(); }
-    rendu3D();
-    dessinerMiniCarte();
+  // Les idées de questions, à toucher ; « Ce meuble » quand un meuble est choisi sur le plan.
+  function ideesClaudeMerch() {
+    const e = choixMerch && merchElements.docs[choixMerch];
+    return [
+      ...(e ? [[`Ce meuble : ${nomMeuble(e)}`, `Parle-moi de « ${nomMeuble(e)} » : ce qui va, ce que tu changerais, et avec quoi l'associer.`]] : []),
+      ["Des pistes pour ce plan", "Regarde tout le plan et donne-moi tes 5 meilleures pistes pour le merch, de la plus importante à la moins importante."],
+      ["Ce qui ne bouge pas", "Quelles réfs ne bougent pas, et où les déplacer (facing, pressing, étagère, table, plus au chaud) ?"],
+      ["La zone chaude", "Est-ce que ma zone chaude, près de l'entrée, est bien utilisée ? Qu'est-ce que j'y mettrais en avant ?"],
+      ["Les couleurs", "Les couleurs sur mes murs et mes tables : les dégradés, les associations. Qu'est-ce qui accroche l'œil, qu'est-ce qui casse ?"],
+      ["Les mannequins", "Mes mannequins et bustes : qu'est-ce qu'ils devraient porter, et quels meubles devraient-ils présenter ?"],
+    ];
   }
-  function majAnneau(c) {
-    if (c.anneau) c.anneau.material.color.set(couleurEnvie(c.envie));
-    rendu3D();
-  }
-  // Un client qui s'en va (vers l'entrée) ou qui va payer (vers la caisse), en contournant les meubles.
-  function faireMarcherClient(c, cible, apres) {
-    const ch = (t3d.grille && chemin3D(t3d.grille, [c.x, c.z], cible)) || [[c.x, c.z], cible];
-    let i = 1, t0 = performance.now();
-    const pas = now => {
-      if (!t3d || !c.objet || !c.objet.parent) return;
-      let reste = Math.min(0.05, (now - t0) / 1000) * 1.3;
-      t0 = now;
-      while (reste > 0 && i < ch.length) {
-        const [tx, tz] = ch[i], dx = tx - c.x, dz = tz - c.z, d = Math.hypot(dx, dz);
-        if (d > 1e-6) c.angle = Math.atan2(dx, dz);
-        if (d <= reste) { c.x = tx; c.z = tz; reste -= d; i++; } else { c.x += dx / d * reste; c.z += dz / d * reste; reste = 0; }
-      }
-      c.objet.position.set(c.x, 0, c.z);
-      c.objet.rotation.y = c.angle;
-      rendu3D();
-      if (i < ch.length) requestAnimationFrame(pas); else if (apres) apres();
-    };
-    requestAnimationFrame(pas);
-  }
-  function basculerSimulateur(oui) {
-    if (!t3d || !t3d.plan) return;
-    sim.actif = oui;
-    $("me-3d-sim").textContent = oui ? "Arrêter le simulateur" : "Simulateur de vente";
-    $("me-3d-sim").setAttribute("aria-pressed", String(oui));
-    if (oui) {
-      if (t3d.mode !== "promenade") { document.querySelector('input[name="me-vue3d"][value="promenade"]').checked = true; vue3D("promenade"); }
-      for (let k = 0; k < 3; k++) nouveauClient();
-      // On se tourne vers le client le plus proche.
-      const cam = t3d.camera.position, proche = [...sim.clients].sort((a, b) => Math.hypot(a.x - cam.x, a.z - cam.z) - Math.hypot(b.x - cam.x, b.z - cam.z))[0];
-      if (proche && !t3d.anim) { marcher3D([[cam.x, cam.z]], [proche.x, 1.2, proche.z]); $("me-3d-info").hidden = true; }
-      rendu3D();
-    } else {
-      fermerVente();
-      [...sim.clients].forEach(retirerClient);
-    }
-    majAideSim();
-    dessinerMiniCarte();
-  }
-  function majAideSim() {
-    if (!sim.actif) return;
-    const s = statsSim();
-    $("me-3d-aide").textContent = `Simulateur de vente : touche un client pour aller lui parler (son anneau : vert, il a envie d'acheter ; orange, il hésite ; rouge, il va partir). ${s.essais ? `Tes ventes : ${s.ventes} sur ${s.essais}.` : "Ta première vente t'attend."}`;
-  }
-  // Aller voir un client : on marche jusqu'à lui, il se tourne vers nous, la conversation s'ouvre.
-  function allerVersClient(id) {
-    const c = sim.clients.find(o => o.id === id);
-    if (!c || c.parti) return;
-    if (sim.courant && sim.courant !== c && !sim.fini) { toast(`Termine d'abord avec ${sim.courant.sc.prenom}.`); return; }
-    const cam = t3d.camera.position, dx = cam.x - c.x, dz = cam.z - c.z, n = Math.hypot(dx, dz) || 1;
-    let la = null;
-    for (const d of [1.5, 1.8, 1.2, 2.2]) for (const a of [0, 0.5, -0.5, 1, -1, 1.6, -1.6, Math.PI]) {
-      const ux = dx / n, uz = dz / n, ca = Math.cos(a), sa = Math.sin(a), x = c.x + (ux * ca - uz * sa) * d, z = c.z + (ux * sa + uz * ca) * d;
-      if (!la && estLibre3D(t3d.grille, x, z)) la = [x, z];
-    }
-    const ch = la && chemin3D(t3d.grille, [cam.x, cam.z], la);
-    const ouvrirApres = () => {
-      c.angle = Math.atan2(t3d.camera.position.x - c.x, t3d.camera.position.z - c.z);
-      c.objet.rotation.y = c.angle;
-      rendu3D();
-      ouvrirVente(c);
-    };
-    if (t3d.mode !== "promenade") { document.querySelector('input[name="me-vue3d"][value="promenade"]').checked = true; t3d.mode = "promenade"; reglerControles3D(); }
-    marcher3D(ch || [[cam.x, cam.z]], [c.x, 1.35, c.z], ouvrirApres);
-    $("me-3d-info").hidden = true;
-  }
-  function ouvrirVente(c) {
-    sim.courant = c;
-    Object.assign(sim, { fil: [{ qui: "client", texte: remplirSim(c.sc.etapes[0].client, c.ctx) }], envie: c.envie, etape: 0, ordre: melange(c.sc.etapes[0].choix.length), libre: false, fini: false, issue: null, plus: null, achat: null, conseil: null, attente: false, echanges: 0 });
-    document.querySelector('input[name="me-sim-mode"][value="phrases"]').checked = true;
-    $("me-3d-zone").classList.add("en-vente");
-    $("me-sim").hidden = false;
-    rendreVente();
-  }
-  function fermerVente() {
-    if (sim.ctl) sim.ctl.abort();
-    sim.courant = null;
-    $("me-sim").hidden = true;
-    $("me-3d-zone").classList.remove("en-vente");
-  }
-  function rendreVente() {
-    const c = sim.courant;
-    if (!c) return;
-    $("me-sim-nom").textContent = c.sc.prenom;
-    $("me-sim-titre").textContent = c.sc.titre;
-    $("me-sim-jauge").style.width = sim.envie + "%";
-    $("me-sim-jauge").style.background = couleurEnvie(sim.envie);
-    $("me-sim-pct").textContent = `${sim.envie} %`;
-    $("me-sim-envie").setAttribute("aria-label", `${c.sc.sav ? "Satisfaction" : "Envie d'acheter"} : ${sim.envie} sur 100`);
-    $("me-sim-envie-nom").textContent = c.sc.sav ? "Satisfaction" : "Envie d'acheter";
-    $("me-sim-fil").replaceChildren(...sim.fil.map(m => {
-      const li = element("li", `me-sim-msg ${m.qui}`);
-      if (m.qui !== "info") li.append(element("span", "me-sim-qui", m.qui === "client" ? c.sc.prenom : "Toi"));
-      li.append(element("span", "me-sim-texte", m.texte));
-      return li;
-    }), ...(sim.attente ? [element("li", "me-sim-msg client attente", `${c.sc.prenom} réfléchit…`)] : []));
-    $("me-sim-fil").scrollTop = $("me-sim-fil").scrollHeight;
-    $("me-sim-conseil").hidden = !sim.conseil;
-    if (sim.conseil) { $("me-sim-conseil").className = `me-sim-conseil ${sim.conseil.ton}`; $("me-sim-conseil").textContent = sim.conseil.texte; }
-    const claude = !!sampleNs;
-    $("me-sim-mode").hidden = sim.fini || !claude;
-    document.querySelectorAll('input[name="me-sim-mode"]').forEach(r => { r.disabled = r.value === "phrases" && sim.libre && sim.echanges > 0; });
-    const libre = claude && document.querySelector('input[name="me-sim-mode"]:checked').value === "libre";
-    const etape = c.sc.etapes[sim.etape];
-    $("me-sim-choix").hidden = sim.fini || libre || !etape;
-    if (!$("me-sim-choix").hidden) $("me-sim-choix").replaceChildren(...sim.ordre.map(k => {
-      const b = element("button", "me-sim-phrase", remplirSim(etape.choix[k].t, c.ctx));
+  function majIdeesClaude() {
+    $("me-claude-idees").replaceChildren(...ideesClaudeMerch().map(([nom, q]) => {
+      const b = element("button", "me-claude-idee", nom);
       b.type = "button";
-      b.dataset.k = String(k);
+      b.dataset.question = q;
+      b.disabled = claudeMerch.enCours;
       return b;
     }));
-    $("me-sim-libre").hidden = sim.fini || !libre;
-    $("me-sim-dire").disabled = sim.attente;
-    $("me-sim-fin").hidden = !sim.fini;
-    if (sim.fini) {
-      const p = c.sc.prenom, ach = sim.achat || c.ctx.modele;
-      $("me-sim-resultat").className = `me-sim-resultat ${sim.issue}`;
-      $("me-sim-resultat").textContent = sim.issue === "achat"
-        ? (c.sc.sav ? `Réussi : ${p} repart avec un échange, et content.` : `Vendu ! ${p} achète ${ach}${sim.plus ? `, avec ${sim.plus}` : ""}.`)
-        : sim.issue === "reviendra" ? `${p} hésite : « Je repasserai. » Pas de vente cette fois.` : `${p} est parti${c.sc.elle ? "e" : ""} sans acheter.`;
+  }
+  // Une réponse de Claude : des paragraphes, des listes, du gras ; les noms des meubles du plan deviennent des liens.
+  function liensClaude() {
+    const plan = planAffiche();
+    if (!plan) return null;
+    const l = [];
+    elementsDuPlan(plan.id).forEach(e => {
+      const n = nomMeuble(e), court = n.split(" - ")[0].trim();
+      if (n.length >= 3) l.push([n, e.id]);
+      if (court !== n && court.length >= 3) l.push([court, e.id]);
+    });
+    if (!l.length) return null;
+    l.sort((a, b) => b[0].length - a[0].length);
+    const echap = t => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return { ids: new Map(l.slice().reverse()), re: new RegExp(`(?<![0-9A-Za-zÀ-ÿ])(?:${l.map(([n]) => echap(n)).join("|")})(?![0-9A-Za-zÀ-ÿ])`, "g") };
+  }
+  function texteEtLiens(parent, texte, liens) {
+    if (!liens) { parent.append(texte); return; }
+    let i = 0, m;
+    liens.re.lastIndex = 0;
+    while ((m = liens.re.exec(texte))) {
+      if (m.index > i) parent.append(texte.slice(i, m.index));
+      const b = element("button", "me-claude-lien", m[0]);
+      b.type = "button";
+      b.dataset.id = liens.ids.get(m[0]);
+      b.title = "Voir sur le plan";
+      parent.append(b);
+      i = m.index + m[0].length;
     }
+    if (i < texte.length) parent.append(texte.slice(i));
   }
-  // Une phrase choisie : l'envie bouge, le client réagit, le coach commente ; à la dernière étape, il décide.
-  function choisirPhrase(k) {
-    const c = sim.courant, etape = c && c.sc.etapes[sim.etape], ch = etape && etape.choix[k];
-    if (!ch || sim.fini) return;
-    sim.fil.push({ qui: "vendeur", texte: remplirSim(ch.t, c.ctx) });
-    sim.envie = Math.max(0, Math.min(100, sim.envie + ch.e));
-    sim.conseil = { texte: ch.c, ton: ch.e >= 10 ? "bien" : ch.e <= -10 ? "mal" : "moyen" };
-    if (ch.plus) sim.plus = ch.plus;
-    c.envie = sim.envie;
-    majAnneau(c);
-    sim.fil.push({ qui: "client", texte: remplirSim(ch.rep, c.ctx) });
-    if (ch.fin === "depart" || sim.envie <= 0) return terminerVente("depart");
-    if (sim.etape + 1 < c.sc.etapes.length) {
-      sim.etape += 1;
-      sim.ordre = melange(c.sc.etapes[sim.etape].choix.length);
-      sim.fil.push({ qui: "client", texte: remplirSim(c.sc.etapes[sim.etape].client, c.ctx) });
-      rendreVente();
-    } else terminerVente(sim.envie >= 70 ? "achat" : sim.envie >= 45 ? "reviendra" : "depart");
+  function enLigneClaude(parent, texte, liens) {
+    texte.split(/\*\*(.+?)\*\*/).forEach((bout, k) => {
+      if (!bout) return;
+      if (k % 2) { const b = element("b"); texteEtLiens(b, bout, liens); parent.append(b); } else texteEtLiens(parent, bout, liens);
+    });
   }
-  function terminerVente(issue) {
-    const c = sim.courant;
-    if (!c || sim.fini) return;
-    Object.assign(sim, { fini: true, issue });
-    c.parti = true;
-    sim.vus.push(c.sc.id);
-    noterSim(c, issue);
-    if (issue !== "achat") sim.plus = null;
-    rendreVente();
-    majAideSim();
-    // Il s'en va : à la caisse s'il achète, vers la sortie sinon ; un autre client arrive.
-    const plan = t3d.plan, els = elementsDuPlan(plan.id), caisse = els.find(e => e.type === "caisse"), entree = els.find(e => e.type === "entree");
-    const cible = issue === "achat" && caisse ? versPlan(caisse, 0, -caisse.p / 2 - 0.5) : entree ? [entree.x, Math.min(entree.y, plan.profondeur - 0.3)] : [Math.min(plan.homme, plan.largeur) / 2, plan.profondeur - 0.4];
-    setTimeout(() => faireMarcherClient(c, cible, () => {
-      retirerClient(c);
-      if (sim.actif) setTimeout(() => { if (sim.actif) { nouveauClient(); rendu3D(); dessinerMiniCarte(); } }, 1200);
-    }), 900);
+  function corpsReponseClaude(texte, liens) {
+    const corps = element("div", "me-claude-corps");
+    let liste = null;
+    texte.split("\n").forEach(ligne => {
+      const l = ligne.trim();
+      if (!l) { liste = null; return; }
+      const m = /^(?:[-*•]|\d+[.)])\s+(.*)$/.exec(l);
+      let cible;
+      if (m) { if (!liste) { liste = element("ul"); corps.append(liste); } cible = element("li"); liste.append(cible); }
+      else { liste = null; cible = element("p"); corps.append(cible); }
+      enLigneClaude(cible, m ? m[1] : l.replace(/^#+\s*/, ""), liens);
+    });
+    return corps;
   }
-  // Avec ses mots : Claude joue le client (son caractère, ce qu'il cherche, les vraies réfs du magasin) et le coach.
-  function consigneClient(c) {
-    const sc = c.sc, p = sc.persona, ou = emplacementsDuPlan(t3d.plan.id);
-    const refs = piecesEnMagasin().filter(x => sc.categories.includes(x.categorie) || ["ceintures", "chaussettes", "bonnets", "casquettes"].includes(x.categorie)).slice(0, 40)
-      .map(x => `- ${[x.marque, x.modele, x.couleur].filter(Boolean).join(" · ")}${x.prix ? `, ${formatPrix(x.prix)}` : ""}${x.matiere ? `, ${x.matiere}` : ""}${(ou.get(x.id) || [])[0] ? ` (${ou.get(x.id)[0].texte})` : ""}`);
-    const fil = sim.fil.filter(m => m.qui !== "info").map(m => `${m.qui === "client" ? "Client" : "Vendeur"} : ${m.texte}`).join("\n");
-    return [
-      "Tu joues un client dans un magasin de prêt-à-porter homme multimarque (jeans et casual). Un vendeur s'entraîne à vendre avec toi : c'est un jeu d'entraînement.",
-      "Reste dans ton personnage. Réponds comme un vrai client, en français parlé, en une à trois phrases courtes, sans jamais dire que tu es une IA ni commenter le jeu dans ta réplique.",
-      "Sois exigeant mais juste : ton envie d'acheter baisse si le vendeur est vague, insistant, te laisse seul, dévalorise un produit ou ta marque, invente une promotion, ne pose pas de questions ou parle trop ; elle monte s'il t'écoute, pose des questions ouvertes, reformule, montre un produit précis avec ses bénéfices pour toi, propose l'essayage, traite tes objections avec calme et propose au bon moment un article complémentaire pertinent.",
-      "À savoir sur le magasin : les promotions du site internet ne s'appliquent pas en magasin ; les chaussettes sont à la caisse ; un ticket cadeau permet d'échanger.",
-      "",
-      `Ton personnage : ${sc.prenom}, ${p.qui}`,
-      `Ce que tu viens chercher : ${p.besoin}`,
-      `Ton caractère : ${p.caractere}`,
-      `Ce que tu ne dis pas tout de suite : ${p.secret}`,
-      sc.sav ? "Ici, « envie » veut dire ta satisfaction : « achat » veut dire que tu repars satisfait (un échange accepté, par exemple)." : null,
-      "",
-      "Ce que le magasin a vraiment (marque · modèle · couleur, prix, matière, et où c'est) :",
-      ...(refs.length ? refs : ["- (la liste n'est pas disponible : reste général)"]),
-      "",
-      "L'échange jusqu'ici :",
-      fil,
-      "",
-      `Ton envie d'acheter avant le dernier message du vendeur : ${sim.envie}/100.`,
-      'Réponds avec seulement un objet JSON : {"client": "ta réplique", "envie": ta nouvelle envie de 0 à 100, "conseil": "une phrase de coach qui tutoie le vendeur, sur son dernier message : ce qui était bien, ou ce qu\'il aurait mieux valu dire", "ton": "bien" | "moyen" | "mal", "fin": null, "achat": ""}',
-      'Mets "fin" à "achat" quand tu décides d\'acheter (et dans "achat", ce que tu prends, en quelques mots), à "depart" quand tu t\'en vas sans acheter, à "reviendra" quand tu pars en disant que tu repasseras ; sinon laisse null. Ne termine la visite que si c\'est naturel.',
-    ].filter(l => l !== null).join("\n");
+  function bulleClaude(tour, liens) {
+    const li = element("li", `me-claude-msg ${tour.role === "user" ? "moi" : "claude"}`);
+    if (tour.role === "user") li.append(element("p", null, tour.content)); else li.append(corpsReponseClaude(tour.content, liens));
+    return li;
   }
-  async function direLibre(texte) {
-    const c = sim.courant;
-    if (!c || sim.fini || sim.attente || !sampleNs || !texte.trim()) return;
-    sim.libre = true;
-    sim.echanges += 1;
-    sim.fil.push({ qui: "vendeur", texte: texte.trim().slice(0, 600) });
-    sim.attente = true;
-    $("me-sim-texte").value = "";
-    rendreVente();
-    sim.ctl = new AbortController();
+  function rendreClaudeMerch() {
+    const liens = liensClaude(), fil = $("me-claude-fil"), enBas = fil.scrollHeight - fil.scrollTop - fil.clientHeight < 40;
+    majIdeesClaude();
+    $("me-claude-aide").hidden = claudeMerch.tours.length > 0 || claudeMerch.enCours;
+    const bulles = claudeMerch.tours.map(t => bulleClaude(t, liens));
+    if (claudeMerch.enCours) {
+      const li = element("li", "me-claude-msg claude direct");
+      li.id = "me-claude-direct";
+      if (claudeMerch.direct) li.append(corpsReponseClaude(claudeMerch.direct, liens));
+      else li.append(element("p", "me-claude-attente", "Claude regarde le plan… (ça peut prendre jusqu'à une minute)"));
+      bulles.push(li);
+    }
+    fil.replaceChildren(...bulles);
+    if (enBas || claudeMerch.enCours) fil.scrollTop = fil.scrollHeight;
+    $("me-claude-effacer").hidden = !claudeMerch.tours.length || claudeMerch.enCours;
+    $("me-claude-stop").hidden = !claudeMerch.enCours;
+    $("me-claude-envoyer").disabled = claudeMerch.enCours;
+  }
+  function majDirectClaude() {
+    const li = $("me-claude-direct");
+    if (!li) { rendreClaudeMerch(); return; }
+    const fil = $("me-claude-fil"), enBas = fil.scrollHeight - fil.scrollTop - fil.clientHeight < 60;
+    li.replaceChildren(corpsReponseClaude(claudeMerch.direct, liensClaude()));
+    if (enBas) fil.scrollTop = fil.scrollHeight;
+  }
+  // L'onglet Claude du panneau n'existe que si Claude est là (le propriétaire, qui l'a autorisé).
+  function majClaudeMerch() {
+    $("me-panneau-onglets").hidden = !sampleNs;
+    if (!sampleNs && vuePanneauMerch === "claude") choisirVuePanneau("plan");
+  }
+  function choisirVuePanneau(v) {
+    vuePanneauMerch = v === "claude" && sampleNs ? "claude" : "plan";
+    document.querySelectorAll('input[name="me-panneau-vue"]').forEach(r => { r.checked = r.value === vuePanneauMerch; });
+    $("me-panneau").classList.toggle("avec-claude", vuePanneauMerch === "claude");
+    if (vuePanneauMerch === "claude") rendreClaudeMerch();
+  }
+  async function demanderClaudeMerch(question) {
+    const plan = planAffiche(), q = String(question || "").trim().slice(0, 1000);
+    if (!sampleNs || !plan || claudeMerch.enCours || !q) return;
+    claudeMerch.tours.push({ role: "user", content: q });
+    Object.assign(claudeMerch, { enCours: true, direct: "" });
+    $("me-claude-texte").value = "";
+    rendreClaudeMerch();
+    const ctl = claudeMerch.ctl = new AbortController();
+    const entree = [{ role: "user", content: consigneMerchClaude(plan) }, ...claudeMerch.tours.slice(-12)];
+    const rendreQuestion = () => { claudeMerch.tours.pop(); if (!$("me-claude-texte").value) $("me-claude-texte").value = q; };
     try {
-      const r = await sampleNs.json(consigneClient(c), { modelTier: "quick", cache: false, signal: sim.ctl.signal });
-      if (sim.courant !== c) return;
-      const reponse = String((r && r.client) || "").trim().slice(0, 500), envie = Math.round(Number(r && r.envie));
-      if (reponse) sim.fil.push({ qui: "client", texte: reponse });
-      if (Number.isFinite(envie)) sim.envie = Math.max(0, Math.min(100, envie));
-      const conseil = String((r && r.conseil) || "").trim().slice(0, 300);
-      sim.conseil = conseil ? { texte: conseil, ton: ["bien", "moyen", "mal"].includes(r.ton) ? r.ton : "moyen" } : null;
-      c.envie = sim.envie;
-      majAnneau(c);
-      sim.attente = false;
-      const fin = ["achat", "depart", "reviendra"].includes(r && r.fin) ? r.fin : sim.envie <= 0 ? "depart" : sim.echanges >= 12 ? (sim.envie >= 70 ? "achat" : sim.envie >= 45 ? "reviendra" : "depart") : null;
-      if (fin) { sim.achat = fin === "achat" ? String(r.achat || "").trim().slice(0, 120) || null : null; terminerVente(fin); } else rendreVente();
+      const r = await sampleNs(entree, { modelTier: "default", cache: false, signal: ctl.signal, onText: ({ text }) => { claudeMerch.direct = text; majDirectClaude(); } });
+      claudeMerch.tours.push({ role: "assistant", content: r.text + (r.truncated ? "\n\n(Réponse coupée : demande moins à la fois.)" : "") });
     } catch (e) {
-      sim.attente = false;
-      if (sim.courant !== c) return;
-      sim.fil.pop();
-      sim.echanges -= 1;
-      $("me-sim-texte").value = texte;
-      const code = e && e.code;
-      if (code === "cancelled") return;
+      const code = e && e.code, partie = e && typeof e.text === "string" && e.text.trim() ? e.text : "";
       if (["not_granted", "sampling_disabled", "not_declared", "capability_disabled", "capability_removed"].includes(code)) {
+        rendreQuestion();
         sampleNs = null;
-        toast("Claude n'est pas disponible ici : continue avec les phrases toutes faites.");
-        if (!sim.echanges) document.querySelector('input[name="me-sim-mode"][value="phrases"]').checked = true;
-      } else toast(code === "rate_limited" ? "Claude est très demandé : réessaie dans un moment." : code === "refused" ? "Claude n'a pas voulu répondre à ça : dis-le autrement." : "Le client n'a pas répondu. Réessaie.");
-      rendreVente();
+        toast("Claude n'est pas disponible ici.");
+      } else if (code === "refused") { rendreQuestion(); toast("Claude n'a pas voulu répondre à ça : reformule ta question."); }
+      else if (partie) claudeMerch.tours.push({ role: "assistant", content: partie + (code === "cancelled" ? "\n\n(Arrêté.)" : "\n\n(Réponse interrompue.)") });
+      else { rendreQuestion(); if (code !== "cancelled") toast(code === "rate_limited" ? "Claude est très demandé : réessaie dans un moment." : "Pas de réponse de Claude. Réessaie."); }
+    } finally {
+      Object.assign(claudeMerch, { enCours: false, direct: "", ctl: null });
+      garderToursClaude();
+      majClaudeMerch();
+      if (vuePanneauMerch === "claude") rendreClaudeMerch();
     }
   }
-  $("me-3d-sim").addEventListener("click", () => basculerSimulateur(!sim.actif));
-  $("me-sim-choix").addEventListener("click", ev => { const b = ev.target.closest("[data-k]"); if (b) choisirPhrase(Number(b.dataset.k)); });
-  $("me-sim-mode").addEventListener("change", () => { rendreVente(); if (!$("me-sim-libre").hidden) $("me-sim-texte").focus(); });
-  $("me-sim-libre").addEventListener("submit", ev => { ev.preventDefault(); direLibre($("me-sim-texte").value); });
-  $("me-sim-texte").addEventListener("keydown", ev => { if (ev.key === "Enter" && !ev.shiftKey) { ev.preventDefault(); direLibre($("me-sim-texte").value); } });
-  $("me-sim-quitter").addEventListener("click", () => {
-    // Laisser le client en plein échange : il reste où il est, la visite ne compte pas.
-    if (sim.courant && !sim.fini) { sim.courant.envie = sim.courant.sc.envie; majAnneau(sim.courant); }
-    fermerVente();
-    majAideSim();
+  document.querySelectorAll('input[name="me-panneau-vue"]').forEach(r => r.addEventListener("change", () => choisirVuePanneau(r.value)));
+  $("me-claude-idees").addEventListener("click", ev => { const b = ev.target.closest("[data-question]"); if (b) demanderClaudeMerch(b.dataset.question); });
+  $("me-claude-form").addEventListener("submit", ev => { ev.preventDefault(); demanderClaudeMerch($("me-claude-texte").value); });
+  $("me-claude-texte").addEventListener("keydown", ev => { if (ev.key === "Enter" && !ev.shiftKey) { ev.preventDefault(); demanderClaudeMerch($("me-claude-texte").value); } });
+  $("me-claude-stop").addEventListener("click", () => { if (claudeMerch.ctl) claudeMerch.ctl.abort(); });
+  $("me-claude-effacer").addEventListener("click", () => { claudeMerch.tours = []; garderToursClaude(); rendreClaudeMerch(); });
+  // Un nom de meuble dans une réponse : on le montre sur le plan (en 3D, on s'en approche).
+  $("me-claude-fil").addEventListener("click", ev => {
+    const b = ev.target.closest(".me-claude-lien"), e = b && merchElements.docs[b.dataset.id];
+    if (!e) return;
+    if (ongletMerch === "3d" && t3d) { approcher3D(e); return; }
+    if (ongletMerch !== "plan") { ongletMerch = "plan"; rendreMerch(); }
+    choisirElementMerch(e.id);
+    const g = document.querySelector(`#me-svg .me-el[data-id="${e.id}"]`);
+    if (g) g.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
   });
-  $("me-sim-suivant").addEventListener("click", () => { fermerVente(); majAideSim(); });
 
   // ----- un plan : créer, régler, mettre en place, dupliquer, supprimer -----
   let planEdite = null;
