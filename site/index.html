@@ -2119,7 +2119,7 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
             </div>
             <section class="me-claude" id="me-claude" aria-labelledby="me-claude-titre">
               <div class="me-claude-tete"><h2 class="me-panneau-titre" id="me-claude-titre">Des pistes pour le merch</h2><button class="lien-discret" type="button" id="me-claude-effacer" hidden>Effacer</button></div>
-              <p class="aide" id="me-claude-aide">Claude voit le plan affiché : les meubles, les réfs et depuis quand elles sont là, les zones, tes règles et les alertes. Pose-lui une question ou touche une idée ; dans ses réponses, touche le nom d'un meuble pour le voir sur le plan.</p>
+              <p class="aide" id="me-claude-aide">Claude voit le plan affiché : les meubles, leur place, leur taille, leur orientation, les zones, le parcours, tes règles et ce qu'il y a en magasin. Demande-lui si tes meubles sont bien placés, quoi changer, quel thème y mettre ; dans ses réponses, touche le nom d'un meuble pour le voir sur le plan.</p>
               <div class="me-claude-idees" id="me-claude-idees"></div>
               <ol class="me-claude-fil" id="me-claude-fil" aria-live="polite"></ol>
               <form class="me-claude-form" id="me-claude-form">
@@ -12722,7 +12722,7 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
   });
 
   // ----- Claude, à côté du plan : des pistes de réflexion pour le merch -----
-  // Claude voit le plan affiché (les meubles, les réfs posées et depuis quand, les zones), tes règles et les alertes ; il
+  // Claude voit le plan affiché (les meubles, leur place, leur taille, les zones, le parcours), tes règles et ce qu'il y a en magasin ; il
   // propose, tu décides. La conversation reste dans ce navigateur. Seulement pour le propriétaire (Claude utilise son compte).
   const CLE_CLAUDE_MERCH = "tableau-de-bord-axel:merch-claude";
   const claudeMerch = { tours: [], ctl: null, enCours: false, direct: "" };
@@ -12732,66 +12732,53 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
     localStorage.removeItem("tableau-de-bord-axel:simulateur");   // l'ancien simulateur de vente, retiré
   } catch (_) { /* pas de stockage : la conversation ne survivra pas au rechargement */ }
   const garderToursClaude = () => { try { localStorage.setItem(CLE_CLAUDE_MERCH, JSON.stringify(claudeMerch.tours.slice(-20))); } catch (_) { /* tant pis */ } };
-  // Une réf., pour Claude : marque · modèle · couleur (catégorie, prix, repères, depuis quand elle est là).
-  function refPourClaude(a) {
-    const x = pieces[a.p];
-    if (!x) return "pièce introuvable";
-    const r = x.reperes || {};
-    const infos = [NOM_CATEGORIE[x.categorie], x.prix ? formatPrix(x.prix) : null, r.nouveaute ? "nouveauté" : null, r.meilleure ? "meilleure vente" : null,
-      x.archive ? "plus en magasin" : null, a.sup ? "par-dessus" : null, a.ok ? "se vend bien ici" : a.d ? `là depuis ${joursDepuis(a.d)} j` : null].filter(Boolean);
-    return `${[x.marque, x.modele, x.couleur].filter(Boolean).join(" · ")} (${infos.join(", ")})`;
+  // Un meuble, pour Claude : son genre, sa taille, son emprise au sol, son orientation, sa zone.
+  function emprise(e) {
+    const t = TYPES_MERCH[e.type], p = t.porte === "uv" && facesDe(e) !== 2 ? 0.4 : e.p;
+    const pts = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([a, b]) => versPlan(e, a * e.l / 2, b * p / 2));
+    const xs = pts.map(q => q[0]), ys = pts.map(q => q[1]);
+    return `x ${virgule(Math.min(...xs))} à ${virgule(Math.max(...xs))}, y ${virgule(Math.min(...ys))} à ${virgule(Math.max(...ys))}`;
   }
-  const listeRefsClaude = l => (l.length ? l.map(refPourClaude).join(" ; ") : "vide");
-  const ouClaude = e => `x ${virgule(e.x)}, y ${virgule(e.y)}`;
+  const ORIENTATION = { 0: "face vers l'entrée", 90: "face vers la gauche", 180: "face vers le fond", 270: "face vers la droite" };
+  function meublePourClaude(plan, e) {
+    const t = TYPES_MERCH[e.type], zone = t.famille === "repere" ? "" : `, zone ${NOM_ZONE[zoneElement(plan, e)].toLowerCase()}`;
+    const taille = t.rond ? `${virgule(e.l)} m de diamètre` : `${virgule(e.l)} × ${virgule(e.p)} m`;
+    let detail = "";
+    if (t.porte === "uv") detail = ` ; ${resumeUvs(e)}${e.dessus ? ", 2 étagères sur le dessus" : ""}`;
+    else if (t.porte === "niveaux") detail = ` ; ${resumePiles(e)}${e.hauteurs > 1 ? `, ${e.hauteurs} hauteurs (gigognes)` : ""}`;
+    else if (t.porte === "tenue" && presentesPar(e).length) detail = ` ; présente ${presentesPar(e).map(nomMeuble).join(", ")}`;
+    const orient = t.porte === "uv" ? `, ${ORIENTATION[e.rot] || `tourné de ${e.rot}°`}` : t.rond ? "" : `, tourné de ${e.rot}°`;
+    return `- ${nomMeuble(e)} (${t.nom.toLowerCase()}, ${taille}, ${emprise(e)}${orient}${zone}${detail}${e.note ? ` ; note : ${e.note}` : ""})`;
+  }
   function contexteMerchClaude(plan) {
-    const L = [], H = Math.min(plan.homme, plan.largeur), rg = reglagesMerch(), zone = z => NOM_ZONE[z].toLowerCase();
-    L.push(`Le plan « ${plan.nom} »${plan.actif ? " (en place)" : " (prévu)"} : ${virgule(plan.largeur)} m de large, ${virgule(plan.profondeur)} m de profondeur ; le côté Homme fait ${virgule(H)} m, à gauche en entrant.`,
-      "Les positions sont en mètres depuis le coin du fond à gauche : x vers la droite, y vers l'entrée (en bas). La zone (chaude, tiède, froide) vient de la distance à l'entrée et au parcours des clients, ou du choix du vendeur.");
+    const L = [], H = Math.min(plan.homme, plan.largeur), rg = reglagesMerch();
+    L.push(`Le plan « ${plan.nom} »${plan.actif ? " (en place)" : " (prévu)"} : ${virgule(plan.largeur)} m de large, ${virgule(plan.profondeur)} m de profondeur ; le côté Homme fait ${virgule(H)} m, à gauche en entrant (le côté Femme, à droite, n'est pas géré ici).`,
+      "Les positions sont en mètres depuis le coin du fond à gauche : x vers la droite, y vers l'entrée (en bas du plan). Un mur porte ses équipements sur sa face. La zone (chaude, tiède, froide) vient de la distance à l'entrée et au parcours des clients, ou de ce qui a été choisi.");
+    if (plan.circulation.length >= 2) L.push(`Le parcours des clients tracé sur le plan : ${plan.circulation.map(q => `(${virgule(q.x)} ; ${virgule(q.y)})`).join(" → ")}.`);
     L.push("", "Ses règles de merch (à respecter) :");
     REGLES_MERCH.forEach(([, regles]) => regles.forEach(([, t]) => L.push(`- ${t}`)));
-    L.push(`- Une réf. qui reste au même endroit ${rg.seuil} jours ou plus doit bouger (facing ↔ pressing ↔ étagère ↔ table), sauf si elle « se vend bien ici ».`);
-    L.push("", "Les meubles et ce qu'ils portent :");
-    trierElements(elementsDuPlan(plan.id)).forEach(e => {
-      const t = TYPES_MERCH[e.type];
-      if (t.porte === "uv") {
-        L.push(`- ${nomMeuble(e)} (${facesDe(e) === 2 ? "grand portant en mini-mur recto-verso" : estUnMiroir(e) ? "miroir" : "mur"}, ${facesDe(e) === 2 ? `${uvsParFace(e)} UV de chaque côté` : `${e.uvs.length} UV`} de ${Math.round(e.uvL * 100)} cm, ${ouClaude(e)}) :`);
-        e.uvs.forEach((u, i) => {
-          const tete = `  ${nomUv(e, i)} (zone ${zone(zoneUv(plan, e, i))})`;
-          if (estMiroir(u)) { L.push(`${tete} : un miroir`); return; }
-          L.push(`${tete}${u.miroir ? ", miroir condamné derrière" : ""} : ${u.eq.length ? u.eq.map(q => `${nomEq(u, q).toLowerCase()} à ${hauteurEq(q)}${q.ferme ? " (fermeture)" : ""} : ${listeRefsClaude(q.articles)}`).join(" | ") : "rien"}`);
-        });
-        if (e.dessus) e.dessus.forEach((d, k) => L.push(`  dessus, étagère ${k + 1} (${d.piles} piles) : ${listeRefsClaude(d.articles)}`));
-      } else if (t.porte === "niveaux") {
-        const rangs = nomsRangees(e);
-        L.push(`- ${nomMeuble(e)} (${t.nom.toLowerCase()}, ${resumePiles(e)}${e.dispo === "milieu" ? "" : e.sens === "meme" ? ", dans le même sens" : ", dos à dos"}${e.hauteurs > 1 ? `, ${e.hauteurs} hauteurs` : ""}, zone ${zone(zoneElement(plan, e))}, ${ouClaude(e)}) :`);
-        rangeesTable(e).forEach(([r, n]) => {
-          const piles = [];
-          for (let k = 1; k <= n; k++) { const a = e.niveaux[0].articles.find(x => x.pos === r + k); piles.push(`pile ${k} : ${a ? refPourClaude(a) : "vide"}`); }
-          L.push(`  ${rangs[r]} : ${piles.join(" ; ")}`);
-        });
-        e.niveaux.forEach((niv, k) => { if (k && niv.articles.length) L.push(`  ${k + 1}e hauteur : ${listeRefsClaude(niv.articles)}`); });
-      } else if (t.porte === "tenue") {
-        const presente = presentesPar(e).map(nomMeuble);
-        L.push(`- ${nomMeuble(e)} (${t.nom.toLowerCase()}, zone ${zone(zoneElement(plan, e))}, ${ouClaude(e)}) : ${e.tenue ? `tenue « ${e.tenue} », ` : ""}porte ${listeRefsClaude(e.articles || [])}${presente.length ? ` ; présente ${presente.join(", ")}` : ""}`);
-      } else if (t.porte === "articles") {
-        L.push(`- ${nomMeuble(e)} (${t.nom.toLowerCase()}${t.famille === "repere" ? "" : `, zone ${zone(zoneElement(plan, e))}`}, ${ouClaude(e)}) : ${listeRefsClaude(e.articles || [])}`);
-      } else L.push(`- ${nomMeuble(e)} (${t.nom.toLowerCase()}, ${ouClaude(e)})`);
-    });
-    const al = alertesDuPlan(plan), ou = emplacementsDuPlan(plan.id);
-    const bloc = (titre, lignes, max) => { if (lignes.length) L.push("", `${titre} :`, ...lignes.slice(0, max).map(x => `- ${x}`), ...(lignes.length > max ? [`- … et ${lignes.length - max} autres`] : [])); };
-    bloc(`Les réfs qui n'ont pas bougé depuis ${al.seuil} jours ou plus`, al.immobiles.map(p => `${refPourClaude(p.a)} — ${p.texte}`), 30);
-    bloc("Les règles à revoir", al.regles.map(r => r.texte), 20);
-    bloc("Nouveautés et meilleures ventes pas encore exposées", al.aExposer.map(x => refPourClaude({ p: x.id })), 25);
-    bloc("À réassortir", al.reassort.map(p => `${refPourClaude(p.a)} — ${p.texte}`), 15);
-    bloc("Le reste du Dressing, en magasin mais pas encore posé", piecesEnMagasin().filter(x => !ou.has(x.id)).map(x => refPourClaude({ p: x.id })), 70);
+    L.push("", "Les meubles (le nom dit souvent leur thème actuel) :");
+    trierElements(elementsDuPlan(plan.id)).forEach(e => L.push(meublePourClaude(plan, e)));
+    const regles = [];
+    elementsDuPlan(plan.id).filter(e => TYPES_MERCH[e.type].porte === "uv").forEach(e => { const al = alertesMur(e); al.facings.forEach(f => regles.push(`${nomMeuble(e)} : deux facings côte à côte, ${f.texte}`)); al.hauteurs.forEach(h => regles.push(`${nomMeuble(e)}, ${nomUv(e, h.uv)} : ${h.texte}`)); });
+    if (regles.length) L.push("", "Ce qui cloche dans l'équipement des murs :", ...regles.slice(0, 15).map(x => `- ${x}`));
+    // Ce qu'il y a en magasin (le Dressing), par catégorie : de quoi choisir un thème.
+    const parCat = new Map();
+    piecesEnMagasin().forEach(x => { const c = NOM_CATEGORIE[x.categorie] || "Autres"; if (!parCat.has(c)) parCat.set(c, []); parCat.get(c).push(x); });
+    const tete = (l, n) => { const m = new Map(); l.filter(Boolean).forEach(v => m.set(v, (m.get(v) || 0) + 1)); return [...m].sort((a, b) => b[1] - a[1]).slice(0, n).map(([v, k]) => `${v} (${k})`).join(", "); };
+    if (parCat.size) {
+      L.push("", "Ce qu'il y a en magasin, d'après le Dressing (catégorie : nombre de réfs ; marques ; couleurs les plus présentes ; nouveautés) :");
+      [...parCat].forEach(([c, xs]) => L.push(`- ${c} : ${xs.length} réf${xs.length > 1 ? "s" : ""} ; ${tete(xs.map(x => x.marque), 6)} ; ${tete(xs.map(x => (x.couleur || "").toLowerCase()), 6)}${xs.some(x => x.reperes && x.reperes.nouveaute) ? ` ; ${xs.filter(x => x.reperes && x.reperes.nouveaute).length} nouveauté(s)` : ""}`));
+    }
+    L.push("", `L'ordre des marques à mettre en avant : ${[...new Set(piecesEnMagasin().map(x => x.marque).filter(Boolean))].sort((a, b) => rangMarque(a) - rangMarque(b)).join(", ")}.`);
     return L.join("\n");
   }
   function consigneMerchClaude(plan) {
     return [
-      "Tu es un conseiller en merchandising visuel. Tu aides un vendeur d'un magasin de prêt-à-porter homme multimarque (jeans et casual) à réfléchir à l'implantation de son magasin. Voici son plan tel qu'il est en ce moment.",
+      "Tu es un conseiller en merchandising visuel. Tu aides un vendeur d'un magasin de prêt-à-porter homme multimarque (jeans et casual) à réfléchir à l'implantation de son magasin : la place et l'orientation des meubles, le parcours des clients, les zones chaudes et froides, et le thème de chaque meuble (quelle famille de produits, quelle marque, quelle couleur ou quelle ambiance y mettre). Voici son plan tel qu'il est en ce moment.",
       "",
-      "Ce que tu fais : tu donnes des pistes de réflexion concrètes et argumentées, en français, en tutoyant. Dis quoi changer, où, et pourquoi : zone chaude ou froide, hauteur des yeux, facing, pressing, étagère ou table, dégradés de couleurs, associations de marques et de modèles, mannequins, rotation des réfs qui ne bougent pas, nouveautés et meilleures ventes à exposer. Cite les meubles et les UV par leur nom exact (par exemple « Mur 3 - Bleu / Beige, UV 2 »), pour qu'il les retrouve sur le plan.",
-      "Respecte ses règles. Ne propose pas de déplacer une réf. marquée « se vend bien ici ». Ne parle pas de promotions : celles du site internet ne valent pas en magasin. Ne parle ni de chiffre d'affaires ni d'objectifs. Si une information te manque (une taille de meuble, un stock), dis-le en une phrase plutôt que de l'inventer. Ce sont des pistes : c'est lui qui décide.",
+      "Ce que tu fais : tu donnes des pistes de réflexion concrètes et argumentées, en français, en tutoyant. Dis si un meuble est bien placé ou non, ce que tu déplacerais, tournerais, regrouperais ou séparerais, et où ; vérifie la largeur des allées (au moins 90 cm à 1,20 m pour circuler) avec les emprises au sol ; propose des thèmes adaptés à la zone et à ce qu'il y a en magasin. Cite les meubles par leur nom exact (par exemple « Table pull chaud »), pour qu'il les retrouve sur le plan.",
+      "On ne s'occupe pas ici des articles posés un par un sur les meubles : parle des meubles et de leurs thèmes. Respecte ses règles. Ne parle pas de promotions : celles du site internet ne valent pas en magasin. Ne parle ni de chiffre d'affaires ni d'objectifs. Si une information te manque (une mesure, une contrainte du magasin), dis-le en une phrase plutôt que de l'inventer. Ce sont des pistes : c'est lui qui décide.",
       "Forme : du texte simple, des listes à puces « - », du gras avec **…** pour l'essentiel, pas de tableau ni de titre ; une dizaine de lignes au plus, sauf si on te demande plus.",
       "",
       contexteMerchClaude(plan),
@@ -12801,12 +12788,12 @@ circle.mu-bras { fill: #6b7484; stroke: none; }
   function ideesClaudeMerch() {
     const e = choixMerch && merchElements.docs[choixMerch];
     return [
-      ...(e ? [[`Ce meuble : ${nomMeuble(e)}`, `Parle-moi de « ${nomMeuble(e)} » : ce qui va, ce que tu changerais, et avec quoi l'associer.`]] : []),
-      ["Des pistes pour ce plan", "Regarde tout le plan et donne-moi tes 5 meilleures pistes pour le merch, de la plus importante à la moins importante."],
-      ["Ce qui ne bouge pas", "Quelles réfs ne bougent pas, et où les déplacer (facing, pressing, étagère, table, plus au chaud) ?"],
-      ["La zone chaude", "Est-ce que ma zone chaude, près de l'entrée, est bien utilisée ? Qu'est-ce que j'y mettrais en avant ?"],
-      ["Les couleurs", "Les couleurs sur mes murs et mes tables : les dégradés, les associations. Qu'est-ce qui accroche l'œil, qu'est-ce qui casse ?"],
-      ["Les mannequins", "Mes mannequins et bustes : qu'est-ce qu'ils devraient porter, et quels meubles devraient-ils présenter ?"],
+      ...(e ? [[`Ce meuble : ${nomMeuble(e)}`, `Parle-moi de « ${nomMeuble(e)} » : est-il bien placé et bien orienté ? Quel thème lui donnerais-tu, et pourquoi ?`]] : []),
+      ["Mes meubles sont-ils bien placés ?", "Regarde l'implantation : quels meubles sont mal placés, mal orientés ou gênent le passage ? Que déplacerais-tu, et où ?"],
+      ["Quels thèmes ?", "Propose un thème pour chaque meuble principal (murs, tables, grand portant), selon sa zone et ce qu'on a en magasin."],
+      ["La zone chaude", "Est-ce que ma zone chaude, près de l'entrée, est bien utilisée ? Quels meubles et quels thèmes y mettrais-tu ?"],
+      ["Le parcours client", "Comment le client circule-t-il dans le magasin ? Les allées sont-elles assez larges, y a-t-il des culs-de-sac ou des coins morts ?"],
+      ["Les mannequins", "Où placer mes mannequins et bustes, et quels meubles devraient-ils présenter ?"],
     ];
   }
   function majIdeesClaude() {
