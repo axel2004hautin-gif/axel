@@ -8,14 +8,14 @@ Ouvre `index.html` dans un navigateur (rien à installer). Sur la page publiée 
 
 **Patrimoine**
 - **Mon patrimoine** : le total (épargne + bourse + crypto), la part de chacun, la plus-value latente et la date des cours.
-- **Mon épargne de précaution** : où j'en suis par rapport à mon objectif (mes dépenses × le nombre de mois), ce qu'il manque, et le mois où elle sera complète à mon rythme de versement.
+- **Mon épargne de précaution** : par paliers datés si je veux (ex. 6 000 € au 5 janvier, puis 9 000 € fin 2027), chacun avec son partage du mois entre épargne et investissements ; la page dit combien verser par paie pour tenir la date. Sinon : où j'en suis par rapport à mon objectif (mes dépenses × le nombre de mois), ce qu'il manque, et le mois où elle sera complète à mon rythme de versement.
 - **Mon patrimoine dans le temps** : la courbe épargne, bourse et crypto. Un point est noté chaque jour où je mets à jour un cours, un solde ou une ligne.
 - **Mes investissements** : chaque poche de ma stratégie, aujourd'hui contre la cible, avec la marge de rééquilibrage et les frais moyens.
 - **Ce qui demande ton attention** : ce qui s'écarte de ma stratégie ou de mes règles (poche hors marge, action ou crypto trop lourde, frais trop hauts, épargne de précaution en retard ou sans versement, compte rémunéré moins rentable que le Livret A après impôt, livret plein, ligne hors stratégie…).
 - **Ce mois-ci** : mon effort d'épargne du mois, partagé selon ma stratégie. D'abord le versement sur l'épargne de précaution (sur le compte au meilleur taux net qui a de la place), puis l'argent à investir, réparti ligne par ligne sans rien vendre. Une fois l'épargne de précaution complète, son versement peut basculer vers les investissements.
 - **Mes enveloppes** : PEA (plafond, 5 ans), compte-titres et wallet crypto (impôt latent si je vendais tout), assurance-vie, comptes d'épargne.
 - **Mes comptes d'épargne** : Livret A, LDDS, LEP, compte rémunéré, espèces du courtier, avec le solde, le taux brut, le taux net d'impôt et le plafond. Les comptes cochés forment l'épargne de précaution ; un nouveau solde se saisit directement dans le tableau.
-- **Cours en direct** : un robot relève les cours chaque soir de semaine à 19 h 17 (après la clôture d'Euronext) ; « Actualiser maintenant » le relance tout de suite. La valeur, la plus-value et la variation de la dernière séance suivent les cours du marché.
+- **Cours en direct** : un robot relève les cours chaque soir de semaine à 22 h 47 (après la clôture de Wall Street) ; « Actualiser maintenant » le relance tout de suite. La valeur, la plus-value et la variation de la dernière séance suivent les cours du marché.
 - **Mes lignes** : ajouter, modifier, mettre à jour les cours. Un cours saisi à la main remplace celui du marché jusqu'au relevé suivant. Une ligne peut être suivie en valeur seule quand je ne connais pas le nombre de parts. « Importer avec Claude » lit une capture de Trade Republic (une par portefeuille : PEA, compte-titres, crypto) ou un texte copié, et range les espèces dans mes comptes d'épargne.
 
 **Budget**
@@ -52,9 +52,9 @@ Chaque principe coché pilote des vérifications et est donné à Claude. Le tex
 
 ## Le robot des cours
 
-Une tâche planifiée de mon compte (« Boussole Bourse : cours du marché ») s'exécute chaque soir de semaine à 19 h 17, heure de Paris, dans une session cloud. Elle lit le portefeuille de la page, lance `robot/cours.js` (publié avec la page) et écrit les documents `marche` et `historique`.
+Une tâche planifiée de mon compte (« Boussole Bourse : cours du marché ») s'exécute chaque soir de semaine à 22 h 47, heure de Paris, dans une session cloud. Elle lit le portefeuille de la page, lance `robot/cours.js` (publié avec la page) et écrit les documents `marche` et `historique`.
 
-- Actions et ETF : Yahoo Finance. Le symbole est trouvé avec l'ISIN ou le nom (Paris d'abord pour le PEA), ou donné à la main dans la ligne (ex. `CW8.PA`). Les cours en dollars ou en livres sont convertis en euros.
+- Actions et ETF : Yahoo Finance, en prenant le cours le plus récent (pour un ISIN, la cotation de Stuttgart, ouverte jusqu'à 22 h, est comparée à la place principale) : c'est ce qui se rapproche le plus de la valeur affichée le soir par un courtier comme Trade Republic. Le symbole est trouvé avec l'ISIN ou le nom (Paris d'abord pour le PEA), ou donné à la main dans la ligne (ex. `CW8.PA`). Les cours en dollars ou en livres sont convertis en euros.
 - Cryptos : CoinGecko, à partir du symbole (BTC, ETH, SOL…) ou du nom.
 - Chaque exécution utilise mon compte Claude. Pour changer l'heure ou l'arrêter : claude.ai, Claude Code, tâches planifiées.
 - Test à la main : `node robot/cours.js portefeuille.json - - sortie/`.

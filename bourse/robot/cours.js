@@ -122,7 +122,12 @@ for (const l of lignes) {
 for (const l of lignes) {
   const s = marche.symboles[l.id];
   if (!s || s.source !== "Yahoo Finance") continue;
-  const c = coteYahoo(s.symbole);
+  // Le cours le plus récent : la place principale, et pour un ISIN la cotation de Stuttgart,
+  // ouverte jusqu'à 22 h (proche de ce qu'affiche un courtier en soirée).
+  const candidats = [s.symbole];
+  if (/^[A-Z]{2}[A-Z0-9]{9}\d$/.test(l.code || "") && !s.symbole.endsWith(".SG")) candidats.push(l.code + ".SG");
+  const cotes = candidats.map(coteYahoo).filter(Boolean);
+  const c = cotes.sort((a, b) => (b.date || "").localeCompare(a.date || ""))[0] || null;
   if (!c) { marche.erreurs.push({ ligne: l.nom, message: `Pas de cours pour ${s.symbole} aujourd'hui.` }); if (anciensCours[l.id]) marche.cours[l.id] = anciensCours[l.id]; continue; }
   const prix = versEuros(c.prix, c.devise), veille = c.veille != null ? versEuros(c.veille, c.devise) : null;
   if (prix == null) { marche.erreurs.push({ ligne: l.nom, message: `Conversion ${c.devise} → EUR impossible.` }); continue; }

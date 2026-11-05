@@ -102,6 +102,7 @@
     if (nom === "strategie") {
       const r = { ...base, ...d };
       r.profil = { ...base.profil, ...(d.profil || {}) };
+      r.profil.paliers = Array.isArray(r.profil.paliers) ? r.profil.paliers.filter(p => p && typeof p === "object").map(p => ({ montant: num(p.montant), date: /^\d{4}-\d{2}-\d{2}$/.test(p.date || "") ? p.date : "", versement: num(p.versement), investi: num(p.investi) })) : [];
       r.regles = { ...base.regles, ...(d.regles || {}) };
       r.enveloppes = { ...base.enveloppes, ...(d.enveloppes || {}) };
       r.principes = { ...base.principes, ...(d.principes || {}) };
@@ -352,16 +353,44 @@
     const place = c => !(num(c.plafond) > 0) || num(c.solde) < num(c.plafond);
     return [...cs].filter(place).sort((a, b) => (tauxNet(b) ?? -1) - (tauxNet(a) ?? -1))[0] || cs[0] || null;
   }
+  // Paliers d'épargne de précaution : des objectifs datés, chacun avec son partage du mois
+  // entre l'épargne et les investissements. Sans palier, l'objectif vaut dépenses × mois.
+  const paliers = () => (Array.isArray(S.strategie.profil.paliers) ? S.strategie.profil.paliers : [])
+    .filter(p => p && num(p.montant) > 0).sort((a, b) => (a.date || "9999") < (b.date || "9999") ? -1 : 1);
+  // Nombre de paies (fins de mois) après `debut` (ou aujourd'hui) et jusqu'à `fin` incluse.
+  function paiesEntre(debut, fin) {
+    if (!fin) return null;
+    const apres = debut ? new Date(debut + "T23:59:59") : new Date(new Date().setHours(0, 0, 0, 0));
+    const limite = new Date(fin + "T23:59:59");
+    let n = 0;
+    for (let d = new Date(apres.getFullYear(), apres.getMonth(), 1, 12); n < 600; d.setMonth(d.getMonth() + 1)) {
+      const finMois = new Date(d.getFullYear(), d.getMonth() + 1, 0, 12);
+      if (finMois > limite) break;
+      if (finMois >= apres) n++;
+    }
+    return n;
+  }
   // L'effort d'épargne du mois : d'abord l'épargne de précaution, puis l'argent à investir.
   function planDuMois() {
-    const pr = S.strategie.profil;
-    const obj = objectifPrecaution(), act = epargnePrecaution(), manque = Math.max(0, obj - act);
-    const vp = num(pr.versementPrecaution), vi = num(pr.versementMensuel);
+    const pr = S.strategie.profil, ps = paliers(), act = epargnePrecaution();
+    let obj, vp, vi, palier = null, suivant = null, rang = null;
+    if (ps.length) {
+      const i = ps.findIndex(p => act < num(p.montant));
+      const p = i >= 0 ? ps[i] : ps[ps.length - 1];
+      palier = i >= 0 ? p : null; suivant = i >= 0 ? ps[i + 1] || null : null; rang = i >= 0 ? i : ps.length;
+      obj = num(p.montant); vp = num(p.versement); vi = num(p.investi);
+    } else { obj = objectifPrecaution(); vp = num(pr.versementPrecaution); vi = num(pr.versementMensuel); }
+    const manque = Math.max(0, obj - act);
     let versEpargne, investir;
     if (pr.basculer) { versEpargne = Math.min(vp, manque); investir = vi + vp - versEpargne; }
     else { versEpargne = vp; investir = vi; }
     const mois = vp > 0 && manque > 0 ? Math.ceil(manque / vp) : null;
-    return { obj, act, manque, vp, vi, versEpargne, investir, complete: obj > 0 && manque <= 0, mois, fin: mois ? ajouterMois(aujourdhui(), mois) : null, compte: compteCible() };
+    const paies = palier && palier.date ? paiesEntre(null, palier.date) : null;
+    const besoin = paies ? Math.ceil(manque / paies) : null;
+    const datePassee = palier && palier.date && palier.date < aujourdhui();
+    const enRetard = !!palier && !!palier.date && manque > 0 && (datePassee || paies === 0 || vp * paies < manque - 0.5);
+    return { obj, act, manque, vp, vi, versEpargne, investir, complete: obj > 0 && manque <= 0, mois, fin: mois ? ajouterMois(aujourdhui(), mois) : null, compte: compteCible(),
+      paliers: ps, palier, suivant, rang, paies, besoin, enRetard, datePassee };
   }
   const cibleActions = () => somme(S.strategie.poches.filter(p => p.classe === "actions" || p.classe === "crypto"), p => num(p.cible));
   const objectifPrecaution = () => num(S.strategie.profil.depensesMensuelles) * num(S.strategie.profil.moisPrecaution);
@@ -406,7 +435,12 @@
       else if (!comptes.some(c => c.precaution)) ajoute("attention", "Aucun compte n'est coché comme épargne de précaution : ajoute ton livret dans « Mes comptes d'épargne ».");
       else if (pl.manque > 0) {
         const t = `Épargne de précaution : ${eur(pl.act, 0)} sur ${eur(pl.obj, 0)} (${pct(pl.act / pl.obj * 100, 0)}).`;
-        if (pl.vp > 0) ajoute(pl.mois > 24 ? "attention" : "info", `${t} À ${eur(pl.vp, 0)} par mois, elle sera complète en ${moisFr(pl.fin)}${pl.mois > 24 ? " : c'est long, augmente le versement si tu peux" : ""}.`);
+        if (pl.palier && pl.palier.date) {
+          if (pl.datePassee) ajoute("attention", `${t} L'objectif du ${dateFr(pl.palier.date)} n'est pas atteint : fixe une nouvelle date ou un nouveau versement dans Ma stratégie.`);
+          else if (pl.enRetard) ajoute("attention", `${t} Pour l'avoir le ${dateFr(pl.palier.date)}, il faut ${eur(pl.besoin, 0)} sur chacune des ${pl.paies} prochaines paies ; ta stratégie en prévoit ${eur(pl.vp, 0)}.`);
+          else ajoute("info", `${t} Objectif du ${dateFr(pl.palier.date)} tenu : ${eur(pl.vp, 0)} sur ${pl.paies > 1 ? `chacune des ${pl.paies} prochaines paies` : "la prochaine paie"} (${eur(pl.besoin, 0)} suffisent).`);
+        }
+        else if (pl.vp > 0) ajoute(pl.mois > 24 ? "attention" : "info", `${t} À ${eur(pl.vp, 0)} par mois, elle sera complète en ${moisFr(pl.fin)}${pl.mois > 24 ? " : c'est long, augmente le versement si tu peux" : ""}.`);
         else ajoute("attention", `${t} Aucun versement mensuel n'est prévu pour la compléter : fixe-le dans Ma stratégie.`);
       } else if (pl.act > pl.obj * 1.5) ajoute("info", `Ton épargne de précaution dépasse ton objectif de ${eur(pl.act - pl.obj, 0)} : ce surplus pourrait être investi selon ta stratégie.`);
       else ajoute("ok", `Épargne de précaution complète : ${eur(pl.act, 0)} pour un objectif de ${eur(pl.obj, 0)}.`);
@@ -564,6 +598,24 @@
       return;
     }
     const part = Math.min(100, pl.act / pl.obj * 100);
+    if (pl.paliers.length) {
+      const fin = pl.paliers[pl.paliers.length - 1];
+      const texte = pl.palier
+        ? (pl.palier.date
+          ? `Il manque ${eur(pl.manque, 0)} d'ici le ${dateFr(pl.palier.date)} : ${pl.paies} paie${pl.paies > 1 ? "s" : ""} d'ici là, soit ${eur(pl.besoin || pl.manque, 0)} par paie. Ta stratégie prévoit ${eur(pl.vp, 0)} par mois${pl.enRetard ? " : c'est trop peu, augmente le versement ou décale la date." : ", c'est bon."}`
+          : `Il manque ${eur(pl.manque, 0)}${pl.mois ? ` : à ${eur(pl.vp, 0)} par mois, atteint en ${moisFr(pl.fin)}` : ""}.`)
+        : `Tous tes paliers sont atteints.${pr.basculer && num(fin.versement) > 0 ? ` Tes ${eur(num(fin.versement), 0)} mensuels vont maintenant à tes investissements.` : ""}`;
+      const apres = pl.suivant
+        ? `Ensuite : ${eur(num(pl.suivant.montant), 0)}${pl.suivant.date ? ` pour le ${dateFr(pl.suivant.date)}` : ""}, avec ${eur(num(pl.suivant.versement), 0)} par mois sur l'épargne et ${eur(num(pl.suivant.investi), 0)} investis.`
+        : pl.palier && pr.basculer && pl.vp > 0 ? `Une fois ce dernier palier atteint, ces ${eur(pl.vp, 0)} iront à tes investissements, qui passeront à ${eur(pl.vi + pl.vp, 0)} par mois.` : null;
+      vider(z,
+        h("div", { class: "repart-tete" }, h("span", { class: "chiffre-cle", text: eur(pl.act, 0) }), h("span", { class: "muet petit", text: `sur ${eur(pl.obj, 0)} · palier ${Math.min(pl.rang + 1, pl.paliers.length)} sur ${pl.paliers.length}${pl.palier && pl.palier.date ? `, pour le ${dateFr(pl.palier.date)}` : ""}` })),
+        h("div", { class: "jauge", role: "meter", "aria-label": "Épargne de précaution", "aria-valuemin": "0", "aria-valuemax": String(Math.round(pl.obj)), "aria-valuenow": String(Math.round(Math.min(pl.act, pl.obj))) }, h("div", { style: `width:${part}%` })),
+        h("p", { text: texte }),
+        apres ? h("p", { class: "petit muet", text: apres }) : null,
+        comptes.length ? h("p", { class: "petit muet", text: "Sur : " + comptes.map(c => `${c.nom} (${eur(num(c.solde), 0)})`).join(" · ") }) : null);
+      return;
+    }
     vider(z,
       h("div", { class: "repart-tete" }, h("span", { class: "chiffre-cle", text: eur(pl.act, 0) }), h("span", { class: "muet petit", text: `sur ${eur(pl.obj, 0)} · ${num(pr.moisPrecaution)} mois de dépenses` })),
       h("div", { class: "jauge", role: "meter", "aria-label": "Épargne de précaution", "aria-valuemin": "0", "aria-valuemax": String(Math.round(pl.obj)), "aria-valuenow": String(Math.round(Math.min(pl.act, pl.obj))) }, h("div", { style: `width:${part}%` })),
@@ -1162,7 +1214,8 @@
     const pat = patrimoine(syn), pl = planDuMois();
     L.push(`\nPROFIL${st.exemple ? " (modèle de départ, pas encore personnalisé)" : ""} : objectif « ${pr.objectifTexte} » ; ${eur(num(pr.objectifMontant), 0)} (en euros d'aujourd'hui) visés pour ${pr.objectifAnnee} ; horizon ${num(pr.horizon)} ans ; profil ${risque} ; après une baisse de 30 % : « ${reaction} » ; versement mensuel investi ${eur(num(pr.versementMensuel), 0)} ; versement mensuel sur l'épargne de précaution ${eur(num(pr.versementPrecaution), 0)}${pr.basculer ? " (basculé vers les investissements une fois l'objectif atteint)" : ""} ; dépenses mensuelles ${eur(num(pr.depensesMensuelles), 0)}${pr.courtier ? ` ; courtier : ${pr.courtier}` : ""}.`);
     L.push(`\nPATRIMOINE${S.portefeuille.exemple || S.portefeuille.comptes.some(estExempleCompte) ? " (contient des données d'EXEMPLE fictives)" : ""} : ${eur(pat.total, 0)} au total = épargne ${eur(pat.epargne, 0)} + bourse ${eur(pat.bourse, 0)} + crypto ${eur(pat.crypto, 0)}.`);
-    L.push(`ÉPARGNE DE PRÉCAUTION : ${eur(pl.act, 0)} pour un objectif de ${eur(pl.obj, 0)} (${num(pr.moisPrecaution)} mois de dépenses)${pl.manque > 0 ? (pl.mois ? `, complète en ${moisFr(pl.fin)} au rythme actuel` : ", sans versement prévu") : ", complète"}. Plan de ce mois : ${eur(pl.versEpargne, 0)} sur l'épargne${pl.compte ? ` (${pl.compte.nom})` : ""}, ${eur(pl.investir, 0)} à investir.`);
+    if (pl.paliers.length) L.push("PALIERS D'ÉPARGNE DE PRÉCAUTION (objectif, date, versement mensuel vers l'épargne, investi par mois) :\n" + pl.paliers.map((p, i) => `- ${eur(num(p.montant), 0)}${p.date ? " pour le " + dateFr(p.date) : ""} : ${eur(num(p.versement), 0)} vers l'épargne, ${eur(num(p.investi), 0)} investis${i === pl.rang ? " (palier en cours)" : i < pl.rang ? " (atteint)" : ""}`).join("\n"));
+    L.push(`ÉPARGNE DE PRÉCAUTION : ${eur(pl.act, 0)} pour un objectif de ${eur(pl.obj, 0)}${pl.paliers.length ? "" : ` (${num(pr.moisPrecaution)} mois de dépenses)`}${pl.manque > 0 ? (pl.mois ? `, complète en ${moisFr(pl.fin)} au rythme actuel` : ", sans versement prévu") : ", complète"}. Plan de ce mois : ${eur(pl.versEpargne, 0)} sur l'épargne${pl.compte ? ` (${pl.compte.nom})` : ""}, ${eur(pl.investir, 0)} à investir.`);
     if (S.portefeuille.comptes.length) L.push("Comptes d'épargne (nom | type | solde | taux brut | net d'impôt | plafond | précaution) :\n" + S.portefeuille.comptes.map(c => `- ${c.nom} | ${(TYPE_COMPTE[c.type] || {}).nom} | ${eur(num(c.solde), 0)} | ${tauxCompte(c) == null ? "?" : pct(tauxCompte(c), 2)} | ${tauxNet(c) == null ? "?" : pct(tauxNet(c), 2)} | ${num(c.plafond) ? eur(num(c.plafond), 0) : "—"} | ${c.precaution ? "oui" : "non"}`).join("\n"));
     const hist = S.historique.points;
     if (hist.length >= 2) L.push(`HISTORIQUE : ${eur(totalPoint(hist[0]), 0)} le ${dateFr(hist[0].date)}, ${eur(totalPoint(hist[hist.length - 1]), 0)} le ${dateFr(hist[hist.length - 1].date)} (${hist.length} relevés).`);
@@ -1223,7 +1276,8 @@
     const pv = S.budget.prevu, pr = S.strategie.profil;
     const revenus = somme(B.CATEGORIES_BUDGET.filter(c => c.type === "revenu"), c => num(pv[c.id]));
     const depenses = somme(B.CATEGORIES_BUDGET.filter(c => c.type === "depense"), c => num(pv[c.id]));
-    const epargne = num(pr.versementPrecaution) + num(pr.versementMensuel);
+    const plm = planDuMois();
+    const epargne = plm.versEpargne + plm.investir;
     return { revenus, depenses, epargne, capacite: revenus - depenses, reste: revenus - depenses - epargne, taux: revenus > 0 ? (revenus - depenses) / revenus * 100 : null };
   }
   // Moyenne des dépenses réelles sur les trois derniers mois complets qui ont des opérations.
@@ -1448,8 +1502,8 @@ Règles :
         h("tr", {}, h("th", { colspan: "2", text: "Dépenses courantes" })), B.CATEGORIES_BUDGET.filter(c => c.type === "depense" && !c.fixe).map(ligne),
         h("tr", { class: "table-total" }, h("td", { text: "Total des dépenses" }), h("td", { class: "num chiffre", text: eur(pl.depenses, 0) })),
         h("tr", {}, h("th", { colspan: "2", text: "Épargne (Ma stratégie)" })),
-        h("tr", {}, h("td", { text: "Épargne de précaution" }), h("td", { class: "num chiffre", text: eur(num(pr.versementPrecaution), 0) })),
-        h("tr", {}, h("td", { text: "Investissements" }), h("td", { class: "num chiffre", text: eur(num(pr.versementMensuel), 0) })),
+        h("tr", {}, h("td", { text: "Épargne de précaution" }), h("td", { class: "num chiffre", text: eur(planDuMois().versEpargne, 0) })),
+        h("tr", {}, h("td", { text: "Investissements" }), h("td", { class: "num chiffre", text: eur(planDuMois().investir, 0) })),
         h("tr", { class: "table-total" }, h("td", { text: "Reste à vivre" }), h("td", { class: "num chiffre " + (pl.reste < 0 ? "perte" : ""), text: eur(pl.reste, 0) }))))),
       h("div", { class: "actions" }, h("button", { class: "btn btn-ghost btn-petit", text: "Modifier mes versements", onclick: () => { montrer("strategie"); $("s-versement-precaution").focus(); } })));
   }
@@ -2658,6 +2712,28 @@ ${texte ? "\nTEXTE COPIÉ :\n" + texte.slice(0, 60000) : ""}${fichiers.length ? 
   }
   $("btn-s-regle").addEventListener("click", () => { modifier("strategie", st => { st.reglesLibres.push(""); }); $("regle-" + (S.strategie.reglesLibres.length - 1))?.focus(); });
 
+  function rendrePaliers() {
+    const z = $("s-paliers"), ps = S.strategie.profil.paliers || [];
+    const avec = paliers().length > 0;
+    for (const id of ["s-versement", "s-versement-precaution", "s-mois"]) { $(id).disabled = avec; $(id).title = avec ? "Fixé par tes paliers" : ""; }
+    if (aFocus(z)) return;
+    if (!ps.length) { vider(z); return; }
+    const maj = (i, cle, v) => { modifier("strategie", st => { st.profil.paliers[i][cle] = v; }); };
+    vider(z, h("div", { class: "defile" }, h("table", {},
+      h("thead", {}, h("tr", {}, ["Objectif (€)", "Pour le", "Vers l'épargne (€/mois)", "Investi (€/mois)", ""].map(t => h("th", { text: t })))),
+      h("tbody", {}, ps.map((p, i) => h("tr", {},
+        h("td", {}, h("input", { type: "number", class: "solde", id: `palier-${i}-montant`, min: "0", step: "100", inputmode: "decimal", value: String(num(p.montant) || ""), "aria-label": "Objectif du palier " + (i + 1), onchange: e => maj(i, "montant", num(e.target.value)) })),
+        h("td", {}, h("input", { type: "date", id: `palier-${i}-date`, value: p.date || "", "aria-label": "Date du palier " + (i + 1), onchange: e => maj(i, "date", e.target.value) })),
+        h("td", {}, h("input", { type: "number", class: "solde", id: `palier-${i}-versement`, min: "0", step: "10", inputmode: "decimal", value: String(num(p.versement)), "aria-label": "Versement vers l'épargne du palier " + (i + 1), onchange: e => maj(i, "versement", num(e.target.value)) })),
+        h("td", {}, h("input", { type: "number", class: "solde", id: `palier-${i}-investi`, min: "0", step: "10", inputmode: "decimal", value: String(num(p.investi)), "aria-label": "Investi par mois au palier " + (i + 1), onchange: e => maj(i, "investi", num(e.target.value)) })),
+        h("td", {}, h("button", { class: "btn btn-discret btn-petit", text: "Retirer", "aria-label": "Retirer le palier " + (i + 1), onclick: () => modifier("strategie", st => { st.profil.paliers.splice(i, 1); }) }))))))));
+  }
+  $("btn-s-palier").addEventListener("click", () => modifier("strategie", st => {
+    const ps = st.profil.paliers ||= [];
+    const der = ps[ps.length - 1];
+    ps.push({ montant: der ? num(der.montant) + 3000 : Math.max(1000, objectifPrecaution()), date: der && der.date ? ajouterMois(der.date, 12) : ajouterMois(aujourdhui(), 6), versement: der ? num(der.versement) : num(st.profil.versementPrecaution), investi: der ? num(der.investi) : num(st.profil.versementMensuel) });
+  }));
+
   function rendrePrincipes() {
     const z = $("s-principes");
     const n = B.PRINCIPES.filter(p => actif(p.id)).length;
@@ -2684,7 +2760,7 @@ ${texte ? "\nTEXTE COPIÉ :\n" + texte.slice(0, 60000) : ""}${fichiers.length ? 
       h("p", {}, h("b", { text: "Stratégie de départ." }), " C'est un modèle cœur-satellite courant, pas ta stratégie. Adapte chaque champ : dès le premier changement, elle devient la tienne."),
       claudePret ? h("button", { class: "btn btn-petit", text: "La décrire à Claude", onclick: () => { $("s-decrire").focus(); $("carte-decrire").scrollIntoView({ block: "center", behavior: "smooth" }); } }) : null) : null);
     $("carte-decrire").hidden = !claudePret;
-    rendrePoches(); rendreReglesLibres(); rendrePrincipes();
+    rendrePoches(); rendreReglesLibres(); rendrePaliers(); rendrePrincipes();
   }
 
   // Décrire sa stratégie à Claude.
