@@ -4,6 +4,8 @@ Toutes les pièces achetées au magasin Blue Box depuis juin 2026. Le but : êtr
 
 **16 pièces** : Tommy Jeans 9 · Levi's 4 · Teddy Smith 3.
 
+> Dans ce dépôt aussi : **[Boussole Bourse](bourse/README.md)**, mon outil d'investissement (dossier `bourse/`).
+
 ## L'appli
 
 Ouvre `index.html` dans un navigateur (double-clic sur le fichier, rien à installer). La page est rangée en cinq onglets, en haut sur ordinateur, en bas sur téléphone et tablette. Le bouton « Ajouter un achat » reste en haut, quel que soit l'onglet.
