@@ -8,8 +8,8 @@ window.BOUSSOLE = (() => {
   // les principes cochés pilotent les vérifications et sont donnés à Claude.
   const PRINCIPES = [
     { id: "precaution", groupe: "Les bases", titre: "Une épargne de précaution d'abord",
-      texte: "Avant d'investir en bourse, garder de 3 à 6 mois de dépenses sur un livret disponible à tout moment. Sans ce coussin, une dépense imprévue oblige à vendre, parfois au pire moment.",
-      outil: "Alerte quand ton épargne de précaution est sous ton objectif, et le rappelle avant chaque achat." },
+      texte: "Garder de 3 à 6 mois de dépenses sur un livret disponible à tout moment, avant d'investir ou en parallèle tant qu'elle se constitue. Sans ce coussin, une dépense imprévue oblige à vendre, parfois au pire moment. Livret A et LDDS rapportent 1,7 % net d'impôt ; les intérêts d'un compte rémunéré sont taxés à 31,4 %.",
+      outil: "Suit ton épargne de précaution compte par compte, dit quand elle sera complète, et partage ton effort mensuel entre elle et tes investissements." },
     { id: "horizon", groupe: "Les bases", titre: "L'argent en actions a au moins 5 ans devant lui",
       texte: "Sur un an, un portefeuille d'actions peut perdre 30 à 50 %. Sur 15 ans et plus, un indice mondial diversifié a très rarement fini en perte. L'argent dont tu auras besoin bientôt n'a rien à faire en actions.",
       outil: "Signale un achat d'actions avec un horizon de moins de 5 ans." },
@@ -32,8 +32,8 @@ window.BOUSSOLE = (() => {
       texte: "Quand une poche s'écarte de sa cible au-delà d'un seuil fixé à l'avance, on oriente les nouveaux versements vers les poches en retard. Sans vendre, donc sans impôt ni frais de transaction.",
       outil: "Repère les poches hors de ta marge et répartit ton prochain versement pour revenir vers la cible." },
     { id: "enveloppes", groupe: "Fiscalité française", titre: "Utiliser les bonnes enveloppes",
-      texte: "PEA : après 5 ans, plus d'impôt sur le revenu sur les gains, il reste les prélèvements sociaux (18,6 % en 2026) ; versements plafonnés à 150 000 € ; actions européennes et ETF éligibles. Assurance-vie : après 8 ans, 4 600 € de gains par an sans impôt sur le revenu (9 200 € pour un couple), prélèvements sociaux de 17,2 %. Compte-titres : tout est permis, gains taxés à 31,4 %. Ouvrir un PEA tôt, même avec peu, fait courir le délai de 5 ans.",
-      outil: "Suit les dates de tes enveloppes, le plafond du PEA, et applique la bonne fiscalité dans Comparer." },
+      texte: "PEA : après 5 ans, plus d'impôt sur le revenu sur les gains, il reste les prélèvements sociaux (18,6 % en 2026) ; versements plafonnés à 150 000 € ; actions européennes et ETF éligibles. Assurance-vie : après 8 ans, 4 600 € de gains par an sans impôt sur le revenu (9 200 € pour un couple), prélèvements sociaux de 17,2 %. Compte-titres : tout est permis, gains taxés à 31,4 %. Crypto : gains taxés à 31,4 % seulement quand on repasse en euros ; les échanges entre cryptos ne sont pas imposés, et rien n'est dû si les ventes de l'année ne dépassent pas 305 €. Ouvrir un PEA tôt, même avec peu, fait courir le délai de 5 ans.",
+      outil: "Suit les dates de tes enveloppes, le plafond du PEA, l'impôt latent du compte-titres et du wallet crypto, et applique la bonne fiscalité dans Comparer." },
     { id: "biais", groupe: "Comportement", titre: "Se méfier de ses propres réflexes",
       texte: "La peur de rater une hausse, la peur de perdre, l'excès de confiance après quelques gains, l'attachement au prix d'achat : ces réflexes font acheter haut et vendre bas. Un délai de réflexion et une check-list les désamorcent.",
       outil: "Applique ton délai de réflexion aux achats non prévus et pose les questions de la check-list dans Décider." },
@@ -83,13 +83,23 @@ window.BOUSSOLE = (() => {
   // Fiscalité française des gains, taux 2026 (impots.gouv.fr) : prélèvements sociaux 18,6 %
   // (17,2 % pour l'assurance-vie), flat tax 31,4 %.
   const FISCALITE = {
-    ps: 18.6, psAV: 17.2, ir: 12.8, irAV8: 7.5, abattementAV: 4600, plafondPEA: 150000
+    ps: 18.6, psAV: 17.2, ir: 12.8, irAV8: 7.5, abattementAV: 4600, plafondPEA: 150000, seuilCrypto: 305
   };
 
   const TYPES = ["ETF", "Action", "Fonds", "Obligation", "Monétaire", "Livret", "Crypto", "Produit à levier", "Autre"];
   const ENVELOPPES = [
-    { id: "PEA", nom: "PEA" }, { id: "CTO", nom: "Compte-titres" }, { id: "AV", nom: "Assurance-vie" },
-    { id: "PER", nom: "PER" }, { id: "Livret", nom: "Livret" }, { id: "Autre", nom: "Autre" }
+    { id: "PEA", nom: "PEA" }, { id: "CTO", nom: "Compte-titres" }, { id: "Crypto", nom: "Wallet crypto" },
+    { id: "AV", nom: "Assurance-vie" }, { id: "PER", nom: "PER" }, { id: "Autre", nom: "Autre" }
+  ];
+  // Comptes d'épargne. Taux bruts annuels au 5 novembre 2026 (Livret A, LDDS : 1,7 % depuis le
+  // 1er août 2026) ; un compte rémunéré a un taux variable, à recopier depuis l'appli.
+  const TYPES_COMPTES = [
+    { id: "livretA", nom: "Livret A", taux: 1.7, plafond: 22950, impose: false },
+    { id: "ldds", nom: "LDDS", taux: 1.7, plafond: 12000, impose: false },
+    { id: "lep", nom: "LEP", taux: 2.5, plafond: 10000, impose: false },
+    { id: "remunere", nom: "Compte rémunéré", taux: null, plafond: 0, impose: true },
+    { id: "courant", nom: "Compte courant", taux: 0, plafond: 0, impose: false },
+    { id: "autre", nom: "Autre épargne", taux: null, plafond: 0, impose: true }
   ];
   const ZONES = ["Monde", "États-Unis", "Europe", "France", "Pays émergents", "Asie", "Autre"];
   const RISQUES = [
@@ -106,21 +116,22 @@ window.BOUSSOLE = (() => {
   ];
 
   // La stratégie de départ : un modèle « cœur-satellite » à adapter, marqué comme exemple.
+  // L'épargne de précaution est à part : objectif en mois de dépenses et versement mensuel propre.
   const STRATEGIE_DEPART = {
     exemple: true,
     profil: {
       horizon: 15, objectifTexte: "Construire un capital pour le long terme", objectifMontant: 50000,
-      objectifAnnee: 2036, risque: "dynamique", reaction: "garde", versementMensuel: 200,
-      depensesMensuelles: 1500, moisPrecaution: 4
+      objectifAnnee: 2036, risque: "offensif", reaction: "garde", versementMensuel: 150,
+      depensesMensuelles: 1500, moisPrecaution: 4, versementPrecaution: 150, basculer: true, courtier: ""
     },
     poches: [
-      { id: "monde", nom: "ETF Monde", classe: "actions", cible: 65, ligne: "" },
+      { id: "monde", nom: "ETF Monde", classe: "actions", cible: 75, ligne: "" },
       { id: "emergents", nom: "ETF Pays émergents", classe: "actions", cible: 10, ligne: "" },
       { id: "direct", nom: "Actions en direct", classe: "actions", cible: 10, ligne: "" },
-      { id: "securite", nom: "Fonds monétaire", classe: "monetaire", cible: 15, ligne: "" }
+      { id: "crypto", nom: "Crypto", classe: "crypto", cible: 5, ligne: "" }
     ],
     regles: {
-      maxAction: 5, maxDirect: 15, marge: 5, fraisMax: 0.5,
+      maxAction: 5, maxDirect: 15, maxCrypto: 10, marge: 5, fraisMax: 0.5,
       delaiActif: true, delaiHeures: 48, interditLevier: true, venteEnPerte: true
     },
     reglesLibres: [
@@ -135,9 +146,12 @@ window.BOUSSOLE = (() => {
   const MODELES = [
     { id: "simple", nom: "Simple : un ETF monde", poches: [
       { nom: "ETF Monde", classe: "actions", cible: 90 }, { nom: "Fonds monétaire", classe: "monetaire", cible: 10 }] },
-    { id: "coeur", nom: "Cœur-satellite", poches: [
-      { nom: "ETF Monde", classe: "actions", cible: 65 }, { nom: "ETF Pays émergents", classe: "actions", cible: 10 },
-      { nom: "Actions en direct", classe: "actions", cible: 10 }, { nom: "Fonds monétaire", classe: "monetaire", cible: 15 }] },
+    { id: "coeur", nom: "Cœur-satellite avec crypto", poches: [
+      { nom: "ETF Monde", classe: "actions", cible: 75 }, { nom: "ETF Pays émergents", classe: "actions", cible: 10 },
+      { nom: "Actions en direct", classe: "actions", cible: 10 }, { nom: "Crypto", classe: "crypto", cible: 5 }] },
+    { id: "coeur-sans", nom: "Cœur-satellite sans crypto", poches: [
+      { nom: "ETF Monde", classe: "actions", cible: 80 }, { nom: "ETF Pays émergents", classe: "actions", cible: 10 },
+      { nom: "Actions en direct", classe: "actions", cible: 10 }] },
     { id: "equilibre", nom: "Équilibré 60 / 40", poches: [
       { nom: "ETF Monde", classe: "actions", cible: 60 }, { nom: "Obligations", classe: "obligations", cible: 30 },
       { nom: "Fonds euros", classe: "monetaire", cible: 10 }] },
@@ -146,18 +160,20 @@ window.BOUSSOLE = (() => {
       { nom: "Fonds euros", classe: "monetaire", cible: 30 }] }
   ];
 
-  // Un portefeuille d'exemple, pour voir l'outil fonctionner. Noms et cours fictifs.
+  // Un patrimoine d'exemple, pour voir l'outil fonctionner. Noms, cours et soldes fictifs.
   const PORTEFEUILLE_EXEMPLE = {
     exemple: true,
     coursMaj: "",
-    precaution: 4500,
     lignes: [
       { id: "ex1", nom: "ETF MSCI World (exemple)", code: "", type: "ETF", enveloppe: "PEA", poche: "monde", classe: "actions", zone: "Monde", quantite: 180, pru: 26.4, cours: 31.2, frais: 0.38 },
       { id: "ex2", nom: "ETF Pays émergents (exemple)", code: "", type: "ETF", enveloppe: "PEA", poche: "emergents", classe: "actions", zone: "Pays émergents", quantite: 40, pru: 22.1, cours: 21.3, frais: 0.30 },
       { id: "ex3", nom: "Action gaz industriels (exemple)", code: "", type: "Action", enveloppe: "PEA", poche: "direct", classe: "actions", zone: "France", quantite: 2, pru: 158, cours: 171, frais: 0 },
       { id: "ex4", nom: "Action semi-conducteurs (exemple)", code: "", type: "Action", enveloppe: "CTO", poche: "direct", classe: "actions", zone: "Europe", quantite: 1, pru: 610, cours: 742, frais: 0 },
-      { id: "ex5", nom: "Fonds monétaire (exemple)", code: "", type: "Monétaire", enveloppe: "AV", poche: "securite", classe: "monetaire", zone: "Europe", quantite: 1, pru: 650, cours: 668, frais: 0.10 },
-      { id: "ex6", nom: "ETF Bitcoin (exemple)", code: "", type: "Crypto", enveloppe: "CTO", poche: "", classe: "crypto", zone: "Monde", quantite: 10, pru: 48, cours: 39, frais: 0.25 }
+      { id: "ex5", nom: "Bitcoin (exemple)", code: "BTC", type: "Crypto", enveloppe: "Crypto", poche: "crypto", classe: "crypto", zone: "Monde", quantite: 0.006, pru: 72000, cours: 81000, frais: 0 }
+    ],
+    comptes: [
+      { id: "cx1", nom: "Livret A (exemple)", type: "livretA", solde: 3200, taux: 1.7, plafond: 22950, precaution: true },
+      { id: "cx2", nom: "Espèces du compte-titres (exemple)", type: "remunere", solde: 1300, taux: 2, plafond: 0, precaution: true }
     ]
   };
 
@@ -170,6 +186,6 @@ window.BOUSSOLE = (() => {
     { id: "livret", nom: "Livret A", poids: { livret: 100 }, frais: 0, enveloppe: "aucune" }
   ];
 
-  return { PRINCIPES, CLASSES, CORRELATIONS, FISCALITE, TYPES, ENVELOPPES, ZONES, RISQUES, REACTIONS,
+  return { PRINCIPES, CLASSES, CORRELATIONS, FISCALITE, TYPES, ENVELOPPES, TYPES_COMPTES, ZONES, RISQUES, REACTIONS,
     STRATEGIE_DEPART, MODELES, PORTEFEUILLE_EXEMPLE, PRESETS_COMPARER };
 })();

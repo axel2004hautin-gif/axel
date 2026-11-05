@@ -75,16 +75,19 @@
     else el.value = valeur ?? "";
   };
 
+  const TYPE_COMPTE = Object.fromEntries(B.TYPES_COMPTES.map(t => [t.id, t]));
+
   // ---------- état ----------
-  const DOCS = ["strategie", "portefeuille", "journal", "comparer", "discussion"];
+  const DOCS = ["strategie", "portefeuille", "journal", "comparer", "discussion", "historique"];
   const S = {};
   function defauts(nom) {
     switch (nom) {
       case "strategie": return clone(B.STRATEGIE_DEPART);
-      case "portefeuille": return { exemple: false, coursMaj: "", precaution: 0, lignes: [] };
+      case "portefeuille": return { exemple: false, coursMaj: "", lignes: [], comptes: [] };
       case "journal": return { entrees: [] };
       case "comparer": return null;
       case "discussion": return { messages: [] };
+      case "historique": return { points: [] };
     }
   }
   function normaliser(nom, d) {
@@ -106,13 +109,21 @@
       r.lignes = Array.isArray(d.lignes) ? d.lignes.map(l => ({
         id: l.id || uid(), nom: l.nom || "Sans nom", code: l.code || "", type: l.type || "ETF",
         enveloppe: l.enveloppe || "CTO", poche: l.poche || "", classe: l.classe || "", zone: l.zone || "",
-        quantite: num(l.quantite), pru: num(l.pru), cours: num(l.cours), frais: num(l.frais)
+        quantite: num(l.quantite), pru: num(l.pru), cours: num(l.cours), frais: num(l.frais), sansQuantite: !!l.sansQuantite
       })) : [];
-      r.precaution = num(d.precaution);
+      r.comptes = Array.isArray(d.comptes) ? d.comptes.map(c => ({
+        id: c.id || uid(), nom: c.nom || "Compte", type: TYPE_COMPTE[c.type] ? c.type : "autre", solde: num(c.solde),
+        taux: c.taux == null || c.taux === "" ? null : num(c.taux), plafond: num(c.plafond), precaution: !!c.precaution
+      })) : [];
+      // Ancien format : un seul montant d'épargne de précaution.
+      if (!Array.isArray(d.comptes) && num(d.precaution) > 0)
+        r.comptes.push({ id: uid(), nom: "Épargne de précaution", type: "livretA", solde: num(d.precaution), taux: 1.7, plafond: 22950, precaution: true });
+      delete r.precaution;
       return r;
     }
     if (nom === "journal") return { entrees: Array.isArray(d.entrees) ? d.entrees : [] };
     if (nom === "discussion") return { messages: Array.isArray(d.messages) ? d.messages.filter(m => m && (m.role === "user" || m.role === "assistant") && m.content) : [] };
+    if (nom === "historique") return { points: Array.isArray(d.points) ? d.points.filter(x => x && /^\d{4}-\d{2}-\d{2}$/.test(x.date)).sort((a, b) => a.date < b.date ? -1 : 1) : [] };
     return d;
   }
   for (const n of DOCS) S[n] = defauts(n);
@@ -140,6 +151,7 @@
     else for (const n of DOCS) { const d = lireLocal(n); if (d) S[n] = normaliser(n, d); }
     stock.pret = true;
     etatDonnees(raison || "Enregistré dans ce navigateur");
+    if (!etaitPage && !S.historique.points.length) noterPoint();
     toutRendre();
   }
 
@@ -163,7 +175,7 @@
         // continuent de modifier le bon objet.
         if (JSON.stringify(recu) !== JSON.stringify(S[n])) S[n] = recu;
       }
-      if (!snap.metadata.fromCache && !confirme) { confirme = true; clearTimeout(minuteur); etatDonnees("Enregistré dans ta page, privé"); }
+      if (!snap.metadata.fromCache && !confirme) { confirme = true; clearTimeout(minuteur); etatDonnees("Enregistré dans ta page, privé"); if (!S.historique.points.length) noterPoint(); }
       stock.pret = true;
       toutRendre();
     }, err => {
@@ -244,8 +256,40 @@
       lignes, total, investi, pv: total - investi, pvPct: investi > 0 ? (total / investi - 1) * 100 : 0,
       poches, hors, horsValeur: somme(hors, l => l.valeur), fraisMoyen, classes, parEnveloppe,
       directPoids: total > 0 ? somme(direct, l => l.valeur) / total * 100 : 0,
+      cryptoPoids: total > 0 ? somme(lignes.filter(estCrypto), l => l.valeur) / total * 100 : 0,
       totalCible: somme(st.poches, p => num(p.cible))
     };
+  }
+  const estTR = () => norm(S.strategie.profil.courtier).includes("trade republic");
+  const estCrypto = l => (l.classeCalc || classeDe(l)) === "crypto" || l.type === "Crypto" || l.enveloppe === "Crypto";
+  const enFractions = l => l.type === "Crypto" || l.enveloppe === "Crypto" || (estTR() && l.enveloppe === "CTO");
+  const estExempleCompte = c => /^cx\d/.test(c.id);
+  const tauxCompte = c => c.taux != null ? num(c.taux) : ((TYPE_COMPTE[c.type] || {}).taux ?? null);
+  const tauxNet = c => { const t = tauxCompte(c); if (t == null) return null; return (TYPE_COMPTE[c.type] || {}).impose ? t * (1 - (B.FISCALITE.ir + B.FISCALITE.ps) / 100) : t; };
+  const epargnePrecaution = () => somme(S.portefeuille.comptes.filter(c => c.precaution), c => num(c.solde));
+  const epargneTotale = () => somme(S.portefeuille.comptes, c => num(c.solde));
+  const moisFr = iso => iso ? new Date(iso + "T12:00:00").toLocaleDateString("fr-FR", { month: "long", year: "numeric" }) : "";
+  function patrimoine(syn) {
+    const crypto = somme(syn.lignes.filter(estCrypto), l => l.valeur);
+    const epargne = epargneTotale(), precaution = epargnePrecaution();
+    return { total: syn.total + epargne, bourse: syn.total - crypto, crypto, epargne, precaution, autreEpargne: epargne - precaution };
+  }
+  // Le compte qui reçoit l'épargne de précaution : le meilleur taux net parmi ceux qui ont de la place.
+  function compteCible() {
+    const cs = S.portefeuille.comptes.filter(c => c.precaution);
+    const place = c => !(num(c.plafond) > 0) || num(c.solde) < num(c.plafond);
+    return [...cs].filter(place).sort((a, b) => (tauxNet(b) ?? -1) - (tauxNet(a) ?? -1))[0] || cs[0] || null;
+  }
+  // L'effort d'épargne du mois : d'abord l'épargne de précaution, puis l'argent à investir.
+  function planDuMois() {
+    const pr = S.strategie.profil;
+    const obj = objectifPrecaution(), act = epargnePrecaution(), manque = Math.max(0, obj - act);
+    const vp = num(pr.versementPrecaution), vi = num(pr.versementMensuel);
+    let versEpargne, investir;
+    if (pr.basculer) { versEpargne = Math.min(vp, manque); investir = vi + vp - versEpargne; }
+    else { versEpargne = vp; investir = vi; }
+    const mois = vp > 0 && manque > 0 ? Math.ceil(manque / vp) : null;
+    return { obj, act, manque, vp, vi, versEpargne, investir, complete: obj > 0 && manque <= 0, mois, fin: mois ? ajouterMois(aujourdhui(), mois) : null, compte: compteCible() };
   }
   const cibleActions = () => somme(S.strategie.poches.filter(p => p.classe === "actions" || p.classe === "crypto"), p => num(p.cible));
   const objectifPrecaution = () => num(S.strategie.profil.depensesMensuelles) * num(S.strategie.profil.moisPrecaution);
@@ -273,6 +317,7 @@
         for (const l of syn.lignes.filter(l => l.type === "Action" && l.poids > num(r.maxAction)))
           ajoute("bloquant", `${l.nom} pèse ${pct(l.poids)} du portefeuille ; ta règle : ${pct(num(r.maxAction))} au plus par action.`);
         if (syn.directPoids > num(r.maxDirect)) ajoute("bloquant", `Les actions en direct pèsent ${pct(syn.directPoids)} ; ta règle : ${pct(num(r.maxDirect), 0)} au plus.`);
+        if (syn.cryptoPoids > num(r.maxCrypto)) ajoute("bloquant", `La crypto pèse ${pct(syn.cryptoPoids)} de tes investissements ; ta règle : ${pct(num(r.maxCrypto), 0)} au plus.`);
       }
       if (actif("frais")) {
         for (const l of syn.lignes.filter(l => estFonds(l) && num(l.frais) > num(r.fraisMax)))
@@ -283,9 +328,24 @@
           ajoute("bloquant", `${l.nom} est un produit à levier, contraire à ta règle.`);
       }
     }
-    if (actif("precaution") && objectifPrecaution() > 0) {
-      const p = num(S.portefeuille.precaution), o = objectifPrecaution();
-      if (p < o) ajoute("attention", `Épargne de précaution : ${eur(p)} pour un objectif de ${eur(o)} (${num(pr.moisPrecaution)} mois de dépenses). Complète-la avant d'investir davantage.`);
+    if (actif("precaution")) {
+      const pl = planDuMois(), comptes = S.portefeuille.comptes;
+      if (pl.obj <= 0) ajoute("info", "Fixe l'objectif de ton épargne de précaution (dépenses mensuelles et nombre de mois) dans Ma stratégie.");
+      else if (!comptes.some(c => c.precaution)) ajoute("attention", "Aucun compte n'est coché comme épargne de précaution : ajoute ton livret dans « Mes comptes d'épargne ».");
+      else if (pl.manque > 0) {
+        const t = `Épargne de précaution : ${eur(pl.act, 0)} sur ${eur(pl.obj, 0)} (${pct(pl.act / pl.obj * 100, 0)}).`;
+        if (pl.vp > 0) ajoute(pl.mois > 24 ? "attention" : "info", `${t} À ${eur(pl.vp, 0)} par mois, elle sera complète en ${moisFr(pl.fin)}${pl.mois > 24 ? " : c'est long, augmente le versement si tu peux" : ""}.`);
+        else ajoute("attention", `${t} Aucun versement mensuel n'est prévu pour la compléter : fixe-le dans Ma stratégie.`);
+      } else if (pl.act > pl.obj * 1.5) ajoute("info", `Ton épargne de précaution dépasse ton objectif de ${eur(pl.act - pl.obj, 0)} : ce surplus pourrait être investi selon ta stratégie.`);
+      else ajoute("ok", `Épargne de précaution complète : ${eur(pl.act, 0)} pour un objectif de ${eur(pl.obj, 0)}.`);
+      const livret = TYPE_COMPTE.livretA;
+      for (const c of comptes.filter(c => c.precaution && (TYPE_COMPTE[c.type] || {}).impose && num(c.solde) > 0)) {
+        const net = tauxNet(c);
+        if (net == null) ajoute("info", `${c.nom} : renseigne son taux pour comparer son rendement net à celui du Livret A.`);
+        else if (net < livret.taux) ajoute("info", `${c.nom} : ${pct(tauxCompte(c), 2)} brut, soit ${pct(net, 2)} net après la flat tax, moins que le Livret A (${pct(livret.taux, 1)} net d'impôt)${estTR() ? ". Trade Republic propose aussi un Livret A" : ""}.`);
+      }
+      for (const c of comptes.filter(c => num(c.plafond) > 0 && num(c.solde) >= num(c.plafond) * 0.95))
+        ajoute("info", `${c.nom} est ${num(c.solde) >= num(c.plafond) ? "plein" : "presque plein"} (${eur(num(c.solde), 0)} sur ${eur(num(c.plafond), 0)}).${c.type === "livretA" ? " Le LDDS a le même taux et reste net d'impôt." : ""}`);
     }
     if (actif("allocation")) {
       const risque = B.RISQUES.find(x => x.id === pr.risque);
@@ -305,7 +365,7 @@
       const j = joursDepuis(S.portefeuille.coursMaj);
       if (j > 30) ajoute("info", `Cours mis à jour il y a ${j} jours. Mets-les à jour pour des chiffres justes.`);
     }
-    if (syn.lignes.length && !out.some(a => a.niveau !== "info")) ajoute("ok", "Ton portefeuille respecte ta stratégie et tes règles.");
+    if (syn.lignes.length && !out.some(a => a.niveau === "attention" || a.niveau === "bloquant")) ajoute("ok", "Tes investissements respectent ta stratégie et tes règles.");
     const ordre = { bloquant: 0, attention: 1, info: 2, ok: 3 };
     return out.sort((a, b) => ordre[a.niveau] - ordre[b.niveau]);
   }
@@ -344,10 +404,12 @@
       $("t-" + v).setAttribute("aria-selected", v === vue ? "true" : "false");
     }
     if (vue === "comparer") planifierSimulation();
+    if (vue === "portefeuille") rendreHistorique();
     window.scrollTo({ top: 0 });
   }
   document.querySelectorAll(".onglet").forEach(b => b.addEventListener("click", () => montrer(b.dataset.vue)));
-  window.addEventListener("hashchange", () => { const v = location.hash.slice(1); if (VUES.includes(v)) montrer(v); });
+  const vueDe = hash => hash === "patrimoine" ? "portefeuille" : hash;
+  window.addEventListener("hashchange", () => { const v = vueDe(location.hash.slice(1)); if (VUES.includes(v)) montrer(v); });
 
   // ---------- rendu : portefeuille ----------
   function rendreBandeau() {
@@ -370,41 +432,172 @@
     } else vider(zone);
   }
   function effacerExemple() {
-    S.portefeuille = { exemple: false, coursMaj: "", precaution: S.portefeuille.precaution || 0, lignes: [] };
+    S.portefeuille = { exemple: false, coursMaj: "", lignes: [], comptes: S.portefeuille.comptes.filter(c => !estExempleCompte(c)) };
     enregistrer("portefeuille"); toutRendre();
   }
   function chargerExemple() {
     const ex = clone(B.PORTEFEUILLE_EXEMPLE);
     const poches = S.strategie.poches;
-    const cles = { monde: "monde", emergents: "emerg", direct: "direct", securite: "monet" };
+    const cles = { monde: "monde", emergents: "emerg", direct: "direct", crypto: "crypto" };
     for (const l of ex.lignes) {
       if (!l.poche) continue;
       const p = poches.find(p => p.id === l.poche) || poches.find(p => norm(p.nom).includes(cles[l.poche] || "§")) || poches.find(p => p.classe === l.classe);
       l.poche = p ? p.id : "";
     }
     ex.coursMaj = aujourdhui();
-    ex.precaution = S.portefeuille.precaution || ex.precaution;
+    // Les vrais comptes d'épargne restent ; les comptes d'exemple ne s'ajoutent que s'il n'y en a pas.
+    if (S.portefeuille.comptes.length) ex.comptes = S.portefeuille.comptes;
     S.portefeuille = ex; enregistrer("portefeuille"); toutRendre();
   }
 
+  const COULEURS_PATRIMOINE = { epargne: "var(--serie-3)", bourse: "var(--serie-1)", crypto: "var(--serie-2)" };
   function rendreReleve(syn) {
-    const z = $("releve");
-    const pfx = syn.lignes.length ? [] : [h("span", { class: "petit muet", text: "Aucune ligne pour l'instant" })];
+    const pat = patrimoine(syn);
+    const stat = (lib, val, cls) => h("div", { class: "releve-ligne" }, h("span", { class: "etiquette", text: lib }), h("span", { class: "chiffre " + (cls || ""), text: val }));
+    vider($("releve"),
+      h("div", { class: "releve-ligne" }, h("span", { class: "etiquette", text: "Mon patrimoine" }), h("span", { class: "releve-total", text: eur(pat.total, 0) })),
+      stat("Épargne", eur(pat.epargne, 0)),
+      pat.autreEpargne > 0 ? stat("dont précaution", eur(pat.precaution, 0)) : null,
+      stat("Bourse", eur(pat.bourse, 0)),
+      pat.crypto > 0 || S.strategie.poches.some(p => p.classe === "crypto") ? stat("Crypto", eur(pat.crypto, 0)) : null,
+      syn.lignes.length ? stat("Plus-value latente", `${eurSigne(syn.pv)} (${pctSigne(syn.pvPct)})`, syn.pv >= 0 ? "gain" : "perte") : null,
+      syn.lignes.length ? stat("Cours du", S.portefeuille.coursMaj ? dateFr(S.portefeuille.coursMaj) : "non renseigné") : null);
+    const parts = [
+      { nom: "Épargne", valeur: pat.epargne, couleur: COULEURS_PATRIMOINE.epargne },
+      { nom: "Bourse", valeur: pat.bourse, couleur: COULEURS_PATRIMOINE.bourse },
+      { nom: "Crypto", valeur: pat.crypto, couleur: COULEURS_PATRIMOINE.crypto }
+    ].filter(x => x.valeur > 0);
+    const zb = $("patrimoine-barre");
+    if (pat.total <= 0) { vider(zb); return; }
+    const barre = h("div", { class: "barre-seg", role: "list", "aria-label": "Répartition du patrimoine" },
+      parts.map(x => {
+        const part = x.valeur / pat.total * 100;
+        return h("div", { role: "listitem", tabindex: "0", title: `${x.nom} : ${eur(x.valeur, 0)} (${pct(part)})`, "aria-label": `${x.nom} : ${eur(x.valeur, 0)}, ${pct(part)}`, style: `flex:${x.valeur} 1 0;background:${x.couleur}` },
+          h("span", { style: "padding:0 8px", text: pct(part, 0) }));
+      }));
+    vider(zb, barre, h("div", { class: "legende", style: "margin-top:8px" }, parts.map(x => h("span", {}, h("i", { class: "puce", style: "background:" + x.couleur }), x.nom))));
+    // Une part trop étroite pour son pourcentage n'en affiche pas : il reste au survol et dans le relevé.
+    requestAnimationFrame(() => barre.querySelectorAll("[role=listitem]").forEach(seg => { const t = seg.firstChild; if (t && t.offsetWidth > seg.clientWidth) t.remove(); }));
+  }
+
+  function rendrePrecaution() {
+    const pl = planDuMois(), z = $("precaution"), pr = S.strategie.profil;
+    const comptes = S.portefeuille.comptes.filter(c => c.precaution);
+    vider($("precaution-statut"), pl.obj <= 0 ? null : pl.manque > 0 ? pastille("attention", "en cours") : pastille("ok", "complète"));
+    if (pl.obj <= 0) {
+      vider(z, h("p", { class: "vide", text: "Fixe ton objectif dans Ma stratégie : tes dépenses mensuelles et le nombre de mois à garder de côté." }),
+        h("button", { class: "btn btn-ghost btn-petit", text: "Fixer mon objectif", onclick: () => { montrer("strategie"); $("s-depenses").focus(); } }));
+      return;
+    }
+    const part = Math.min(100, pl.act / pl.obj * 100);
     vider(z,
-      h("div", { class: "releve-ligne" }, h("span", { class: "etiquette", text: "Valeur du portefeuille" }), h("span", { class: "releve-total", text: eur(syn.total, 0) })),
-      syn.lignes.length ? [
-        h("div", { class: "releve-ligne" }, h("span", { class: "etiquette", text: "Plus-value latente" }),
-          h("span", { class: "chiffre " + (syn.pv >= 0 ? "gain" : "perte"), text: `${eurSigne(syn.pv)} (${pctSigne(syn.pvPct)})` })),
-        h("div", { class: "releve-ligne" }, h("span", { class: "etiquette", text: "Prix de revient" }), h("span", { class: "chiffre", text: eur(syn.investi, 0) })),
-        h("div", { class: "releve-ligne" }, h("span", { class: "etiquette", text: "Frais moyens des fonds" }), h("span", { class: "chiffre", text: pct(syn.fraisMoyen, 2) + " / an" })),
-        h("div", { class: "releve-ligne" }, h("span", { class: "etiquette", text: "Cours du" }), h("span", { class: "chiffre", text: S.portefeuille.coursMaj ? dateFr(S.portefeuille.coursMaj) : "non renseigné" }))
-      ] : pfx);
+      h("div", { class: "repart-tete" }, h("span", { class: "chiffre-cle", text: eur(pl.act, 0) }), h("span", { class: "muet petit", text: `sur ${eur(pl.obj, 0)} · ${num(pr.moisPrecaution)} mois de dépenses` })),
+      h("div", { class: "jauge", role: "meter", "aria-label": "Épargne de précaution", "aria-valuemin": "0", "aria-valuemax": String(Math.round(pl.obj)), "aria-valuenow": String(Math.round(Math.min(pl.act, pl.obj))) }, h("div", { style: `width:${part}%` })),
+      h("p", { text: pl.manque > 0
+        ? (pl.vp > 0 ? `Il manque ${eur(pl.manque, 0)}. À ${eur(pl.vp, 0)} par mois, elle sera complète en ${moisFr(pl.fin)} (${pl.mois} mois).` : `Il manque ${eur(pl.manque, 0)}, et aucun versement mensuel n'est prévu : fixe-le dans Ma stratégie.`)
+        : `Complète${pl.act > pl.obj ? `, avec ${eur(pl.act - pl.obj, 0)} de plus que l'objectif` : ""}.${pr.basculer && pl.vp > 0 ? ` Tes ${eur(pl.vp, 0)} mensuels vont maintenant à tes investissements.` : ""}` }),
+      pl.manque > 0 && pl.vp > 0 && pr.basculer ? h("p", { class: "petit muet", text: `Ensuite, ces ${eur(pl.vp, 0)} iront à tes investissements, qui passeront à ${eur(pl.vi + pl.vp, 0)} par mois.` }) : null,
+      comptes.length ? h("p", { class: "petit muet", text: "Sur : " + comptes.map(c => `${c.nom} (${eur(num(c.solde), 0)})`).join(" · ") }) : h("p", { class: "petit", text: "Coche tes livrets comme épargne de précaution dans « Mes comptes d'épargne »." }));
+  }
+
+  // ---------- historique du patrimoine ----------
+  const totalPoint = p => num(p.epargne) + num(p.bourse) + num(p.crypto);
+  function noterPoint() {
+    if (S.portefeuille.exemple || S.portefeuille.comptes.some(estExempleCompte)) return;
+    const syn = synthese(), pat = patrimoine(syn);
+    const pts = S.historique.points;
+    if (pat.total <= 0 && !pts.length) return;
+    const r2 = x => Math.round(x * 100) / 100;
+    const pt = { date: aujourdhui(), epargne: r2(pat.epargne), precaution: r2(pat.precaution), bourse: r2(pat.bourse), crypto: r2(pat.crypto), investi: r2(syn.investi) };
+    if (pts.length && pts[pts.length - 1].date === pt.date) pts[pts.length - 1] = pt; else pts.push(pt);
+    // Au-delà de 1 000 relevés, on garde un point sur deux dans la plus ancienne moitié.
+    if (pts.length > 1000) S.historique.points = pts.filter((_, i) => i >= 500 || i % 2 === 0);
+    enregistrer("historique");
+  }
+  function rendreHistorique() {
+    const pts = S.historique.points, z = $("historique-graphe");
+    const series = [
+      { cle: "epargne", nom: "Épargne", couleur: COULEURS_PATRIMOINE.epargne },
+      { cle: "bourse", nom: "Bourse", couleur: COULEURS_PATRIMOINE.bourse },
+      { cle: "crypto", nom: "Crypto", couleur: COULEURS_PATRIMOINE.crypto }
+    ].filter(se => pts.some(p => num(p[se.cle]) > 0));
+    $("historique-note").textContent = pts.length ? `${pts.length} relevé${pts.length > 1 ? "s" : ""} depuis le ${dateFr(pts[0].date)}` : "";
+    vider($("historique-legende"), pts.length >= 2 ? series.map(se => h("span", {}, h("i", { class: "puce", style: "background:" + se.couleur }), se.nom)) : null);
+    if (pts.length < 2) {
+      const base = "La courbe se dessine à chaque mise à jour de tes cours ou de tes soldes, un point par jour.";
+      vider(z, h("p", { class: "vide", text: S.portefeuille.exemple || S.portefeuille.comptes.some(estExempleCompte)
+        ? "La courbe démarre avec tes vrais chiffres : rien n'est noté tant que l'exemple est affiché."
+        : pts.length ? `Premier relevé le ${dateFr(pts[0].date)} : ${eur(totalPoint(pts[0]), 0)}. ${base}` : base }));
+      return;
+    }
+    if (!z.clientWidth) return;
+    const W = Math.round(Math.max(300, Math.min(900, z.clientWidth))), H = W < 520 ? 200 : 240, m = { g: 52, d: 14, h: 10, b: 26 };
+    const t = p => new Date(p.date + "T12:00:00").getTime();
+    const t0 = t(pts[0]), t1 = t(pts[pts.length - 1]);
+    const ymaxBrut = Math.max(1, ...pts.map(totalPoint));
+    const pas = (() => { const brut = ymaxBrut / 4, e = Math.pow(10, Math.floor(Math.log10(brut))), f = brut / e; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * e; })();
+    const ymax = Math.ceil(ymaxBrut / pas) * pas;
+    const x = p => m.g + (t(p) - t0) / Math.max(1, t1 - t0) * (W - m.g - m.d);
+    const y = v => m.h + (1 - v / ymax) * (H - m.h - m.b);
+    const NS = "http://www.w3.org/2000/svg";
+    const sv = (tag, attrs, txt) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v); if (txt != null) e.textContent = txt; return e; };
+    const svg = sv("svg", { viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: "img", "aria-label": `Patrimoine du ${dateFr(pts[0].date)} au ${dateFr(pts[pts.length - 1].date)} : de ${eur(totalPoint(pts[0]), 0)} à ${eur(totalPoint(pts[pts.length - 1]), 0)}` });
+    for (let v = 0; v <= ymax + 1e-6; v += pas) {
+      svg.append(sv("line", { class: "grille-h", x1: m.g, x2: W - m.d, y1: y(v), y2: y(v) }));
+      svg.append(sv("text", { x: m.g - 8, y: y(v) + 4, "text-anchor": "end" }, compact(v)));
+    }
+    const jours = (t1 - t0) / 86400000;
+    const fmt = jours > 75 ? { month: "short", year: "2-digit" } : { day: "numeric", month: "short" };
+    const nbTicks = Math.max(2, Math.min(6, Math.floor((W - m.g - m.d) / 90)));
+    for (let k = 0; k < nbTicks; k++) {
+      const tk = t0 + (t1 - t0) * k / (nbTicks - 1);
+      const xx = m.g + k / (nbTicks - 1) * (W - m.g - m.d);
+      svg.append(sv("text", { x: xx, y: H - 8, "text-anchor": k === 0 ? "start" : k === nbTicks - 1 ? "end" : "middle" }, new Date(tk).toLocaleDateString("fr-FR", fmt)));
+    }
+    svg.append(sv("line", { class: "axe", x1: m.g, x2: W - m.d, y1: y(0), y2: y(0) }));
+    const cumul = pts.map(() => 0);
+    for (const se of series) {
+      const bas = cumul.slice();
+      pts.forEach((p, i) => { cumul[i] += num(p[se.cle]); });
+      const haut = pts.map((p, i) => `${x(p)},${y(cumul[i])}`);
+      const dessous = pts.map((p, i) => `${x(p)},${y(bas[i])}`).reverse();
+      svg.append(sv("polygon", { points: [...haut, ...dessous].join(" "), style: `fill:${se.couleur};opacity:0.16;stroke:none` }));
+      svg.append(sv("polyline", { points: haut.join(" "), style: `fill:none;stroke:${se.couleur};stroke-width:2;stroke-linejoin:round;stroke-linecap:round` }));
+    }
+    const der = pts[pts.length - 1];
+    svg.append(sv("circle", { cx: x(der), cy: y(totalPoint(der)), r: 4, style: `fill:${series.length ? series[series.length - 1].couleur : "var(--encre)"};stroke:var(--surface);stroke-width:2` }));
+    const repere = sv("line", { x1: 0, x2: 0, y1: m.h, y2: H - m.b, style: "stroke:var(--encre-2);stroke-width:1;opacity:0", "pointer-events": "none" });
+    svg.append(repere);
+    const zone = sv("rect", { x: m.g, y: m.h, width: W - m.g - m.d, height: H - m.h - m.b, style: "fill:transparent;cursor:crosshair;touch-action:pan-y" });
+    svg.append(zone);
+    const bulle = h("div", { class: "info-bulle", hidden: true });
+    vider(z, svg, bulle);
+    const montrerPoint = clientX => {
+      const r = svg.getBoundingClientRect();
+      const px = (clientX - r.left) / r.width * W;
+      let i = 0, best = Infinity;
+      pts.forEach((p, k) => { const d = Math.abs(x(p) - px); if (d < best) { best = d; i = k; } });
+      const p = pts[i];
+      repere.setAttribute("x1", x(p)); repere.setAttribute("x2", x(p)); repere.style.opacity = "0.5";
+      const pv = num(p.bourse) + num(p.crypto) - num(p.investi);
+      vider(bulle, h("b", { text: dateFr(p.date) }),
+        series.map(se => h("div", { class: "ligne-serie" }, h("span", {}, h("span", { class: "puce", style: "background:" + se.couleur + ";margin-right:6px" }), se.nom), h("span", { class: "chiffre", text: eur(num(p[se.cle]), 0) }))),
+        h("div", { class: "ligne-serie" }, h("b", { text: "Total" }), h("b", { class: "chiffre", text: eur(totalPoint(p), 0) })),
+        num(p.investi) > 0 ? h("div", { class: "ligne-serie muet" }, h("span", { text: "dont plus-values latentes" }), h("span", { class: "chiffre", text: eurSigne(pv) })) : null);
+      bulle.hidden = false;
+      const gauche = x(p) / W * r.width, largeur = bulle.offsetWidth || 190;
+      bulle.style.left = (gauche + 12 + largeur > r.width ? Math.max(0, gauche - 12 - largeur) : gauche + 12) + "px";
+      bulle.style.top = "8px";
+    };
+    zone.addEventListener("pointermove", e => montrerPoint(e.clientX));
+    zone.addEventListener("pointerdown", e => montrerPoint(e.clientX));
+    zone.addEventListener("pointerleave", () => { bulle.hidden = true; repere.style.opacity = "0"; });
   }
 
   function rendreRepartition(syn) {
     const z = $("repartition");
     const marge = num(S.strategie.regles.marge);
-    $("repart-note").textContent = `Marge : ± ${nf(0, 1).format(marge)} pt`;
+    $("repart-note").textContent = `Marge ± ${nf(0, 1).format(marge)} pt` + (syn.lignes.some(estFonds) ? ` · frais moyens ${pct(syn.fraisMoyen, 2)} / an` : "");
     const ech = Math.max(100, ...syn.poches.map(p => Math.max(p.poids, num(p.cible) + marge)));
     const ligne = (nom, poids, cible, sousTitre, niveau) => h("div", { class: "repart-ligne" },
       h("div", { class: "repart-tete" },
@@ -431,24 +624,38 @@
   }
 
   function rendreVersement(syn) {
+    const pl = planDuMois();
+    const rangs = [];
+    if (pl.versEpargne > 0) rangs.push(h("tr", {}, h("td", {}, h("div", { class: "nom-ligne" }, h("span", { text: pl.complete || pl.obj <= 0 ? "Épargne" : "Épargne de précaution" }),
+      h("small", { text: pl.compte ? "sur " + pl.compte.nom : "sur ton livret" }))), h("td", { class: "num chiffre", text: eur(pl.versEpargne, 0) })));
+    if (pl.investir > 0) rangs.push(h("tr", {}, h("td", {}, h("div", { class: "nom-ligne" }, h("span", { text: "À investir" }),
+      h("small", { text: pl.investir > pl.vi ? `${eur(pl.vi, 0)} prévus + ${eur(pl.investir - pl.vi, 0)} libérés par l'épargne de précaution complète` : "réparti ci-dessous" }))), h("td", { class: "num chiffre", text: eur(pl.investir, 0) })));
+    vider($("plan-mois"), rangs.length ? h("div", { class: "defile" }, h("table", {}, h("tbody", {}, rangs,
+      h("tr", { class: "table-total" }, h("td", { text: "Effort d'épargne du mois" }), h("td", { class: "num chiffre", text: eur(pl.versEpargne + pl.investir, 0) })))))
+      : h("p", { class: "vide", text: "Fixe tes versements mensuels (épargne de précaution et investissements) dans Ma stratégie." }));
     const champ = $("versement-montant");
-    if (!champ.dataset.touche && !aFocus(champ)) champ.value = num(S.strategie.profil.versementMensuel) || "";
+    if (!champ.dataset.touche && !aFocus(champ)) champ.value = pl.investir || "";
     const montant = num(champ.value);
     const z = $("versement-resultat");
-    if (!(montant > 0)) { vider(z, h("p", { class: "vide", text: "Indique un montant." })); return; }
+    if (!(montant > 0)) { vider(z, h("p", { class: "vide", text: pl.vi > 0 || pl.vp > 0 ? "Rien à investir ce mois-ci : tout va à ton épargne de précaution." : "Indique un montant." })); return; }
     const plan = repartirVersement(montant, syn);
     if (!plan.length) { vider(z, h("p", { class: "vide", text: "Ajoute des poches avec une cible dans Ma stratégie." })); return; }
+    const detail = x => {
+      const l = x.ligne;
+      if (l.sansQuantite) return l.enveloppe;
+      if (enFractions(l)) return `${(B.ENVELOPPES.find(e => e.id === l.enveloppe) || {}).nom || l.enveloppe} · montant exact, en fractions`;
+      return x.parts > 0 ? `≈ ${x.parts} part${x.parts > 1 ? "s" : ""} à ${eur(l.cours, 2)}` : `moins d'une part (${eur(l.cours, 2)})`;
+    };
     vider(z, h("div", { class: "defile" }, h("table", {},
       h("thead", {}, h("tr", {}, h("th", { text: "Poche" }), h("th", { text: "Sur quelle ligne" }), h("th", { class: "num", text: "Montant" }), h("th", { class: "num", text: "Poids après" }))),
       h("tbody", {}, plan.map(x => h("tr", {},
         h("td", { text: x.poche.nom }),
-        h("td", {}, x.ligne ? h("div", { class: "nom-ligne", style: "min-width:120px" }, h("span", { text: x.ligne.nom }),
-          h("small", { text: x.parts != null ? (x.parts > 0 ? `≈ ${x.parts} part${x.parts > 1 ? "s" : ""} à ${eur(x.ligne.cours, 2)}` : `moins d'une part (${eur(x.ligne.cours, 2)})`) : x.ligne.enveloppe })) : h("span", { class: "muet", text: "ligne à choisir" })),
+        h("td", {}, x.ligne ? h("div", { class: "nom-ligne", style: "min-width:120px" }, h("span", { text: x.ligne.nom }), h("small", { text: detail(x) })) : h("span", { class: "muet", text: "ligne à choisir" })),
         h("td", { class: "num chiffre", text: eur(x.montant, 0) }),
         h("td", { class: "num" }, h("div", { class: "nom-ligne", style: "min-width:0" }, h("span", { class: "chiffre", text: pct(x.poidsApres) }), h("small", { text: "cible " + pct(num(x.poche.cible), 0) })))))))),
-      h("div", { class: "actions" }, claudePret ? h("button", { class: "btn btn-ghost btn-petit", text: "En parler à Claude", onclick: () => demanderDansChat(`J'ai ${eur(montant, 0)} à investir ce mois-ci. L'outil propose : ${plan.map(x => `${x.poche.nom} ${eur(x.montant, 0)}`).join(", ")}. Qu'en penses-tu au regard de ma stratégie ?`) }) : null));
+      estTR() ? h("p", { class: "note", text: "Sur Trade Republic, un plan d'investissement programmé fait ces achats chaque mois sans frais, alors qu'un ordre ponctuel coûte 1 €. Sur le PEA, il n'achète que des parts entières." }) : null,
+      h("div", { class: "actions" }, claudePret ? h("button", { class: "btn btn-ghost btn-petit", text: "En parler à Claude", onclick: () => demanderDansChat(`Ce mois-ci, l'outil propose : ${pl.versEpargne > 0 ? `${eur(pl.versEpargne, 0)} sur ${pl.compte ? pl.compte.nom : "mon livret"} pour mon épargne de précaution, et ` : ""}${eur(montant, 0)} à investir : ${plan.map(x => `${x.poche.nom} ${eur(x.montant, 0)}`).join(", ")}. Qu'en penses-tu au regard de ma stratégie ?`) }) : null));
   }
-  $("versement-montant").addEventListener("input", e => { e.target.dataset.touche = "1"; rendreVersement(synthese()); });
 
   function rendreEnveloppes(syn) {
     const e = S.strategie.enveloppes, F = B.FISCALITE, rangs = [];
@@ -468,20 +675,26 @@
       rangs.push(h("tr", {}, h("td", {}, h("div", { class: "nom-ligne" }, h("b", { text: "Assurance-vie" }), h("small", { text: "Après 8 ans : 4 600 € de gains par an sans impôt sur le revenu" }))),
         h("td", { class: "num chiffre", text: eur(av.valeur, 0) }), h("td", {}, statut)));
     }
+    const cr = val("Crypto");
+    if (cr.valeur > 0) {
+      const pv = cr.valeur - cr.investi, impot = Math.max(0, pv) * (F.ir + F.ps) / 100;
+      rangs.push(h("tr", {}, h("td", {}, h("div", { class: "nom-ligne" }, h("b", { text: "Wallet crypto" }), h("small", { text: pv > 0 ? `Tout repasser en euros aujourd'hui : ≈ ${eur(impot, 0)} d'impôt (31,4 % de ${eur(pv, 0)}) ; rien sous ${F.seuilCrypto} € de ventes dans l'année` : "Pas de plus-value latente à taxer" }))),
+        h("td", { class: "num chiffre", text: eur(cr.valeur, 0) }), h("td", {}, pastille("info", "impôt à la vente"))));
+    }
     const cto = val("CTO");
     if (cto.valeur > 0) {
       const pv = cto.valeur - cto.investi, impot = Math.max(0, pv) * (F.ir + F.ps) / 100;
       rangs.push(h("tr", {}, h("td", {}, h("div", { class: "nom-ligne" }, h("b", { text: "Compte-titres" }), h("small", { text: pv > 0 ? `Tout vendre aujourd'hui : ≈ ${eur(impot, 0)} d'impôt (31,4 % de ${eur(pv, 0)})` : "Pas de plus-value latente à taxer" }))),
         h("td", { class: "num chiffre", text: eur(cto.valeur, 0) }), h("td", {}, pastille("info", "flat tax 31,4 %"))));
     }
-    for (const id of ["PER", "Livret", "Autre"]) {
-      const v = val(id);
-      if (v.valeur > 0) rangs.push(h("tr", {}, h("td", {}, h("b", { text: B.ENVELOPPES.find(x => x.id === id).nom })), h("td", { class: "num chiffre", text: eur(v.valeur, 0) }), h("td", {})));
+    for (const [id, v] of Object.entries(syn.parEnveloppe)) {
+      if (["PEA", "AV", "CTO", "Crypto"].includes(id) || !(v.valeur > 0)) continue;
+      rangs.push(h("tr", {}, h("td", {}, h("b", { text: (B.ENVELOPPES.find(x => x.id === id) || { nom: id }).nom })), h("td", { class: "num chiffre", text: eur(v.valeur, 0) }), h("td", {})));
     }
-    const p = num(S.portefeuille.precaution), o = objectifPrecaution();
-    rangs.push(h("tr", {}, h("td", {}, h("div", { class: "nom-ligne" }, h("b", { text: "Épargne de précaution" }), h("small", { text: o > 0 ? `Objectif : ${eur(o, 0)} (${num(S.strategie.profil.moisPrecaution)} mois de dépenses)` : "Objectif à fixer dans Ma stratégie" }))),
-      h("td", { class: "num chiffre", text: eur(p, 0) }), h("td", {}, o > 0 ? (p >= o ? pastille("ok", "complète") : pastille("attention", "à compléter")) : null)));
-    vider($("enveloppes"), h("div", { class: "defile" }, h("table", {}, h("tbody", {}, rangs))));
+    const ep = epargneTotale();
+    if (ep > 0) rangs.push(h("tr", {}, h("td", {}, h("div", { class: "nom-ligne" }, h("b", { text: "Comptes d'épargne" }), h("small", { text: `${S.portefeuille.comptes.length} compte${S.portefeuille.comptes.length > 1 ? "s" : ""}, dont ${eur(epargnePrecaution(), 0)} d'épargne de précaution` }))),
+      h("td", { class: "num chiffre", text: eur(ep, 0) }), h("td", {})));
+    vider($("enveloppes"), rangs.length ? h("div", { class: "defile" }, h("table", {}, h("tbody", {}, rangs))) : h("p", { class: "vide", text: "Tes enveloppes apparaîtront avec tes lignes." }));
   }
 
   function rendreLignes(syn) {
@@ -494,9 +707,9 @@
       h("tbody", {}, tri.map(l => h("tr", {},
         h("td", {}, h("div", { class: "nom-ligne" }, h("span", { text: l.nom }),
           h("small", { text: [l.code, l.type, envNom(l.enveloppe), (pocheDe(l) || {}).nom || "hors stratégie"].filter(Boolean).join(" · ") }))),
-        h("td", { class: "num chiffre", text: nf(0, 4).format(l.quantite) }),
-        h("td", { class: "num chiffre", text: eur(l.pru, 2) }),
-        h("td", { class: "num chiffre", text: eur(l.cours, 2) }),
+        h("td", { class: "num chiffre", text: l.sansQuantite ? "—" : nf(0, 6).format(l.quantite) }),
+        h("td", { class: "num chiffre", text: l.sansQuantite ? "—" : eur(l.pru, 2) }),
+        h("td", { class: "num chiffre", text: l.sansQuantite ? "—" : eur(l.cours, 2) }),
         h("td", { class: "num chiffre", text: eur(l.valeur, 0) }),
         h("td", { class: "num chiffre " + (l.pv >= 0 ? "gain" : "perte"), text: `${eurSigne(l.pv)} (${pctSigne(l.pvPct)})` }),
         h("td", { class: "num chiffre", text: pct(l.poids) }),
@@ -518,7 +731,7 @@
   function ouvrirLigne(id) {
     const f = $("fiche-ligne");
     $("fiche-cours").hidden = true; $("fiche-import").hidden = true;
-    const l = id ? S.portefeuille.lignes.find(x => x.id === id) : { nom: "", code: "", type: "ETF", enveloppe: "PEA", poche: "", classe: "", zone: "", quantite: "", pru: "", cours: "", frais: "" };
+    const l = id ? S.portefeuille.lignes.find(x => x.id === id) : { nom: "", code: "", type: "ETF", enveloppe: "PEA", poche: "", classe: "", zone: "", quantite: "", pru: "", cours: "", frais: "", sansQuantite: false };
     if (!l) return;
     const champ = (lib, el, large) => h("label", { class: "champ" + (large ? " champ-large" : "") }, h("span", { text: lib }), el);
     const sel = (idc, opts, v) => { const s = h("select", { id: idc }); options(s, opts, v); return s; };
@@ -527,10 +740,17 @@
       h("button", { type: "button", class: "btn btn-danger btn-petit", text: "Oui, supprimer", onclick: () => {
         S.portefeuille.lignes = S.portefeuille.lignes.filter(x => x.id !== id);
         for (const p of S.strategie.poches) if (p.ligne === id) p.ligne = "";
-        enregistrer("portefeuille"); f.hidden = true; toutRendre();
+        enregistrer("portefeuille"); noterPoint(); f.hidden = true; toutRendre();
       } }),
       h("button", { type: "button", class: "btn btn-discret btn-petit", text: "Non", onclick: () => { confirmer.hidden = true; } }));
     const erreur = h("p", { class: "erreur", hidden: true });
+    const parts = h("div", { class: "champs", hidden: !!l.sansQuantite },
+      champ("Quantité", nb("l-quantite", l.sansQuantite ? "" : l.quantite)),
+      champ("Prix de revient unitaire (€)", nb("l-pru", l.sansQuantite ? "" : l.pru)),
+      champ("Cours actuel (€)", nb("l-cours", l.sansQuantite ? "" : l.cours)));
+    const valeurs = h("div", { class: "champs", hidden: !l.sansQuantite },
+      champ("Valeur actuelle (€)", nb("l-valeur", l.sansQuantite ? l.cours : "")),
+      champ("Montant investi (€)", nb("l-investi", l.sansQuantite ? l.pru : "")));
     vider(f,
       h("h3", { text: id ? "Modifier " + l.nom : "Ajouter une ligne" }),
       h("div", { class: "champs" },
@@ -541,24 +761,27 @@
         champ("Poche de ma stratégie", sel("l-poche", optsPoches(), l.poche)),
         champ("Classe d'actif", sel("l-classe", optsClasses("Selon la poche ou le type"), l.classe)),
         champ("Zone", sel("l-zone", optsZones(), l.zone)),
-        champ("Quantité", nb("l-quantite", l.quantite)),
-        champ("Prix de revient unitaire (€)", nb("l-pru", l.pru)),
-        champ("Cours actuel (€)", nb("l-cours", l.cours)),
         champ("Frais annuels (%)", nb("l-frais", l.frais, "0.01"))),
+      h("label", { class: "case" }, h("input", { type: "checkbox", id: "l-sansq", checked: !!l.sansQuantite, onchange: e => { parts.hidden = e.target.checked; valeurs.hidden = !e.target.checked; } }),
+        h("span", { text: "Je ne connais que la valeur et la plus-value (pas le nombre de parts)" })),
+      parts, valeurs,
       erreur,
       h("div", { class: "actions" },
         h("button", { type: "button", class: "btn", text: "Enregistrer", onclick: () => {
           const v = idc => $(idc).value;
           const nom = v("l-nom").trim();
           if (!nom) { erreur.textContent = "Donne un nom à la ligne."; erreur.hidden = false; return; }
-          if (!(num(v("l-quantite")) > 0)) { erreur.textContent = "Indique une quantité supérieure à zéro."; erreur.hidden = false; return; }
-          const donnees = { nom, code: v("l-code").trim(), type: v("l-type"), enveloppe: v("l-enveloppe"), poche: v("l-poche"), classe: v("l-classe"), zone: v("l-zone"),
-            quantite: num(v("l-quantite")), pru: num(v("l-pru")) || num(v("l-cours")), cours: num(v("l-cours")) || num(v("l-pru")), frais: num(v("l-frais")) };
+          const sansQ = $("l-sansq").checked;
+          if (sansQ ? !(num(v("l-valeur")) > 0) : !(num(v("l-quantite")) > 0)) { erreur.textContent = sansQ ? "Indique la valeur actuelle de la ligne." : "Indique une quantité supérieure à zéro."; erreur.hidden = false; return; }
+          const base = { nom, code: v("l-code").trim(), type: v("l-type"), enveloppe: v("l-enveloppe"), poche: v("l-poche"), classe: v("l-classe"), zone: v("l-zone"), frais: num(v("l-frais")) };
+          const donnees = sansQ
+            ? { ...base, sansQuantite: true, quantite: 1, cours: num(v("l-valeur")), pru: num(v("l-investi")) || num(v("l-valeur")) }
+            : { ...base, sansQuantite: false, quantite: num(v("l-quantite")), pru: num(v("l-pru")) || num(v("l-cours")), cours: num(v("l-cours")) || num(v("l-pru")) };
           if (id) Object.assign(S.portefeuille.lignes.find(x => x.id === id), donnees);
           else S.portefeuille.lignes.push({ id: uid(), ...donnees });
           S.portefeuille.exemple = false;
           if (!S.portefeuille.coursMaj) S.portefeuille.coursMaj = aujourdhui();
-          enregistrer("portefeuille"); f.hidden = true; toutRendre();
+          enregistrer("portefeuille"); noterPoint(); f.hidden = true; toutRendre();
         } }),
         h("button", { type: "button", class: "btn btn-discret", text: "Annuler", onclick: () => { f.hidden = true; } }),
         id ? h("button", { type: "button", class: "btn btn-danger", text: "Supprimer", onclick: () => { confirmer.hidden = false; } }) : null,
@@ -568,6 +791,90 @@
     $("l-nom").focus({ preventScroll: true });
   }
   $("btn-ajouter-ligne").addEventListener("click", () => { if (S.portefeuille.exemple) effacerExemple(); ouvrirLigne(null); });
+
+  // ---------- comptes d'épargne ----------
+  function majCompte(id, f) {
+    const c = S.portefeuille.comptes.find(k => k.id === id);
+    if (!c) return;
+    f(c); enregistrer("portefeuille"); noterPoint(); toutRendre();
+  }
+  function rendreComptes() {
+    const z = $("comptes");
+    if (aFocus(z)) return;
+    const cs = S.portefeuille.comptes;
+    if (!cs.length) {
+      vider(z, h("p", { class: "vide", text: "Aucun compte. Ajoute ton Livret A, ton LDDS ou les espèces de ton courtier : leur solde entre dans ton patrimoine, et ceux que tu coches forment ton épargne de précaution." }));
+      return;
+    }
+    const interets = somme(cs, c => num(c.solde) * (tauxNet(c) || 0) / 100);
+    vider(z, h("div", { class: "defile" }, h("table", {},
+      h("thead", {}, h("tr", {}, ["Compte", "Solde (€)", "Taux brut", "Net d'impôt", "Plafond", "Précaution", ""].map((t, i) => h("th", { class: i >= 1 && i <= 4 ? "num" : null, text: t })))),
+      h("tbody", {}, cs.map(c => {
+        const t = tauxCompte(c), n = tauxNet(c), ex = estExempleCompte(c), type = TYPE_COMPTE[c.type] || TYPE_COMPTE.autre;
+        return h("tr", {},
+          h("td", {}, h("div", { class: "nom-ligne" }, h("span", { text: c.nom }), h("small", { text: type.nom + (c.type === "courant" ? "" : type.impose ? " · intérêts imposés à 31,4 %" : " · net d'impôt") }))),
+          h("td", { class: "num" }, h("input", { type: "number", class: "solde", id: "solde-" + c.id, min: "0", step: "10", inputmode: "decimal", value: String(num(c.solde)), disabled: ex, "aria-label": "Solde de " + c.nom,
+            onchange: e => majCompte(c.id, k => { k.solde = num(e.target.value); }) })),
+          h("td", { class: "num chiffre", text: t == null ? "à renseigner" : pct(t, 2) }),
+          h("td", { class: "num chiffre", text: n == null ? "—" : pct(n, 2) }),
+          h("td", { class: "num chiffre", text: num(c.plafond) > 0 ? eur(num(c.plafond), 0) : "—" }),
+          h("td", {}, h("input", { type: "checkbox", id: "prec-" + c.id, checked: !!c.precaution, disabled: ex, "aria-label": `Compter ${c.nom} dans l'épargne de précaution`, onchange: e => majCompte(c.id, k => { k.precaution = e.target.checked; }) })),
+          h("td", {}, ex ? h("span", { class: "petit muet", text: "exemple" }) : h("button", { class: "btn btn-discret btn-petit", text: "Modifier", "aria-label": "Modifier " + c.nom, onclick: () => ouvrirCompte(c.id) })));
+      })),
+      h("tfoot", {}, h("tr", { class: "table-total" }, h("td", { text: "Total" }), h("td", { class: "num chiffre", text: eur(epargneTotale(), 0) }), h("td", {}), h("td", {}), h("td", {}), h("td", {}), h("td", {}))))),
+      interets > 0 ? h("p", { class: "note", text: `À ces taux, ton épargne rapporte environ ${eur(interets, 0)} par an après impôt. Saisis un nouveau solde quand tu fais un versement : il est noté dans ton historique.` }) : null);
+  }
+  function ouvrirCompte(id) {
+    const f = $("fiche-compte");
+    const c = id ? S.portefeuille.comptes.find(x => x.id === id) : { nom: "", type: "livretA", solde: "", taux: 1.7, plafond: 22950, precaution: true };
+    if (!c) return;
+    const champ = (lib, el) => h("label", { class: "champ" }, h("span", { text: lib }), el);
+    const nb = (idc, v, step) => h("input", { id: idc, type: "number", step: step || "any", min: "0", inputmode: "decimal", value: v === "" || v == null ? "" : String(v) });
+    const selType = h("select", { id: "k-type", onchange: e => {
+      const t = TYPE_COMPTE[e.target.value];
+      $("k-taux").value = t.taux == null ? "" : String(t.taux);
+      $("k-plafond").value = t.plafond ? String(t.plafond) : "";
+      $("k-prec").checked = ["livretA", "ldds", "lep"].includes(t.id);
+      $("k-taux-note").hidden = t.taux != null;
+    } });
+    options(selType, B.TYPES_COMPTES.map(t => ({ value: t.id, label: t.nom })), c.type);
+    const erreur = h("p", { class: "erreur", hidden: true });
+    const confirmer = h("span", { class: "confirmer", hidden: true }, "Supprimer ce compte ?",
+      h("button", { type: "button", class: "btn btn-danger btn-petit", text: "Oui, supprimer", onclick: () => {
+        S.portefeuille.comptes = S.portefeuille.comptes.filter(x => x.id !== id);
+        enregistrer("portefeuille"); noterPoint(); f.hidden = true; toutRendre();
+      } }),
+      h("button", { type: "button", class: "btn btn-discret btn-petit", text: "Non", onclick: () => { confirmer.hidden = true; } }));
+    vider(f,
+      h("h3", { text: id ? "Modifier " + c.nom : "Ajouter un compte d'épargne" }),
+      h("div", { class: "champs" },
+        champ("Type", selType),
+        champ("Nom", h("input", { id: "k-nom", value: c.nom, placeholder: estTR() ? "Ex. : Livret A Trade Republic" : "Ex. : Livret A" })),
+        champ("Solde (€)", nb("k-solde", c.solde)),
+        champ("Taux brut annuel (%)", nb("k-taux", tauxCompte(c), "0.01")),
+        champ("Plafond (€)", nb("k-plafond", num(c.plafond) || ""))),
+      h("p", { class: "note", id: "k-taux-note", hidden: (TYPE_COMPTE[c.type] || {}).taux != null, text: "Taux variable : recopie celui affiché dans ton appli. Les intérêts d'un compte rémunéré sont imposés à 31,4 % (flat tax), contrairement au Livret A et au LDDS." }),
+      h("label", { class: "case" }, h("input", { type: "checkbox", id: "k-prec", checked: !!c.precaution }), h("span", { text: "Ce compte fait partie de mon épargne de précaution" })),
+      erreur,
+      h("div", { class: "actions" },
+        h("button", { type: "button", class: "btn", text: "Enregistrer", onclick: () => {
+          const type = $("k-type").value;
+          const donnees = { nom: $("k-nom").value.trim() || TYPE_COMPTE[type].nom, type, solde: num($("k-solde").value),
+            taux: $("k-taux").value === "" ? null : num($("k-taux").value), plafond: num($("k-plafond").value), precaution: $("k-prec").checked };
+          // Les comptes d'exemple laissent la place aux vrais.
+          S.portefeuille.comptes = S.portefeuille.comptes.filter(k => !estExempleCompte(k));
+          if (id && S.portefeuille.comptes.find(x => x.id === id)) Object.assign(S.portefeuille.comptes.find(x => x.id === id), donnees);
+          else S.portefeuille.comptes.push({ id: uid(), ...donnees });
+          enregistrer("portefeuille"); noterPoint(); f.hidden = true; toutRendre();
+        } }),
+        h("button", { type: "button", class: "btn btn-discret", text: "Annuler", onclick: () => { f.hidden = true; } }),
+        id ? h("button", { type: "button", class: "btn btn-danger", text: "Supprimer", onclick: () => { confirmer.hidden = false; } }) : null,
+        confirmer));
+    f.hidden = false;
+    f.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    $("k-solde").focus({ preventScroll: true });
+  }
+  $("btn-ajouter-compte").addEventListener("click", () => ouvrirCompte(null));
 
   // Mise à jour des cours.
   $("btn-maj-cours").addEventListener("click", () => {
@@ -579,13 +886,13 @@
       h("h3", { text: "Mettre à jour les cours" }),
       h("p", { class: "petit muet", text: claudePret ? "Saisis les cours du jour, ou passe par « Importer avec Claude » avec une capture de ton courtier." : "Saisis les cours du jour." }),
       h("label", { class: "champ", style: "max-width:220px" }, h("span", { text: "Cours du" }), h("input", { type: "date", id: "c-date", value: aujourdhui() })),
-      h("div", { class: "champs" }, lignes.map(l => h("label", { class: "champ" }, h("span", { text: l.nom }),
+      h("div", { class: "champs" }, lignes.map(l => h("label", { class: "champ" }, h("span", { text: l.sansQuantite ? l.nom + " : valeur (€)" : l.nom }),
         h("input", { type: "number", id: "cours-" + l.id, step: "any", min: "0", inputmode: "decimal", value: String(l.cours) })))),
       h("div", { class: "actions" },
         h("button", { class: "btn", text: "Enregistrer les cours", onclick: () => {
           for (const l of S.portefeuille.lignes) { const v = num($("cours-" + l.id)?.value); if (v > 0) l.cours = v; }
           S.portefeuille.coursMaj = $("c-date").value || aujourdhui();
-          enregistrer("portefeuille"); f.hidden = true; toutRendre();
+          enregistrer("portefeuille"); noterPoint(); f.hidden = true; toutRendre();
         } }),
         h("button", { class: "btn btn-discret", text: "Annuler", onclick: () => { f.hidden = true; } })));
     f.hidden = false;
@@ -687,7 +994,8 @@
 - Appuie-toi sur ses chiffres ci-dessous et cite ses règles et ses principes quand ils s'appliquent. Si une idée contredit sa stratégie, dis-le clairement, même s'il semble en avoir envie.
 - Tu n'as accès ni aux cours en direct ni à l'actualité : tes connaissances sur une entreprise, un fonds ou un taux peuvent être datées ; dis-le quand ça compte. Ne donne jamais de prévision de cours ni de promesse de rendement.
 - Distingue les faits, les hypothèses et ton avis. Tu l'aides à raisonner ; la décision lui appartient. Ce n'est pas un conseil en investissement réglementé, inutile de le répéter à chaque message.
-- Fiscalité française 2026 : flat tax 31,4 % (12,8 % d'impôt + 18,6 % de prélèvements sociaux) ; PEA : après 5 ans, seuls les prélèvements sociaux de 18,6 % sur les gains, versements plafonnés à 150 000 € ; assurance-vie : prélèvements sociaux 17,2 %, après 8 ans abattement de 4 600 € (9 200 € en couple) puis 7,5 % d'impôt (jusqu'à 150 000 € de primes).`;
+- Fiscalité française 2026 : flat tax 31,4 % (12,8 % d'impôt + 18,6 % de prélèvements sociaux), y compris sur les intérêts d'un compte rémunéré ; Livret A et LDDS : 1,7 % net d'impôt (plafonds 22 950 € et 12 000 €) ; PEA : après 5 ans, seuls les prélèvements sociaux de 18,6 % sur les gains, versements plafonnés à 150 000 € ; crypto : 31,4 % sur les gains seulement en repassant en euros, échanges entre cryptos non imposés, rien si les ventes de l'année ne dépassent pas 305 € ; assurance-vie : prélèvements sociaux 17,2 %, après 8 ans abattement de 4 600 € (9 200 € en couple) puis 7,5 % d'impôt (jusqu'à 150 000 € de primes).
+- L'épargne de précaution fait partie de sa stratégie : tiens compte de sa progression et du partage de son effort mensuel entre elle et ses investissements.`;
 
   function contexteInvestisseur() {
     const st = S.strategie, pr = st.profil, r = st.regles, syn = synthese();
@@ -695,11 +1003,17 @@
     const reaction = (B.REACTIONS.find(x => x.id === pr.reaction) || {}).nom || pr.reaction;
     const L = [];
     L.push(`Date du jour : ${dateFr(aujourdhui())}.`);
-    L.push(`\nPROFIL${st.exemple ? " (modèle de départ, pas encore personnalisé)" : ""} : objectif « ${pr.objectifTexte} » ; ${eur(num(pr.objectifMontant), 0)} (en euros d'aujourd'hui) visés pour ${pr.objectifAnnee} ; horizon ${num(pr.horizon)} ans ; profil ${risque} ; après une baisse de 30 % : « ${reaction} » ; versement mensuel ${eur(num(pr.versementMensuel), 0)} ; dépenses mensuelles ${eur(num(pr.depensesMensuelles), 0)} ; épargne de précaution ${eur(num(S.portefeuille.precaution), 0)} pour un objectif de ${num(pr.moisPrecaution)} mois (${eur(objectifPrecaution(), 0)}).`);
+    const pat = patrimoine(syn), pl = planDuMois();
+    L.push(`\nPROFIL${st.exemple ? " (modèle de départ, pas encore personnalisé)" : ""} : objectif « ${pr.objectifTexte} » ; ${eur(num(pr.objectifMontant), 0)} (en euros d'aujourd'hui) visés pour ${pr.objectifAnnee} ; horizon ${num(pr.horizon)} ans ; profil ${risque} ; après une baisse de 30 % : « ${reaction} » ; versement mensuel investi ${eur(num(pr.versementMensuel), 0)} ; versement mensuel sur l'épargne de précaution ${eur(num(pr.versementPrecaution), 0)}${pr.basculer ? " (basculé vers les investissements une fois l'objectif atteint)" : ""} ; dépenses mensuelles ${eur(num(pr.depensesMensuelles), 0)}${pr.courtier ? ` ; courtier : ${pr.courtier}` : ""}.`);
+    L.push(`\nPATRIMOINE${S.portefeuille.exemple || S.portefeuille.comptes.some(estExempleCompte) ? " (contient des données d'EXEMPLE fictives)" : ""} : ${eur(pat.total, 0)} au total = épargne ${eur(pat.epargne, 0)} + bourse ${eur(pat.bourse, 0)} + crypto ${eur(pat.crypto, 0)}.`);
+    L.push(`ÉPARGNE DE PRÉCAUTION : ${eur(pl.act, 0)} pour un objectif de ${eur(pl.obj, 0)} (${num(pr.moisPrecaution)} mois de dépenses)${pl.manque > 0 ? (pl.mois ? `, complète en ${moisFr(pl.fin)} au rythme actuel` : ", sans versement prévu") : ", complète"}. Plan de ce mois : ${eur(pl.versEpargne, 0)} sur l'épargne${pl.compte ? ` (${pl.compte.nom})` : ""}, ${eur(pl.investir, 0)} à investir.`);
+    if (S.portefeuille.comptes.length) L.push("Comptes d'épargne (nom | type | solde | taux brut | net d'impôt | plafond | précaution) :\n" + S.portefeuille.comptes.map(c => `- ${c.nom} | ${(TYPE_COMPTE[c.type] || {}).nom} | ${eur(num(c.solde), 0)} | ${tauxCompte(c) == null ? "?" : pct(tauxCompte(c), 2)} | ${tauxNet(c) == null ? "?" : pct(tauxNet(c), 2)} | ${num(c.plafond) ? eur(num(c.plafond), 0) : "—"} | ${c.precaution ? "oui" : "non"}`).join("\n"));
+    const hist = S.historique.points;
+    if (hist.length >= 2) L.push(`HISTORIQUE : ${eur(totalPoint(hist[0]), 0)} le ${dateFr(hist[0].date)}, ${eur(totalPoint(hist[hist.length - 1]), 0)} le ${dateFr(hist[hist.length - 1].date)} (${hist.length} relevés).`);
     L.push("\nALLOCATION CIBLE :");
     for (const p of syn.poches) L.push(`- ${p.nom} (${CLASSE[p.classe]?.nom || p.classe}) : cible ${pct(num(p.cible), 0)}, aujourd'hui ${pct(p.poids)}`);
     if (syn.hors.length) L.push(`- Hors stratégie : ${pct(syn.horsValeur / (syn.total || 1) * 100)}`);
-    L.push(`\nRÈGLES : action en direct ≤ ${pct(num(r.maxAction))} du portefeuille ; total actions en direct ≤ ${pct(num(r.maxDirect), 0)} ; rééquilibrer au-delà de ± ${num(r.marge)} points ; frais d'un fonds ≤ ${pct(num(r.fraisMax), 2)} par an${r.delaiActif ? ` ; délai de réflexion de ${num(r.delaiHeures)} h avant un achat non prévu` : ""}${r.interditLevier ? " ; pas de levier ni de produits complexes" : ""}${r.venteEnPerte ? " ; pas de vente en perte non prévue par la stratégie" : ""}.`);
+    L.push(`\nRÈGLES : action en direct ≤ ${pct(num(r.maxAction))} du portefeuille ; total actions en direct ≤ ${pct(num(r.maxDirect), 0)} ; crypto ≤ ${pct(num(r.maxCrypto), 0)} ; rééquilibrer au-delà de ± ${num(r.marge)} points ; frais d'un fonds ≤ ${pct(num(r.fraisMax), 2)} par an${r.delaiActif ? ` ; délai de réflexion de ${num(r.delaiHeures)} h avant un achat non prévu` : ""}${r.interditLevier ? " ; pas de levier ni de produits complexes" : ""}${r.venteEnPerte ? " ; pas de vente en perte non prévue par la stratégie" : ""}.`);
     if (st.reglesLibres.filter(Boolean).length) L.push("Règles personnelles :\n" + st.reglesLibres.filter(Boolean).map(x => "- " + x).join("\n"));
     const pa = B.PRINCIPES.filter(p => actif(p.id));
     if (pa.length) L.push("\nPRINCIPES QU'IL APPLIQUE :\n" + pa.map(p => `- ${p.titre} : ${p.texte}`).join("\n"));
@@ -812,6 +1126,11 @@
         else if (l) ajoute("ok", `${l.nom} pèserait ${pct(l.poids)} du portefeuille, sous ta limite de ${pct(num(r.maxAction))}.`);
         if (apres.directPoids > num(r.maxDirect)) ajoute("bloquant", `Les actions en direct passeraient à ${pct(apres.directPoids)} ; ta règle : ${pct(num(r.maxDirect), 0)} au plus.`);
       }
+      const opCrypto = op.type === "Crypto" || op.enveloppe === "Crypto" || (st.poches.find(p => p.id === op.poche) || {}).classe === "crypto";
+      if (op.achat && opCrypto && actif("diversification")) {
+        if (apres.cryptoPoids > num(r.maxCrypto)) ajoute("bloquant", `La crypto passerait à ${pct(apres.cryptoPoids)} de tes investissements ; ta règle : ${pct(num(r.maxCrypto), 0)} au plus.`);
+        else ajoute("ok", `La crypto resterait à ${pct(apres.cryptoPoids)} de tes investissements, sous ta limite de ${pct(num(r.maxCrypto), 0)}.`);
+      }
     }
     // Frais.
     if (op.achat && (op.type === "ETF" || op.type === "Fonds") && actif("frais")) {
@@ -819,9 +1138,14 @@
       else if (op.frais > num(r.fraisMax)) ajoute("attention", `Frais de ${pct(op.frais, 2)} par an, au-dessus de ton plafond de ${pct(num(r.fraisMax), 2)}. Sur 20 ans, 1 % de frais en plus coûte environ 18 % du capital final.`);
       else ajoute("ok", `Frais de ${pct(op.frais, 2)} par an, sous ton plafond.`);
     }
-    // Épargne de précaution.
-    if (op.achat && actif("precaution") && objectifPrecaution() > 0 && num(S.portefeuille.precaution) < objectifPrecaution())
-      ajoute("attention", `Ton épargne de précaution n'est pas complète (${eur(num(S.portefeuille.precaution), 0)} sur ${eur(objectifPrecaution(), 0)}) : complète-la avant d'investir de nouvelles sommes.`);
+    // Épargne de précaution : un achat prévu se fait en parallèle, un achat hors plan la retarde.
+    if (op.achat && actif("precaution")) {
+      const pl = planDuMois();
+      if (pl.obj > 0 && pl.manque > 0) {
+        if (op.prevu && pl.vp > 0) ajoute("info", `Ton épargne de précaution se constitue en parallèle (${eur(pl.act, 0)} sur ${eur(pl.obj, 0)}, complète en ${moisFr(pl.fin)}) : un achat prévu dans ton plan ne la retarde pas.`);
+        else ajoute("attention", `Ton épargne de précaution n'est pas complète (${eur(pl.act, 0)} sur ${eur(pl.obj, 0)}). Un achat hors plan la retarde : selon ta stratégie, cet argent irait d'abord sur ${pl.compte ? pl.compte.nom : "ton livret"}.`);
+      }
+    }
     // Horizon.
     const risquee = ["Action", "ETF", "Fonds", "Crypto", "Produit à levier"].includes(op.type);
     if (op.achat && actif("horizon") && risquee && op.horizon < 5) ajoute("attention", "Tu comptes le garder moins de 5 ans : l'argent dont tu auras besoin bientôt ne devrait pas être en actions.");
@@ -851,6 +1175,8 @@
       const part = l && l.valeur > 0 ? Math.min(1, montant / l.valeur) : 0;
       const pv = l ? l.pv * part : 0;
       if (op.enveloppe === "CTO" && pv > 0) ajoute("info", `Impôt estimé sur la vente : ≈ ${eur(pv * (F.ir + F.ps) / 100, 0)} (31,4 % de ${eur(pv, 0)} de plus-value).`);
+      if (op.enveloppe === "Crypto" || op.type === "Crypto")
+        ajoute("info", (pv > 0 ? `Repasser en euros déclenche environ ${eur(pv * (F.ir + F.ps) / 100, 0)} d'impôt (31,4 % de ${eur(pv, 0)} de plus-value), sauf si tes ventes de crypto de l'année restent sous ${F.seuilCrypto} €.` : "Pas de plus-value : pas d'impôt sur cette vente.") + " Un échange contre une autre crypto n'est pas imposé.");
       if (op.enveloppe === "PEA") {
         const ans = anneesDepuis(st.enveloppes.peaOuverture);
         ajoute("info", "Vendre à l'intérieur du PEA ne déclenche pas d'impôt tant que l'argent y reste." + (ans != null && ans < 5 ? " Attention : retirer de l'argent du PEA avant ses 5 ans entraîne en principe sa clôture." : ""));
@@ -1045,7 +1371,7 @@ ${res.constats.map(c => `- [${c.niveau}] ${c.texte}`).join("\n")}`;
   function impotSortie(gains, enveloppe, annees, F) {
     if (gains <= 0) return 0;
     if (enveloppe === "PEA") return gains * (annees >= 5 ? F.ps : F.ir + F.ps) / 100;
-    if (enveloppe === "CTO") return gains * (F.ir + F.ps) / 100;
+    if (enveloppe === "CTO" || enveloppe === "Crypto") return gains * (F.ir + F.ps) / 100;
     if (enveloppe === "AV") return annees >= 8 ? Math.max(0, gains - F.abattementAV) * F.irAV8 / 100 + gains * F.psAV / 100 : gains * (F.ir + F.psAV) / 100;
     return 0;
   }
@@ -1209,7 +1535,7 @@ ${res.constats.map(c => `- [${c.niveau}] ${c.texte}`).join("\n")}`;
         } });
         options(selPreset, presets, "");
         const selEnv = h("select", { id: `cmp-${i}-env`, onchange: e => { s.enveloppe = e.target.value; enregistrerComparer(); } });
-        options(selEnv, [{ value: "PEA", label: "PEA" }, { value: "CTO", label: "Compte-titres" }, { value: "AV", label: "Assurance-vie" }, { value: "aucune", label: "Sans impôt (livret)" }], s.enveloppe);
+        options(selEnv, [{ value: "PEA", label: "PEA" }, { value: "CTO", label: "Compte-titres" }, { value: "Crypto", label: "Wallet crypto" }, { value: "AV", label: "Assurance-vie" }, { value: "aucune", label: "Sans impôt (livret)" }], s.enveloppe);
         const selEntree = h("select", { id: `cmp-${i}-entree`, onchange: e => { s.entree = e.target.value; enregistrerComparer(); } });
         options(selEntree, [{ value: "immediat", label: "Investi tout de suite" }, { value: "etale", label: "Étalé sur 12 mois" }], s.entree || "immediat");
         return h("div", { class: "strat" },
@@ -1367,7 +1693,7 @@ ${res.constats.map(c => `- [${c.niveau}] ${c.texte}`).join("\n")}`;
     $("btn-cmp-claude").hidden = !claudePret;
   }
   let minuteurRedim = null;
-  window.addEventListener("resize", () => { clearTimeout(minuteurRedim); minuteurRedim = setTimeout(() => { if (vueActive === "comparer") dessinerResultats(); }, 200); });
+  window.addEventListener("resize", () => { clearTimeout(minuteurRedim); minuteurRedim = setTimeout(() => { if (vueActive === "comparer") dessinerResultats(); if (vueActive === "portefeuille") rendreHistorique(); }, 200); });
 
   function texteComparaison() {
     if (!dernierResultat || !dernierParams) return "";
@@ -1400,12 +1726,12 @@ ${res.constats.map(c => `- [${c.niveau}] ${c.texte}`).join("\n")}`;
 
   // ---------- CLAUDE : discussion ----------
   const SUGGESTIONS = [
-    { texte: "Où placer mon versement de ce mois ?" },
-    { texte: "Mon portefeuille respecte-t-il ma stratégie ?" },
-    { texte: "Que faire si la bourse baisse de 30 % ?" },
+    { texte: "Que faire de mon argent ce mois-ci ?" },
+    { texte: "Mon patrimoine respecte-t-il ma stratégie ?" },
+    { texte: "Livret A ou compte rémunéré pour mon épargne de précaution ?" },
+    { texte: "Quelle part de crypto est raisonnable pour moi ?" },
     { texte: "Passe une action en revue selon mes règles : ", remplir: true },
-    { texte: "Mes frais sont-ils trop élevés ?" },
-    { texte: "PEA ou assurance-vie pour mon prochain versement ?" }
+    { texte: "Que faire si la bourse baisse de 30 % ?" }
   ];
   let ctlChat = null, enCoursChat = false;
   function demanderDansChat(texte) { montrer("claude"); $("c-message").value = texte; $("c-message").focus(); }
@@ -1425,11 +1751,11 @@ ${res.constats.map(c => `- [${c.niveau}] ${c.texte}`).join("\n")}`;
         inputSchema: { type: "object", properties: {
           strategies: { type: "array", items: { type: "object", properties: {
             nom: { type: "string" }, poids: { type: "object", description: "Part de chaque classe en %, clés parmi : " + B.CLASSES.map(c => c.id).join(", ") },
-            frais: { type: "number", description: "Frais annuels en %" }, enveloppe: { type: "string", enum: ["PEA", "CTO", "AV", "aucune"] } }, required: ["nom", "poids"] } },
+            frais: { type: "number", description: "Frais annuels en %" }, enveloppe: { type: "string", enum: ["PEA", "CTO", "Crypto", "AV", "aucune"] } }, required: ["nom", "poids"] } },
           capital: { type: "number" }, versement_mensuel: { type: "number" }, annees: { type: "number" } }, required: ["strategies"] },
         execute: input => {
           const c = cmp(), syn = synthese(), pr = S.strategie.profil;
-          const strategies = (Array.isArray(input.strategies) ? input.strategies : []).slice(0, 3).map(s => ({ nom: String(s.nom || "Stratégie"), poids: s.poids && typeof s.poids === "object" ? s.poids : {}, frais: num(s.frais), enveloppe: ["PEA", "CTO", "AV", "aucune"].includes(s.enveloppe) ? s.enveloppe : "PEA", entree: "immediat" }));
+          const strategies = (Array.isArray(input.strategies) ? input.strategies : []).slice(0, 3).map(s => ({ nom: String(s.nom || "Stratégie"), poids: s.poids && typeof s.poids === "object" ? s.poids : {}, frais: num(s.frais), enveloppe: ["PEA", "CTO", "Crypto", "AV", "aucune"].includes(s.enveloppe) ? s.enveloppe : "PEA", entree: "immediat" }));
           if (!strategies.length) throw new Error("Donne au moins une stratégie.");
           const p = { capital: input.capital != null ? num(input.capital) : Math.round(syn.total), versement: input.versement_mensuel != null ? num(input.versement_mensuel) : num(pr.versementMensuel), duree: Math.max(1, Math.min(40, Math.round(num(input.annees) || num(pr.horizon) || 15))), inflation: c.inflation, strategies, hypotheses: c.hypotheses, fiscalite: c.fiscalite, objectif: null };
           const r = simuler(p, 800);
@@ -1461,7 +1787,7 @@ ${res.constats.map(c => `- [${c.niveau}] ${c.texte}`).join("\n")}`;
     $("btn-c-envoyer").disabled = !claudePret || enCoursChat;
     $("c-message").disabled = !claudePret;
     const syn = synthese();
-    $("c-contexte").textContent = claudePret ? `Claude voit ta stratégie, tes principes, ton portefeuille${syn.lignes.length && S.portefeuille.coursMaj ? " (cours du " + dateFr(S.portefeuille.coursMaj) + ")" : ""} et ton journal.` : "";
+    $("c-contexte").textContent = claudePret ? `Claude voit ta stratégie, tes principes, ton épargne, ton portefeuille${syn.lignes.length && S.portefeuille.coursMaj ? " (cours du " + dateFr(S.portefeuille.coursMaj) + ")" : ""} et ton journal.` : "";
     vider($("c-suggestions"), claudePret ? SUGGESTIONS.map(s => h("button", { class: "suggestion", text: s.texte, onclick: () => {
       if (s.remplir) { $("c-message").value = s.texte; $("c-message").focus(); } else envoyerChat(s.texte);
     } })) : null);
@@ -1472,7 +1798,7 @@ ${res.constats.map(c => `- [${c.niveau}] ${c.texte}`).join("\n")}`;
       return;
     }
     if (!msgs.length) {
-      vider(fil, h("div", { class: "bulle bulle-claude" }, markdown("Bonjour ! Je connais ta stratégie, tes règles, tes principes et ton portefeuille. Demande-moi où placer un versement, ce que je pense d'une action au regard de tes règles, ou comment réagir si le marché baisse.\n\nJe ne vois ni les cours en direct ni l'actualité : pour une décision, vérifie toujours les chiffres du jour.")));
+      vider(fil, h("div", { class: "bulle bulle-claude" }, markdown("Bonjour ! Je connais ta stratégie, tes règles, tes principes, ton épargne et ton portefeuille. Demande-moi quoi faire de ton argent ce mois-ci, ce que je pense d'une action au regard de tes règles, ou comment réagir si le marché baisse.\n\nJe ne vois ni les cours en direct ni l'actualité : pour une décision, vérifie toujours les chiffres du jour.")));
       return;
     }
     vider(fil, msgs.map(m => m.role === "user" ? h("div", { class: "bulle bulle-moi", text: m.content }) : h("div", { class: "bulle bulle-claude" }, markdown(m.content))));
@@ -1544,15 +1870,17 @@ ${res.constats.map(c => `- [${c.niveau}] ${c.texte}`).join("\n")}`;
     if (!texte && !fichiers.length) { $("import-etat").textContent = "Colle un texte ou ajoute une capture."; return; }
     const env = $("import-enveloppe").value;
     const poches = S.strategie.poches.map(p => `${p.id} = ${p.nom} (${p.classe})`).join(" ; ");
-    const prompt = `Tu lis le relevé d'un portefeuille boursier d'un particulier français (texte copié depuis son courtier et/ou captures d'écran). Extrais chaque position.
+    const prompt = `Tu lis le relevé d'un portefeuille d'un particulier français (texte copié depuis son courtier et/ou captures d'écran). Extrais chaque position.
 Réponds uniquement par un objet JSON de la forme :
-{"lignes":[{"nom":"Amundi MSCI World UCITS ETF","code":"FR0011869353","type":"ETF","enveloppe":"PEA","quantite":150,"pru":28.1,"cours":31.45,"valeur":4717.5,"frais":0.38,"classe":"actions","zone":"Monde","poche":"monde"}],"especes":120.5,"date":"2026-11-05"}
+{"lignes":[{"nom":"Amundi MSCI World UCITS ETF","code":"FR0011869353","type":"ETF","enveloppe":"PEA","quantite":150,"pru":28.1,"cours":31.45,"valeur":4717.5,"plus_value":502.5,"performance_pct":11.9,"frais":0.38,"classe":"actions","zone":"Monde","poche":"monde"}],"especes":120.5,"date":"2026-11-05"}
 Règles :
-- Nombres en JSON (point décimal), montants en euros. Laisse null ce que tu ne trouves pas ; n'invente pas de quantité ni de cours.
-- type parmi : ${B.TYPES.join(", ")}. enveloppe parmi : PEA, CTO, AV, PER, Livret, Autre${env ? ` (par défaut : ${env})` : ""}. classe parmi : ${B.CLASSES.map(c => c.id).join(", ")}. zone parmi : ${B.ZONES.join(", ")}.
+- Nombres en JSON (point décimal), montants en euros. Laisse null ce que tu ne trouves pas ; n'invente ni quantité ni cours.
+- Si le nombre de parts n'apparaît pas, laisse quantite, pru et cours à null et donne valeur avec plus_value ou performance_pct (depuis l'achat).
+- type parmi : ${B.TYPES.join(", ")}. enveloppe parmi : PEA, CTO, Crypto, AV, PER, Autre${env ? ` (par défaut : ${env})` : ""} ; une cryptomonnaie détenue en direct va dans Crypto. classe parmi : ${B.CLASSES.map(c => c.id).join(", ")}. zone parmi : ${B.ZONES.join(", ")}.
 - poche : l'identifiant de la poche de sa stratégie où ranger la ligne, parmi : ${poches || "aucune"} ; "" si aucune ne convient.
-- frais : frais courants annuels en % seulement si tu les connais pour ce fonds précis, sinon null. 0 pour une action.
-- especes : liquidités du compte si elles apparaissent, sinon null. date : date du relevé si elle apparaît, sinon null.
+- frais : frais courants annuels en % seulement si tu les connais pour ce fonds précis, sinon null. 0 pour une action ou une crypto.
+- especes : solde d'espèces non investies s'il apparaît, sinon null. date : date du relevé si elle apparaît, sinon null.${estTR() ? `
+- Le relevé vient de Trade Republic : l'écran Portefeuille liste chaque position avec sa valeur et sa performance ; la fiche d'une position donne le nombre de parts et le prix d'achat moyen. Le PEA et le compte-titres y sont deux portefeuilles séparés ; les cryptos vont dans l'enveloppe Crypto.` : ""}
 ${texte ? "\nTEXTE COPIÉ :\n" + texte.slice(0, 60000) : ""}${fichiers.length ? "\nLes captures d'écran jointes montrent le portefeuille." : ""}`;
     $("btn-import-lire").disabled = true; $("import-etat").textContent = "Claude lit ton relevé…";
     ctlImport = new AbortController();
@@ -1564,77 +1892,99 @@ ${texte ? "\nTEXTE COPIÉ :\n" + texte.slice(0, 60000) : ""}${fichiers.length ? 
       importLignes = brut.map(l => {
         const cours = num(l.cours), valeur = num(l.valeur);
         let quantite = num(l.quantite);
-        if (!(quantite > 0) && cours > 0 && valeur > 0) quantite = Math.round(valeur / cours * 10000) / 10000;
-        const coursF = cours > 0 ? cours : (quantite > 0 && valeur > 0 ? valeur / quantite : 0);
-        return {
+        if (!(quantite > 0) && cours > 0 && valeur > 0) quantite = Math.round(valeur / cours * 1e6) / 1e6;
+        const base = {
           id: uid(), nom: String(l.nom || "Sans nom").slice(0, 120), code: String(l.code || "").slice(0, 40),
           type: B.TYPES.includes(l.type) ? l.type : "Autre", enveloppe: B.ENVELOPPES.some(e => e.id === l.enveloppe) ? l.enveloppe : (env || "CTO"),
           poche: S.strategie.poches.some(p => p.id === l.poche) ? l.poche : "", classe: CLASSE[l.classe] ? l.classe : "", zone: B.ZONES.includes(l.zone) ? l.zone : "",
-          quantite, pru: num(l.pru) || coursF, cours: coursF, frais: l.frais == null ? 0 : num(l.frais), _pruManquant: !(num(l.pru) > 0)
+          frais: l.frais == null ? 0 : num(l.frais)
         };
+        if (base.type === "Crypto" && !B.ENVELOPPES.some(e => e.id === l.enveloppe)) base.enveloppe = "Crypto";
+        if (!(quantite > 0) && valeur > 0) {
+          // Valeur seule (écran Portefeuille de Trade Republic) : on garde la valeur et le montant investi.
+          const investi = l.plus_value != null ? valeur - num(l.plus_value) : l.performance_pct != null ? valeur / (1 + num(l.performance_pct) / 100) : null;
+          return { ...base, sansQuantite: true, quantite: 1, cours: valeur, pru: investi > 0 ? Math.round(investi * 100) / 100 : valeur, _pruManquant: !(investi > 0) };
+        }
+        const coursF = cours > 0 ? cours : (quantite > 0 && valeur > 0 ? valeur / quantite : 0);
+        return { ...base, sansQuantite: false, quantite, pru: num(l.pru) || coursF, cours: coursF, _pruManquant: !(num(l.pru) > 0) };
       }).filter(l => l.quantite > 0 && l.cours > 0);
-      const especes = num(r && r.especes);
-      if (especes > 0) {
-        const pm = S.strategie.poches.find(p => p.classe === "monetaire" || p.classe === "livret");
-        importLignes.push({ id: uid(), nom: "Espèces" + (env ? " (" + env + ")" : ""), code: "", type: "Monétaire", enveloppe: env || "CTO", poche: pm ? pm.id : "", classe: "monetaire", zone: "", quantite: 1, pru: especes, cours: especes, frais: 0 });
-      }
+      importEspeces = num(r && r.especes) > 0 ? num(r.especes) : 0;
       const date = r && typeof r.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(r.date) ? r.date : aujourdhui();
-      $("import-etat").textContent = importLignes.length ? `${importLignes.length} ligne${importLignes.length > 1 ? "s" : ""} trouvée${importLignes.length > 1 ? "s" : ""}. Vérifie avant d'enregistrer.` : "Aucune ligne lisible : essaie avec plus de texte ou une capture plus nette.";
+      $("import-etat").textContent = importLignes.length || importEspeces ? `${importLignes.length} ligne${importLignes.length > 1 ? "s" : ""} trouvée${importLignes.length > 1 ? "s" : ""}. Vérifie avant d'enregistrer.` : "Aucune ligne lisible : essaie avec plus de texte ou une capture plus nette.";
       rendreApercuImport(date);
     } catch (e) {
       $("import-etat").textContent = e && e.code === "cancelled" ? "" : messageErreur(e);
     } finally { $("btn-import-lire").disabled = false; ctlImport = null; }
   });
+  let importEspeces = 0;
   function rendreApercuImport(date) {
     const z = $("import-apercu");
-    if (!importLignes || !importLignes.length) { vider(z); return; }
+    if ((!importLignes || !importLignes.length) && !importEspeces) { vider(z); return; }
+    importLignes = importLignes || [];
     const existe = l => S.portefeuille.lignes.find(x => (l.code && x.code && norm(x.code) === norm(l.code)) || norm(x.nom) === norm(l.nom));
+    const envImport = [...new Set(importLignes.map(l => l.enveloppe))];
+    const envNoms = envImport.map(id => (B.ENVELOPPES.find(e => e.id === id) || { nom: id }).nom);
     const remplace = S.portefeuille.exemple || !S.portefeuille.lignes.length;
+    const nomEspeces = `Espèces ${envImport.length === 1 ? (envImport[0] === "PEA" ? "du PEA" : envImport[0] === "Crypto" ? "du wallet crypto" : "du compte-titres") : "du courtier"}${estTR() ? " Trade Republic" : ""}`;
+    const caseEspeces = importEspeces ? h("input", { type: "checkbox", id: "import-especes", checked: true }) : null;
     const appliquer = mode => {
       if (mode === "remplacer" || S.portefeuille.exemple) S.portefeuille.lignes = [];
+      if (mode === "enveloppe") S.portefeuille.lignes = S.portefeuille.lignes.filter(x => !envImport.includes(x.enveloppe));
       for (const l of importLignes) {
         const { _pruManquant, ...propre } = l;
         const x = mode === "fusionner" ? existe(l) : null;
-        if (x) { x.quantite = l.quantite; x.cours = l.cours; if (!_pruManquant) x.pru = l.pru; if (l.frais) x.frais = l.frais; if (!x.code && l.code) x.code = l.code; }
-        else S.portefeuille.lignes.push(propre);
+        if (!x) { S.portefeuille.lignes.push(propre); continue; }
+        if (l.sansQuantite && !x.sansQuantite && x.quantite > 0) { x.cours = l.cours / x.quantite; }
+        else { x.quantite = l.quantite; x.cours = l.cours; x.sansQuantite = l.sansQuantite; if (!_pruManquant) x.pru = l.pru; }
+        if (l.frais) x.frais = l.frais;
+        if (!x.code && l.code) x.code = l.code;
+      }
+      if (importEspeces && caseEspeces && caseEspeces.checked) {
+        S.portefeuille.comptes = S.portefeuille.comptes.filter(k => !estExempleCompte(k));
+        const k = S.portefeuille.comptes.find(c => norm(c.nom) === norm(nomEspeces));
+        if (k) k.solde = importEspeces;
+        else S.portefeuille.comptes.push({ id: uid(), nom: nomEspeces, type: "remunere", solde: importEspeces, taux: null, plafond: 0, precaution: false });
       }
       S.portefeuille.exemple = false; S.portefeuille.coursMaj = date;
-      enregistrer("portefeuille");
-      importLignes = null; vider(z); $("fiche-import").hidden = true; $("import-texte").value = ""; $("import-images").value = "";
+      enregistrer("portefeuille"); noterPoint();
+      importLignes = null; importEspeces = 0; vider(z); $("fiche-import").hidden = true; $("import-texte").value = ""; $("import-images").value = "";
       $("import-etat").textContent = "";
       toutRendre();
     };
     const sansPru = importLignes.filter(l => l._pruManquant).length;
     vider(z, h("div", { class: "aperçu" },
-      h("div", { class: "defile" }, h("table", {},
-        h("thead", {}, h("tr", {}, ["Ligne", "Enveloppe", "Poche", "Quantité", "PRU", "Cours", "Valeur", ""].map((t, i) => h("th", { class: i >= 3 && i < 7 ? "num" : "", text: t })))),
+      importLignes.length ? h("div", { class: "defile" }, h("table", {},
+        h("thead", {}, h("tr", {}, ["Ligne", "Enveloppe", "Poche", "Quantité", "PRU", "Cours", "Valeur", ""].map((t, i) => h("th", { class: i >= 3 && i < 7 ? "num" : null, text: t })))),
         h("tbody", {}, importLignes.map(l => h("tr", {},
           h("td", {}, h("div", { class: "nom-ligne" }, h("span", { text: l.nom }), h("small", { text: [l.code, l.type].filter(Boolean).join(" · ") }))),
-          h("td", { text: l.enveloppe }),
+          h("td", { text: (B.ENVELOPPES.find(e => e.id === l.enveloppe) || { nom: l.enveloppe }).nom }),
           h("td", {}, (() => { const s = h("select", { "aria-label": "Poche de " + l.nom, onchange: e => { l.poche = e.target.value; } }); options(s, optsPoches(), l.poche); return s; })()),
-          h("td", { class: "num chiffre", text: nf(0, 4).format(l.quantite) }),
-          h("td", { class: "num chiffre", text: l._pruManquant ? "?" : eur(l.pru, 2) }),
-          h("td", { class: "num chiffre", text: eur(l.cours, 2) }),
+          h("td", { class: "num chiffre", text: l.sansQuantite ? "—" : nf(0, 6).format(l.quantite) }),
+          h("td", { class: "num chiffre", text: l.sansQuantite || l._pruManquant ? "—" : eur(l.pru, 2) }),
+          h("td", { class: "num chiffre", text: l.sansQuantite ? "—" : eur(l.cours, 2) }),
           h("td", { class: "num chiffre", text: eur(l.quantite * l.cours, 0) }),
-          h("td", {}, h("button", { class: "btn btn-discret btn-petit", text: "Retirer", onclick: () => { importLignes = importLignes.filter(x => x !== l); rendreApercuImport(date); } }))))))),
-      sansPru ? h("p", { class: "note", text: `Prix de revient introuvable pour ${sansPru} ligne${sansPru > 1 ? "s" : ""} : le cours est pris à la place (plus-value à zéro). Corrige-le avec « Modifier » ensuite.` }) : null,
+          h("td", {}, h("button", { class: "btn btn-discret btn-petit", text: "Retirer", onclick: () => { importLignes = importLignes.filter(x => x !== l); rendreApercuImport(date); } }))))))) : null,
+      importLignes.some(l => l.sansQuantite) ? h("p", { class: "note", text: "Pour certaines lignes, seule la valeur était visible : elles sont suivies en valeur et en plus-value. Une capture de la fiche de la position (parts et prix d'achat moyen) donne le détail." }) : null,
+      sansPru ? h("p", { class: "note", text: `Prix de revient introuvable pour ${sansPru} ligne${sansPru > 1 ? "s" : ""} : la valeur actuelle est prise à la place (plus-value à zéro). Corrige-le avec « Modifier » ensuite.` }) : null,
+      importEspeces ? h("label", { class: "case" }, caseEspeces, h("span", { text: `Espèces trouvées : ${eur(importEspeces, 2)}. Mettre à jour « ${nomEspeces} » dans mes comptes d'épargne (non compté dans l'épargne de précaution, coche-le ensuite si c'est le cas).` })) : null,
       h("div", { class: "actions" },
-        remplace ? h("button", { class: "btn", text: "Enregistrer ces lignes", onclick: () => appliquer("remplacer") }) : [
+        remplace || !importLignes.length ? h("button", { class: "btn", text: importLignes.length ? "Enregistrer ces lignes" : "Enregistrer", onclick: () => appliquer(importLignes.length ? "remplacer" : "fusionner") }) : [
           h("button", { class: "btn", text: "Mettre à jour mon portefeuille", title: "Met à jour les lignes déjà présentes et ajoute les nouvelles", onclick: () => appliquer("fusionner") }),
+          h("button", { class: "btn btn-discret", text: `Remplacer les lignes ${envNoms.join(" et ")}`, title: "Retire les lignes de ces enveloppes qui ne sont plus dans le relevé (positions vendues)", onclick: () => appliquer("enveloppe") }),
           h("button", { class: "btn btn-discret", text: "Tout remplacer", onclick: () => appliquer("remplacer") })])));
   }
 
   // ---------- STRATÉGIE ----------
   const PROFIL = [["s-objectif-texte", "objectifTexte", "texte"], ["s-objectif-montant", "objectifMontant"], ["s-objectif-annee", "objectifAnnee"], ["s-horizon", "horizon"],
-    ["s-versement", "versementMensuel"], ["s-risque", "risque", "texte"], ["s-reaction", "reaction", "texte"], ["s-depenses", "depensesMensuelles"], ["s-mois", "moisPrecaution"]];
-  const REGLES = [["s-max-action", "maxAction"], ["s-max-direct", "maxDirect"], ["s-marge", "marge"], ["s-frais-max", "fraisMax"], ["s-delai", "delaiHeures"],
+    ["s-versement", "versementMensuel"], ["s-risque", "risque", "texte"], ["s-reaction", "reaction", "texte"], ["s-depenses", "depensesMensuelles"], ["s-mois", "moisPrecaution"],
+    ["s-versement-precaution", "versementPrecaution"], ["s-courtier", "courtier", "texte"], ["s-basculer", "basculer", "case"]];
+  const REGLES = [["s-max-action", "maxAction"], ["s-max-direct", "maxDirect"], ["s-max-crypto", "maxCrypto"], ["s-marge", "marge"], ["s-frais-max", "fraisMax"], ["s-delai", "delaiHeures"],
     ["s-delai-actif", "delaiActif", "case"], ["s-levier", "interditLevier", "case"], ["s-vente-perte", "venteEnPerte", "case"]];
   options($("s-risque"), B.RISQUES.map(r => ({ value: r.id, label: `${r.nom} (jusqu'à ${r.maxActions} % d'actions)` })), "dynamique");
   options($("s-reaction"), B.REACTIONS.map(r => ({ value: r.id, label: r.nom })), "garde");
   options($("s-modele"), [{ value: "", label: "Partir d'un modèle…" }, ...B.MODELES.map(m => ({ value: m.id, label: m.nom }))], "");
-  for (const [id, cle, t] of PROFIL) $(id).addEventListener(t === "texte" && id !== "s-objectif-texte" ? "change" : "input", e => modifier("strategie", st => { st.profil[cle] = t === "texte" ? e.target.value : num(e.target.value); }));
+  for (const [id, cle, t] of PROFIL) $(id).addEventListener(t === "case" || $(id).tagName === "SELECT" ? "change" : "input", e => modifier("strategie", st => { st.profil[cle] = t === "case" ? e.target.checked : t === "texte" ? e.target.value : num(e.target.value); }));
   for (const [id, cle, t] of REGLES) $(id).addEventListener(t === "case" ? "change" : "input", e => modifier("strategie", st => { st.regles[cle] = t === "case" ? e.target.checked : num(e.target.value); }));
-  $("s-precaution").addEventListener("input", e => { S.portefeuille.precaution = num(e.target.value); enregistrer("portefeuille"); toutRendre(); });
   $("s-pea-ouverture").addEventListener("change", e => modifier("strategie", st => { st.enveloppes.peaOuverture = e.target.value; }));
   $("s-pea-versements").addEventListener("input", e => modifier("strategie", st => { st.enveloppes.peaVersements = num(e.target.value); }));
   $("s-av-ouverture").addEventListener("change", e => modifier("strategie", st => { st.enveloppes.avOuverture = e.target.value; }));
@@ -1720,7 +2070,6 @@ ${texte ? "\nTEXTE COPIÉ :\n" + texte.slice(0, 60000) : ""}${fichiers.length ? 
     const st = S.strategie, pr = st.profil, r = st.regles;
     for (const [id, cle] of PROFIL) remplir(id, pr[cle]);
     for (const [id, cle] of REGLES) remplir(id, r[cle]);
-    remplir("s-precaution", S.portefeuille.precaution || "");
     remplir("s-pea-ouverture", st.enveloppes.peaOuverture); remplir("s-pea-versements", st.enveloppes.peaVersements || "");
     remplir("s-av-ouverture", st.enveloppes.avOuverture);
     vider($("bandeau-strategie"), st.exemple ? h("div", { class: "bandeau" },
@@ -1739,15 +2088,18 @@ ${texte ? "\nTEXTE COPIÉ :\n" + texte.slice(0, 60000) : ""}${fichiers.length ? 
     $("btn-s-decrire").disabled = true; $("s-decrire-etat").textContent = "Claude lit ta description…";
     const prompt = `Un investisseur particulier français décrit sa stratégie d'investissement. Transforme-la en réglages pour son outil. Date du jour : ${aujourdhui()}.
 Réponds uniquement par un objet JSON. Mets null (ou omets) tout ce que la description ne dit pas : n'invente rien.
-{"profil":{"objectifTexte":string,"objectifMontant":number,"objectifAnnee":number,"horizon":number,"versementMensuel":number,"risque":"prudent"|"equilibre"|"dynamique"|"offensif","reaction":"renforce"|"garde"|"partie"|"tout","depensesMensuelles":number,"moisPrecaution":number,"precautionActuelle":number},
+{"profil":{"objectifTexte":string,"objectifMontant":number,"objectifAnnee":number,"horizon":number,"versementMensuel":number,"risque":"prudent"|"equilibre"|"dynamique"|"offensif","reaction":"renforce"|"garde"|"partie"|"tout","depensesMensuelles":number,"moisPrecaution":number,"versementPrecaution":number,"basculer":boolean,"courtier":string},
  "poches":[{"nom":string,"classe":${B.CLASSES.map(c => `"${c.id}"`).join("|")},"cible":number}],
- "regles":{"maxAction":number,"maxDirect":number,"marge":number,"fraisMax":number,"delaiActif":boolean,"delaiHeures":number,"interditLevier":boolean},
+ "regles":{"maxAction":number,"maxDirect":number,"maxCrypto":number,"marge":number,"fraisMax":number,"delaiActif":boolean,"delaiHeures":number,"interditLevier":boolean},
+ "comptes":[{"nom":string,"type":${B.TYPES_COMPTES.map(t => `"${t.id}"`).join("|")},"solde":number,"taux":number,"precaution":boolean}],
  "reglesLibres":[string],
  "enveloppes":{"peaOuverture":"AAAA-MM-JJ","peaVersements":number,"avOuverture":"AAAA-MM-JJ"},
  "resume":"2 phrases qui résument sa stratégie, en le tutoyant",
  "questions":["ce qu'il faudrait préciser, 3 au plus"]}
 - poches : son allocation cible, cibles en % dont le total fait 100 ; null si la description n'en parle pas.
-- maxAction : poids max d'une action en direct en % du portefeuille ; maxDirect : total max des actions en direct en %.
+- maxAction : poids max d'une action en direct en % du portefeuille ; maxDirect : total max des actions en direct en % ; maxCrypto : part max de la crypto en %.
+- versementMensuel : ce qu'il investit chaque mois ; versementPrecaution : ce qu'il met chaque mois sur son épargne de précaution ; basculer : true s'il dit qu'une fois l'épargne de précaution complète, ce versement ira aux investissements.
+- comptes : ses livrets et comptes d'épargne avec leur solde (livretA, ldds, lep, remunere pour un compte rémunéré ou les espèces d'un courtier, courant, autre) ; precaution : true pour ceux qui forment son épargne de précaution ; taux seulement s'il le donne.
 - reglesLibres : ses règles personnelles qui n'entrent pas dans les champs, formulées à la première personne.
 - Une date d'ouverture donnée seulement par l'année : mets le 1er janvier de cette année.
 DESCRIPTION :
@@ -1766,8 +2118,8 @@ ${texte.slice(0, 20000)}`;
     if (!p || typeof p !== "object") { vider(z); return; }
     const changements = [];
     const pr = p.profil || {}, rg = p.regles || {}, en = p.enveloppes || {};
-    const libProfil = { objectifTexte: "Objectif", objectifMontant: "Montant visé", objectifAnnee: "Année", horizon: "Horizon (ans)", versementMensuel: "Versement mensuel", risque: "Profil de risque", reaction: "Après −30 %", depensesMensuelles: "Dépenses mensuelles", moisPrecaution: "Mois de précaution", precautionActuelle: "Épargne de précaution" };
-    const libRegles = { maxAction: "Max par action (%)", maxDirect: "Max actions en direct (%)", marge: "Marge (points)", fraisMax: "Frais max (%)", delaiActif: "Délai de réflexion", delaiHeures: "Délai (heures)", interditLevier: "Pas de levier" };
+    const libProfil = { objectifTexte: "Objectif", objectifMontant: "Montant visé", objectifAnnee: "Année", horizon: "Horizon (ans)", versementMensuel: "Versement mensuel investi", risque: "Profil de risque", reaction: "Après −30 %", depensesMensuelles: "Dépenses mensuelles", moisPrecaution: "Mois de précaution", versementPrecaution: "Versement mensuel sur l'épargne de précaution", basculer: "Ensuite, ce versement va aux investissements", courtier: "Courtier" };
+    const libRegles = { maxAction: "Max par action (%)", maxDirect: "Max actions en direct (%)", maxCrypto: "Max crypto (%)", marge: "Marge (points)", fraisMax: "Frais max (%)", delaiActif: "Délai de réflexion", delaiHeures: "Délai (heures)", interditLevier: "Pas de levier" };
     const val = v => typeof v === "boolean" ? (v ? "oui" : "non") : String(v);
     for (const [k, l] of Object.entries(libProfil)) if (pr[k] != null && pr[k] !== "") changements.push(`${l} : ${val(k === "risque" ? (B.RISQUES.find(x => x.id === pr[k]) || {}).nom || pr[k] : k === "reaction" ? (B.REACTIONS.find(x => x.id === pr[k]) || {}).nom || pr[k] : pr[k])}`);
     for (const [k, l] of Object.entries(libRegles)) if (rg[k] != null) changements.push(`${l} : ${val(rg[k])}`);
@@ -1776,16 +2128,18 @@ ${texte.slice(0, 20000)}`;
     if (en.avOuverture) changements.push("Assurance-vie ouverte le " + dateFr(en.avOuverture));
     const poches = Array.isArray(p.poches) ? p.poches.filter(x => x && x.nom && num(x.cible) > 0) : [];
     const regles = Array.isArray(p.reglesLibres) ? p.reglesLibres.filter(x => typeof x === "string" && x.trim()) : [];
+    const comptes = Array.isArray(p.comptes) ? p.comptes.filter(x => x && x.nom && TYPE_COMPTE[x.type]) : [];
     vider(z, h("div", { class: "aperçu" },
       p.resume ? h("p", {}, h("b", { text: "Ce que Claude a compris : " }), String(p.resume)) : null,
       poches.length ? h("div", {}, h("span", { class: "etiquette", text: "Allocation cible" }), h("ul", {}, poches.map(x => h("li", { text: `${x.nom} : ${pct(num(x.cible), 0)}` })))) : null,
       changements.length ? h("div", {}, h("span", { class: "etiquette", text: "Réglages" }), h("ul", {}, changements.map(t => h("li", { text: t })))) : null,
       regles.length ? h("div", {}, h("span", { class: "etiquette", text: "Règles à toi" }), h("ul", {}, regles.map(t => h("li", { text: t })))) : null,
+      comptes.length ? h("div", {}, h("span", { class: "etiquette", text: "Comptes d'épargne" }), h("ul", {}, comptes.map(x => h("li", { text: `${x.nom} (${TYPE_COMPTE[x.type].nom}) : ${x.solde != null ? eur(num(x.solde), 0) : "solde ?"}${x.precaution ? ", épargne de précaution" : ""}` })))) : null,
       Array.isArray(p.questions) && p.questions.length ? h("div", {}, h("span", { class: "etiquette", text: "À préciser" }), h("ul", {}, p.questions.slice(0, 3).map(t => h("li", { text: String(t) })))) : null,
       h("div", { class: "actions" },
         h("button", { class: "btn", text: "Appliquer à ma stratégie", onclick: () => {
           modifier("strategie", st => {
-            for (const k of Object.keys(libProfil)) if (k !== "precautionActuelle" && pr[k] != null && pr[k] !== "") st.profil[k] = typeof st.profil[k] === "number" ? num(pr[k]) : String(pr[k]);
+            for (const k of Object.keys(libProfil)) if (pr[k] != null && pr[k] !== "") st.profil[k] = typeof st.profil[k] === "number" ? num(pr[k]) : typeof st.profil[k] === "boolean" ? !!pr[k] : String(pr[k]);
             for (const k of Object.keys(libRegles)) if (rg[k] != null) st.regles[k] = typeof st.regles[k] === "boolean" ? !!rg[k] : num(rg[k]);
             if (en.peaOuverture && /^\d{4}-\d{2}-\d{2}$/.test(en.peaOuverture)) st.enveloppes.peaOuverture = en.peaOuverture;
             if (en.peaVersements != null) st.enveloppes.peaVersements = num(en.peaVersements);
@@ -1800,7 +2154,16 @@ ${texte.slice(0, 20000)}`;
             }
             if (regles.length) st.reglesLibres = regles.map(String);
           });
-          if (pr.precautionActuelle != null) { S.portefeuille.precaution = num(pr.precautionActuelle); enregistrer("portefeuille"); }
+          if (comptes.length) {
+            S.portefeuille.comptes = S.portefeuille.comptes.filter(k => !estExempleCompte(k));
+            for (const x of comptes) {
+              const k = S.portefeuille.comptes.find(c => norm(c.nom) === norm(x.nom));
+              const t = TYPE_COMPTE[x.type];
+              const d = { nom: String(x.nom), type: x.type, solde: num(x.solde), taux: x.taux != null ? num(x.taux) : t.taux, plafond: t.plafond, precaution: !!x.precaution };
+              if (k) Object.assign(k, x.solde == null ? { ...d, solde: k.solde } : d); else S.portefeuille.comptes.push({ id: uid(), ...d });
+            }
+            enregistrer("portefeuille"); noterPoint();
+          }
           propositionStrategie = null; vider(z); $("s-decrire").value = ""; toutRendre();
           $("s-decrire-etat").textContent = "Stratégie mise à jour.";
         } }),
@@ -1823,7 +2186,7 @@ ${texte.slice(0, 20000)}`;
   }
   $("btn-exporter").addEventListener("click", async () => {
     if (!downloads) return;
-    const data = JSON.stringify({ app: "Boussole Bourse", date: aujourdhui(), strategie: S.strategie, portefeuille: S.portefeuille, journal: S.journal, comparer: S.comparer }, null, 2);
+    const data = JSON.stringify({ app: "Boussole Bourse", date: aujourdhui(), strategie: S.strategie, portefeuille: S.portefeuille, journal: S.journal, comparer: S.comparer, historique: S.historique }, null, 2);
     try { await downloads.save({ filename: `boussole-bourse-${aujourdhui()}.json`, data }); } catch (_) {}
   });
   $("btn-effacer").addEventListener("click", () => { $("effacer-confirmer").hidden = false; });
@@ -1847,7 +2210,7 @@ ${texte.slice(0, 20000)}`;
     rendreEnCours = true;
     try {
       const syn = synthese();
-      rendreBandeau(); rendreReleve(syn); rendreRepartition(syn); rendreAlertes(syn); rendreVersement(syn); rendreEnveloppes(syn); rendreLignes(syn);
+      rendreBandeau(); rendreReleve(syn); rendrePrecaution(); rendreHistorique(); rendreRepartition(syn); rendreAlertes(syn); rendreVersement(syn); rendreEnveloppes(syn); rendreComptes(); rendreLignes(syn);
       $("btn-importer").hidden = !claudePret;
       rendreDecision(); rendreJournal();
       rendreComparerForm(); planifierSimulation(); if (dernierResultat) $("btn-cmp-claude").hidden = !claudePret;
@@ -1857,7 +2220,7 @@ ${texte.slice(0, 20000)}`;
   }
 
   // ---------- démarrage ----------
-  const depart = location.hash.slice(1);
+  const depart = vueDe(location.hash.slice(1));
   montrer(VUES.includes(depart) ? depart : "portefeuille");
   toutRendre();
   demarrerStockage();

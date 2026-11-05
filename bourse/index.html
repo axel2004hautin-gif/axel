@@ -221,6 +221,15 @@ input[type="checkbox"] { width: 18px; height: 18px; min-height: 0; accent-color:
 .cle-cible { width: 2px; height: 14px; background: var(--encre); }
 .cle-marge { width: 18px; height: 12px; background: var(--accent-doux); border-radius: 3px; }
 
+/* Patrimoine : barre segmentée haute, légende sans chiffres */
+.barre-seg { display: flex; gap: 2px; height: 28px; margin-top: 4px; }
+.barre-seg > div { border-radius: 4px; display: flex; align-items: center; padding: 0 8px; min-width: 0; color: #ffffff; font: 600 0.78rem var(--f-texte); white-space: nowrap; overflow: visible; }
+.barre-seg > div:focus-visible { outline: 2px solid var(--encre); outline-offset: 2px; }
+.jauge { position: relative; height: 12px; border-radius: 999px; background: color-mix(in srgb, var(--serie-3) 18%, var(--surface-2)); }
+.jauge > div { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: var(--serie-3); }
+.chiffre-cle { font-family: var(--f-titre); font-size: 1.5rem; font-weight: 750; letter-spacing: -0.01em; }
+input.solde { width: 120px; min-height: 32px; padding: 4px 8px; text-align: right; }
+
 /* Tableaux */
 .defile { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -4px; padding: 0 4px; }
 table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
@@ -334,7 +343,7 @@ details[open] > summary { margin-bottom: 10px; }
     <nav class="onglets" role="tablist" aria-label="Sections">
       <button class="onglet" role="tab" id="t-portefeuille" data-vue="portefeuille" aria-selected="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"></path><path d="M7 15l4-4 3 3 5-6"></path></svg>
-        Portefeuille</button>
+        Patrimoine</button>
       <button class="onglet" role="tab" id="t-decider" data-vue="decider" aria-selected="false">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"></path><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"></path></svg>
         Décider</button>
@@ -358,17 +367,23 @@ details[open] > summary { margin-bottom: 10px; }
     <div id="bandeau-exemple"></div>
 
     <div class="carte">
-      <div class="releve" id="releve">
-        <div class="releve-ligne">
-          <span class="etiquette">Valeur du portefeuille</span>
-          <span class="releve-total chiffre" id="valeur-totale">—</span>
-        </div>
-      </div>
+      <div class="releve" id="releve"></div>
+      <div id="patrimoine-barre"></div>
     </div>
 
     <div class="grille">
+      <div class="carte c5">
+        <div class="carte-tete"><h2>Mon épargne de précaution</h2><span id="precaution-statut"></span></div>
+        <div id="precaution"></div>
+      </div>
       <div class="carte c7">
-        <div class="carte-tete"><h2>Ma répartition</h2><span class="petit muet" id="repart-note"></span></div>
+        <div class="carte-tete"><h2>Mon patrimoine dans le temps</h2><span class="petit muet" id="historique-note"></span></div>
+        <div class="legende" id="historique-legende"></div>
+        <div class="graphe" id="historique-graphe"></div>
+      </div>
+
+      <div class="carte c7">
+        <div class="carte-tete"><h2>Mes investissements</h2><span class="petit muet" id="repart-note"></span></div>
         <div class="repart" id="repartition"></div>
         <div class="legende"><span><i class="cle-barre"></i>Aujourd'hui</span><span><i class="cle-cible"></i>Ta cible</span><span><i class="cle-marge"></i>Ta marge</span></div>
       </div>
@@ -378,8 +393,9 @@ details[open] > summary { margin-bottom: 10px; }
       </div>
 
       <div class="carte c5">
-        <div class="carte-tete"><h2>Mon prochain versement</h2></div>
-        <p class="petit muet">Répartit l'argent à investir pour rapprocher chaque poche de sa cible, sans rien vendre.</p>
+        <div class="carte-tete"><h2>Ce mois-ci</h2></div>
+        <p class="petit muet">Ton effort d'épargne du mois, partagé selon ta stratégie : d'abord ce qui va à l'épargne de précaution, puis l'argent à investir, réparti pour rapprocher chaque poche de sa cible sans rien vendre.</p>
+        <div id="plan-mois"></div>
         <div class="champs">
           <label class="champ"><span>Montant à investir (€)</span><input type="number" id="versement-montant" min="0" step="10" inputmode="decimal"></label>
         </div>
@@ -388,6 +404,17 @@ details[open] > summary { margin-bottom: 10px; }
       <div class="carte c7">
         <h2>Mes enveloppes</h2>
         <div id="enveloppes"></div>
+      </div>
+
+      <div class="carte c12">
+        <div class="carte-tete">
+          <h2>Mes comptes d'épargne</h2>
+          <div class="actions">
+            <button class="btn btn-petit" id="btn-ajouter-compte">Ajouter un compte</button>
+          </div>
+        </div>
+        <div class="fiche" id="fiche-compte" hidden></div>
+        <div id="comptes"></div>
       </div>
 
       <div class="carte c12">
@@ -401,7 +428,7 @@ details[open] > summary { margin-bottom: 10px; }
         </div>
         <div class="fiche" id="fiche-import" hidden>
           <h3>Importer depuis ton courtier</h3>
-          <p class="petit">Copie la page « Portefeuille » ou « Positions » de ton courtier et colle-la ici, ou ajoute des captures d'écran. Claude lit les lignes ; tu vérifies avant d'enregistrer.</p>
+          <p class="petit">Ajoute des captures d'écran de ton courtier, ou colle le texte de ta page « Portefeuille ». Claude lit les lignes ; tu vérifies avant d'enregistrer. Sur Trade Republic : une capture par portefeuille (PEA, compte-titres, crypto) ; la fiche d'une position donne en plus le nombre de parts et le prix d'achat moyen.</p>
           <label class="champ"><span>Texte copié</span><textarea id="import-texte" rows="5" placeholder="Ex. : Amundi MSCI World  FR0011869353  150 parts  PRU 28,10 €  Cours 31,45 €"></textarea></label>
           <label class="champ" id="import-images-champ" hidden><span>Captures d'écran</span><input type="file" id="import-images" accept="image/*" multiple></label>
           <label class="champ"><span>Enveloppe par défaut</span>
@@ -557,8 +584,8 @@ details[open] > summary { margin-bottom: 10px; }
     <div class="grille">
       <div class="carte c12" id="carte-decrire" hidden>
         <h2>Décrire ma stratégie à Claude</h2>
-        <p class="petit">Explique avec tes mots comment tu investis : enveloppes, ETF ou actions, versements, ce que tu t'interdis. Claude remplit la page ; tu vérifies avant d'appliquer.</p>
-        <textarea id="s-decrire" rows="4" placeholder="Ex. : J'ai un PEA ouvert en 2024 où je mets 300 € par mois sur un ETF World. Je garde 10 % pour quelques actions françaises que je connais bien, jamais plus de 3 % par action. Pas de crypto, pas de levier. Objectif : 80 000 € dans 12 ans."></textarea>
+        <p class="petit">Explique avec tes mots comment tu épargnes et investis : enveloppes, ETF, actions ou crypto, versements, épargne de précaution, ce que tu t'interdis. Claude remplit la page ; tu vérifies avant d'appliquer.</p>
+        <textarea id="s-decrire" rows="4" placeholder="Ex. : Tout est chez Trade Republic. PEA ouvert en 2024, 150 € par mois sur un ETF World ; quelques actions sur le compte-titres, jamais plus de 3 % chacune ; 5 % de crypto au maximum. J'ai 2 000 € sur mon Livret A et j'y mets 200 € par mois jusqu'à 4 mois de dépenses (1 400 € par mois)."></textarea>
         <div class="actions"><button class="btn" id="btn-s-decrire">Remplir avec Claude</button><span class="petit muet" id="s-decrire-etat"></span></div>
         <div id="s-decrire-apercu"></div>
       </div>
@@ -570,13 +597,19 @@ details[open] > summary { margin-bottom: 10px; }
           <label class="champ"><span>Montant visé (€ d'aujourd'hui)</span><input type="number" id="s-objectif-montant" min="0" step="1000" inputmode="decimal"></label>
           <label class="champ"><span>Pour l'année</span><input type="number" id="s-objectif-annee" min="2026" max="2090" step="1" inputmode="numeric"></label>
           <label class="champ"><span>Horizon de placement (ans)</span><input type="number" id="s-horizon" min="1" max="60" step="1" inputmode="numeric"></label>
-          <label class="champ"><span>Versement mensuel (€)</span><input type="number" id="s-versement" min="0" step="10" inputmode="decimal"></label>
+          <label class="champ"><span>Versement mensuel investi (€)</span><input type="number" id="s-versement" min="0" step="10" inputmode="decimal"></label>
           <label class="champ"><span>Mon profil de risque</span><select id="s-risque"></select></label>
           <label class="champ champ-large"><span>Si mon portefeuille perdait 30 % en six mois…</span><select id="s-reaction"></select></label>
-          <label class="champ"><span>Dépenses mensuelles (€)</span><input type="number" id="s-depenses" min="0" step="50" inputmode="decimal"></label>
-          <label class="champ"><span>Épargne de précaution visée (mois)</span><input type="number" id="s-mois" min="0" max="24" step="1" inputmode="numeric"></label>
-          <label class="champ"><span>Épargne de précaution actuelle (€)</span><input type="number" id="s-precaution" min="0" step="100" inputmode="decimal"></label>
+          <label class="champ champ-large"><span>Mon courtier ou ma banque</span><input id="s-courtier" placeholder="Ex. : Trade Republic"></label>
         </div>
+        <h3>Mon épargne de précaution</h3>
+        <div class="champs">
+          <label class="champ"><span>Dépenses mensuelles (€)</span><input type="number" id="s-depenses" min="0" step="50" inputmode="decimal"></label>
+          <label class="champ"><span>Objectif (mois de dépenses)</span><input type="number" id="s-mois" min="0" max="24" step="1" inputmode="numeric"></label>
+          <label class="champ"><span>J'y verse chaque mois (€)</span><input type="number" id="s-versement-precaution" min="0" step="10" inputmode="decimal"></label>
+        </div>
+        <label class="case"><input type="checkbox" id="s-basculer"><span>Une fois l'objectif atteint, ce versement part vers mes investissements</span></label>
+        <p class="note">Les soldes se tiennent dans Patrimoine, rubrique « Mes comptes d'épargne » : coche les comptes qui forment ton épargne de précaution.</p>
       </div>
 
       <div class="carte c6">
@@ -594,6 +627,7 @@ details[open] > summary { margin-bottom: 10px; }
         <div class="champs">
           <label class="champ"><span>Poids max d'une action en direct (%)</span><input type="number" id="s-max-action" min="0" max="100" step="0.5" inputmode="decimal"></label>
           <label class="champ"><span>Total max des actions en direct (%)</span><input type="number" id="s-max-direct" min="0" max="100" step="1" inputmode="decimal"></label>
+          <label class="champ"><span>Total max en crypto (%)</span><input type="number" id="s-max-crypto" min="0" max="100" step="1" inputmode="decimal"></label>
           <label class="champ"><span>Marge avant rééquilibrage (points)</span><input type="number" id="s-marge" min="0" max="30" step="0.5" inputmode="decimal"></label>
           <label class="champ"><span>Frais annuels max d'un fonds (%)</span><input type="number" id="s-frais-max" min="0" max="5" step="0.05" inputmode="decimal"></label>
         </div>
