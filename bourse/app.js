@@ -617,7 +617,8 @@
     if (!mcp || !S.robot.trigger) return;
     btn.disabled = true; note.textContent = "Demande envoyée…";
     try {
-      await mcp.callTool("Claude Code Remote", "fire_trigger", { trigger_id: S.robot.trigger, text: "Relevé demandé depuis la page Boussole Bourse." }, { cache: false });
+      // Sans texte : un texte ajouté devient un second message et le robot ferait deux relevés.
+      await mcp.callTool("Claude Code Remote", "fire_trigger", { trigger_id: S.robot.trigger }, { cache: false });
       demandeCours = Date.now();
       btn.textContent = "Relevé en cours…";
       note.textContent = "Le robot est lancé : les nouveaux cours arrivent d'ici quelques minutes, la page se met à jour seule.";
