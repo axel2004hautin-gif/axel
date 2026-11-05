@@ -177,6 +177,31 @@ window.BOUSSOLE = (() => {
     ]
   };
 
+  // Catégories du budget. « epargne » : virements vers livrets, PEA, compte-titres ou crypto, ni
+  // revenu ni dépense.
+  const CATEGORIES_BUDGET = [
+    { id: "salaire", nom: "Salaire", type: "revenu" },
+    { id: "aides", nom: "Aides et allocations", type: "revenu" },
+    { id: "autres-revenus", nom: "Autres revenus", type: "revenu" },
+    { id: "logement", nom: "Logement", type: "depense", fixe: true },
+    { id: "factures", nom: "Énergie, internet, téléphone", type: "depense", fixe: true },
+    { id: "assurances", nom: "Assurances", type: "depense", fixe: true },
+    { id: "abonnements", nom: "Abonnements", type: "depense", fixe: true },
+    { id: "transport", nom: "Transport", type: "depense" },
+    { id: "courses", nom: "Courses", type: "depense" },
+    { id: "restaurants", nom: "Restaurants et sorties", type: "depense" },
+    { id: "loisirs", nom: "Loisirs", type: "depense" },
+    { id: "shopping", nom: "Shopping", type: "depense" },
+    { id: "sante", nom: "Santé", type: "depense" },
+    { id: "voyages", nom: "Voyages", type: "depense" },
+    { id: "cadeaux", nom: "Cadeaux et dons", type: "depense" },
+    { id: "etudes", nom: "Études et formation", type: "depense" },
+    { id: "impots", nom: "Impôts", type: "depense" },
+    { id: "frais", nom: "Frais bancaires", type: "depense" },
+    { id: "autres", nom: "Autres dépenses", type: "depense" },
+    { id: "epargne", nom: "Épargne et investissement", type: "epargne" }
+  ];
+
   // Stratégies proposées dans Comparer. `poids` : part de chaque classe en %.
   const PRESETS_COMPARER = [
     { id: "actions", nom: "100 % actions monde", poids: { actions: 100 }, frais: 0.3, enveloppe: "PEA" },
@@ -186,6 +211,6 @@ window.BOUSSOLE = (() => {
     { id: "livret", nom: "Livret A", poids: { livret: 100 }, frais: 0, enveloppe: "aucune" }
   ];
 
-  return { PRINCIPES, CLASSES, CORRELATIONS, FISCALITE, TYPES, ENVELOPPES, TYPES_COMPTES, ZONES, RISQUES, REACTIONS,
+  return { PRINCIPES, CLASSES, CORRELATIONS, FISCALITE, TYPES, ENVELOPPES, TYPES_COMPTES, CATEGORIES_BUDGET, ZONES, RISQUES, REACTIONS,
     STRATEGIE_DEPART, MODELES, PORTEFEUILLE_EXEMPLE, PRESETS_COMPARER };
 })();

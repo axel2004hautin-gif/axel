@@ -227,6 +227,9 @@ input[type="checkbox"] { width: 18px; height: 18px; min-height: 0; accent-color:
 .barre-seg > div:focus-visible { outline: 2px solid var(--encre); outline-offset: 2px; }
 .jauge { position: relative; height: 12px; border-radius: 999px; background: color-mix(in srgb, var(--serie-3) 18%, var(--surface-2)); }
 .jauge > div { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: var(--serie-3); }
+.tuiles { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.tuile { display: grid; gap: 2px; padding: 10px 12px; border-radius: 8px; background: var(--surface-2); min-width: 0; }
+.tuile b { font-family: var(--f-titre); font-size: 1.3rem; font-weight: 750; letter-spacing: -0.01em; }
 .chiffre-cle { font-family: var(--f-titre); font-size: 1.5rem; font-weight: 750; letter-spacing: -0.01em; }
 input.solde { width: 120px; min-height: 32px; padding: 4px 8px; text-align: right; }
 
@@ -344,12 +347,15 @@ details[open] > summary { margin-bottom: 10px; }
       <button class="onglet" role="tab" id="t-portefeuille" data-vue="portefeuille" aria-selected="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"></path><path d="M7 15l4-4 3 3 5-6"></path></svg>
         Patrimoine</button>
+      <button class="onglet" role="tab" id="t-budget" data-vue="budget" aria-selected="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="2"></rect><path d="M3 10h18"></path><path d="M16 15h2"></path><path d="M7 6V4h10v2"></path></svg>
+        Budget</button>
       <button class="onglet" role="tab" id="t-decider" data-vue="decider" aria-selected="false">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"></path><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"></path></svg>
         Décider</button>
       <button class="onglet" role="tab" id="t-comparer" data-vue="comparer" aria-selected="false">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"></path><path d="M10 20V4"></path><path d="M16 20v-7"></path><path d="M22 20H2"></path></svg>
-        Comparer</button>
+        Simuler</button>
       <button class="onglet" role="tab" id="t-claude" data-vue="claude" aria-selected="false">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"></path></svg>
         Claude</button>
@@ -426,6 +432,7 @@ details[open] > summary { margin-bottom: 10px; }
             <button class="btn btn-ghost btn-petit" id="btn-importer" hidden>Importer avec Claude</button>
           </div>
         </div>
+        <div id="cours-direct"></div>
         <div class="fiche" id="fiche-import" hidden>
           <h3>Importer depuis ton courtier</h3>
           <p class="petit">Ajoute des captures d'écran de ton courtier, ou colle le texte de ta page « Portefeuille ». Claude lit les lignes ; tu vérifies avant d'enregistrer. Sur Trade Republic : une capture par portefeuille (PEA, compte-titres, crypto) ; la fiche d'une position donne en plus le nombre de parts et le prix d'achat moyen.</p>
@@ -443,6 +450,64 @@ details[open] > summary { margin-bottom: 10px; }
         <div class="fiche" id="fiche-cours" hidden></div>
         <div class="fiche" id="fiche-ligne" hidden></div>
         <div id="lignes"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ BUDGET ============ -->
+  <section class="vue" id="vue-budget" role="tabpanel" aria-labelledby="t-budget" hidden>
+    <div class="vue-titre">
+      <h2>Mon budget</h2>
+      <div class="actions">
+        <button class="btn btn-discret btn-petit" id="b-mois-prec" aria-label="Mois précédent">‹</button>
+        <b id="b-mois" style="min-width:130px;text-align:center"></b>
+        <button class="btn btn-discret btn-petit" id="b-mois-suiv" aria-label="Mois suivant">›</button>
+      </div>
+    </div>
+    <div class="carte"><div class="tuiles" id="b-tuiles"></div><p class="note" id="b-tuiles-note"></p></div>
+    <div class="grille">
+      <div class="carte c7">
+        <div class="carte-tete"><h2>Par catégorie</h2><span class="petit muet" id="b-cat-note"></span></div>
+        <div class="repart" id="b-categories"></div>
+        <div class="legende"><span><i class="cle-barre"></i>Dépensé</span><span><i class="cle-cible"></i>Budget prévu</span></div>
+      </div>
+      <div class="carte c5">
+        <h2>Ce que dit ton budget</h2>
+        <ul class="constats" id="b-alertes"></ul>
+      </div>
+      <div class="carte c12">
+        <div class="carte-tete">
+          <h2>Mes opérations</h2>
+          <div class="actions">
+            <button class="btn btn-petit" id="b-ajouter">Ajouter une opération</button>
+            <button class="btn btn-ghost btn-petit" id="b-importer" hidden>Importer un relevé avec Claude</button>
+          </div>
+        </div>
+        <div class="fiche" id="b-fiche-import" hidden>
+          <h3>Importer un relevé de compte</h3>
+          <p class="petit">Colle les opérations copiées depuis ta banque, ou ajoute un fichier CSV ou des captures d'écran (par exemple l'onglet Activité de Trade Republic). Claude range chaque opération dans une catégorie ; tu vérifies avant d'enregistrer. Pour un PDF, copie son texte ou fais une capture.</p>
+          <label class="champ"><span>Texte copié</span><textarea id="b-import-texte" rows="5" placeholder="03/11 CARTE CARREFOUR CITY -23,45&#10;05/11 VIR SALAIRE NOVEMBRE +1 650,00"></textarea></label>
+          <label class="champ"><span>Fichiers (CSV, texte ou captures)</span><input type="file" id="b-import-fichiers" multiple></label>
+          <div class="actions">
+            <button class="btn" id="b-import-lire">Lire avec Claude</button>
+            <button class="btn btn-discret" id="b-import-annuler">Annuler</button>
+            <span class="petit muet" id="b-import-etat"></span>
+          </div>
+          <div id="b-import-apercu"></div>
+        </div>
+        <div class="fiche" id="b-fiche-op" hidden></div>
+        <div id="b-operations"></div>
+      </div>
+      <div class="carte c6">
+        <div class="carte-tete"><h2>Mon budget prévu</h2><span id="b-plan-total"></span></div>
+        <p class="petit muet">Ce que tu prévois chaque mois. Tes versements d'épargne viennent de ta stratégie.</p>
+        <div id="b-plan"></div>
+      </div>
+      <div class="carte c6">
+        <h2>Sur 12 mois</h2>
+        <div class="legende" id="b-12-legende"></div>
+        <div class="graphe" id="b-12-graphe"></div>
+        <div class="defile" id="b-12-tableau"></div>
       </div>
     </div>
   </section>
@@ -513,7 +578,28 @@ details[open] > summary { margin-bottom: 10px; }
 
   <!-- ============ COMPARER ============ -->
   <section class="vue" id="vue-comparer" role="tabpanel" aria-labelledby="t-comparer" hidden>
-    <div class="vue-titre"><h2>Comparer des stratégies</h2><span class="petit muet">1 500 avenirs possibles simulés pour chacune</span></div>
+    <div class="vue-titre"><h2>Simuler</h2><span class="petit muet">Intérêts composés, puis stratégies comparées sur 1 500 avenirs possibles</span></div>
+
+    <div class="carte" id="carte-interets">
+      <div class="carte-tete"><h2>Intérêts composés</h2><button class="btn btn-ghost btn-petit" id="btn-ic-mes-chiffres">Reprendre mes chiffres</button></div>
+      <p class="petit muet">Un rendement régulier chaque année, sans les hauts et les bas du marché : la mécanique des intérêts qui rapportent des intérêts. Pour l'incertitude, compare des stratégies plus bas.</p>
+      <div class="champs">
+        <label class="champ"><span>Capital de départ (€)</span><input type="number" id="ic-capital" min="0" step="100" inputmode="decimal"></label>
+        <label class="champ"><span>Versement mensuel (€)</span><input type="number" id="ic-versement" min="0" step="10" inputmode="decimal"></label>
+        <label class="champ"><span>Hausse des versements (%/an)</span><input type="number" id="ic-hausse" min="0" max="20" step="0.5" inputmode="decimal"></label>
+        <label class="champ"><span>Rendement annuel (%)</span><input type="number" id="ic-taux" min="-10" max="30" step="0.1" inputmode="decimal"></label>
+        <label class="champ"><span>Durée (années)</span><input type="number" id="ic-duree" min="1" max="60" step="1" inputmode="numeric"></label>
+        <label class="champ"><span>Frais annuels (%)</span><input type="number" id="ic-frais" min="0" max="5" step="0.05" inputmode="decimal"></label>
+        <label class="champ"><span>Inflation (%/an)</span><input type="number" id="ic-inflation" min="0" max="10" step="0.1" inputmode="decimal"></label>
+        <label class="champ"><span>Objectif (€ d'aujourd'hui)</span><input type="number" id="ic-objectif" min="0" step="1000" inputmode="decimal"></label>
+      </div>
+      <div id="ic-resultat"></div>
+      <div class="legende" id="ic-legende"></div>
+      <div class="graphe" id="ic-graphe"></div>
+      <details><summary>Année par année</summary><div class="defile" id="ic-tableau"></div></details>
+    </div>
+
+    <div class="vue-titre"><h2 style="font-size:1.2rem">Comparer des stratégies</h2></div>
     <div class="carte">
       <div class="carte-tete"><h3>Point de départ</h3><button class="btn btn-ghost btn-petit" id="btn-cmp-mes-chiffres">Reprendre mes chiffres</button></div>
       <div class="champs">
