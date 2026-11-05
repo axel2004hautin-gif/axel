@@ -90,7 +90,7 @@
       case "comparer": return null;
       case "discussion": return { messages: [] };
       case "historique": return { points: [] };
-      case "budget": return { prevu: {} };
+      case "budget": return { prevu: {}, demenagement: {} };
       case "marche": return { maj: "", cours: {}, symboles: {}, erreurs: [], sources: [] };
       case "robot": return { trigger: "", horaire: "" };
     }
@@ -130,7 +130,8 @@
     }
     if (nom === "journal") return { entrees: Array.isArray(d.entrees) ? d.entrees : [] };
     if (nom === "discussion") return { messages: Array.isArray(d.messages) ? d.messages.filter(m => m && (m.role === "user" || m.role === "assistant") && m.content) : [] };
-    if (nom === "budget") return { prevu: d.prevu && typeof d.prevu === "object" ? Object.fromEntries(Object.entries(d.prevu).map(([k, v]) => [k, num(v)])) : {} };
+    if (nom === "budget") return { prevu: d.prevu && typeof d.prevu === "object" ? Object.fromEntries(Object.entries(d.prevu).map(([k, v]) => [k, num(v)])) : {},
+      demenagement: d.demenagement && typeof d.demenagement === "object" ? Object.fromEntries(Object.entries(d.demenagement).map(([k, v]) => [k, num(v)])) : {} };
     if (nom === "marche") return { ...base, ...d, cours: d.cours && typeof d.cours === "object" ? d.cours : {}, symboles: d.symboles || {}, erreurs: Array.isArray(d.erreurs) ? d.erreurs : [] };
     if (nom === "robot") return { ...base, ...d };
     if (nom === "historique") return { points: Array.isArray(d.points) ? d.points.filter(x => x && /^\d{4}-\d{2}-\d{2}$/.test(x.date)).sort((a, b) => a.date < b.date ? -1 : 1) : [] };
@@ -201,7 +202,7 @@
         // continuent de modifier le bon objet.
         if (JSON.stringify(recu) !== JSON.stringify(S[n])) S[n] = recu;
       }
-      if (!snap.metadata.fromCache && !confirme) { confirme = true; clearTimeout(minuteur); etatDonnees("Enregistré dans ta page, privé"); if (!S.historique.points.length) noterPoint(); }
+      if (!snap.metadata.fromCache && !confirme) { confirme = true; stock.confirme = true; clearTimeout(minuteur); etatDonnees("Enregistré dans ta page, privé"); if (!S.historique.points.length) noterPoint(); actualiserAuto(); }
       if (confirme && S.marche.maj && S.marche.maj !== majAvant) apresMarche();
       stock.pret = true;
       toutRendre();
@@ -450,7 +451,7 @@
         if (net == null) ajoute("info", `${c.nom} : renseigne son taux pour comparer son rendement net à celui du Livret A.`);
         else if (net < livret.taux) ajoute("info", `${c.nom} : ${pct(tauxCompte(c), 2)} brut, soit ${pct(net, 2)} net après la flat tax, moins que le Livret A (${pct(livret.taux, 1)} net d'impôt)${estTR() ? ". Trade Republic propose aussi un Livret A" : ""}.`);
       }
-      for (const c of comptes.filter(c => num(c.plafond) > 0 && num(c.solde) >= num(c.plafond) * 0.95))
+      for (const c of comptes.filter(c => c.type !== "livretJeune" && num(c.plafond) > 0 && num(c.solde) >= num(c.plafond) * 0.95))
         ajoute("info", `${c.nom} est ${num(c.solde) >= num(c.plafond) ? "plein" : "presque plein"} (${eur(num(c.solde), 0)} sur ${eur(num(c.plafond), 0)}).${c.type === "livretA" ? " Le LDDS a le même taux et reste net d'impôt." : ""}`);
     }
     if (actif("allocation")) {
@@ -637,55 +638,98 @@
     }
     if (change) enregistrer("portefeuille");
     noterPoint();
-    if (demandeCours) { demandeCours = 0; }
+    if (demandeCours) { demandeCours = 0; etatRobot = ""; clearTimeout(minuteurRobot); }
   }
-  let mcp = null, demandeCours = 0;
+  let mcp = null, demandeCours = 0, etatRobot = "", minuteurRobot = null, autoFait = false;
   async function brancherMcp() {
     if (!(window.claude && typeof window.claude.use === "function")) return;
     try { mcp = await window.claude.use("mcp"); } catch (_) { mcp = null; }
+    rendreCoursDirect();
+    actualiserAuto();
+  }
+  // Heures de cotation de Trade Republic (Lang & Schwarz) : du lundi au vendredi, 7 h 30 – 23 h, heure de Paris.
+  function parisInfo(d) {
+    const parts = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Paris", weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(d);
+    const g = t => (parts.find(x => x.type === t) || {}).value || "";
+    return { semaine: !["Sat", "Sun"].includes(g("weekday")), minutes: Number(g("hour")) * 60 + Number(g("minute")) };
+  }
+  const bourseOuverte = d => { const p = parisInfo(d); return p.semaine && p.minutes >= 450 && p.minutes <= 1380; };
+  // Les cours ont-ils pu bouger depuis le dernier relevé ?
+  function coursPerimes() {
+    const r = S.strategie.profil.coursAuto || {};
+    if (!S.marche.maj) return true;
+    const debut = Date.parse(S.marche.maj), age = (Date.now() - debut) / 60000;
+    if (age < Math.max(5, num(r.minutes) || 15)) return false;
+    if (bourseOuverte(new Date())) return true;
+    if (S.portefeuille.lignes.some(l => estCrypto(l)) && age > 60) return true;
+    for (let t = debut + 15 * 60000; t < Date.now(); t += 15 * 60000) if (bourseOuverte(new Date(t))) return true;
+    return false;
+  }
+  // À l'ouverture de la page (et quand on y revient), relance le robot si les cours sont périmés.
+  function actualiserAuto() {
+    const r = S.strategie.profil.coursAuto || {};
+    if (autoFait || !r.actif || !mcp || !S.robot.trigger || !stock.confirme || S.portefeuille.exemple || !S.portefeuille.lignes.length) return;
+    if (demandeCours && Date.now() - demandeCours < 4 * 60000) return;
+    let derniere = 0;
+    try { derniere = Number(localStorage.getItem(CLE("demande-auto"))) || 0; } catch (_) {}
+    if (Date.now() - derniere < Math.max(5, num(r.minutes) || 15) * 60000) return;
+    if (!coursPerimes()) return;
+    autoFait = true;
+    try { localStorage.setItem(CLE("demande-auto"), String(Date.now())); } catch (_) {}
+    lancerRobot(true);
+  }
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { autoFait = false; actualiserAuto(); } });
+  async function lancerRobot(auto) {
+    if (!mcp || !S.robot.trigger) return;
+    demandeCours = Date.now();
+    etatRobot = auto ? "Actualisation des cours…" : "Demande envoyée…";
+    rendreCoursDirect();
+    try {
+      // Sans texte : un texte ajouté devient un second message et le robot ferait deux relevés.
+      await mcp.callTool("Claude Code Remote", "fire_trigger", { trigger_id: S.robot.trigger }, { cache: false });
+      etatRobot = "Le robot relève les cours : ils arrivent d'ici une minute, la page se met à jour seule.";
+      clearTimeout(minuteurRobot);
+      minuteurRobot = setTimeout(() => { if (demandeCours) { demandeCours = 0; etatRobot = "Le relevé n'est pas encore arrivé : réessaie dans un moment."; rendreCoursDirect(); } }, 4 * 60000);
+    } catch (e) {
+      demandeCours = 0;
+      const code = e && e.code;
+      etatRobot = ({
+        server_not_connected: "Le connecteur Claude Code Remote n'est pas disponible pour ton compte ; le relevé automatique du soir continue.",
+        needs_reauth: "Reconnecte Claude Code Remote dans claude.ai, Réglages, Connecteurs.",
+        not_in_manifest: "La page n'a pas l'autorisation de lancer le robot : accepte-la dans la fenêtre de claude.ai, ou dans le menu Autorisations de la page.",
+        approval_required: "Il faut ton accord pour lancer le robot : clique sur « Actualiser maintenant » et accepte la demande de claude.ai.",
+        consent_required: "Il faut ton accord pour lancer le robot : clique sur « Actualiser maintenant » et accepte la demande de claude.ai.",
+        tool_error: "Le robot n'a pas pu être lancé. Le relevé automatique du soir continue."
+      })[code] || "La demande n'est pas passée. Le relevé automatique du soir continue.";
+    }
     rendreCoursDirect();
   }
   function rendreCoursDirect() {
     const z = $("cours-direct");
     if (!z) return;
-    const m = S.marche, r = S.robot, lignes = S.portefeuille.lignes;
+    const m = S.marche, r = S.robot, lignes = S.portefeuille.lignes, pr = S.strategie.profil;
     if (!lignes.length && !m.maj) { vider(z); return; }
+    if (aFocus(z)) return;
     const syn = synthese();
     const noms = new Set(lignes.map(l => l.nom));
     const erreurs = (m.erreurs || []).filter(e => noms.has(e.ligne));
-    const note = h("span", { class: "petit muet" });
     const enAttente = demandeCours && Date.now() - demandeCours < 4 * 60000;
-    const bouton = r.trigger && mcp ? h("button", { class: "btn btn-ghost btn-petit", text: enAttente ? "Relevé en cours…" : "Actualiser maintenant", disabled: !!enAttente, onclick: e => actualiserCours(e.target, note) }) : null;
+    const auto = pr.coursAuto || { actif: true, minutes: 15 };
+    const selMin = h("select", { id: "cours-auto-min", "aria-label": "Délai avant actualisation", disabled: !auto.actif, style: "width:auto;min-height:30px;padding:2px 8px", onchange: e => modifier("strategie", st => { st.profil.coursAuto = { ...(st.profil.coursAuto || {}), minutes: num(e.target.value) }; }) });
+    options(selMin, [5, 15, 30, 60].map(v => ({ value: String(v), label: `${v} min` })), String(num(auto.minutes) || 15));
     vider(z, h("div", { class: "bandeau", style: "border-style:solid" },
       h("p", {}, m.maj
-        ? [h("b", { text: "Cours en direct" }), ` · ${momentFr(m.maj)} · ${(m.sources || []).join(" et ")} · ${syn.enDirect} ligne${syn.enDirect > 1 ? "s" : ""} sur ${lignes.length}`]
-        : [h("b", { text: r.trigger ? "Cours en direct activés" : "Cours en direct" }), r.trigger ? " · premier relevé en attente" : " · pas encore activés"],
-        r.horaire ? ` · relevé automatique ${r.horaire}` : ""),
-      h("div", { class: "actions" }, bouton, note)),
+        ? [h("b", { text: "Cours en direct" }), ` · ${momentFr(m.maj)} · ${(m.sources || []).join(", ")} · ${syn.enDirect} ligne${syn.enDirect > 1 ? "s" : ""} sur ${lignes.length}`]
+        : [h("b", { text: r.trigger ? "Cours en direct activés" : "Cours en direct" }), r.trigger ? " · premier relevé en attente" : " · pas encore activés"]),
+      h("div", { class: "actions" },
+        r.trigger && mcp ? h("button", { class: "btn btn-ghost btn-petit", text: enAttente ? "Relevé en cours…" : "Actualiser maintenant", disabled: !!enAttente, onclick: () => lancerRobot(false) }) : null,
+        etatRobot ? h("span", { class: "petit muet", text: etatRobot }) : null)),
+      r.trigger ? h("div", { class: "actions petit" },
+        h("label", { class: "case" }, h("input", { type: "checkbox", id: "cours-auto", checked: !!auto.actif, onchange: e => modifier("strategie", st => { st.profil.coursAuto = { ...(st.profil.coursAuto || {}), actif: e.target.checked }; }) }),
+          h("span", { text: "Actualiser à l'ouverture de la page quand les cours ont plus de" })), selMin,
+        h("span", { class: "muet", text: `· chaque relevé prend une demi-minute de ton usage Claude${r.horaire ? " · relevé automatique " + r.horaire : ""}` })) : null,
       erreurs.length ? h("details", {}, h("summary", { text: `${erreurs.length} ligne${erreurs.length > 1 ? "s" : ""} sans cours en direct` }),
         h("ul", { class: "constats" }, erreurs.map(e => h("li", {}, pastille("info", "Info"), h("p", { text: `${e.ligne} : ${e.message}` }))))) : null);
-  }
-  async function actualiserCours(btn, note) {
-    if (!mcp || !S.robot.trigger) return;
-    btn.disabled = true; note.textContent = "Demande envoyée…";
-    try {
-      // Sans texte : un texte ajouté devient un second message et le robot ferait deux relevés.
-      await mcp.callTool("Claude Code Remote", "fire_trigger", { trigger_id: S.robot.trigger }, { cache: false });
-      demandeCours = Date.now();
-      btn.textContent = "Relevé en cours…";
-      note.textContent = "Le robot est lancé : les nouveaux cours arrivent d'ici quelques minutes, la page se met à jour seule.";
-    } catch (e) {
-      const code = e && e.code;
-      note.textContent = ({
-        server_not_connected: "Le connecteur Claude Code Remote n'est pas disponible pour ton compte ; le relevé automatique continue à l'heure prévue.",
-        needs_reauth: "Reconnecte Claude Code Remote dans claude.ai, Réglages, Connecteurs.",
-        not_in_manifest: "La page n'a pas l'autorisation de lancer le robot : accepte-la dans la fenêtre de claude.ai, ou dans le menu Autorisations de la page.",
-        approval_required: "Il faut ton accord pour lancer le robot : réessaie et accepte la demande de claude.ai.",
-        consent_required: "Il faut ton accord pour lancer le robot : réessaie et accepte la demande de claude.ai.",
-        tool_error: "Le robot n'a pas pu être lancé. Le relevé automatique continue à l'heure prévue."
-      })[code] || "La demande n'est pas passée. Le relevé automatique continue à l'heure prévue.";
-      btn.disabled = false;
-    }
   }
 
   // ---------- historique du patrimoine ----------
@@ -847,6 +891,115 @@
       h("div", { class: "actions" }, claudePret ? h("button", { class: "btn btn-ghost btn-petit", text: "En parler à Claude", onclick: () => demanderDansChat(`Ce mois-ci, l'outil propose : ${pl.versEpargne > 0 ? `${eur(pl.versEpargne, 0)} sur ${pl.compte ? pl.compte.nom : "mon livret"} pour mon épargne de précaution, et ` : ""}${eur(montant, 0)} à investir : ${plan.map(x => `${x.poche.nom} ${eur(x.montant, 0)}`).join(", ")}. Qu'en penses-tu au regard de ma stratégie ?`) }) : null));
   }
 
+  $("versement-montant").addEventListener("input", e => { e.target.dataset.touche = "1"; rendreVersement(synthese()); });
+
+  // ---------- une rentrée d'argent : que faire de cette prime ? ----------
+  // Règle : d'abord ce qui manque au palier d'épargne de précaution en cours ; le reste se partage
+  // comme les versements du palier suivant (tout investi si tous les paliers sont atteints).
+  function conseilRentree(montant) {
+    const pl = planDuMois(), pr = S.strategie.profil, syn = synthese();
+    const plaisir = Math.round(montant * Math.min(100, Math.max(0, num(pr.partPlaisir))) / 100);
+    let reste = montant - plaisir;
+    const prec = pl.manque > 0 ? Math.min(reste, pl.manque) : 0;
+    reste -= prec;
+    let ratio = 0, raisonReste = "";
+    if (reste > 0) {
+      if (pl.paliers.length) {
+        const p = pl.manque > 0 ? pl.suivant : null;
+        if (p) { ratio = num(p.versement) / Math.max(1, num(p.versement) + num(p.investi)); raisonReste = `le reste se partage comme tes versements du palier suivant (${eur(num(p.versement), 0)} d'épargne pour ${eur(num(p.investi), 0)} investis)`; }
+        else raisonReste = "tes paliers d'épargne de précaution sont atteints : le reste est investi";
+      } else if (!pr.basculer) { ratio = pl.vp / Math.max(1, pl.vp + pl.vi); raisonReste = "le reste se partage comme tes versements mensuels"; }
+      else raisonReste = "ton épargne de précaution est complète : le reste est investi";
+    }
+    const enPlus = Math.round(reste * ratio), investir = reste - enPlus;
+    // L'épargne va sur les comptes de précaution, meilleur taux net d'abord, dans la limite des plafonds.
+    let aPlacer = prec + enPlus;
+    const comptes = [...S.portefeuille.comptes.filter(c => c.precaution)].sort((a, b) => (tauxNet(b) ?? -1) - (tauxNet(a) ?? -1));
+    const versComptes = [];
+    for (const c of comptes) {
+      if (aPlacer <= 0) break;
+      const place = num(c.plafond) > 0 ? Math.max(0, num(c.plafond) - num(c.solde)) : Infinity;
+      const x = Math.min(aPlacer, place);
+      if (x > 0) { versComptes.push({ compte: c, montant: x }); aPlacer -= x; }
+    }
+    if (aPlacer > 0) versComptes.push({ compte: null, montant: aPlacer });
+    const plan = investir > 0 ? repartirVersement(investir, syn) : [];
+    const raisons = [];
+    if (prec > 0) raisons.push(`ton épargne de précaution passe en premier : il lui manquait ${eur(pl.manque, 0)}${pl.palier && pl.palier.date ? ` pour le ${dateFr(pl.palier.date)}` : ""}`);
+    if (raisonReste) raisons.push(raisonReste);
+    if (!raisons.length && plaisir > 0) raisons.push("tout est pour toi");
+    return { montant, plaisir, prec, enPlus, investir, versComptes, plan, raisons, pl };
+  }
+  const TYPES_RENTREE = [
+    { id: "prime", nom: "Prime de mon employeur", categorie: "salaire" },
+    { id: "aide", nom: "Prime d'activité ou aide", categorie: "aides" },
+    { id: "cadeau", nom: "Cadeau, chèque", categorie: "autres-revenus" },
+    { id: "remboursement", nom: "Remboursement", categorie: "autres-revenus" },
+    { id: "autre", nom: "Autre rentrée", categorie: "autres-revenus" }
+  ];
+  function ouvrirRentree() {
+    montrer("portefeuille");
+    const f = $("fiche-rentree"), pr = S.strategie.profil;
+    const champ = (lib, el) => h("label", { class: "champ" }, h("span", { text: lib }), el);
+    const res = h("div", { id: "r-resultat" });
+    const type = h("select", { id: "r-type" });
+    options(type, TYPES_RENTREE.map(t => ({ value: t.id, label: t.nom })), "prime");
+    const montant = h("input", { type: "number", id: "r-montant", min: "0", step: "1", inputmode: "decimal", placeholder: "300" });
+    const date = h("input", { type: "date", id: "r-date", value: aujourdhui() });
+    const plaisir = h("input", { type: "number", id: "r-plaisir", min: "0", max: "100", step: "5", inputmode: "decimal", value: String(num(pr.partPlaisir)) });
+    const calculer = () => {
+      const m = num(montant.value);
+      if (!(m > 0)) { vider(res, h("p", { class: "vide", text: "Indique le montant reçu." })); return; }
+      const c = conseilRentree(m);
+      const rangs = [];
+      if (c.plaisir > 0) rangs.push(h("tr", {}, h("td", {}, h("div", { class: "nom-ligne" }, h("span", { text: "Pour te faire plaisir" }), h("small", { text: `${num(plaisir.value)} % de la somme` }))), h("td", { class: "num chiffre", text: eur(c.plaisir, 0) })));
+      for (const v of c.versComptes) rangs.push(h("tr", {}, h("td", {}, h("div", { class: "nom-ligne" }, h("span", { text: v.compte ? v.compte.nom : "Un autre livret" }), h("small", { text: v.compte ? "épargne de précaution" : "tes livrets de précaution sont pleins" }))), h("td", { class: "num chiffre", text: eur(v.montant, 0) })));
+      for (const x of c.plan) rangs.push(h("tr", {}, h("td", {}, h("div", { class: "nom-ligne" }, h("span", { text: x.ligne ? x.ligne.nom : x.poche.nom }), h("small", { text: x.ligne ? (enFractions(x.ligne) ? "en fractions" : x.parts > 0 ? `≈ ${x.parts} part${x.parts > 1 ? "s" : ""} à ${eur(x.ligne.coursEff, 2)}` : "moins d'une part") : "ligne à choisir" }))), h("td", { class: "num chiffre", text: eur(x.montant, 0) })));
+      const reste = c.pl.manque - c.prec;
+      vider(res, h("div", { class: "aperçu" },
+        h("p", {}, h("b", { text: "Ce que dit ta stratégie : " }), c.raisons.join(" ; ") + "."),
+        h("div", { class: "defile" }, h("table", {}, h("tbody", {}, rangs))),
+        c.prec > 0 ? h("p", { class: "petit muet", text: reste > 0 ? `Après ce versement, il manquera encore ${eur(reste, 0)} à ton épargne de précaution.` : `Avec ce versement, ton palier de ${eur(c.pl.obj, 0)} est atteint.` }) : null,
+        h("div", { class: "actions" },
+          h("button", { class: "btn", text: "C'est fait : mettre à jour mes comptes", onclick: () => appliquerRentree(c, type.value, date.value || aujourdhui(), true) }),
+          h("button", { class: "btn btn-discret", text: "Noter seulement dans mon budget", onclick: () => appliquerRentree(c, type.value, date.value || aujourdhui(), false) }),
+          claudePret ? h("button", { class: "btn btn-ghost btn-petit", text: "En parler à Claude", onclick: () => demanderDansChat(`J'ai reçu ${eur(m, 0)} (${TYPES_RENTREE.find(t => t.id === type.value).nom.toLowerCase()}). L'outil propose : ${[c.plaisir ? `${eur(c.plaisir, 0)} pour me faire plaisir` : "", ...c.versComptes.map(v => `${eur(v.montant, 0)} sur ${v.compte ? v.compte.nom : "un livret"}`), ...c.plan.map(x => `${eur(x.montant, 0)} sur ${x.ligne ? x.ligne.nom : x.poche.nom}`)].filter(Boolean).join(", ")}. Qu'en penses-tu ?`) }) : null)));
+    };
+    montant.addEventListener("input", calculer);
+    plaisir.addEventListener("input", calculer);
+    plaisir.addEventListener("change", e => { S.strategie.profil.partPlaisir = Math.min(100, Math.max(0, num(e.target.value))); enregistrer("strategie"); });
+    vider(f, h("h3", { text: "J'ai reçu de l'argent" }),
+      h("div", { class: "champs" }, champ("Montant reçu (€)", montant), champ("C'est…", type), champ("Reçu le", date), champ("Part pour te faire plaisir (%)", plaisir)),
+      res,
+      h("div", { class: "actions" }, h("button", { class: "btn btn-discret btn-petit", text: "Fermer", onclick: () => { f.hidden = true; } })));
+    calculer();
+    f.hidden = false;
+    f.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    montant.focus({ preventScroll: true });
+  }
+  function appliquerRentree(c, type, date, comptes) {
+    const t = TYPES_RENTREE.find(x => x.id === type) || TYPES_RENTREE[4];
+    const ops = [{ date, libelle: t.nom, montant: c.montant, categorie: t.categorie }];
+    const verse = c.prec + c.enPlus + c.investir;
+    if (comptes) {
+      for (const v of c.versComptes) if (v.compte) { const k = S.portefeuille.comptes.find(x => x.id === v.compte.id); if (k) k.solde = Math.round((num(k.solde) + v.montant) * 100) / 100; }
+      for (const x of c.plan) {
+        const l = x.ligne && S.portefeuille.lignes.find(y => y.id === x.ligne.id);
+        if (!l || l.sansQuantite || !(x.ligne.coursEff > 0)) continue;
+        const q = enFractions(l) ? x.montant / x.ligne.coursEff : Math.floor(x.montant / x.ligne.coursEff);
+        if (q > 0) { l.pru = (num(l.pru) * num(l.quantite) + q * x.ligne.coursEff) / (num(l.quantite) + q); l.quantite = num(l.quantite) + q; }
+        if (l.enveloppe === "PEA") S.strategie.enveloppes.peaVersements = Math.round((num(S.strategie.enveloppes.peaVersements) + x.montant) * 100) / 100;
+      }
+      enregistrer("portefeuille"); enregistrer("strategie"); noterPoint();
+    }
+    if (verse > 0) ops.push({ date, libelle: `Mis de côté : ${t.nom.toLowerCase()}`, montant: -verse, categorie: "epargne" });
+    ajouterMouvements(ops);
+    $("fiche-rentree").hidden = true;
+    toutRendre();
+  }
+  $("btn-rentree").addEventListener("click", ouvrirRentree);
+  $("b-rentree").addEventListener("click", ouvrirRentree);
+
   function rendreEnveloppes(syn) {
     const e = S.strategie.enveloppes, F = B.FISCALITE, rangs = [];
     const val = id => syn.parEnveloppe[id] || { valeur: 0, investi: 0 };
@@ -892,7 +1045,7 @@
     if (!syn.lignes.length) { vider(z, h("p", { class: "vide", text: "Aucune ligne pour l'instant." })); return; }
     const tri = [...syn.lignes].sort((a, b) => b.valeur - a.valeur);
     const envNom = id => (B.ENVELOPPES.find(e => e.id === id) || {}).nom || id;
-    vider(z, h("div", { class: "defile" }, h("table", {},
+    vider(z, noteLignes ? h("p", { class: "note", text: noteLignes }) : null, h("div", { class: "defile" }, h("table", {},
       h("thead", {}, h("tr", {}, ["Ligne", "Quantité", "PRU", "Cours", "Séance", "Valeur", "Plus-value", "Poids", "Frais", ""].map((t, i) => h("th", { class: i > 0 && i < 9 ? "num" : null, text: t })))),
       h("tbody", {}, tri.map(l => h("tr", {},
         h("td", {}, h("div", { class: "nom-ligne" }, h("span", { text: l.nom }),
@@ -938,6 +1091,7 @@
       } }),
       h("button", { type: "button", class: "btn btn-discret btn-petit", text: "Non", onclick: () => { confirmer.hidden = true; } }));
     const erreur = h("p", { class: "erreur", hidden: true });
+    let vente = null;
     const ch = id ? chiffrer(l) : null;
     const arrondi = x => Math.round(x * 10000) / 10000;
     const parts = h("div", { class: "champs", hidden: !!l.sansQuantite },
@@ -986,11 +1140,69 @@
           enregistrer("portefeuille"); noterPoint(); f.hidden = true; toutRendre();
         } }),
         h("button", { type: "button", class: "btn btn-discret", text: "Annuler", onclick: () => { f.hidden = true; } }),
+        id ? h("button", { type: "button", class: "btn btn-ghost", text: "J'ai vendu cette ligne", onclick: () => { vente.hidden = false; vente.querySelector("input").focus(); } }) : null,
         id ? h("button", { type: "button", class: "btn btn-danger", text: "Supprimer", onclick: () => { confirmer.hidden = false; } }) : null,
-        confirmer));
+        confirmer),
+      id ? (vente = panneauVente(l, () => { f.hidden = true; })) : null);
     f.hidden = false;
     f.scrollIntoView({ block: "nearest", behavior: "smooth" });
     $("l-nom").focus({ preventScroll: true });
+  }
+  let noteLignes = "";
+  // Vente d'une ligne : retire la ligne, note l'opération au journal, et range l'argent.
+  function panneauVente(l, fermer) {
+    const F = B.FISCALITE, syn = synthese(), ligne = syn.lignes.find(x => x.id === l.id) || { valeur: 0, investi: 0 };
+    const etf = S.portefeuille.lignes.find(x => x.id !== l.id && x.enveloppe === "PEA" && x.type === "ETF");
+    const champ = (lib, el) => h("label", { class: "champ" }, h("span", { text: lib }), el);
+    const montant = h("input", { type: "number", id: "v-montant", min: "0", step: "0.01", inputmode: "decimal", value: String(Math.round(ligne.valeur * 100) / 100) });
+    const dest = h("select", { id: "v-dest" });
+    options(dest, [...(etf ? [{ value: "pea", label: `Versé sur mon PEA et investi sur ${etf.nom}` }] : []), { value: "especes", label: "Gardé en espèces chez mon courtier" }], etf ? "pea" : "especes");
+    const raison = h("textarea", { id: "v-raison", rows: 2, value: etf ? `Simplifier : tout sur ${etf.nom}, dans le PEA.` : "" });
+    const info = h("p", { class: "petit muet" });
+    const maj = () => {
+      const m = num(montant.value), pv = m - ligne.investi;
+      const crypto = l.type === "Crypto" || l.enveloppe === "Crypto";
+      const impot = (l.enveloppe === "CTO" || crypto) && pv > 0 ? pv * (F.ir + F.ps) / 100 : 0;
+      info.textContent = `${pv >= 0 ? "Plus-value" : "Moins-value"} réalisée : ${eurSigne(pv)}. ` + (l.enveloppe === "PEA" ? "Vendre dans le PEA ne déclenche pas d'impôt tant que l'argent y reste."
+        : impot > 0 ? `Impôt estimé : ≈ ${eur(impot, 0)} (31,4 %)${crypto ? `, dû seulement si tes ventes de crypto de l'année dépassent ${F.seuilCrypto} €` : ""}, à déclarer l'an prochain.`
+        : "Pas d'impôt sur une vente sans plus-value ; une moins-value du compte-titres s'impute sur tes plus-values des 10 années suivantes.");
+    };
+    montant.addEventListener("input", maj); maj();
+    const panneau = h("div", { class: "aperçu", hidden: true },
+      h("h3", { text: "J'ai vendu " + l.nom }),
+      h("div", { class: "champs" }, champ("Montant de la vente (€)", montant), champ("L'argent est…", dest)),
+      champ("Pourquoi (pour ton journal)", raison),
+      info,
+      h("div", { class: "actions" },
+        h("button", { type: "button", class: "btn", text: "Enregistrer la vente", onclick: () => {
+          const m = num(montant.value);
+          if (!(m > 0)) return;
+          const pv = m - ligne.investi;
+          S.portefeuille.lignes = S.portefeuille.lignes.filter(x => x.id !== l.id);
+          for (const p of S.strategie.poches) if (p.ligne === l.id) p.ligne = "";
+          let note = "";
+          if (dest.value === "pea" && etf) {
+            const cours = chiffrer(etf).cours;
+            const parts = cours > 0 ? Math.floor(m / cours) : 0;
+            if (parts > 0) { etf.pru = (num(etf.pru) * num(etf.quantite) + parts * cours) / (num(etf.quantite) + parts); etf.quantite = num(etf.quantite) + parts; }
+            S.strategie.enveloppes.peaVersements = Math.round((num(S.strategie.enveloppes.peaVersements) + m) * 100) / 100;
+            note = `${parts} part${parts > 1 ? "s" : ""} de ${etf.nom} ajoutée${parts > 1 ? "s" : ""} à ${eur(cours, 2)} ; il reste ${eur(m - parts * cours, 2)} d'espèces sur le PEA. Corrige la quantité si ton achat diffère.`;
+          } else {
+            const nom = `Espèces ${l.enveloppe === "Crypto" ? "du wallet crypto" : l.enveloppe === "PEA" ? "du PEA" : "du compte-titres"}${estTR() ? " Trade Republic" : ""}`;
+            const k = S.portefeuille.comptes.find(c => norm(c.nom) === norm(nom));
+            if (k) k.solde = Math.round((num(k.solde) + m) * 100) / 100;
+            else S.portefeuille.comptes.push({ id: uid(), nom, type: "remunere", solde: m, taux: null, plafond: 0, precaution: false });
+          }
+          S.journal.entrees.unshift({ id: uid(), date: aujourdhui(), sens: "vendre", actif: l.nom, ligneId: "", enveloppe: l.enveloppe, montant: m,
+            raison: raison.value.trim(), verdict: "ok", verdictTitre: "Vente faite", points: [info.textContent].concat(note ? [note] : []),
+            avis: "", revoir: ajouterMois(aujourdhui(), 6), statut: "faite", bilan: "" });
+          enregistrer("portefeuille"); enregistrer("strategie"); enregistrer("journal"); noterPoint();
+          fermer(); toutRendre();
+          noteLignes = `Vente de ${l.nom} enregistrée et notée au journal.${note ? " " + note : ""}`;
+          rendreLignes(synthese());
+        } }),
+        h("button", { type: "button", class: "btn btn-discret", text: "Annuler", onclick: () => { panneau.hidden = true; } })));
+    return panneau;
   }
   $("btn-ajouter-ligne").addEventListener("click", () => { if (S.portefeuille.exemple) effacerExemple(); ouvrirLigne(null); });
 
@@ -1340,7 +1552,7 @@
       : h("p", { class: "vide", text: "Rien à afficher : fixe ton budget prévu ou importe un relevé." }));
     vider($("b-alertes"), alertesBudget().map(a => h("li", {}, pastille(a.niveau, { ok: "OK", attention: "À voir", bloquant: "Budget", info: "Info" }[a.niveau]),
       h("div", { style: "display:grid;gap:6px" }, h("p", { text: a.texte }), a.action ? h("div", {}, h("button", { class: "btn btn-ghost btn-petit", text: a.action.texte, onclick: a.action.faire })) : null))));
-    rendreOperations(); rendrePlanBudget(); rendre12Mois();
+    rendreOperations(); rendrePlanBudget(); rendreDemenagement(); rendre12Mois();
   }
   $("b-mois-prec").addEventListener("click", () => { moisBudget = decalerMois(moisBudget, -1); rendreBudget(); });
   $("b-mois-suiv").addEventListener("click", () => { moisBudget = decalerMois(moisBudget, 1); rendreBudget(); });
@@ -1506,6 +1718,50 @@ Règles :
         h("tr", {}, h("td", { text: "Investissements" }), h("td", { class: "num chiffre", text: eur(planDuMois().investir, 0) })),
         h("tr", { class: "table-total" }, h("td", { text: "Reste à vivre" }), h("td", { class: "num chiffre " + (pl.reste < 0 ? "perte" : ""), text: eur(pl.reste, 0) }))))),
       h("div", { class: "actions" }, h("button", { class: "btn btn-ghost btn-petit", text: "Modifier mes versements", onclick: () => { montrer("strategie"); $("s-versement-precaution").focus(); } })));
+  }
+
+  // ---------- et si je déménage ? ----------
+  const DM_CHAMPS = ["loyer", "energie", "assurance", "courses", "autres", "apl", "installation"];
+  DM_CHAMPS.forEach(k => $("dm-" + k).addEventListener("input", e => {
+    S.budget.demenagement ||= {};
+    const v = num(e.target.value);
+    if (e.target.value === "") delete S.budget.demenagement[k]; else S.budget.demenagement[k] = v;
+    enregistrer("budget"); rendreDemenagement();
+  }));
+  function rendreDemenagement() {
+    const d = S.budget.demenagement || {};
+    for (const k of DM_CHAMPS) remplir("dm-" + k, d[k] != null ? d[k] : "");
+    const z = $("dm-resultat");
+    if (!(num(d.loyer) > 0)) { vider(z, h("p", { class: "vide", text: "Indique au moins un loyer pour voir ce qu'il change." })); return; }
+    const pl = planBudget(), pr = S.strategie.profil, syn = synthese(), plm = planDuMois();
+    const enPlus = num(d.loyer) + num(d.energie) + num(d.assurance) + num(d.courses) + num(d.autres) - num(d.apl);
+    const depenses = pl.depenses + enPlus, capacite = pl.revenus - depenses;
+    // Épargne de précaution après le déménagement : on garde le versement du dernier palier.
+    const ps = plm.paliers, dernier = ps[ps.length - 1];
+    const versPrec = dernier ? num(dernier.versement) : num(pr.versementPrecaution);
+    const investir = Math.max(0, capacite - versPrec);
+    const cible = dernier ? num(dernier.montant) : objectifPrecaution();
+    const mois = depenses > 0 ? cible / depenses : null;
+    const salaire = num(S.budget.prevu.salaire), loyerMax = salaire / 3;
+    const annees = Math.max(1, num(pr.objectifAnnee) - new Date().getFullYear());
+    const proj = v => interetsComposes({ capital: syn.total, versement: v, hausse: 2, taux: 7, duree: annees, frais: syn.fraisMoyen || 0.2, inflation: 2, objectif: 0 }).fin.valeur;
+    const avant = plm.investir, finAvant = proj(dernier ? num(dernier.investi) : avant), finApres = proj(investir);
+    const constats = [];
+    if (capacite < 0) constats.push(["bloquant", `Ce logement ne tient pas dans ton budget : il manquerait ${eur(-capacite, 0)} chaque mois.`]);
+    else if (capacite < versPrec) constats.push(["attention", `Après les dépenses, il resterait ${eur(capacite, 0)} par mois : moins que les ${eur(versPrec, 0)} prévus pour ton épargne de précaution, et rien à investir.`]);
+    if (salaire > 0 && num(d.loyer) > loyerMax) constats.push(["attention", `Les propriétaires demandent souvent un salaire d'au moins 3 fois le loyer : avec ${eur(salaire, 0)}, ça fait un loyer jusqu'à ${eur(Math.floor(loyerMax / 10) * 10, 0)} environ (un garant peut compenser).`]);
+    else if (salaire > 0) constats.push(["ok", `Loyer sous le tiers de ton salaire (${eur(Math.floor(loyerMax / 10) * 10, 0)} au plus) : la règle des 3 fois le loyer que demandent souvent les propriétaires est respectée.`]);
+    if (mois != null) constats.push([mois >= 3 ? "ok" : "attention", `Ton épargne de précaution de ${eur(cible, 0)} couvrirait ${nf(0, 1).format(mois)} mois de tes nouvelles dépenses${mois < 3 ? " : vise au moins 3 mois avant de partir" : ""}.`]);
+    if (num(d.installation) > 0) constats.push(["info", `Les ${eur(num(d.installation), 0)} d'installation (dépôt de garantie, meubles…) sont à mettre de côté à part : pris sur l'épargne de précaution, elle tomberait à ${eur(Math.max(0, plm.act - num(d.installation)), 0)}.`]);
+    const tuile = (lib, val, sous, cls) => h("div", { class: "tuile" }, h("span", { class: "etiquette", text: lib }), h("b", { class: cls || null, text: val }), sous ? h("span", { class: "petit muet", text: sous }) : null);
+    vider(z,
+      h("div", { class: "tuiles" },
+        tuile("Dépenses par mois", eur(depenses, 0), `aujourd'hui : ${eur(pl.depenses, 0)}`),
+        tuile("Ce qui reste à épargner", eur(capacite, 0), `aujourd'hui : ${eur(pl.capacite, 0)}`, capacite < 0 ? "perte" : null),
+        tuile("Investi chaque mois", eur(investir, 0), `après ${eur(versPrec, 0)} d'épargne de précaution`),
+        tuile(`À tes 50 ans (${num(pr.objectifAnnee)})`, compact(finApres), `au lieu de ${compact(finAvant)} sans déménager`)),
+      h("ul", { class: "constats" }, constats.map(([n, t]) => h("li", {}, pastille(n, { ok: "OK", attention: "À voir", bloquant: "Budget", info: "Info" }[n]), h("p", { text: t })))),
+      h("p", { class: "note", text: `Projection à 7 % par an avec des versements qui augmentent de 2 % par an, comme dans Simuler. Ton salaire et tes autres dépenses restent ceux de ton budget prévu.` }));
   }
 
   function rendre12Mois() {

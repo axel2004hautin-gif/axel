@@ -402,6 +402,8 @@ details[open] > summary { margin-bottom: 10px; }
         <div class="carte-tete"><h2>Ce mois-ci</h2></div>
         <p class="petit muet">Ton effort d'épargne du mois, partagé selon ta stratégie : d'abord ce qui va à l'épargne de précaution, puis l'argent à investir, réparti pour rapprocher chaque poche de sa cible sans rien vendre.</p>
         <div id="plan-mois"></div>
+        <div class="actions"><button class="btn btn-ghost btn-petit" id="btn-rentree">J'ai reçu de l'argent (prime, chèque…)</button></div>
+        <div class="fiche" id="fiche-rentree" hidden></div>
         <div class="champs">
           <label class="champ"><span>Montant à investir (€)</span><input type="number" id="versement-montant" min="0" step="10" inputmode="decimal"></label>
         </div>
@@ -481,6 +483,7 @@ details[open] > summary { margin-bottom: 10px; }
           <div class="actions">
             <button class="btn btn-petit" id="b-ajouter">Ajouter une opération</button>
             <button class="btn btn-ghost btn-petit" id="b-importer" hidden>Importer un relevé avec Claude</button>
+            <button class="btn btn-ghost btn-petit" id="b-rentree">J'ai reçu de l'argent</button>
           </div>
         </div>
         <div class="fiche" id="b-fiche-import" hidden>
@@ -502,6 +505,20 @@ details[open] > summary { margin-bottom: 10px; }
         <div class="carte-tete"><h2>Mon budget prévu</h2><span id="b-plan-total"></span></div>
         <p class="petit muet">Ce que tu prévois chaque mois. Tes versements d'épargne viennent de ta stratégie.</p>
         <div id="b-plan"></div>
+      </div>
+      <div class="carte c12">
+        <div class="carte-tete"><h2>Et si je déménage ?</h2><span class="petit muet">Pour lire les annonces avec tes chiffres</span></div>
+        <p class="petit muet">Indique ce que coûterait un logement : la page montre ton nouveau budget, ce que tu pourras encore investir et ce que ça change pour ton objectif à 50 ans.</p>
+        <div class="champs">
+          <label class="champ"><span>Loyer charges comprises (€)</span><input type="number" id="dm-loyer" min="0" step="10" inputmode="decimal" placeholder="550"></label>
+          <label class="champ"><span>Électricité, internet (€/mois)</span><input type="number" id="dm-energie" min="0" step="5" inputmode="decimal" placeholder="60"></label>
+          <label class="champ"><span>Assurance habitation (€/mois)</span><input type="number" id="dm-assurance" min="0" step="1" inputmode="decimal" placeholder="10"></label>
+          <label class="champ"><span>Courses en plus (€/mois)</span><input type="number" id="dm-courses" min="0" step="10" inputmode="decimal" placeholder="200"></label>
+          <label class="champ"><span>Autres dépenses en plus (€/mois)</span><input type="number" id="dm-autres" min="0" step="10" inputmode="decimal" placeholder="50"></label>
+          <label class="champ"><span>APL estimée (€/mois)</span><input type="number" id="dm-apl" min="0" step="5" inputmode="decimal" placeholder="0"></label>
+          <label class="champ"><span>Dépôt de garantie, frais d'emménagement (€)</span><input type="number" id="dm-installation" min="0" step="100" inputmode="decimal" placeholder="1500"></label>
+        </div>
+        <div id="dm-resultat"></div>
       </div>
       <div class="carte c6">
         <h2>Sur 12 mois</h2>

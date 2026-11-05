@@ -12,17 +12,19 @@ Ouvre `index.html` dans un navigateur (rien à installer). Sur la page publiée 
 - **Mon patrimoine dans le temps** : la courbe épargne, bourse et crypto. Un point est noté chaque jour où je mets à jour un cours, un solde ou une ligne.
 - **Mes investissements** : chaque poche de ma stratégie, aujourd'hui contre la cible, avec la marge de rééquilibrage et les frais moyens.
 - **Ce qui demande ton attention** : ce qui s'écarte de ma stratégie ou de mes règles (poche hors marge, action ou crypto trop lourde, frais trop hauts, épargne de précaution en retard ou sans versement, compte rémunéré moins rentable que le Livret A après impôt, livret plein, ligne hors stratégie…).
+- **J'ai reçu de l'argent** : une prime, un chèque, un cadeau ? Indique le montant : la page applique ta stratégie (d'abord ce qui manque au palier d'épargne de précaution en cours, puis le partage du palier suivant, avec une part plaisir si tu veux), te dit sur quel compte verser, et met à jour soldes, parts et budget quand c'est fait.
 - **Ce mois-ci** : mon effort d'épargne du mois, partagé selon ma stratégie. D'abord le versement sur l'épargne de précaution (sur le compte au meilleur taux net qui a de la place), puis l'argent à investir, réparti ligne par ligne sans rien vendre. Une fois l'épargne de précaution complète, son versement peut basculer vers les investissements.
 - **Mes enveloppes** : PEA (plafond, 5 ans), compte-titres et wallet crypto (impôt latent si je vendais tout), assurance-vie, comptes d'épargne.
 - **Mes comptes d'épargne** : Livret A, LDDS, LEP, compte rémunéré, espèces du courtier, avec le solde, le taux brut, le taux net d'impôt et le plafond. Les comptes cochés forment l'épargne de précaution ; un nouveau solde se saisit directement dans le tableau.
 - **Cours en direct** : un robot relève les cours chaque soir de semaine à 22 h 47 (après la clôture de Wall Street) ; « Actualiser maintenant » le relance tout de suite. La valeur, la plus-value et la variation de la dernière séance suivent les cours du marché.
-- **Mes lignes** : ajouter, modifier, mettre à jour les cours. Un cours saisi à la main remplace celui du marché jusqu'au relevé suivant. Une ligne peut être suivie en valeur seule quand je ne connais pas le nombre de parts. « Importer avec Claude » lit une capture de Trade Republic (une par portefeuille : PEA, compte-titres, crypto) ou un texte copié, et range les espèces dans mes comptes d'épargne.
+- **Mes lignes** : ajouter, modifier, mettre à jour les cours. « J'ai vendu cette ligne » retire la ligne, estime l'impôt, range l'argent (réinvesti sur l'ETF du PEA ou en espèces) et note la vente au journal. Un cours saisi à la main remplace celui du marché jusqu'au relevé suivant. Une ligne peut être suivie en valeur seule quand je ne connais pas le nombre de parts. « Importer avec Claude » lit une capture de Trade Republic (une par portefeuille : PEA, compte-titres, crypto) ou un texte copié, et range les espèces dans mes comptes d'épargne.
 
 **Budget**
 - **Le mois** : revenus, dépenses, ce qui a été mis de côté, taux d'épargne et ce qui reste sur le compte, comparés au budget prévu. Les virements vers l'épargne et les investissements ne comptent pas comme des dépenses.
 - **Par catégorie** : chaque poste de dépense contre son budget, dépassements signalés.
 - **Mes opérations** : « Importer un relevé avec Claude » lit un texte copié depuis la banque, un CSV ou des captures (l'onglet Activité de Trade Republic par exemple) et range chaque opération dans une catégorie ; les doublons sont repérés. Ajout à la main possible.
 - **Mon budget prévu** : revenus et dépenses prévus par catégorie ; les versements d'épargne viennent de la stratégie, et le reste à vivre se calcule seul.
+- **Et si je déménage ?** : loyer, énergie, assurance, courses, APL et frais d'installation d'un logement ; la page montre le nouveau budget, ce qui reste à investir, la règle des 3 fois le loyer, les mois couverts par l'épargne de précaution et l'effet sur l'objectif à 50 ans.
 - **Sur 12 mois** : revenus et dépenses mois par mois, avec le taux d'épargne.
 - Le budget nourrit la stratégie : la moyenne des dépenses réelles peut devenir les « dépenses mensuelles » qui fixent l'objectif d'épargne de précaution, et la page vérifie que le budget permet les versements prévus.
 
@@ -54,7 +56,8 @@ Chaque principe coché pilote des vérifications et est donné à Claude. Le tex
 
 Une tâche planifiée de mon compte (« Boussole Bourse : cours du marché ») s'exécute chaque soir de semaine à 22 h 47, heure de Paris, dans une session cloud. Elle lit le portefeuille de la page, lance `robot/cours.js` (publié avec la page) et écrit les documents `marche` et `historique`.
 
-- Actions et ETF : Yahoo Finance, en prenant le cours le plus récent (pour un ISIN, la cotation de Stuttgart, ouverte jusqu'à 22 h, est comparée à la place principale) : c'est ce qui se rapproche le plus de la valeur affichée le soir par un courtier comme Trade Republic. Le symbole est trouvé avec l'ISIN ou le nom (Paris d'abord pour le PEA), ou donné à la main dans la ligne (ex. `CW8.PA`). Les cours en dollars ou en livres sont convertis en euros.
+- Actions et ETF : Tradegate, prix de vente en direct à partir de l'ISIN (trouvé par le nom sur Lang & Schwarz s'il manque) : c'est le prix qu'utilise Trade Republic pour valoriser un portefeuille, à quelques centimes près. Yahoo Finance prend le relais pour un titre absent de Tradegate.
+- À l'ouverture de la page, si les cours ont plus de 15 minutes (réglable) et que la bourse a pu bouger, la page relance le robot elle-même : les cours arrivent une demi-minute plus tard. Le symbole est trouvé avec l'ISIN ou le nom (Paris d'abord pour le PEA), ou donné à la main dans la ligne (ex. `CW8.PA`). Les cours en dollars ou en livres sont convertis en euros.
 - Cryptos : CoinGecko, à partir du symbole (BTC, ETH, SOL…) ou du nom.
 - Chaque exécution utilise mon compte Claude. Pour changer l'heure ou l'arrêter : claude.ai, Claude Code, tâches planifiées.
 - Test à la main : `node robot/cours.js portefeuille.json - - sortie/`.

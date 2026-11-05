@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Robot des cours de Boussole Bourse.
-// Lit le portefeuille, récupère les cours (Yahoo Finance pour les actions et les ETF, CoinGecko pour
-// les cryptos), convertit en euros, et prépare deux documents à écrire dans la page :
+// Lit le portefeuille, récupère les cours (Tradegate, prix de vente en direct, pour les actions et
+// les ETF ; Yahoo Finance s'ils n'y sont pas ; CoinGecko pour les cryptos), convertit en euros, et
+// prépare deux documents à écrire dans la page :
 //   - marche.json : les cours de chaque ligne, les symboles trouvés et les erreurs ;
 //   - historique.json : l'historique du patrimoine avec le relevé du jour.
 // Usage : node cours.js <portefeuille.json> <marche.json|-> <historique.json|-> <dossier de sortie>
@@ -96,39 +97,77 @@ const anciensCours = marchePrecedent.cours || {};
 const marche = { maj: new Date().toISOString(), sources: [], cours: {}, symboles: {}, erreurs: [] };
 const sources = new Set();
 
-// 1. Résoudre les symboles (réutilisés d'une fois sur l'autre tant que la ligne ne change pas).
+// Tradegate : prix de vente (bid) en direct, en euros, à partir de l'ISIN. C'est le prix le plus
+// proche de celui qu'affiche Trade Republic pour valoriser un portefeuille, à toute heure.
+const nombre = v => {
+  if (typeof v === "number") return v;
+  const t = String(v ?? "").trim();
+  const n = parseFloat(t.includes(",") ? t.replace(/\./g, "").replace(",", ".") : t);
+  return Number.isFinite(n) ? n : null;
+};
+const estIsin = c => /^[A-Z]{2}[A-Z0-9]{9}\d$/.test(c || "");
+function tradegate(isin) {
+  const r = getJSON(`https://www.tradegatebsx.com/refresh.php?isin=${isin}`);
+  if (!r) return null;
+  const bid = nombre(r.bid), last = nombre(r.last), close = nombre(r.close);
+  const prix = bid > 0 ? bid : last > 0 ? last : null;
+  if (!prix) return null;
+  return { prix, veille: close > 0 ? close : null, date: new Date().toISOString() };
+}
+// ISIN à partir du nom, via la recherche de Lang & Schwarz (la place de Trade Republic).
+function isinParNom(ligne) {
+  const r = getJSON(`https://www.ls-tc.de/_rpc/json/.lstc/instrument/search/main?q=${encodeURIComponent(nomPropre(ligne.nom))}&localeId=2`);
+  const liste = Array.isArray(r) ? r.filter(x => estIsin(x.isin)) : [];
+  const cat = { ETF: "ETF", Action: "Aktie", Fonds: "Fonds" }[ligne.type];
+  const x = (cat && liste.find(x => x.categoryName === cat)) || liste.find(x => ["Aktie", "ETF", "Fonds"].includes(x.categoryName));
+  return x ? x.isin : null;
+}
+
+// 1. Résoudre chaque ligne (réutilisé d'une fois sur l'autre tant que la ligne ne change pas).
 const cryptos = [];
 for (const l of lignes) {
   const cle = cleLigne(l);
   const ancien = anciensSymboles[l.id];
-  if (ancien && ancien.cle === cle && ancien.symbole) { marche.symboles[l.id] = ancien; if (ancien.source === "CoinGecko") cryptos.push(l); continue; }
+  // Réutilisé seulement s'il a été trouvé par cette version du robot (v: 2, avec Tradegate).
+  if (ancien && ancien.v === 2 && ancien.cle === cle && (ancien.symbole || ancien.isin)) { marche.symboles[l.id] = ancien; if (ancien.source === "CoinGecko") cryptos.push(l); continue; }
   if (estCrypto(l) && !/\.[A-Z]{1,3}$/.test(l.symbole || "")) {
     const id = l.symbole && /^[a-z0-9-]+$/.test(l.symbole) && l.symbole.length > 5 ? l.symbole : idCoinGecko(l);
-    if (id) { marche.symboles[l.id] = { symbole: id, cle, source: "CoinGecko" }; cryptos.push(l); }
+    if (id) { marche.symboles[l.id] = { symbole: id, cle, source: "CoinGecko", v: 2 }; cryptos.push(l); }
     else marche.erreurs.push({ ligne: l.nom, message: "Crypto introuvable sur CoinGecko : indique son symbole (BTC, ETH…)." });
     continue;
   }
+  // ISIN : celui de la ligne, sinon trouvé par le nom (sauf si un symbole Yahoo est imposé).
+  const isin = estIsin(l.code) ? l.code : estIsin(l.symbole) ? l.symbole : !l.symbole ? isinParNom(l) : null;
   let symbole = null;
-  if (l.symbole) symbole = l.symbole.trim();
-  else {
-    const essais = [l.code, nomPropre(l.nom)].filter(Boolean);
-    for (const e of essais) { symbole = chercherYahoo(e, l); if (symbole) break; }
+  if (l.symbole && !estIsin(l.symbole)) symbole = l.symbole.trim();
+  else if (!isin) {
+    for (const e of [l.code, nomPropre(l.nom)].filter(Boolean)) { symbole = chercherYahoo(e, l); if (symbole) break; }
   }
-  if (symbole) marche.symboles[l.id] = { symbole, cle, source: "Yahoo Finance" };
-  else marche.erreurs.push({ ligne: l.nom, message: "Introuvable sur Yahoo Finance : ajoute l'ISIN ou le symbole de cotation (ex. CW8.PA)." });
+  if (isin || symbole) marche.symboles[l.id] = { symbole: symbole || "", isin: isin || "", cle, source: isin ? "Tradegate" : "Yahoo Finance", v: 2 };
+  else marche.erreurs.push({ ligne: l.nom, message: "Introuvable : ajoute l'ISIN de la ligne (ex. IE0002XZSHO1) ou son symbole Yahoo Finance (ex. CW8.PA)." });
 }
 
-// 2. Cours des actions et ETF.
+// 2. Cours des actions et ETF : Tradegate d'abord, Yahoo Finance sinon.
 for (const l of lignes) {
   const s = marche.symboles[l.id];
-  if (!s || s.source !== "Yahoo Finance") continue;
-  // Le cours le plus récent : la place principale, et pour un ISIN la cotation de Stuttgart,
-  // ouverte jusqu'à 22 h (proche de ce qu'affiche un courtier en soirée).
-  const candidats = [s.symbole];
-  if (/^[A-Z]{2}[A-Z0-9]{9}\d$/.test(l.code || "") && !s.symbole.endsWith(".SG")) candidats.push(l.code + ".SG");
+  if (!s || s.source === "CoinGecko") continue;
+  if (s.isin) {
+    const t = tradegate(s.isin);
+    if (t) {
+      marche.cours[l.id] = { symbole: s.isin, nom: "", prix: t.prix, veille: t.veille, devise: "EUR", prixDevise: t.prix, date: t.date, source: "Tradegate", cle: s.cle };
+      sources.add("Tradegate");
+      continue;
+    }
+  }
+  // Yahoo Finance : le cours le plus récent entre la place principale et, pour un ISIN, Stuttgart.
+  let symbole = s.symbole;
+  if (!symbole) { symbole = chercherYahoo(s.isin, l) || chercherYahoo(nomPropre(l.nom), l); if (symbole) s.symbole = symbole; }
+  if (!symbole) { marche.erreurs.push({ ligne: l.nom, message: "Pas de cours sur Tradegate ni sur Yahoo Finance." }); if (anciensCours[l.id]) marche.cours[l.id] = anciensCours[l.id]; continue; }
+  const candidats = [symbole];
+  if (s.isin && !symbole.endsWith(".SG")) candidats.push(s.isin + ".SG");
   const cotes = candidats.map(coteYahoo).filter(Boolean);
   const c = cotes.sort((a, b) => (b.date || "").localeCompare(a.date || ""))[0] || null;
-  if (!c) { marche.erreurs.push({ ligne: l.nom, message: `Pas de cours pour ${s.symbole} aujourd'hui.` }); if (anciensCours[l.id]) marche.cours[l.id] = anciensCours[l.id]; continue; }
+  if (!c) { marche.erreurs.push({ ligne: l.nom, message: `Pas de cours pour ${symbole} aujourd'hui.` }); if (anciensCours[l.id]) marche.cours[l.id] = anciensCours[l.id]; continue; }
   const prix = versEuros(c.prix, c.devise), veille = c.veille != null ? versEuros(c.veille, c.devise) : null;
   if (prix == null) { marche.erreurs.push({ ligne: l.nom, message: `Conversion ${c.devise} → EUR impossible.` }); continue; }
   marche.cours[l.id] = { symbole: c.symbole, nom: c.nom, prix: Math.round(prix * 10000) / 10000, veille: veille != null ? Math.round(veille * 10000) / 10000 : null,
