@@ -97,6 +97,8 @@ window.BOUSSOLE = (() => {
     { id: "livretA", nom: "Livret A", taux: 1.7, plafond: 22950, impose: false },
     { id: "ldds", nom: "LDDS", taux: 1.7, plafond: 12000, impose: false },
     { id: "lep", nom: "LEP", taux: 2.5, plafond: 10000, impose: false },
+    // Livret Jeune (12-25 ans) : taux libre, au moins celui du Livret A ; fermé à la fin de l'année des 25 ans.
+    { id: "livretJeune", nom: "Livret Jeune", taux: 1.7, plafond: 1600, impose: false },
     { id: "remunere", nom: "Compte rémunéré", taux: null, plafond: 0, impose: true },
     { id: "courant", nom: "Compte courant", taux: 0, plafond: 0, impose: false },
     { id: "autre", nom: "Autre épargne", taux: null, plafond: 0, impose: true }

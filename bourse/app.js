@@ -984,7 +984,7 @@
       const t = TYPE_COMPTE[e.target.value];
       $("k-taux").value = t.taux == null ? "" : String(t.taux);
       $("k-plafond").value = t.plafond ? String(t.plafond) : "";
-      $("k-prec").checked = ["livretA", "ldds", "lep"].includes(t.id);
+      $("k-prec").checked = ["livretA", "ldds", "lep", "livretJeune"].includes(t.id);
       $("k-taux-note").hidden = t.taux != null;
     } });
     options(selType, B.TYPES_COMPTES.map(t => ({ value: t.id, label: t.nom })), c.type);
@@ -2291,7 +2291,8 @@ ${res.constats.map(c => `- [${c.niveau}] ${c.texte}`).join("\n")}`;
       lignes.push([`Chance d'avoir ${eur(num(objectif.objectifMontant), 0)} d'aujourd'hui, net, en ${objectif.objectifAnnee}`, r => r.objectif == null ? "—" : pct(r.objectif * 100, 0)]);
     else if (num(objectif.objectifMontant) > 0 && anneeObj != null)
       lignes.push([`Objectif de ${eur(num(objectif.objectifMontant), 0)} en ${objectif.objectifAnnee}`, () => anneeObj > duree ? "après la durée simulée" : "date passée"]);
-    vider($("cmp-tableau"), h("table", {},
+    const avecCrypto = dernierParams.strategies.some(st => num(st.poids.crypto) > 0 && num(st.poids.crypto) < 100);
+    vider($("cmp-tableau"), avecCrypto ? h("p", { class: "note", text: "Attention : avec la crypto, très volatile, le rééquilibrage mensuel du modèle crée un gain théorique qui dépend entièrement de l'hypothèse de rendement choisie pour elle. Personne ne connaît ce rendement : ne te fie pas à l'écart entre stratégies avec et sans crypto." }) : null, h("table", {},
       h("thead", {}, h("tr", {}, h("th", { text: `Dans ${duree} ans${reel ? ", en euros d'aujourd'hui" : ""}` }), noms.map((n, i) => h("th", { class: "num" }, h("span", { class: "puce", style: "background:" + couleurs[i] + ";margin-right:6px" }), n)))),
       h("tbody", {}, lignes.map(([lib, f]) => h("tr", {}, h("td", { text: lib }), res.map(r => h("td", { class: "num chiffre", text: f(r) })))))));
     $("btn-cmp-claude").hidden = !claudePret;
