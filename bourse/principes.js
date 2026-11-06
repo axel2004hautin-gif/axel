@@ -213,6 +213,11 @@ window.BOUSSOLE = (() => {
     smicHoraire: 12.31, smicMensuel: 1867.02, smicDepuis: "2026-06-01",
     // Une heure supplémentaire : cotisations salariales réduites (jusqu'à 11,31 points) et pas d'impôt.
     reductionHeuresSup: 11.31,
+    // Cotisations salariales d'un employé non cadre (taux de la fiche de paie d'octobre 2026, SAS JMC) :
+    // Sécurité sociale 6,90 % + 0,40 %, retraite complémentaire 4,01 %, prévoyance 0,335 %, mutuelle
+    // fixe (0,83 % du plafond de la Sécurité sociale, 4 005 €), CSG/CRDS 9,70 % sur 98,25 % du brut plus
+    // la part patronale de mutuelle et de prévoyance.
+    cotisations: { proportionnelles: 11.645, mutuelle: 33.24, csg: 9.70, assietteCsg: 98.25, prevoyancePatronale: 0.335, mutuellePatronale: 33.24 },
     // Prime d'activité : quand le revenu du travail augmente, elle baisse d'environ 39 % de la hausse
     // (le calcul retient 61 % des revenus d'activité), avec trois mois de décalage.
     baissePrimeActivite: 39,

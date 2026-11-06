@@ -134,7 +134,8 @@
     if (nom === "discussion") return { messages: Array.isArray(d.messages) ? d.messages.filter(m => m && (m.role === "user" || m.role === "assistant") && m.content) : [] };
     if (nom === "budget") return { prevu: d.prevu && typeof d.prevu === "object" ? Object.fromEntries(Object.entries(d.prevu).map(([k, v]) => [k, num(v)])) : {},
       demenagement: d.demenagement && typeof d.demenagement === "object" ? Object.fromEntries(Object.entries(d.demenagement).map(([k, v]) => [k, num(v)])) : {},
-      paie: d.paie && typeof d.paie === "object" ? { ...d.paie } : {} };
+      // « net », « promoAnnee » et « promoBrut » : anciens champs (le net se calcule maintenant depuis le brut).
+      paie: d.paie && typeof d.paie === "object" ? Object.fromEntries(Object.entries(d.paie).filter(([k]) => !["net", "promoAnnee", "promoBrut"].includes(k))) : {} };
     if (nom === "marche") return { ...base, ...d, cours: d.cours && typeof d.cours === "object" ? d.cours : {}, symboles: d.symboles || {}, erreurs: Array.isArray(d.erreurs) ? d.erreurs : [] };
     if (nom === "robot") return { ...base, ...d };
     if (nom === "historique") return { points: Array.isArray(d.points) ? d.points.filter(x => x && /^\d{4}-\d{2}-\d{2}$/.test(x.date)).sort((a, b) => a.date < b.date ? -1 : 1) : [] };
@@ -935,6 +936,7 @@
   }
   const TYPES_RENTREE = [
     { id: "prime", nom: "Prime de mon employeur", categorie: "salaire" },
+    { id: "heures-sup", nom: "Heures supplémentaires", categorie: "salaire" },
     { id: "aide", nom: "Prime d'activité ou aide", categorie: "aides" },
     { id: "cadeau", nom: "Cadeau, chèque", categorie: "autres-revenus" },
     { id: "remboursement", nom: "Remboursement", categorie: "autres-revenus" },
@@ -981,7 +983,7 @@
     montant.focus({ preventScroll: true });
   }
   function appliquerRentree(c, type, date, comptes) {
-    const t = TYPES_RENTREE.find(x => x.id === type) || TYPES_RENTREE[4];
+    const t = TYPES_RENTREE.find(x => x.id === type) || TYPES_RENTREE.find(x => x.id === "autre");
     const ops = [{ date, libelle: t.nom, montant: c.montant, categorie: t.categorie }];
     const verse = c.prec + c.enPlus + c.investir;
     if (comptes) {
@@ -1729,11 +1731,19 @@ Règles :
   const PAIE = B.PAIE;
   function paie() {
     const p = S.budget.paie || {};
-    return { brut: num(p.brut) || PAIE.smicMensuel, heures: num(p.heures) || 151.67, net: num(p.net) || num(S.budget.prevu.salaire), pas: num(p.pas),
+    return { brut: num(p.brut) || PAIE.smicMensuel, heures: num(p.heures) || 151.67, pas: num(p.pas),
       entree: p.entree || "", categorie: p.categorie || "1-2", smic: p.smic !== false, hausse: p.hausse != null && p.hausse !== "" ? num(p.hausse) : 2,
-      hs: num(p.hs), prime: num(p.prime), augm: num(p.augm), promoAnnee: num(p.promoAnnee), promoBrut: num(p.promoBrut) };
+      hs: num(p.hs), prime: num(p.prime), augm: num(p.augm) };
   }
-  const tauxNetPaie = p => p.brut > 0 && p.net > 0 ? p.net / p.brut : 0.77;
+  // Du brut au net, cotisation par cotisation, comme sur la fiche de paie. `f` indexe la mutuelle
+  // (liée au plafond de la Sécurité sociale) pour les années à venir.
+  function netDepuisBrut(brut, hsBrut = 0, f = 1) {
+    const c = PAIE.cotisations;
+    const proportionnelles = brut * c.proportionnelles / 100, mutuelle = c.mutuelle * f;
+    const csg = (brut * c.assietteCsg / 100 + c.mutuellePatronale * f + brut * c.prevoyancePatronale / 100) * c.csg / 100;
+    const reduction = hsBrut * Math.min(PAIE.reductionHeuresSup, c.proportionnelles) / 100;
+    return { net: brut - proportionnelles - mutuelle - csg + reduction, proportionnelles, mutuelle, csg, reduction };
+  }
   // Prime d'ancienneté (convention de l'habillement) à une date donnée.
   function primeAnciennete(p, iso) {
     if (!p.entree) return 0;
@@ -1743,7 +1753,7 @@ Règles :
   }
   // Prime d'activité après une hausse de revenu net : baisse d'environ 39 % de la hausse, jamais sous 0.
   const primeActiviteApres = (pa, hausseNette) => { const v = Math.max(0, pa - hausseNette * PAIE.baissePrimeActivite / 100); return v < 15 ? 0 : v; };
-  const PAIE_CHAMPS = { "paie-poste": "poste", "paie-brut": "brut", "paie-heures": "heures", "paie-net": "net", "paie-pas": "pas", "paie-entree": "entree", "paie-categorie": "categorie", "paie-hs": "hs", "paie-prime": "prime", "paie-augm": "augm", "paie-hausse": "hausse", "paie-promo-annee": "promoAnnee", "paie-promo-brut": "promoBrut" };
+  const PAIE_CHAMPS = { "paie-poste": "poste", "paie-brut": "brut", "paie-heures": "heures", "paie-pas": "pas", "paie-entree": "entree", "paie-categorie": "categorie", "paie-hs": "hs", "paie-prime": "prime", "paie-augm": "augm", "paie-hausse": "hausse" };
   for (const [id, cle] of Object.entries(PAIE_CHAMPS)) {
     const el = $(id);
     el.addEventListener(el.tagName === "SELECT" || el.type === "date" ? "change" : "input", e => {
@@ -1755,47 +1765,62 @@ Règles :
   $("paie-smic").addEventListener("change", e => { S.budget.paie ||= {}; S.budget.paie.smic = e.target.checked; enregistrer("budget"); rendrePaie(); });
 
   function rendrePaie() {
-    const p = paie(), t = tauxNetPaie(p), pa = num(S.budget.prevu.aides), pl = planBudget();
+    const p = paie(), pa = num(S.budget.prevu.aides), pl = planBudget();
     remplir("paie-poste", (S.budget.paie || {}).poste || "");
-    remplir("paie-brut", p.brut); remplir("paie-heures", p.heures); remplir("paie-net", p.net || ""); remplir("paie-pas", p.pas);
+    remplir("paie-brut", p.brut); remplir("paie-heures", p.heures); remplir("paie-pas", p.pas);
     remplir("paie-entree", p.entree); remplir("paie-categorie", p.categorie); remplir("paie-smic", p.smic);
     remplir("paie-hs", p.hs || ""); remplir("paie-prime", p.prime || ""); remplir("paie-augm", p.augm || "");
-    remplir("paie-hausse", p.hausse); remplir("paie-promo-annee", p.promoAnnee || ""); remplir("paie-promo-brut", p.promoBrut || "");
+    remplir("paie-hausse", p.hausse);
     const horaire = p.brut / p.heures, auSmic = Math.abs(horaire / PAIE.smicHoraire - 1) < 0.01;
-    $("paie-note").textContent = p.net ? `${pct(t * 100, 1)} du brut arrive sur ton compte` : "";
+    const base = netDepuisBrut(p.brut);
+    const impot = x => x * (1 - p.pas / 100);
+    const netBase = impot(base.net);
+    $("paie-note").textContent = `${pct(base.net / p.brut * 100, 1)} du brut arrive sur ton compte`;
     const tuile = (lib, val, sous, cls) => h("div", { class: "tuile" }, h("span", { class: "etiquette", text: lib }), h("b", { class: cls || null, text: val }), sous ? h("span", { class: "petit muet", text: sous }) : null);
-    const netPas = p.net * (1 - p.pas / 100);
     const prochaine = primeAnciennete(p, ajouterMois(aujourdhui(), 1)) || null;
     const debutAnc = p.entree ? ajouterMois(p.entree, 36) : null;
+    const ecartBudget = num(S.budget.prevu.salaire) ? netBase - num(S.budget.prevu.salaire) : 0;
+    const ligneCot = (lib, v) => h("tr", {}, h("td", { text: lib }), h("td", { class: "num chiffre", text: "−" + eur(v, 2) }));
     vider($("paie-aujourdhui"), h("div", { class: "tuiles" },
       tuile("Taux horaire brut", eur(horaire, 2), auSmic ? `le SMIC (${eur(PAIE.smicHoraire, 2)} depuis le ${dateFr(PAIE.smicDepuis)})` : `SMIC : ${eur(PAIE.smicHoraire, 2)}`),
-      tuile("Net sur ton compte", eur(netPas, 0), p.pas ? `après ${pct(p.pas, 1)} d'impôt à la source` : "pas d'impôt prélevé"),
-      tuile("Avec la prime d'activité", eur(netPas + pa, 0), pa ? `dont ${eur(pa, 0)} de prime d'activité` : "sans prime d'activité"),
+      tuile("Net sur ton compte", eur(netBase, 2), p.pas ? `après ${pct(p.pas, 1)} d'impôt à la source` : "sans heures en plus, pas d'impôt prélevé"),
+      tuile("Avec la prime d'activité", eur(netBase + pa, 0), pa ? `dont ${eur(pa, 0)} de prime d'activité` : "sans prime d'activité"),
       tuile("Prime d'ancienneté", prochaine ? eur(prochaine, 0) + " brut" : debutAnc ? "dès le " + dateFr(debutAnc) : "—", debutAnc && !prochaine ? `${eur((PAIE.anciennete[p.categorie] || [])[0] || 34, 0)} brut par mois au début` : null)),
-      auSmic && p.smic ? h("p", { class: "petit muet", text: "Ton salaire est au SMIC : il augmente à chaque revalorisation (au 1er janvier, et en cours d'année si l'inflation dépasse 2 %, comme le 1er juin 2026). Le reste du temps, il ne bouge qu'avec des heures en plus, des primes ou une évolution de poste." }) : null);
+      h("details", {}, h("summary", { text: "Du brut au net, ligne par ligne" }), h("div", { class: "defile" }, h("table", {}, h("tbody", {},
+        h("tr", {}, h("td", { text: "Salaire brut" }), h("td", { class: "num chiffre", text: eur(p.brut, 2) })),
+        ligneCot("Sécurité sociale, retraite complémentaire et prévoyance (11,645 %)", base.proportionnelles),
+        ligneCot("Mutuelle de l'entreprise", base.mutuelle),
+        ligneCot("CSG et CRDS (9,70 %)", base.csg),
+        h("tr", { class: "table-total" }, h("td", { text: "Net à payer" }), h("td", { class: "num chiffre", text: eur(base.net, 2) }))))),
+        h("p", { class: "note", text: "Taux de ta fiche de paie d'octobre 2026. Ils peuvent bouger un peu chaque 1er janvier (mutuelle, plafond de la Sécurité sociale)." })),
+      Math.abs(ecartBudget) > 5 ? h("p", { class: "petit muet", text: `Ton budget prévoit ${eur(num(S.budget.prevu.salaire), 2)} de salaire ; le calcul donne ${eur(netBase, 2)}.` }) : null,
+      auSmic && p.smic ? h("p", { class: "petit muet", text: "Ton salaire est au SMIC : il augmente à chaque revalorisation (au 1er janvier, et en cours d'année si l'inflation dépasse 2 %, comme le 1er juin 2026). Entre deux, il ne bouge qu'avec des heures en plus, des primes ou une augmentation que tu demandes." }) : null);
 
     // Un mois différent.
-    const hsBrut = p.hs * horaire * 1.25, hsNet = hsBrut * Math.min(1, t + PAIE.reductionHeuresSup / 100);
-    const augmNet = p.augm * t * (1 - p.pas / 100), primeNet = p.prime * t * (1 - p.pas / 100);
+    const hsBrut = p.hs * horaire * 1.25;
+    const mois = netDepuisBrut(p.brut + p.augm + hsBrut, hsBrut);
+    const avecAugm = netDepuisBrut(p.brut + p.augm);
+    const hsNet = mois.net - avecAugm.net, augmNet = impot(avecAugm.net - base.net);
+    const primeNet = impot(netDepuisBrut(p.brut + p.augm + hsBrut + p.prime, hsBrut).net - mois.net);
     const recurrent = hsNet + augmNet;
     const z = $("paie-simulation");
-    if (!(recurrent > 0 || primeNet > 0)) { vider(z, h("p", { class: "vide", text: "Ajoute des heures, une prime ou une augmentation pour voir ce qu'elles rapportent vraiment." })); }
+    if (!(recurrent > 0 || primeNet > 0)) { vider(z, h("p", { class: "vide", text: "Ajoute des heures supplémentaires, une prime ou une augmentation pour voir ce qu'elles rapportent vraiment." })); }
     else {
       const paApres = primeActiviteApres(pa, recurrent);
       const gainReel = recurrent - (pa - paApres);
       const plm = planDuMois();
       const ratio = plm.palier ? num(plm.palier.versement) / Math.max(1, num(plm.palier.versement) + num(plm.palier.investi)) : 0;
       const lignes = [];
-      if (hsBrut > 0) lignes.push(`${nf(0, 1).format(p.hs)} h supplémentaires majorées de 25 % : ${eur(hsBrut, 0)} brut, environ ${eur(hsNet, 0)} net (cotisations réduites, sans impôt sur le revenu jusqu'à 7 500 € par an).`);
-      if (augmNet > 0) lignes.push(`Une augmentation de ${eur(p.augm, 0)} brut : environ ${eur(augmNet, 0)} net de plus chaque mois.`);
-      if (recurrent > 0 && pa > 0) lignes.push(`Ta prime d'activité baisserait d'environ ${eur(pa - paApres, 0)} par mois à partir du trimestre suivant : le gain réel est d'environ ${eur(gainReel, 0)} par mois.`);
+      if (hsBrut > 0) lignes.push(`${nf(0, 2).format(p.hs)} h supplémentaires majorées de 25 % (${eur(horaire * 1.25, 4)} de l'heure) : ${eur(hsBrut, 2)} brut, ${eur(hsNet, 2)} net (cotisations réduites, sans impôt sur le revenu jusqu'à 7 500 € par an).`);
+      if (augmNet > 0) lignes.push(`Une augmentation de ${eur(p.augm, 0)} brut par mois : ${eur(augmNet, 2)} net de plus chaque mois.`);
+      if (recurrent > 0 && pa > 0) lignes.push(`Ta prime d'activité baisserait d'environ ${eur(pa - paApres, 0)} par mois au trimestre suivant : le gain réel est d'environ ${eur(gainReel, 0)} par mois. Pour des heures sup ponctuelles, la baisse ne touche qu'un trimestre.`);
       if (recurrent > 0) lignes.push(plm.palier ? `Selon ta stratégie, ces ${eur(gainReel, 0)} iraient à ${eur(gainReel * ratio, 0)} sur ton épargne de précaution et ${eur(gainReel * (1 - ratio), 0)} sur tes investissements (partage du palier en cours).` : `Selon ta stratégie, ces ${eur(gainReel, 0)} pourraient aller à tes investissements.`);
       if (primeNet > 0) {
         const c = conseilRentree(Math.round(primeNet));
-        lignes.push(`Une prime de ${eur(p.prime, 0)} brut : environ ${eur(primeNet, 0)} net, une fois. ${pa > 0 ? `Ta prime d'activité du trimestre suivant baisserait d'environ ${eur(Math.min(pa * 3, primeNet * PAIE.baissePrimeActivite / 100), 0)} au total, à garder de côté. ` : ""}Selon ta stratégie : ${[...c.versComptes.map(v => `${eur(v.montant, 0)} sur ${v.compte ? v.compte.nom : "un livret"}`), ...c.plan.map(x => `${eur(x.montant, 0)} sur ${x.ligne ? x.ligne.nom : x.poche.nom}`)].join(", ") || "rien à placer"}.`);
+        lignes.push(`Une prime de ${eur(p.prime, 0)} brut : ${eur(primeNet, 0)} net, une fois. ${pa > 0 ? `Ta prime d'activité du trimestre suivant baisserait d'environ ${eur(Math.min(pa * 3, primeNet * PAIE.baissePrimeActivite / 100), 0)} au total, à garder de côté. ` : ""}Selon ta stratégie : ${[...c.versComptes.map(v => `${eur(v.montant, 0)} sur ${v.compte ? v.compte.nom : "un livret"}`), ...c.plan.map(x => `${eur(x.montant, 0)} sur ${x.ligne ? x.ligne.nom : x.poche.nom}`)].join(", ") || "rien à placer"}.`);
       }
       vider(z, h("div", { class: "tuiles" },
-        tuile("Net du mois", eur(netPas + hsNet + augmNet + primeNet, 0), `au lieu de ${eur(netPas, 0)}`),
+        tuile("Net du mois", eur(netBase + hsNet + augmNet + primeNet, 2), `au lieu de ${eur(netBase, 2)}`),
         recurrent > 0 ? tuile("Gain réel par mois", eur(gainReel, 0), pa ? "après la baisse de la prime d'activité" : null) : null),
         h("ul", { style: "margin:4px 0 0;padding-left:1.2em;display:grid;gap:4px" }, lignes.map(x => h("li", { text: x }))));
     }
@@ -1806,19 +1831,17 @@ Règles :
     const annees = [...new Set([...Array.from({ length: 8 }, (_, i) => an0 + 1 + i), an0 + 10, an0 + 15, objectif].filter(a => a > an0 && a <= objectif))].sort((a, b) => a - b);
     const rangs = annees.map(a => {
       const n = a - an0, f = Math.pow(1 + g, n);
-      let base = p.promoAnnee && p.promoBrut && a >= p.promoAnnee ? p.promoBrut * Math.pow(1 + g, a - p.promoAnnee) : p.brut * f;
-      if (p.smic) base = Math.max(base, PAIE.smicMensuel * f * Math.min(1, p.heures / 151.67));
+      let brutBase = (p.brut + p.augm) * f;
+      if (p.smic) brutBase = Math.max(brutBase, PAIE.smicMensuel * f * Math.min(1, p.heures / 151.67));
       const anc = primeAnciennete(p, `${a}-07-01`);
-      const brut = base + anc, net = brut * t * (1 - p.pas / 100);
-      const paA = primeActiviteApres(pa * f, net - p.net * (1 - p.pas / 100) * f);
+      const brut = brutBase + anc, net = impot(netDepuisBrut(brut, 0, f).net);
+      const paA = primeActiviteApres(pa * f, net - netBase * f);
       const total = net + paA, reel = total / Math.pow(1 + infl, n);
-      const depenses = pl.depenses * Math.pow(1 + infl, n);
-      return { a, brut, anc, net, pa: paA, total, reel, capacite: total - depenses };
+      return { a, brut, anc, net, pa: paA, total, reel, capacite: total - pl.depenses * Math.pow(1 + infl, n) };
     });
-    const aujourd = netPas + pa;
-    const fin = rangs[rangs.length - 1];
+    const aujourd = netBase + pa, fin = rangs[rangs.length - 1];
     vider(zf,
-      fin ? h("p", {}, `${p.smic && !p.promoBrut ? "Si ton salaire suit seulement le SMIC" : "Avec ces hypothèses"} (+${pct(p.hausse, 1)} par an), tu toucherais environ ${eur(rangs[0].total, 0)} par mois en ${rangs[0].a} et ${eur(fin.total, 0)} en ${fin.a}, soit ${eur(fin.reel, 0)} d'aujourd'hui (aujourd'hui : ${eur(aujourd, 0)}). ${p.smic && !p.promoBrut ? "Ton pouvoir d'achat resterait presque le même : c'est une évolution de poste qui le fera vraiment grandir. " : ""}${p.entree ? `La prime d'ancienneté démarre le ${dateFr(ajouterMois(p.entree, 36))}.` : ""}`) : null,
+      fin ? h("p", {}, `${p.smic && !p.augm ? "Si ton salaire suit le SMIC" : "Avec ces hypothèses"} (+${pct(p.hausse, 1)} par an${p.augm ? `, et ton augmentation de ${eur(p.augm, 0)} brut` : ""}), tu toucherais environ ${eur(rangs[0].total, 0)} par mois en ${rangs[0].a} et ${eur(fin.total, 0)} en ${fin.a}, soit ${eur(fin.reel, 0)} d'aujourd'hui (aujourd'hui : ${eur(aujourd, 0)}). ${p.smic && !p.augm ? "Ton pouvoir d'achat resterait presque le même : ce sont les augmentations que tu obtiendras, les heures en plus et ton épargne qui feront la différence. " : ""}${p.entree ? `La prime d'ancienneté démarre le ${dateFr(ajouterMois(p.entree, 36))}.` : ""}`) : null,
       h("div", { class: "defile" }, h("table", {},
         h("thead", {}, h("tr", {}, ["Année", "Brut", "dont ancienneté", "Net", "Prime d'activité", "Total par mois", "En € d'aujourd'hui", "À épargner*"].map((x, i) => h("th", { class: i ? "num" : null, text: x })))),
         h("tbody", {}, rangs.map(r => h("tr", {}, h("td", { text: String(r.a) }),
@@ -1826,7 +1849,7 @@ Règles :
           h("td", { class: "num chiffre", text: eur(r.net, 0) }), h("td", { class: "num chiffre", text: r.pa ? eur(r.pa, 0) : "—" }),
           h("td", { class: "num chiffre", text: eur(r.total, 0) }), h("td", { class: "num chiffre", text: eur(r.reel, 0) }),
           h("td", { class: "num chiffre", text: eur(r.capacite, 0) })))))),
-      h("p", { class: "note", text: "* Si tes dépenses restent celles de ton budget prévu (chez tes parents), augmentées de l'inflation : à recalculer avec « Et si je déménage ? ». Estimations : le taux de cotisations reste celui de ta paie actuelle, la prime d'activité baisse d'environ 39 % de chaque hausse de revenu, et la prime d'ancienneté est celle de la convention de l'habillement (IDCC 1483) ; vérifie ta catégorie sur ta fiche de paie et le montant exact de la prime d'activité sur le simulateur de la CAF." }));
+      h("p", { class: "note", text: "Sans heures supplémentaires. * Si tes dépenses restent celles de ton budget prévu (chez tes parents), augmentées de l'inflation : à recalculer avec « Et si je déménage ? ». Estimations : cotisations de ta fiche de paie, prime d'activité qui baisse d'environ 39 % de chaque hausse de revenu, prime d'ancienneté de la convention de l'habillement (catégorie de ta fiche de paie) ; pour la prime d'activité exacte, le simulateur de la CAF fait foi." }));
   }
 
   // ---------- et si je déménage ? ----------
@@ -3124,8 +3147,9 @@ ${texte ? "\nTEXTE COPIÉ :\n" + texte.slice(0, 60000) : ""}${fichiers.length ? 
     const p = paie();
     const age = pr.naissance ? Math.floor((Date.now() - new Date(pr.naissance + "T12:00:00")) / (365.25 * 86400000)) : null;
     const poste = String((S.budget.paie || {}).poste || "").trim();
-    if (age || poste) L.push(`- ${age ? `${age} ans` : ""}${age && poste ? ", " + poste.charAt(0).toLowerCase() + poste.slice(1) : poste}${p.smic && Math.abs(p.brut / p.heures / PAIE.smicHoraire - 1) < 0.01 ? ", payé au SMIC" : ""}.`);
-    L.push(`- ${p.net ? `${eur(p.net, 0)} net par mois${num(S.budget.prevu.aides) ? ` + ${eur(num(S.budget.prevu.aides), 0)} de prime d'activité` : ""}` : "Revenus : voir budget"}${plb.depenses ? `, environ ${eur(plb.depenses, 0)} de dépenses par mois` : ""}.`);
+    if (age || poste) L.push(`- ${age ? `${age} ans` : ""}${age && poste ? ", " + poste.charAt(0).toLowerCase() + poste.slice(1) : poste}${p.smic && Math.abs(p.brut / p.heures / PAIE.smicHoraire - 1) < 0.01 ? `, payé au SMIC (${eur(p.brut, 2)} brut pour ${nf(0, 2).format(p.heures)} h), avec parfois des heures supplémentaires majorées de 25 %` : ""}.`);
+    const netPaie = netDepuisBrut(p.brut).net * (1 - p.pas / 100);
+    L.push(`- ${netPaie ? `${eur(netPaie, 0)} net par mois${num(S.budget.prevu.aides) ? ` + ${eur(num(S.budget.prevu.aides), 0)} de prime d'activité` : ""}` : "Revenus : voir budget"}${plb.depenses ? `, environ ${eur(plb.depenses, 0)} de dépenses par mois` : ""}.`);
     if (pr.courtier) L.push(`- Mes comptes : ${pr.courtier}.`);
     L.push(`- Objectif : ${pr.objectifTexte}. ${eur(num(pr.objectifMontant), 0)} d'aujourd'hui en ${pr.objectifAnnee}, horizon ${num(pr.horizon)} ans.`);
     L.push(`- Profil de risque : ${risque.toLowerCase()}. Si mon portefeuille perd 30 % : « ${reaction} ».`);
