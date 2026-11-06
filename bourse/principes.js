@@ -142,7 +142,8 @@ window.BOUSSOLE = (() => {
       "Je n'achète pas une action sur un conseil entendu sans l'avoir étudiée."
     ],
     enveloppes: { peaOuverture: "", peaVersements: 0, avOuverture: "" },
-    principes: Object.fromEntries(PRINCIPES.map(p => [p.id, true]))
+    principes: Object.fromEntries(PRINCIPES.map(p => [p.id, true])),
+    sagesse: {}
   };
 
   // Modèles d'allocation proposés dans Ma stratégie.
@@ -205,6 +206,42 @@ window.BOUSSOLE = (() => {
     { id: "epargne", nom: "Épargne et investissement", type: "epargne" }
   ];
 
+  // Paie. SMIC au 1er juin 2026 : 12,31 € brut de l'heure, 1 867,02 € brut par mois pour 35 h.
+  // Prime d'ancienneté de la convention de l'habillement (IDCC 1483, employés), euros bruts par mois
+  // à temps plein, selon la catégorie de classification (code.travail.gouv.fr, à jour au 1er avril 2026).
+  const PAIE = {
+    smicHoraire: 12.31, smicMensuel: 1867.02, smicDepuis: "2026-06-01",
+    // Une heure supplémentaire : cotisations salariales réduites (jusqu'à 11,31 points) et pas d'impôt.
+    reductionHeuresSup: 11.31,
+    // Prime d'activité : quand le revenu du travail augmente, elle baisse d'environ 39 % de la hausse
+    // (le calcul retient 61 % des revenus d'activité), avec trois mois de décalage.
+    baissePrimeActivite: 39,
+    anciennete: {
+      "1-2": [34, 49, 64, 79, 94, 109], "3-4": [35, 50, 65, 80, 95, 110],
+      "5-6": [36, 51, 66, 81, 96, 111], "7-8": [37, 52, 67, 82, 97, 112]
+    }
+  };
+
+  // Les règles des grands investisseurs, et ce qu'elles veulent dire pour un investisseur en ETF.
+  const SAGESSE = [
+    { id: "botte", auteur: "John Bogle, fondateur de Vanguard", citation: "Ne cherchez pas l'aiguille dans la botte de foin : achetez la botte de foin.", regle: "Le cœur du portefeuille, c'est un ETF monde qui détient toute la botte, plutôt que des paris sur quelques actions." },
+    { id: "indiciel", auteur: "Warren Buffett, lettre aux actionnaires de 1996", citation: "Pour la plupart des investisseurs, la meilleure façon de détenir des actions est un fonds indiciel aux frais minimes.", regle: "Un ETF indiciel peu cher, renforcé chaque mois, bat la plupart des gérants sur le long terme." },
+    { id: "frais", auteur: "John Bogle", citation: "En investissement, on obtient ce pour quoi on ne paie pas.", regle: "Chaque point de frais se compose contre toi : garde des frais annuels bas et des ordres sans frais (plan programmé)." },
+    { id: "temps", auteur: "John Bogle", citation: "Le temps est ton ami ; l'impulsion est ton ennemie.", regle: "Ne décide rien sous le coup d'une émotion : délai de réflexion avant tout achat ou toute vente hors plan." },
+    { id: "interrompre", auteur: "Charlie Munger", citation: "La première règle des intérêts composés : ne jamais les interrompre sans nécessité.", regle: "Ne retire rien de tes investissements pour une dépense : c'est le rôle de l'épargne de précaution." },
+    { id: "attendre", auteur: "Charlie Munger", citation: "Le gros de l'argent ne se fait pas en achetant et en vendant, mais en attendant.", regle: "Ton avantage, ce sont tes 28 ans d'horizon : laisse le temps travailler." },
+    { id: "peur", auteur: "Warren Buffett", citation: "Soyez craintif quand les autres sont avides, et avide quand les autres sont craintifs.", regle: "Quand la bourse chute pour des raisons de contexte, continue tes versements, voire renforce ; ne vends pas." },
+    { id: "corrections", auteur: "Peter Lynch", citation: "Bien plus d'argent a été perdu par des investisseurs qui se préparaient aux corrections, ou essayaient de les anticiper, que dans les corrections elles-mêmes.", regle: "N'essaie pas de deviner le bon moment : verse chaque mois, quel que soit le marché." },
+    { id: "connaitre", auteur: "Peter Lynch", citation: "Sachez ce que vous possédez, et pourquoi vous le possédez.", regle: "Pour chaque ligne, sois capable d'expliquer en deux phrases ce que c'est et pourquoi elle est là ; sinon, ne l'achète pas." },
+    { id: "lui-meme", auteur: "Benjamin Graham, L'Investisseur intelligent", citation: "Le principal problème de l'investisseur, et même son pire ennemi, sera probablement lui-même.", regle: "Écris tes décisions au journal et relis tes règles avant d'agir : la discipline compte plus que l'intelligence." },
+    { id: "prix", auteur: "Warren Buffett, lettre de 2008", citation: "Le prix, c'est ce que vous payez ; la valeur, c'est ce que vous obtenez.", regle: "Une action à la mode peut être une bonne entreprise et un mauvais placement à ce prix : regarde la valorisation avant d'acheter." },
+    { id: "different", auteur: "John Templeton", citation: "Les quatre mots les plus dangereux en investissement : cette fois, c'est différent.", regle: "Méfie-toi des bulles et des promesses de nouvelle ère, en crypto comme en bourse." },
+    { id: "preparer", auteur: "Howard Marks, Oaktree", citation: "On ne peut pas prédire. On peut se préparer.", regle: "Prépare-toi aux baisses (épargne de précaution, règles écrites) au lieu d'essayer de les prévoir." },
+    { id: "ego", auteur: "Morgan Housel, La Psychologie de l'argent", citation: "L'épargne, c'est l'écart entre ton ego et tes revenus.", regle: "Ton taux d'épargne est ton premier moteur : chaque hausse de salaire peut aller en partie à tes investissements." },
+    { id: "somniferes", auteur: "André Kostolany", citation: "Achetez des actions, prenez des somnifères et ne regardez plus vos titres. Après beaucoup d'années, vous serez riche.", regle: "Regarde ton portefeuille moins souvent : une fois par mois suffit pour suivre ton plan." },
+    { id: "ennui", auteur: "Paul Samuelson, prix Nobel d'économie", citation: "Investir devrait ressembler à regarder la peinture sécher ou l'herbe pousser. Si vous voulez de l'excitation, allez à Las Vegas.", regle: "Une stratégie ennuyeuse qui dure 28 ans vaut mieux qu'une stratégie excitante qu'on abandonne." }
+  ];
+
   // Stratégies proposées dans Comparer. `poids` : part de chaque classe en %.
   const PRESETS_COMPARER = [
     { id: "actions", nom: "100 % actions monde", poids: { actions: 100 }, frais: 0.3, enveloppe: "PEA" },
@@ -214,6 +251,6 @@ window.BOUSSOLE = (() => {
     { id: "livret", nom: "Livret A", poids: { livret: 100 }, frais: 0, enveloppe: "aucune" }
   ];
 
-  return { PRINCIPES, CLASSES, CORRELATIONS, FISCALITE, TYPES, ENVELOPPES, TYPES_COMPTES, CATEGORIES_BUDGET, ZONES, RISQUES, REACTIONS,
+  return { PRINCIPES, CLASSES, CORRELATIONS, FISCALITE, TYPES, ENVELOPPES, TYPES_COMPTES, CATEGORIES_BUDGET, PAIE, SAGESSE, ZONES, RISQUES, REACTIONS,
     STRATEGIE_DEPART, MODELES, PORTEFEUILLE_EXEMPLE, PRESETS_COMPARER };
 })();

@@ -35,7 +35,7 @@
   const dateFr = iso => {
     if (!iso) return "";
     const d = new Date(iso + "T12:00:00");
-    return isNaN(d) ? iso : d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+    return isNaN(d) ? iso : d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }).replace(/^1 /, "1er ");
   };
   const ajouterMois = (iso, mois) => {
     const d = new Date(iso + "T12:00:00");
@@ -90,7 +90,7 @@
       case "comparer": return null;
       case "discussion": return { messages: [] };
       case "historique": return { points: [] };
-      case "budget": return { prevu: {}, demenagement: {} };
+      case "budget": return { prevu: {}, demenagement: {}, paie: {} };
       case "marche": return { maj: "", cours: {}, symboles: {}, erreurs: [], sources: [] };
       case "robot": return { trigger: "", horaire: "" };
     }
@@ -106,6 +106,8 @@
       r.regles = { ...base.regles, ...(d.regles || {}) };
       r.enveloppes = { ...base.enveloppes, ...(d.enveloppes || {}) };
       r.principes = { ...base.principes, ...(d.principes || {}) };
+      // Les règles des grands investisseurs : toutes appliquées tant qu'elles n'ont pas été décochées.
+      r.sagesse = { ...Object.fromEntries(B.SAGESSE.map(x => [x.id, true])), ...(d.sagesse || {}) };
       r.poches = Array.isArray(d.poches) ? d.poches.map(p => ({ id: p.id || uid(), nom: p.nom || "Poche", classe: p.classe || "actions", cible: num(p.cible), ligne: p.ligne || "" })) : base.poches;
       r.reglesLibres = Array.isArray(d.reglesLibres) ? d.reglesLibres.map(String) : [];
       return r;
@@ -131,7 +133,8 @@
     if (nom === "journal") return { entrees: Array.isArray(d.entrees) ? d.entrees : [] };
     if (nom === "discussion") return { messages: Array.isArray(d.messages) ? d.messages.filter(m => m && (m.role === "user" || m.role === "assistant") && m.content) : [] };
     if (nom === "budget") return { prevu: d.prevu && typeof d.prevu === "object" ? Object.fromEntries(Object.entries(d.prevu).map(([k, v]) => [k, num(v)])) : {},
-      demenagement: d.demenagement && typeof d.demenagement === "object" ? Object.fromEntries(Object.entries(d.demenagement).map(([k, v]) => [k, num(v)])) : {} };
+      demenagement: d.demenagement && typeof d.demenagement === "object" ? Object.fromEntries(Object.entries(d.demenagement).map(([k, v]) => [k, num(v)])) : {},
+      paie: d.paie && typeof d.paie === "object" ? { ...d.paie } : {} };
     if (nom === "marche") return { ...base, ...d, cours: d.cours && typeof d.cours === "object" ? d.cours : {}, symboles: d.symboles || {}, erreurs: Array.isArray(d.erreurs) ? d.erreurs : [] };
     if (nom === "robot") return { ...base, ...d };
     if (nom === "historique") return { points: Array.isArray(d.points) ? d.points.filter(x => x && /^\d{4}-\d{2}-\d{2}$/.test(x.date)).sort((a, b) => a.date < b.date ? -1 : 1) : [] };
@@ -1436,6 +1439,8 @@
     if (syn.hors.length) L.push(`- Hors stratégie : ${pct(syn.horsValeur / (syn.total || 1) * 100)}`);
     L.push(`\nRÈGLES : action en direct ≤ ${pct(num(r.maxAction))} du portefeuille ; total actions en direct ≤ ${pct(num(r.maxDirect), 0)} ; crypto ≤ ${pct(num(r.maxCrypto), 0)} ; rééquilibrer au-delà de ± ${num(r.marge)} points ; frais d'un fonds ≤ ${pct(num(r.fraisMax), 2)} par an${r.delaiActif ? ` ; délai de réflexion de ${num(r.delaiHeures)} h avant un achat non prévu` : ""}${r.interditLevier ? " ; pas de levier ni de produits complexes" : ""}${r.venteEnPerte ? " ; pas de vente en perte non prévue par la stratégie" : ""}.`);
     if (st.reglesLibres.filter(Boolean).length) L.push("Règles personnelles :\n" + st.reglesLibres.filter(Boolean).map(x => "- " + x).join("\n"));
+    const sgs = B.SAGESSE.filter(x => (st.sagesse || {})[x.id]);
+    if (sgs.length) L.push("\nRÈGLES DES GRANDS INVESTISSEURS QU'IL VEUT SUIVRE :\n" + sgs.map(x => `- ${x.regle} (${x.auteur.split(",")[0]} : « ${x.citation} »)`).join("\n"));
     const pa = B.PRINCIPES.filter(p => actif(p.id));
     if (pa.length) L.push("\nPRINCIPES QU'IL APPLIQUE :\n" + pa.map(p => `- ${p.titre} : ${p.texte}`).join("\n"));
     const e = st.enveloppes;
@@ -1552,7 +1557,7 @@
       : h("p", { class: "vide", text: "Rien à afficher : fixe ton budget prévu ou importe un relevé." }));
     vider($("b-alertes"), alertesBudget().map(a => h("li", {}, pastille(a.niveau, { ok: "OK", attention: "À voir", bloquant: "Budget", info: "Info" }[a.niveau]),
       h("div", { style: "display:grid;gap:6px" }, h("p", { text: a.texte }), a.action ? h("div", {}, h("button", { class: "btn btn-ghost btn-petit", text: a.action.texte, onclick: a.action.faire })) : null))));
-    rendreOperations(); rendrePlanBudget(); rendreDemenagement(); rendre12Mois();
+    rendreOperations(); rendrePlanBudget(); rendrePaie(); rendreDemenagement(); rendre12Mois();
   }
   $("b-mois-prec").addEventListener("click", () => { moisBudget = decalerMois(moisBudget, -1); rendreBudget(); });
   $("b-mois-suiv").addEventListener("click", () => { moisBudget = decalerMois(moisBudget, 1); rendreBudget(); });
@@ -1718,6 +1723,110 @@ Règles :
         h("tr", {}, h("td", { text: "Investissements" }), h("td", { class: "num chiffre", text: eur(planDuMois().investir, 0) })),
         h("tr", { class: "table-total" }, h("td", { text: "Reste à vivre" }), h("td", { class: "num chiffre " + (pl.reste < 0 ? "perte" : ""), text: eur(pl.reste, 0) }))))),
       h("div", { class: "actions" }, h("button", { class: "btn btn-ghost btn-petit", text: "Modifier mes versements", onclick: () => { montrer("strategie"); $("s-versement-precaution").focus(); } })));
+  }
+
+  // ---------- ma paie ----------
+  const PAIE = B.PAIE;
+  function paie() {
+    const p = S.budget.paie || {};
+    return { brut: num(p.brut) || PAIE.smicMensuel, heures: num(p.heures) || 151.67, net: num(p.net) || num(S.budget.prevu.salaire), pas: num(p.pas),
+      entree: p.entree || "", categorie: p.categorie || "1-2", smic: p.smic !== false, hausse: p.hausse != null && p.hausse !== "" ? num(p.hausse) : 2,
+      hs: num(p.hs), prime: num(p.prime), augm: num(p.augm), promoAnnee: num(p.promoAnnee), promoBrut: num(p.promoBrut) };
+  }
+  const tauxNetPaie = p => p.brut > 0 && p.net > 0 ? p.net / p.brut : 0.77;
+  // Prime d'ancienneté (convention de l'habillement) à une date donnée.
+  function primeAnciennete(p, iso) {
+    if (!p.entree) return 0;
+    const ans = (new Date(iso + "T12:00:00") - new Date(p.entree + "T12:00:00")) / (365.25 * 86400000);
+    const i = [3, 6, 9, 12, 15, 18].filter(a => ans >= a).length - 1;
+    return i < 0 ? 0 : (PAIE.anciennete[p.categorie] || PAIE.anciennete["1-2"])[i] * Math.min(1, p.heures / 151.67);
+  }
+  // Prime d'activité après une hausse de revenu net : baisse d'environ 39 % de la hausse, jamais sous 0.
+  const primeActiviteApres = (pa, hausseNette) => { const v = Math.max(0, pa - hausseNette * PAIE.baissePrimeActivite / 100); return v < 15 ? 0 : v; };
+  const PAIE_CHAMPS = { "paie-poste": "poste", "paie-brut": "brut", "paie-heures": "heures", "paie-net": "net", "paie-pas": "pas", "paie-entree": "entree", "paie-categorie": "categorie", "paie-hs": "hs", "paie-prime": "prime", "paie-augm": "augm", "paie-hausse": "hausse", "paie-promo-annee": "promoAnnee", "paie-promo-brut": "promoBrut" };
+  for (const [id, cle] of Object.entries(PAIE_CHAMPS)) {
+    const el = $(id);
+    el.addEventListener(el.tagName === "SELECT" || el.type === "date" ? "change" : "input", e => {
+      S.budget.paie ||= {};
+      S.budget.paie[cle] = e.target.type === "number" ? (e.target.value === "" ? "" : num(e.target.value)) : e.target.value;
+      enregistrer("budget"); rendrePaie();
+    });
+  }
+  $("paie-smic").addEventListener("change", e => { S.budget.paie ||= {}; S.budget.paie.smic = e.target.checked; enregistrer("budget"); rendrePaie(); });
+
+  function rendrePaie() {
+    const p = paie(), t = tauxNetPaie(p), pa = num(S.budget.prevu.aides), pl = planBudget();
+    remplir("paie-poste", (S.budget.paie || {}).poste || "");
+    remplir("paie-brut", p.brut); remplir("paie-heures", p.heures); remplir("paie-net", p.net || ""); remplir("paie-pas", p.pas);
+    remplir("paie-entree", p.entree); remplir("paie-categorie", p.categorie); remplir("paie-smic", p.smic);
+    remplir("paie-hs", p.hs || ""); remplir("paie-prime", p.prime || ""); remplir("paie-augm", p.augm || "");
+    remplir("paie-hausse", p.hausse); remplir("paie-promo-annee", p.promoAnnee || ""); remplir("paie-promo-brut", p.promoBrut || "");
+    const horaire = p.brut / p.heures, auSmic = Math.abs(horaire / PAIE.smicHoraire - 1) < 0.01;
+    $("paie-note").textContent = p.net ? `${pct(t * 100, 1)} du brut arrive sur ton compte` : "";
+    const tuile = (lib, val, sous, cls) => h("div", { class: "tuile" }, h("span", { class: "etiquette", text: lib }), h("b", { class: cls || null, text: val }), sous ? h("span", { class: "petit muet", text: sous }) : null);
+    const netPas = p.net * (1 - p.pas / 100);
+    const prochaine = primeAnciennete(p, ajouterMois(aujourdhui(), 1)) || null;
+    const debutAnc = p.entree ? ajouterMois(p.entree, 36) : null;
+    vider($("paie-aujourdhui"), h("div", { class: "tuiles" },
+      tuile("Taux horaire brut", eur(horaire, 2), auSmic ? `le SMIC (${eur(PAIE.smicHoraire, 2)} depuis le ${dateFr(PAIE.smicDepuis)})` : `SMIC : ${eur(PAIE.smicHoraire, 2)}`),
+      tuile("Net sur ton compte", eur(netPas, 0), p.pas ? `après ${pct(p.pas, 1)} d'impôt à la source` : "pas d'impôt prélevé"),
+      tuile("Avec la prime d'activité", eur(netPas + pa, 0), pa ? `dont ${eur(pa, 0)} de prime d'activité` : "sans prime d'activité"),
+      tuile("Prime d'ancienneté", prochaine ? eur(prochaine, 0) + " brut" : debutAnc ? "dès le " + dateFr(debutAnc) : "—", debutAnc && !prochaine ? `${eur((PAIE.anciennete[p.categorie] || [])[0] || 34, 0)} brut par mois au début` : null)),
+      auSmic && p.smic ? h("p", { class: "petit muet", text: "Ton salaire est au SMIC : il augmente à chaque revalorisation (au 1er janvier, et en cours d'année si l'inflation dépasse 2 %, comme le 1er juin 2026). Le reste du temps, il ne bouge qu'avec des heures en plus, des primes ou une évolution de poste." }) : null);
+
+    // Un mois différent.
+    const hsBrut = p.hs * horaire * 1.25, hsNet = hsBrut * Math.min(1, t + PAIE.reductionHeuresSup / 100);
+    const augmNet = p.augm * t * (1 - p.pas / 100), primeNet = p.prime * t * (1 - p.pas / 100);
+    const recurrent = hsNet + augmNet;
+    const z = $("paie-simulation");
+    if (!(recurrent > 0 || primeNet > 0)) { vider(z, h("p", { class: "vide", text: "Ajoute des heures, une prime ou une augmentation pour voir ce qu'elles rapportent vraiment." })); }
+    else {
+      const paApres = primeActiviteApres(pa, recurrent);
+      const gainReel = recurrent - (pa - paApres);
+      const plm = planDuMois();
+      const ratio = plm.palier ? num(plm.palier.versement) / Math.max(1, num(plm.palier.versement) + num(plm.palier.investi)) : 0;
+      const lignes = [];
+      if (hsBrut > 0) lignes.push(`${nf(0, 1).format(p.hs)} h supplémentaires majorées de 25 % : ${eur(hsBrut, 0)} brut, environ ${eur(hsNet, 0)} net (cotisations réduites, sans impôt sur le revenu jusqu'à 7 500 € par an).`);
+      if (augmNet > 0) lignes.push(`Une augmentation de ${eur(p.augm, 0)} brut : environ ${eur(augmNet, 0)} net de plus chaque mois.`);
+      if (recurrent > 0 && pa > 0) lignes.push(`Ta prime d'activité baisserait d'environ ${eur(pa - paApres, 0)} par mois à partir du trimestre suivant : le gain réel est d'environ ${eur(gainReel, 0)} par mois.`);
+      if (recurrent > 0) lignes.push(plm.palier ? `Selon ta stratégie, ces ${eur(gainReel, 0)} iraient à ${eur(gainReel * ratio, 0)} sur ton épargne de précaution et ${eur(gainReel * (1 - ratio), 0)} sur tes investissements (partage du palier en cours).` : `Selon ta stratégie, ces ${eur(gainReel, 0)} pourraient aller à tes investissements.`);
+      if (primeNet > 0) {
+        const c = conseilRentree(Math.round(primeNet));
+        lignes.push(`Une prime de ${eur(p.prime, 0)} brut : environ ${eur(primeNet, 0)} net, une fois. ${pa > 0 ? `Ta prime d'activité du trimestre suivant baisserait d'environ ${eur(Math.min(pa * 3, primeNet * PAIE.baissePrimeActivite / 100), 0)} au total, à garder de côté. ` : ""}Selon ta stratégie : ${[...c.versComptes.map(v => `${eur(v.montant, 0)} sur ${v.compte ? v.compte.nom : "un livret"}`), ...c.plan.map(x => `${eur(x.montant, 0)} sur ${x.ligne ? x.ligne.nom : x.poche.nom}`)].join(", ") || "rien à placer"}.`);
+      }
+      vider(z, h("div", { class: "tuiles" },
+        tuile("Net du mois", eur(netPas + hsNet + augmNet + primeNet, 0), `au lieu de ${eur(netPas, 0)}`),
+        recurrent > 0 ? tuile("Gain réel par mois", eur(gainReel, 0), pa ? "après la baisse de la prime d'activité" : null) : null),
+        h("ul", { style: "margin:4px 0 0;padding-left:1.2em;display:grid;gap:4px" }, lignes.map(x => h("li", { text: x }))));
+    }
+
+    // Les prochaines années.
+    const zf = $("paie-futur"), an0 = new Date().getFullYear(), g = p.hausse / 100, infl = num((S.comparer || {}).inflation || 2) / 100;
+    const objectif = num(S.strategie.profil.objectifAnnee) || an0 + 28;
+    const annees = [...new Set([...Array.from({ length: 8 }, (_, i) => an0 + 1 + i), an0 + 10, an0 + 15, objectif].filter(a => a > an0 && a <= objectif))].sort((a, b) => a - b);
+    const rangs = annees.map(a => {
+      const n = a - an0, f = Math.pow(1 + g, n);
+      let base = p.promoAnnee && p.promoBrut && a >= p.promoAnnee ? p.promoBrut * Math.pow(1 + g, a - p.promoAnnee) : p.brut * f;
+      if (p.smic) base = Math.max(base, PAIE.smicMensuel * f * Math.min(1, p.heures / 151.67));
+      const anc = primeAnciennete(p, `${a}-07-01`);
+      const brut = base + anc, net = brut * t * (1 - p.pas / 100);
+      const paA = primeActiviteApres(pa * f, net - p.net * (1 - p.pas / 100) * f);
+      const total = net + paA, reel = total / Math.pow(1 + infl, n);
+      const depenses = pl.depenses * Math.pow(1 + infl, n);
+      return { a, brut, anc, net, pa: paA, total, reel, capacite: total - depenses };
+    });
+    const aujourd = netPas + pa;
+    const fin = rangs[rangs.length - 1];
+    vider(zf,
+      fin ? h("p", {}, `${p.smic && !p.promoBrut ? "Si ton salaire suit seulement le SMIC" : "Avec ces hypothèses"} (+${pct(p.hausse, 1)} par an), tu toucherais environ ${eur(rangs[0].total, 0)} par mois en ${rangs[0].a} et ${eur(fin.total, 0)} en ${fin.a}, soit ${eur(fin.reel, 0)} d'aujourd'hui (aujourd'hui : ${eur(aujourd, 0)}). ${p.smic && !p.promoBrut ? "Ton pouvoir d'achat resterait presque le même : c'est une évolution de poste qui le fera vraiment grandir. " : ""}${p.entree ? `La prime d'ancienneté démarre le ${dateFr(ajouterMois(p.entree, 36))}.` : ""}`) : null,
+      h("div", { class: "defile" }, h("table", {},
+        h("thead", {}, h("tr", {}, ["Année", "Brut", "dont ancienneté", "Net", "Prime d'activité", "Total par mois", "En € d'aujourd'hui", "À épargner*"].map((x, i) => h("th", { class: i ? "num" : null, text: x })))),
+        h("tbody", {}, rangs.map(r => h("tr", {}, h("td", { text: String(r.a) }),
+          h("td", { class: "num chiffre", text: eur(r.brut, 0) }), h("td", { class: "num chiffre", text: r.anc ? eur(r.anc, 0) : "—" }),
+          h("td", { class: "num chiffre", text: eur(r.net, 0) }), h("td", { class: "num chiffre", text: r.pa ? eur(r.pa, 0) : "—" }),
+          h("td", { class: "num chiffre", text: eur(r.total, 0) }), h("td", { class: "num chiffre", text: eur(r.reel, 0) }),
+          h("td", { class: "num chiffre", text: eur(r.capacite, 0) })))))),
+      h("p", { class: "note", text: "* Si tes dépenses restent celles de ton budget prévu (chez tes parents), augmentées de l'inflation : à recalculer avec « Et si je déménage ? ». Estimations : le taux de cotisations reste celui de ta paie actuelle, la prime d'activité baisse d'environ 39 % de chaque hausse de revenu, et la prime d'ancienneté est celle de la convention de l'habillement (IDCC 1483) ; vérifie ta catégorie sur ta fiche de paie et le montant exact de la prime d'activité sur le simulateur de la CAF." }));
   }
 
   // ---------- et si je déménage ? ----------
@@ -2895,7 +3004,7 @@ ${texte ? "\nTEXTE COPIÉ :\n" + texte.slice(0, 60000) : ""}${fichiers.length ? 
   // ---------- STRATÉGIE ----------
   const PROFIL = [["s-objectif-texte", "objectifTexte", "texte"], ["s-objectif-montant", "objectifMontant"], ["s-objectif-annee", "objectifAnnee"], ["s-horizon", "horizon"],
     ["s-versement", "versementMensuel"], ["s-risque", "risque", "texte"], ["s-reaction", "reaction", "texte"], ["s-depenses", "depensesMensuelles"], ["s-mois", "moisPrecaution"],
-    ["s-versement-precaution", "versementPrecaution"], ["s-courtier", "courtier", "texte"], ["s-basculer", "basculer", "case"]];
+    ["s-versement-precaution", "versementPrecaution"], ["s-courtier", "courtier", "texte"], ["s-basculer", "basculer", "case"], ["s-naissance", "naissance", "texte"]];
   const REGLES = [["s-max-action", "maxAction"], ["s-max-direct", "maxDirect"], ["s-max-crypto", "maxCrypto"], ["s-marge", "marge"], ["s-frais-max", "fraisMax"], ["s-delai", "delaiHeures"],
     ["s-delai-actif", "delaiActif", "case"], ["s-levier", "interditLevier", "case"], ["s-vente-perte", "venteEnPerte", "case"]];
   options($("s-risque"), B.RISQUES.map(r => ({ value: r.id, label: `${r.nom} (jusqu'à ${r.maxActions} % d'actions)` })), "dynamique");
@@ -2990,6 +3099,70 @@ ${texte ? "\nTEXTE COPIÉ :\n" + texte.slice(0, 60000) : ""}${fichiers.length ? 
     ps.push({ montant: der ? num(der.montant) + 3000 : Math.max(1000, objectifPrecaution()), date: der && der.date ? ajouterMois(der.date, 12) : ajouterMois(aujourdhui(), 6), versement: der ? num(der.versement) : num(st.profil.versementPrecaution), investi: der ? num(der.investi) : num(st.profil.versementMensuel) });
   }));
 
+  // ---------- les règles des grands investisseurs ----------
+  function rendreSagesse() {
+    const z = $("s-sagesse"), sg = S.strategie.sagesse || {};
+    $("s-sagesse-compte").textContent = `${B.SAGESSE.filter(x => sg[x.id]).length} sur ${B.SAGESSE.length} appliquées`;
+    if (aFocus(z)) { B.SAGESSE.forEach(x => { const c = $("sg-" + x.id); if (c && c !== document.activeElement) c.checked = !!sg[x.id]; }); return; }
+    vider(z, B.SAGESSE.map((x, i) => h("div", { class: "principe" },
+      h("label", { class: "principe-tete" },
+        h("input", { type: "checkbox", id: "sg-" + x.id, checked: !!sg[x.id], onchange: e => modifier("strategie", st => { st.sagesse = { ...(st.sagesse || {}), [x.id]: e.target.checked }; }) }),
+        h("b", { text: `${i + 1}. ${x.regle}` }),
+        claudePret ? h("button", { type: "button", class: "btn btn-ghost btn-petit", text: "Demander à Claude", onclick: ev => { ev.preventDefault(); demanderDansChat(`Comment appliquer concrètement cette règle de ${x.auteur.split(",")[0]} à ma situation : « ${x.citation} » ?`); } }) : null),
+      h("blockquote", { class: "citation", text: `« ${x.citation} »` }),
+      h("p", { class: "outil", text: x.auteur }))));
+  }
+
+  // ---------- ma stratégie, à copier dans Claude ----------
+  function texteStrategie() {
+    const st = S.strategie, pr = st.profil, r = st.regles, pl = planDuMois(), syn = synthese(), pat = patrimoine(syn), plb = planBudget();
+    const risque = (B.RISQUES.find(x => x.id === pr.risque) || {}).nom || pr.risque;
+    const reaction = (B.REACTIONS.find(x => x.id === pr.reaction) || {}).nom || pr.reaction;
+    const L = [];
+    L.push(`MA STRATÉGIE D'INVESTISSEMENT (mise à jour le ${dateFr(aujourdhui())})`);
+    L.push("", "Qui je suis");
+    const p = paie();
+    const age = pr.naissance ? Math.floor((Date.now() - new Date(pr.naissance + "T12:00:00")) / (365.25 * 86400000)) : null;
+    const poste = String((S.budget.paie || {}).poste || "").trim();
+    if (age || poste) L.push(`- ${age ? `${age} ans` : ""}${age && poste ? ", " + poste.charAt(0).toLowerCase() + poste.slice(1) : poste}${p.smic && Math.abs(p.brut / p.heures / PAIE.smicHoraire - 1) < 0.01 ? ", payé au SMIC" : ""}.`);
+    L.push(`- ${p.net ? `${eur(p.net, 0)} net par mois${num(S.budget.prevu.aides) ? ` + ${eur(num(S.budget.prevu.aides), 0)} de prime d'activité` : ""}` : "Revenus : voir budget"}${plb.depenses ? `, environ ${eur(plb.depenses, 0)} de dépenses par mois` : ""}.`);
+    if (pr.courtier) L.push(`- Mes comptes : ${pr.courtier}.`);
+    L.push(`- Objectif : ${pr.objectifTexte}. ${eur(num(pr.objectifMontant), 0)} d'aujourd'hui en ${pr.objectifAnnee}, horizon ${num(pr.horizon)} ans.`);
+    L.push(`- Profil de risque : ${risque.toLowerCase()}. Si mon portefeuille perd 30 % : « ${reaction} ».`);
+    L.push("", "Mon épargne de précaution");
+    if (pl.paliers.length) for (const x of pl.paliers) L.push(`- ${eur(num(x.montant), 0)}${x.date ? " pour le " + dateFr(x.date) : ""} : ${eur(num(x.versement), 0)} par mois sur l'épargne, ${eur(num(x.investi), 0)} investis.`);
+    else L.push(`- Objectif : ${eur(pl.obj, 0)} (${num(pr.moisPrecaution)} mois de dépenses), ${eur(pl.vp, 0)} par mois.`);
+    const cp = S.portefeuille.comptes.filter(c => c.precaution);
+    if (cp.length) L.push(`- Sur : ${cp.map(c => c.nom).join(", ")}. Je verse d'abord sur le compte au meilleur taux net qui a de la place.`);
+    L.push("- Les primes et rentrées imprévues complètent d'abord le palier en cours ; le reste suit le partage du palier suivant.");
+    L.push("", "Mon allocation cible (investissements)");
+    for (const x of st.poches) L.push(`- ${x.nom} : ${pct(num(x.cible), 0)}`);
+    L.push(`Versements chaque mois par plan d'investissement programmé ; je rééquilibre avec les versements, sans vendre, au-delà de ± ${num(r.marge)} points.`);
+    L.push("", "Mes règles");
+    L.push(`- Une action en direct : ${pct(num(r.maxAction), 0)} du portefeuille au plus ; toutes les actions en direct : ${pct(num(r.maxDirect), 0)} ; la crypto : ${pct(num(r.maxCrypto), 0)}.`);
+    L.push(`- Frais annuels d'un fonds : ${pct(num(r.fraisMax), 2)} au plus.${r.delaiActif ? ` Délai de réflexion de ${num(r.delaiHeures)} h avant un achat non prévu.` : ""}${r.interditLevier ? " Pas de levier ni de produits complexes." : ""}`);
+    for (const x of st.reglesLibres.filter(Boolean)) L.push(`- ${x}`);
+    const sg = B.SAGESSE.filter(x => (st.sagesse || {})[x.id]);
+    if (sg.length) { L.push("", "Les règles des grands investisseurs que je suis"); for (const x of sg) L.push(`- ${x.regle} (${x.auteur.split(",")[0]})`); }
+    if (syn.lignes.length || pat.epargne) {
+      L.push("", `Ma situation au ${dateFr(aujourdhui())}`);
+      L.push(`- Patrimoine : ${eur(pat.total, 0)} (épargne ${eur(pat.epargne, 0)}, bourse ${eur(pat.bourse, 0)}${pat.crypto ? `, crypto ${eur(pat.crypto, 0)}` : ""}).`);
+      for (const l of [...syn.lignes].sort((a, b) => b.valeur - a.valeur)) L.push(`- ${l.nom}${l.code ? " (" + l.code + ")" : ""}, ${(B.ENVELOPPES.find(e => e.id === l.enveloppe) || { nom: l.enveloppe }).nom} : ${eur(l.valeur, 0)}`);
+      if (st.enveloppes.peaOuverture) L.push(`- PEA ouvert le ${dateFr(st.enveloppes.peaOuverture)} (5 ans le ${dateFr(ajouterMois(st.enveloppes.peaOuverture, 60))}), ${eur(num(st.enveloppes.peaVersements), 0)} versés.`);
+    }
+    L.push("", "Comment m'aider");
+    L.push("- Réponds en français, tutoie-moi, sois direct et concret. Appuie-toi sur cette stratégie et dis-moi clairement quand une idée la contredit.");
+    L.push("- Tu ne connais pas les cours du jour : dis-le quand ça compte, et ne donne jamais de prévision de cours ni de promesse de rendement.");
+    L.push("- Fiscalité française 2026 : flat tax 31,4 % ; PEA après 5 ans : 18,6 % de prélèvements sociaux sur les gains ; Livret A, LDDS, LEP et Livret Jeune nets d'impôt.");
+    return L.join("\n");
+  }
+  $("btn-copier-strategie").addEventListener("click", async () => {
+    const t = $("s-texte-claude");
+    t.value = texteStrategie();
+    try { await navigator.clipboard.writeText(t.value); $("s-copie-etat").textContent = `Copié (${t.value.length} caractères). Colle-le dans claude.ai.`; }
+    catch (_) { t.focus(); t.select(); $("s-copie-etat").textContent = "Le texte est sélectionné : copie-le avec Ctrl+C (ou Cmd+C)."; }
+  });
+
   function rendrePrincipes() {
     const z = $("s-principes");
     const n = B.PRINCIPES.filter(p => actif(p.id)).length;
@@ -3016,7 +3189,8 @@ ${texte ? "\nTEXTE COPIÉ :\n" + texte.slice(0, 60000) : ""}${fichiers.length ? 
       h("p", {}, h("b", { text: "Stratégie de départ." }), " C'est un modèle cœur-satellite courant, pas ta stratégie. Adapte chaque champ : dès le premier changement, elle devient la tienne."),
       claudePret ? h("button", { class: "btn btn-petit", text: "La décrire à Claude", onclick: () => { $("s-decrire").focus(); $("carte-decrire").scrollIntoView({ block: "center", behavior: "smooth" }); } }) : null) : null);
     $("carte-decrire").hidden = !claudePret;
-    rendrePoches(); rendreReglesLibres(); rendrePaliers(); rendrePrincipes();
+    rendrePoches(); rendreReglesLibres(); rendrePaliers(); rendrePrincipes(); rendreSagesse();
+    if (!aFocus($("s-texte-claude"))) $("s-texte-claude").value = texteStrategie();
   }
 
   // Décrire sa stratégie à Claude.

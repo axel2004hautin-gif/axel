@@ -24,6 +24,7 @@ Ouvre `index.html` dans un navigateur (rien à installer). Sur la page publiée 
 - **Par catégorie** : chaque poste de dépense contre son budget, dépassements signalés.
 - **Mes opérations** : « Importer un relevé avec Claude » lit un texte copié depuis la banque, un CSV ou des captures (l'onglet Activité de Trade Republic par exemple) et range chaque opération dans une catégorie ; les doublons sont repérés. Ajout à la main possible.
 - **Mon budget prévu** : revenus et dépenses prévus par catégorie ; les versements d'épargne viennent de la stratégie, et le reste à vivre se calcule seul.
+- **Ma paie** : la paie d'aujourd'hui (taux horaire comparé au SMIC, net, prime d'activité, prime d'ancienneté de la convention de l'habillement), un mois différent (heures supplémentaires majorées et défiscalisées, prime, augmentation, avec la baisse de la prime d'activité qui suit) et les prochaines années (SMIC ou salaire revalorisé, ancienneté, évolution de poste), traduits en ce qui reste à épargner.
 - **Et si je déménage ?** : loyer, énergie, assurance, courses, APL et frais d'installation d'un logement ; la page montre le nouveau budget, ce qui reste à investir, la règle des 3 fois le loyer, les mois couverts par l'épargne de précaution et l'effet sur l'objectif à 50 ans.
 - **Sur 12 mois** : revenus et dépenses mois par mois, avec le taux d'épargne.
 - Le budget nourrit la stratégie : la moyenne des dépenses réelles peut devenir les « dépenses mensuelles » qui fixent l'objectif d'épargne de précaution, et la page vérifie que le budget permet les versements prévus.
@@ -36,7 +37,7 @@ Ouvre `index.html` dans un navigateur (rien à installer). Sur la page publiée 
 
 **Claude** : la discussion. Claude voit ma stratégie, mes principes, mon portefeuille et mon journal ; il peut lancer les calculs de la page (répartir un versement, simuler, vérifier une opération). Il ne voit ni les cours en direct ni l'actualité.
 
-**Stratégie** : mon profil (objectif, horizon, risque, versement investi, courtier), mon épargne de précaution (dépenses, nombre de mois, versement mensuel, bascule une fois complète), mon allocation cible en poches, mes règles chiffrées et mes règles à moi, mes enveloppes, et les 15 principes fondamentaux à cocher. « Remplir avec Claude » transforme une description écrite en réglages.
+**Stratégie** : « Ma stratégie pour Claude » (un texte à copier dans claude.ai, tenu à jour par la page), les règles des grands investisseurs (Buffett, Bogle, Munger, Lynch, Graham, Templeton, Marks, Housel, Kostolany, Samuelson) traduites pour ma stratégie, mon profil (objectif, horizon, risque, versement investi, courtier), mon épargne de précaution (dépenses, nombre de mois, versement mensuel, bascule une fois complète), mon allocation cible en poches, mes règles chiffrées et mes règles à moi, mes enveloppes, et les 15 principes fondamentaux à cocher. « Remplir avec Claude » transforme une description écrite en réglages.
 
 ## Les principes intégrés
 

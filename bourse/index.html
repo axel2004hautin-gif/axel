@@ -230,6 +230,8 @@ input[type="checkbox"] { width: 18px; height: 18px; min-height: 0; accent-color:
 .tuiles { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
 .tuile { display: grid; gap: 2px; padding: 10px 12px; border-radius: 8px; background: var(--surface-2); min-width: 0; }
 .tuile b { font-family: var(--f-titre); font-size: 1.3rem; font-weight: 750; letter-spacing: -0.01em; }
+blockquote.citation { margin: 0; padding-left: 12px; border-left: 2px solid var(--accent); font-style: italic; color: var(--encre); max-width: 72ch; }
+#s-texte-claude { font-family: var(--f-chiffres); font-size: 0.8rem; line-height: 1.5; min-height: 220px; }
 .chiffre-cle { font-family: var(--f-titre); font-size: 1.5rem; font-weight: 750; letter-spacing: -0.01em; }
 input.solde { width: 120px; min-height: 32px; padding: 4px 8px; text-align: right; }
 
@@ -501,6 +503,36 @@ details[open] > summary { margin-bottom: 10px; }
         <div class="fiche" id="b-fiche-op" hidden></div>
         <div id="b-operations"></div>
       </div>
+      <div class="carte c12" id="carte-paie">
+        <div class="carte-tete"><h2>Ma paie</h2><span class="petit muet" id="paie-note"></span></div>
+        <p class="petit muet">Ta paie d'aujourd'hui, une paie différente (heures en plus, prime, augmentation) et ta paie des prochaines années, traduites en ce que tu pourras mettre de côté.</p>
+        <h3>Aujourd'hui</h3>
+        <div class="champs">
+          <label class="champ champ-large"><span>Mon poste</span><input id="paie-poste" placeholder="Ex. : vendeur en CDI à temps plein"></label>
+          <label class="champ"><span>Salaire brut mensuel (€)</span><input type="number" id="paie-brut" min="0" step="0.01" inputmode="decimal"></label>
+          <label class="champ"><span>Heures par mois</span><input type="number" id="paie-heures" min="0" step="0.01" inputmode="decimal"></label>
+          <label class="champ"><span>Net perçu (€)</span><input type="number" id="paie-net" min="0" step="0.01" inputmode="decimal"></label>
+          <label class="champ"><span>Prélèvement à la source (%)</span><input type="number" id="paie-pas" min="0" max="45" step="0.1" inputmode="decimal"></label>
+          <label class="champ"><span>Entré dans l'entreprise le</span><input type="date" id="paie-entree"></label>
+          <label class="champ"><span>Catégorie (classification)</span><select id="paie-categorie"><option value="1-2">1 ou 2</option><option value="3-4">3 ou 4</option><option value="5-6">5 ou 6</option><option value="7-8">7 ou 8</option></select></label>
+        </div>
+        <label class="case"><input type="checkbox" id="paie-smic"><span>Mon salaire suit le SMIC (il augmente quand le SMIC est revalorisé)</span></label>
+        <div id="paie-aujourdhui"></div>
+        <h3>Simuler un mois</h3>
+        <div class="champs">
+          <label class="champ"><span>Heures supplémentaires dans le mois</span><input type="number" id="paie-hs" min="0" max="60" step="0.5" inputmode="decimal" placeholder="0"></label>
+          <label class="champ"><span>Prime brute (€)</span><input type="number" id="paie-prime" min="0" step="10" inputmode="decimal" placeholder="0"></label>
+          <label class="champ"><span>Augmentation brute (€/mois)</span><input type="number" id="paie-augm" min="0" step="10" inputmode="decimal" placeholder="0"></label>
+        </div>
+        <div id="paie-simulation"></div>
+        <h3>Les prochaines années</h3>
+        <div class="champs">
+          <label class="champ"><span>Hausse du SMIC ou de ton salaire (%/an)</span><input type="number" id="paie-hausse" min="0" max="10" step="0.1" inputmode="decimal"></label>
+          <label class="champ"><span>Évolution de poste en (année)</span><input type="number" id="paie-promo-annee" min="2026" max="2060" step="1" inputmode="numeric" placeholder="2029"></label>
+          <label class="champ"><span>Nouveau salaire brut (€/mois)</span><input type="number" id="paie-promo-brut" min="0" step="10" inputmode="decimal" placeholder="2100"></label>
+        </div>
+        <div id="paie-futur"></div>
+      </div>
       <div class="carte c6">
         <div class="carte-tete"><h2>Mon budget prévu</h2><span id="b-plan-total"></span></div>
         <p class="petit muet">Ce que tu prévois chaque mois. Tes versements d'épargne viennent de ta stratégie.</p>
@@ -703,6 +735,7 @@ details[open] > summary { margin-bottom: 10px; }
           <label class="champ"><span>Versement mensuel investi (€)</span><input type="number" id="s-versement" min="0" step="10" inputmode="decimal"></label>
           <label class="champ"><span>Mon profil de risque</span><select id="s-risque"></select></label>
           <label class="champ champ-large"><span>Si mon portefeuille perdait 30 % en six mois…</span><select id="s-reaction"></select></label>
+          <label class="champ"><span>Ma date de naissance</span><input type="date" id="s-naissance"></label>
           <label class="champ champ-large"><span>Mon courtier ou ma banque</span><input id="s-courtier" placeholder="Ex. : Trade Republic"></label>
         </div>
         <h3>Mon épargne de précaution</h3>
@@ -758,6 +791,19 @@ details[open] > summary { margin-bottom: 10px; }
           <label class="champ"><span>Assurance-vie ouverte le</span><input type="date" id="s-av-ouverture"></label>
         </div>
         <p class="note">Le délai fiscal court à partir de la date d'ouverture (ou du premier versement). Laisse vide si tu n'as pas l'enveloppe.</p>
+      </div>
+
+      <div class="carte c12">
+        <div class="carte-tete"><h2>Les règles des grands investisseurs</h2><span class="petit muet" id="s-sagesse-compte"></span></div>
+        <p class="petit muet">Ce que Buffett, Bogle, Munger, Lynch, Graham et d'autres répètent, traduit pour ta stratégie. Les règles cochées sont données à Claude et entrent dans ta stratégie à copier.</p>
+        <div class="principes" id="s-sagesse"></div>
+      </div>
+
+      <div class="carte c12">
+        <div class="carte-tete"><h2>Ma stratégie pour Claude</h2><button class="btn btn-petit" id="btn-copier-strategie">Copier</button></div>
+        <p class="petit">Ce texte résume ta stratégie, tes règles et ta situation, et se met à jour avec la page. Colle-le dans claude.ai, dans les préférences de ton profil ou dans les instructions d'un projet « Investissement » : Claude le connaîtra dans toutes tes conversations, même hors de cette page.</p>
+        <textarea id="s-texte-claude" rows="16" readonly></textarea>
+        <span class="petit muet" id="s-copie-etat"></span>
       </div>
 
       <div class="carte c12">
