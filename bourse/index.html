@@ -285,6 +285,28 @@ details.repli[open] > summary { margin-bottom: 14px; }
 .repli-corps { display: grid; gap: 12px; }
 .repli-corps > * { min-width: 0; }
 .repli-corps > p { max-width: 68ch; }
+/* Mon mois */
+.mon-mois { display: grid; gap: 12px 24px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); align-items: start; }
+.mm-bloc { display: grid; gap: 6px; min-width: 0; }
+.mm-bloc h3 { font-size: 0.82rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+.mm-table td { padding: 5px 0; vertical-align: middle; }
+.mm-table td.num { padding-left: 10px; white-space: nowrap; }
+.mm-table input { width: 116px; min-height: 32px; padding: 3px 8px; text-align: right; }
+.mm-table .nom-ligne small { font-size: 0.74rem; }
+.mm-table .table-total td { padding-top: 7px; }
+.mm-tuiles { display: grid; gap: 8px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.mm-tuile { padding: 10px; align-content: start; }
+.mm-tuile .etiquette { overflow-wrap: anywhere; }
+.mm-tuile b { font-size: 1.15rem; white-space: nowrap; }
+@media (max-width: 520px) {
+  .mm-table .nom-ligne small { display: none; }
+  .mm-table td { padding: 3px 0; }
+  .mm-tuile { padding: 8px; }
+  .mm-tuile b { font-size: 1rem; }
+  #carte-mon-mois { padding: 12px 14px; }
+}
+#carte-mon-mois { gap: 10px; }
+#carte-mon-mois .carte-tete { align-items: center; }
 /* À faire */
 .taches { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
 .tache { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: start; padding: 8px 0; border-bottom: 1px solid var(--trait); }
@@ -394,13 +416,50 @@ details[open] > summary { margin-bottom: 10px; }
   <section class="vue" id="vue-portefeuille" role="tabpanel" aria-labelledby="t-portefeuille">
     <div id="bandeau-exemple"></div>
 
+    <div class="carte" id="carte-mon-mois">
+      <div class="carte-tete">
+        <h2 id="mm-titre">Mon mois</h2>
+        <div class="actions">
+          <button class="btn btn-discret btn-petit" id="mm-prec" aria-label="Mois précédent">‹</button>
+          <button class="btn btn-discret btn-petit" id="mm-suiv" aria-label="Mois suivant">›</button>
+        </div>
+      </div>
+      <div class="mon-mois">
+        <div class="mm-bloc">
+          <h3>Ce qui rentre et ce qui sort</h3>
+          <table class="mm-table"><tbody>
+            <tr><td><label for="mm-salaire">Salaire</label></td><td class="num"><input type="number" id="mm-salaire" min="0" step="0.01" inputmode="decimal"></td></tr>
+            <tr><td><label for="mm-prime">Prime d'activité</label></td><td class="num"><input type="number" id="mm-prime" min="0" step="0.01" inputmode="decimal"></td></tr>
+            <tr><td><label for="mm-autres">Autres revenus prévus</label></td><td class="num"><input type="number" id="mm-autres" min="0" step="0.01" inputmode="decimal"></td></tr>
+            <tr><td><div class="nom-ligne"><label for="mm-fixes">Dépenses fixes</label><small>essence, crédit voiture, abonnements</small></div></td><td class="num"><input type="number" id="mm-fixes" min="0" step="1" inputmode="decimal"></td></tr>
+            <tr><td><div class="nom-ligne"><label for="mm-variables">Dépenses variables</label><small>courses, sorties, imprévus</small></div></td><td class="num"><input type="number" id="mm-variables" min="0" step="1" inputmode="decimal"></td></tr>
+            <tr class="table-total"><td>Disponible</td><td class="num chiffre" id="mm-dispo"></td></tr>
+          </tbody></table>
+        </div>
+        <div class="mm-bloc">
+          <h3>Où va mon argent</h3>
+          <div id="mm-repartition"></div>
+        </div>
+      </div>
+      <p class="note" id="mm-note"></p>
+      <div class="actions"><button class="btn btn-ghost btn-petit" id="btn-rentree">J'ai reçu de l'argent (prime, chèque…)</button></div>
+      <div class="fiche" id="fiche-rentree" hidden></div>
+      <details class="sous-repli">
+        <summary>Sur quelle ligne investir</summary>
+        <div class="champs">
+          <label class="champ"><span>Montant à investir (€)</span><input type="number" id="versement-montant" min="0" step="10" inputmode="decimal"></label>
+        </div>
+        <div id="versement-resultat"></div>
+      </details>
+    </div>
+
     <div class="carte">
       <div class="releve" id="releve"></div>
       <div id="patrimoine-barre"></div>
     </div>
 
     <div class="grille">
-      <div class="carte c7" id="carte-taches">
+      <div class="carte c6" id="carte-taches">
         <div class="carte-tete"><h2>À faire</h2><span class="petit muet" id="taches-note"></span></div>
         <div id="taches"></div>
         <form class="ajout-tache" id="form-tache" autocomplete="off">
@@ -410,25 +469,11 @@ details[open] > summary { margin-bottom: 10px; }
         </form>
         <div id="taches-faites"></div>
       </div>
-      <div class="carte c5">
-        <div class="carte-tete"><h2>Ce mois-ci</h2></div>
-        <div id="plan-mois"></div>
-        <div class="actions"><button class="btn btn-ghost btn-petit" id="btn-rentree">J'ai reçu de l'argent (prime, chèque…)</button></div>
-        <div class="fiche" id="fiche-rentree" hidden></div>
-        <details class="sous-repli">
-          <summary>Sur quelle ligne investir</summary>
-          <div class="champs">
-            <label class="champ"><span>Montant à investir (€)</span><input type="number" id="versement-montant" min="0" step="10" inputmode="decimal"></label>
-          </div>
-          <div id="versement-resultat"></div>
-        </details>
-      </div>
-
-      <div class="carte c5">
+      <div class="carte c6">
         <div class="carte-tete"><h2>Mon épargne de précaution</h2><span id="precaution-statut"></span></div>
         <div id="precaution"></div>
       </div>
-      <div class="carte c7">
+      <div class="carte c12">
         <div class="carte-tete"><h2>Mon patrimoine dans le temps</h2><span class="petit muet" id="historique-note"></span></div>
         <div class="graphe-outils" id="historique-outils"></div>
         <div class="legende" id="historique-legende"></div>

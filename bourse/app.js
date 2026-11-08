@@ -81,6 +81,7 @@
 
   // ---------- état ----------
   const CATEGORIE_IDS = new Set(B.CATEGORIES_BUDGET.map(c => c.id));
+  const CHAMPS_MOIS = ["salaire", "primeActivite", "autres", "fixes", "variables"];
   const DOCS = ["strategie", "portefeuille", "taches", "journal", "comparer", "discussion", "historique", "budget", "marche", "robot"];
   // `marche` et `robot` sont écrits par le robot des cours (tâche planifiée), jamais par la page.
   const DOCS_ROBOT = ["marche", "robot"];
@@ -94,7 +95,7 @@
       case "comparer": return null;
       case "discussion": return { messages: [] };
       case "historique": return { points: [] };
-      case "budget": return { prevu: {}, demenagement: {}, paie: {}, regles: [] };
+      case "budget": return { prevu: {}, demenagement: {}, paie: {}, regles: [], mensuel: {} };
       case "marche": return { maj: "", cours: {}, symboles: {}, erreurs: [], sources: [] };
       case "robot": return { trigger: "", horaire: "" };
     }
@@ -146,7 +147,10 @@
       // Jour à partir duquel une paie compte pour le mois suivant (0 : jamais ; absent : le 25).
       ...(d.paieDecalee != null && d.paieDecalee !== "" ? { paieDecalee: Math.max(0, Math.min(31, Math.round(num(d.paieDecalee)))) } : {}),
       // Règles de classement apprises : un libellé qui contient `motif` va dans `categorie`.
-      regles: Array.isArray(d.regles) ? d.regles.filter(r => r && String(r.motif || "").trim() && CATEGORIE_IDS.has(r.categorie)).map(r => ({ motif: String(r.motif).trim().slice(0, 80), categorie: r.categorie })) : [] };
+      regles: Array.isArray(d.regles) ? d.regles.filter(r => r && String(r.motif || "").trim() && CATEGORIE_IDS.has(r.categorie)).map(r => ({ motif: String(r.motif).trim().slice(0, 80), categorie: r.categorie })) : [],
+      // Mon mois : ce que je remplis en début de mois (salaire, prime d'activité, autres revenus, dépenses fixes et variables).
+      mensuel: d.mensuel && typeof d.mensuel === "object" ? Object.fromEntries(Object.entries(d.mensuel).filter(([k, v]) => /^\d{4}-\d{2}$/.test(k) && v && typeof v === "object").sort().slice(-24)
+        .map(([k, v]) => [k, Object.fromEntries(CHAMPS_MOIS.filter(c => v[c] !== undefined && v[c] !== "" && v[c] !== null).map(c => [c, num(v[c])]))])) : {} };
     if (nom === "marche") return { ...base, ...d, cours: d.cours && typeof d.cours === "object" ? d.cours : {}, symboles: d.symboles || {}, erreurs: Array.isArray(d.erreurs) ? d.erreurs : [] };
     if (nom === "robot") return { ...base, ...d };
     if (nom === "historique") return { points: Array.isArray(d.points) ? d.points.filter(x => x && /^\d{4}-\d{2}-\d{2}$/.test(x.date)).sort((a, b) => a.date < b.date ? -1 : 1) : [] };
@@ -748,6 +752,85 @@
         h("ul", { class: "constats" }, erreurs.map(e => h("li", {}, pastille("info", "Info"), h("p", { text: `${e.ligne} : ${e.message}` }))))) : null);
   }
 
+  // ---------- Mon mois : le tableau du début de mois ----------
+  // La paie de fin de mois finance le mois suivant : à partir du 25 (réglable), on prépare déjà le mois qui vient.
+  const moisParDefaut = () => { const auj = new Date(); return jourDecalage() > 0 && auj.getDate() >= jourDecalage() ? decalerMois(cleMois(auj), 1) : cleMois(auj); };
+  let moisTableau = null;
+  // Ce que la page propose tant qu'une case n'est pas remplie : les opérations du mois, sinon le mois d'avant ou le budget prévu.
+  function suggestionsMois(cle) {
+    const ops = mouvementsDuMois(cle), pv = S.budget.prevu;
+    const recu = cat => somme(ops.filter(m => m.categorie === cat && m.montant > 0), m => m.montant);
+    const avant = Object.keys(S.budget.mensuel || {}).filter(k => k < cle).sort().map(k => S.budget.mensuel[k]);
+    const dernier = c => { for (let i = avant.length - 1; i >= 0; i--) if (avant[i][c] != null) return avant[i][c]; return null; };
+    const p = paie(), netPaie = num(S.budget.paie && S.budget.paie.brut) ? Math.round(netDepuisBrut(p.brut).net * (1 - p.pas / 100) * 100) / 100 : num(pv.salaire);
+    return {
+      salaire: recu("salaire") || netPaie,
+      primeActivite: recu("aides") || num(pv.aides),
+      autres: dernier("autres") ?? num(pv["autres-revenus"]),
+      fixes: dernier("fixes") ?? somme(B.CATEGORIES_BUDGET.filter(c => c.type === "depense" && c.fixe), c => num(pv[c.id])),
+      variables: dernier("variables") ?? somme(B.CATEGORIES_BUDGET.filter(c => c.type === "depense" && !c.fixe), c => num(pv[c.id]))
+    };
+  }
+  // Le partage du mois : d'abord les dépenses (gardées sur le compte courant), puis le plan de ta stratégie
+  // (épargne de précaution en premier), et ce qui dépasse le plan suit ta règle des rentrées en plus.
+  function monMois(cle) {
+    const e = (S.budget.mensuel || {})[cle] || {}, sug = suggestionsMois(cle);
+    const v = c => e[c] != null ? num(e[c]) : num(sug[c]);
+    const revenus = v("salaire") + v("primeActivite") + v("autres"), depenses = v("fixes") + v("variables");
+    const dispo = revenus - depenses, pl = planDuMois();
+    let precaution = 0, investir = 0, plaisir = 0, surplus = 0;
+    if (dispo > 0) {
+      precaution = Math.min(dispo, pl.versEpargne);
+      investir = Math.min(dispo - precaution, pl.investir);
+      surplus = dispo - precaution - investir;
+      if (surplus >= 1) { const c = conseilRentree(surplus, precaution); precaution += c.prec + c.enPlus; investir += c.investir; plaisir = c.plaisir; }
+    }
+    precaution = Math.floor(precaution); investir = Math.floor(investir);
+    const garder = Math.round((revenus - precaution - investir) * 100) / 100;
+    const lignes = investir > 0 ? repartirVersement(investir, synthese()) : [];
+    const enveloppes = [...new Set(lignes.filter(x => x.ligne).map(x => x.ligne.enveloppe))];
+    return { cle, e, sug, v, revenus, depenses, dispo, precaution, investir, garder, plaisir, surplus, plan: pl.versEpargne + pl.investir, pl, lignes, enveloppes, rempli: CHAMPS_MOIS.filter(c => e[c] != null).length };
+  }
+  const MM_CHAMPS = { salaire: "mm-salaire", primeActivite: "mm-prime", autres: "mm-autres", fixes: "mm-fixes", variables: "mm-variables" };
+  for (const [c, id] of Object.entries(MM_CHAMPS)) $(id).addEventListener("input", e => {
+    const cle = moisTableau || moisParDefaut();
+    S.budget.mensuel ||= {};
+    const m = (S.budget.mensuel[cle] ||= {});
+    if (e.target.value === "") delete m[c]; else m[c] = num(e.target.value);
+    if (!Object.keys(m).length) delete S.budget.mensuel[cle];
+    enregistrer("budget"); rendreMonMois(); rendreVersement(synthese());
+  });
+  $("mm-prec").addEventListener("click", () => { moisTableau = decalerMois(moisTableau || moisParDefaut(), -1); rendreMonMois(true); rendreVersement(synthese()); });
+  $("mm-suiv").addEventListener("click", () => { moisTableau = decalerMois(moisTableau || moisParDefaut(), 1); rendreMonMois(true); rendreVersement(synthese()); });
+  function rendreMonMois(forcer) {
+    const cle = moisTableau || moisParDefaut(), r = monMois(cle);
+    $("mm-titre").textContent = "Mon mois de " + nomMois(cle).split(" ")[0] + (cle.slice(0, 4) !== String(new Date().getFullYear()) ? " " + cle.slice(0, 4) : "");
+    for (const [c, id] of Object.entries(MM_CHAMPS)) {
+      const el = $(id);
+      el.placeholder = nf(0, 2).format(num(r.sug[c]));
+      if (forcer || !aFocus(el)) el.value = r.e[c] != null ? String(r.e[c]) : "";
+    }
+    $("mm-dispo").textContent = eur(r.dispo, 2);
+    $("mm-dispo").className = "num chiffre" + (r.dispo < 0 ? " perte" : "");
+    const pl = r.pl;
+    // Trois cases côte à côte : elles tiennent sur un écran de téléphone sous le premier tableau.
+    const montantMM = x => eur(x, Math.abs(x % 1) > 0.004 ? 2 : 0);
+    const nomCourt = nom => String(nom).replace(/\s*\(.*\)\s*$/, "");
+    const env = r.enveloppes.length === 1 ? (r.enveloppes[0] === "PEA" ? "PEA" : (B.ENVELOPPES.find(x => x.id === r.enveloppes[0]) || {}).nom || r.enveloppes[0]) : "Investissements";
+    const surQuoi = r.lignes.filter(x => x.ligne).map(x => x.ligne.nom).join(", ");
+    const tuileMM = (lib, sous, montant, titre) => h("div", { class: "tuile mm-tuile", title: titre || null }, h("span", { class: "etiquette", text: lib }), h("b", { class: "chiffre", text: montantMM(montant) }), h("span", { class: "petit muet", text: sous }));
+    vider($("mm-repartition"), h("div", { class: "mm-tuiles" },
+      tuileMM("Compte courant", r.plaisir ? `à garder, dont ${eur(r.plaisir, 0)} pour toi` : "à garder", r.garder),
+      tuileMM(pl.compte ? nomCourt(pl.compte.nom) : "Épargne de précaution", pl.compte ? "à verser (précaution)" : "à verser", r.precaution, pl.compte ? pl.compte.nom : null),
+      tuileMM(env, "à verser", r.investir, surQuoi ? "Pour " + surQuoi : null)));
+    const notes = [];
+    if (r.rempli < CHAMPS_MOIS.length) notes.push("Les montants en gris sont proposés par la page (tes opérations du mois ou le mois d'avant) : remplace-les par les tiens.");
+    if (r.dispo < 0) notes.push(`Tes dépenses dépassent tes revenus de ${eur(-r.dispo, 0)} : rien à verser ce mois-ci.`);
+    else if (r.dispo < r.plan - 0.5) notes.push(`Il manque ${eur(r.plan - r.dispo, 0)} pour suivre ton plan (${eur(pl.versEpargne, 0)} d'épargne et ${eur(pl.investir, 0)} investis) : ton épargne de précaution passe en premier.`);
+    else if (r.surplus >= 1) notes.push(`${eur(r.surplus, 0)} de plus que ton plan (${eur(pl.versEpargne, 0)} + ${eur(pl.investir, 0)}) : ${pl.manque > 0 ? "ils complètent d'abord ton épargne de précaution, comme une prime" : "ils suivent le partage de ta stratégie"}.`);
+    $("mm-note").textContent = notes.join(" ");
+  }
+
   // ---------- À faire ----------
   const jourMois = iso => new Date(iso + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
   function ajouterTache(texte, echeance, source) {
@@ -988,17 +1071,9 @@
   }
 
   function rendreVersement(syn) {
-    const pl = planDuMois();
-    const rangs = [];
-    if (pl.versEpargne > 0) rangs.push(h("tr", {}, h("td", {}, h("div", { class: "nom-ligne" }, h("span", { text: pl.complete || pl.obj <= 0 ? "Épargne" : "Épargne de précaution" }),
-      h("small", { text: pl.compte ? "sur " + pl.compte.nom : "sur ton livret" }))), h("td", { class: "num chiffre", text: eur(pl.versEpargne, 0) })));
-    if (pl.investir > 0) rangs.push(h("tr", {}, h("td", {}, h("div", { class: "nom-ligne" }, h("span", { text: "À investir" }),
-      h("small", { text: pl.investir > pl.vi ? `${eur(pl.vi, 0)} prévus + ${eur(pl.investir - pl.vi, 0)} libérés par l'épargne de précaution complète` : "détail : « Sur quelle ligne investir »" }))), h("td", { class: "num chiffre", text: eur(pl.investir, 0) })));
-    vider($("plan-mois"), rangs.length ? h("div", { class: "defile" }, h("table", {}, h("tbody", {}, rangs,
-      h("tr", { class: "table-total" }, h("td", { text: "Effort d'épargne du mois" }), h("td", { class: "num chiffre", text: eur(pl.versEpargne + pl.investir, 0) })))))
-      : h("p", { class: "vide", text: "Fixe tes versements mensuels (épargne de précaution et investissements) dans Ma stratégie." }));
+    const pl = planDuMois(), mm = monMois(moisTableau || moisParDefaut());
     const champ = $("versement-montant");
-    if (!champ.dataset.touche && !aFocus(champ)) champ.value = pl.investir || "";
+    if (!champ.dataset.touche && !aFocus(champ)) champ.value = mm.investir || "";
     const montant = num(champ.value);
     const z = $("versement-resultat");
     if (!(montant > 0)) { vider(z, h("p", { class: "vide", text: pl.vi > 0 || pl.vp > 0 ? "Rien à investir ce mois-ci : tout va à ton épargne de précaution." : "Indique un montant." })); return; }
@@ -1026,11 +1101,13 @@
   // ---------- une rentrée d'argent : que faire de cette prime ? ----------
   // Règle : d'abord ce qui manque au palier d'épargne de précaution en cours ; le reste se partage
   // comme les versements du palier suivant (tout investi si tous les paliers sont atteints).
-  function conseilRentree(montant) {
+  // `dejaVerse` : ce que le plan du mois met déjà sur l'épargne de précaution (le palier en a besoin d'autant moins).
+  function conseilRentree(montant, dejaVerse = 0) {
     const pl = planDuMois(), pr = S.strategie.profil, syn = synthese();
     const plaisir = Math.round(montant * Math.min(100, Math.max(0, num(pr.partPlaisir))) / 100);
     let reste = montant - plaisir;
-    const prec = pl.manque > 0 ? Math.min(reste, pl.manque) : 0;
+    const manque = Math.max(0, pl.manque - dejaVerse);
+    const prec = manque > 0 ? Math.min(reste, manque) : 0;
     reste -= prec;
     let ratio = 0, raisonReste = "";
     if (reste > 0) {
@@ -1055,7 +1132,7 @@
     if (aPlacer > 0) versComptes.push({ compte: null, montant: aPlacer });
     const plan = investir > 0 ? repartirVersement(investir, syn) : [];
     const raisons = [];
-    if (prec > 0) raisons.push(`ton épargne de précaution passe en premier : il lui manquait ${eur(pl.manque, 0)}${pl.palier && pl.palier.date ? ` pour le ${dateFr(pl.palier.date)}` : ""}`);
+    if (prec > 0) raisons.push(`ton épargne de précaution passe en premier : il lui manquait ${eur(manque, 0)}${pl.palier && pl.palier.date ? ` pour le ${dateFr(pl.palier.date)}` : ""}`);
     if (raisonReste) raisons.push(raisonReste);
     if (!raisons.length && plaisir > 0) raisons.push("tout est pour toi");
     return { montant, plaisir, prec, enPlus, investir, versComptes, plan, raisons, pl };
@@ -1597,6 +1674,8 @@
     if (num(S.budget.paie && S.budget.paie.brut)) L.push(`\nPAIE : ${eur(netPaie, 0)} net par mois (${eur(p.brut, 0)} brut, ${nf(0, 2).format(p.heures)} h${Math.abs(p.brut / p.heures / PAIE.smicHoraire - 1) < 0.01 ? ", au SMIC" : ""}), plus les heures supplémentaires éventuelles${num(S.budget.prevu.aides) ? ` ; prime d'activité ${eur(num(S.budget.prevu.aides), 0)} par mois` : ""}.${jourDecalage() > 0 ? ` Une paie reçue à partir du ${jourDecalage()} (en général vers le 29) finance le mois suivant : le budget la compte pour ce mois-là.` : ""}`);
     const ops = mouvementsDuMois(cleMois(new Date())).sort((a, b) => a.date < b.date ? 1 : -1).slice(0, 20);
     if (ops.length) L.push(`OPÉRATIONS DU MOIS EN COURS (compte courant) :\n` + ops.map(m => `- ${dateFr(m.date)} | ${m.libelle} | ${eurSigne(m.montant)} | ${(CAT[m.categorie] || {}).nom || m.categorie}`).join("\n"));
+    const mm = monMois(moisTableau || moisParDefaut());
+    L.push(`MON MOIS (tableau de début de mois, ${nomMois(mm.cle)}${mm.rempli < CHAMPS_MOIS.length ? ", en partie estimé par la page" : ""}) : salaire ${eur(mm.v("salaire"), 2)}, prime d'activité ${eur(mm.v("primeActivite"), 2)}, autres revenus ${eur(mm.v("autres"), 0)} ; dépenses fixes ${eur(mm.v("fixes"), 0)}, variables ${eur(mm.v("variables"), 0)}. Partage proposé : ${eur(mm.garder, 0)} gardés sur le compte courant, ${eur(mm.precaution, 0)} sur l'épargne de précaution${mm.pl.compte ? " (" + mm.pl.compte.nom + ")" : ""}, ${eur(mm.investir, 0)} investis${mm.enveloppes.length === 1 ? " (" + mm.enveloppes[0] + ")" : ""}.`);
     const afaire = S.taches.items.filter(t => !t.fait);
     L.push(afaire.length ? "\nSA LISTE À FAIRE (id | tâche | échéance | origine) :\n" + afaire.map(t => `- ${t.id} | ${t.texte} | ${t.echeance ? dateFr(t.echeance) : "—"} | ${t.source === "claude" ? "décidé avec toi" : "ajoutée par lui"}`).join("\n") : "\nSA LISTE À FAIRE : vide.");
     const faitesRecentes = S.taches.items.filter(t => t.fait).sort((a, b) => a.faitLe < b.faitLe ? 1 : -1).slice(0, 5);
@@ -3192,7 +3271,7 @@ ${texte.slice(0, 20000)}`;
     rendreEnCours = true;
     try {
       const syn = synthese();
-      rendreBandeau(); rendreReleve(syn); rendreTaches(); rendrePrecaution(); rendreHistorique(); rendreRepartition(syn); rendreAlertes(syn); rendreVersement(syn); rendreEnveloppes(syn); rendreComptes(); rendreCoursDirect(); rendreLignes(syn);
+      rendreBandeau(); rendreMonMois(); rendreReleve(syn); rendreTaches(); rendrePrecaution(); rendreHistorique(); rendreRepartition(syn); rendreAlertes(syn); rendreVersement(syn); rendreEnveloppes(syn); rendreComptes(); rendreCoursDirect(); rendreLignes(syn);
       $("btn-importer").hidden = !claudePret;
       rendreBudget();
       rendreIC();
