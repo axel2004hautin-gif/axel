@@ -68,6 +68,8 @@
     if (sel.value !== String(valeur ?? "") && liste.length) sel.value = liste[0].value;
   };
   const aFocus = el => el && (document.activeElement === el || el.contains(document.activeElement));
+  // Une saisie en cours (texte, nombre, liste) : on ne redessine pas sous les doigts. Un bouton ou une case, si.
+  const enSaisie = el => aFocus(el) && /^(TEXTAREA|SELECT)$|^INPUT$/.test(document.activeElement.tagName) && !["checkbox", "radio", "button", "submit"].includes(document.activeElement.type);
   const remplir = (id, valeur) => {
     const el = $(id);
     if (!el || aFocus(el)) return;
@@ -78,7 +80,8 @@
   const TYPE_COMPTE = Object.fromEntries(B.TYPES_COMPTES.map(t => [t.id, t]));
 
   // ---------- état ----------
-  const DOCS = ["strategie", "portefeuille", "journal", "comparer", "discussion", "historique", "budget", "marche", "robot"];
+  const CATEGORIE_IDS = new Set(B.CATEGORIES_BUDGET.map(c => c.id));
+  const DOCS = ["strategie", "portefeuille", "taches", "journal", "comparer", "discussion", "historique", "budget", "marche", "robot"];
   // `marche` et `robot` sont écrits par le robot des cours (tâche planifiée), jamais par la page.
   const DOCS_ROBOT = ["marche", "robot"];
   const S = {};
@@ -87,10 +90,11 @@
       case "strategie": return clone(B.STRATEGIE_DEPART);
       case "portefeuille": return { exemple: false, coursMaj: "", lignes: [], comptes: [] };
       case "journal": return { entrees: [] };
+      case "taches": return { items: [] };
       case "comparer": return null;
       case "discussion": return { messages: [] };
       case "historique": return { points: [] };
-      case "budget": return { prevu: {}, demenagement: {}, paie: {} };
+      case "budget": return { prevu: {}, demenagement: {}, paie: {}, regles: [] };
       case "marche": return { maj: "", cours: {}, symboles: {}, erreurs: [], sources: [] };
       case "robot": return { trigger: "", horaire: "" };
     }
@@ -131,11 +135,18 @@
       return r;
     }
     if (nom === "journal") return { entrees: Array.isArray(d.entrees) ? d.entrees : [] };
+    if (nom === "taches") return { items: Array.isArray(d.items) ? d.items.filter(t => t && String(t.texte || "").trim()).map(t => ({
+      id: String(t.id || uid()), texte: String(t.texte).trim().slice(0, 300), echeance: /^\d{4}-\d{2}-\d{2}$/.test(t.echeance || "") ? t.echeance : "",
+      fait: !!t.fait, faitLe: /^\d{4}-\d{2}-\d{2}$/.test(t.faitLe || "") ? t.faitLe : "", source: t.source === "claude" ? "claude" : "moi", cree: String(t.cree || "") })) : [] };
     if (nom === "discussion") return { messages: Array.isArray(d.messages) ? d.messages.filter(m => m && (m.role === "user" || m.role === "assistant") && m.content) : [] };
     if (nom === "budget") return { prevu: d.prevu && typeof d.prevu === "object" ? Object.fromEntries(Object.entries(d.prevu).map(([k, v]) => [k, num(v)])) : {},
       demenagement: d.demenagement && typeof d.demenagement === "object" ? Object.fromEntries(Object.entries(d.demenagement).map(([k, v]) => [k, num(v)])) : {},
       // « net », « promoAnnee » et « promoBrut » : anciens champs (le net se calcule maintenant depuis le brut).
-      paie: d.paie && typeof d.paie === "object" ? Object.fromEntries(Object.entries(d.paie).filter(([k]) => !["net", "promoAnnee", "promoBrut"].includes(k))) : {} };
+      paie: d.paie && typeof d.paie === "object" ? Object.fromEntries(Object.entries(d.paie).filter(([k]) => !["net", "promoAnnee", "promoBrut"].includes(k))) : {},
+      // Jour à partir duquel une paie compte pour le mois suivant (0 : jamais ; absent : le 25).
+      ...(d.paieDecalee != null && d.paieDecalee !== "" ? { paieDecalee: Math.max(0, Math.min(31, Math.round(num(d.paieDecalee)))) } : {}),
+      // Règles de classement apprises : un libellé qui contient `motif` va dans `categorie`.
+      regles: Array.isArray(d.regles) ? d.regles.filter(r => r && String(r.motif || "").trim() && CATEGORIE_IDS.has(r.categorie)).map(r => ({ motif: String(r.motif).trim().slice(0, 80), categorie: r.categorie })) : [] };
     if (nom === "marche") return { ...base, ...d, cours: d.cours && typeof d.cours === "object" ? d.cours : {}, symboles: d.symboles || {}, erreurs: Array.isArray(d.erreurs) ? d.erreurs : [] };
     if (nom === "robot") return { ...base, ...d };
     if (nom === "historique") return { points: Array.isArray(d.points) ? d.points.filter(x => x && /^\d{4}-\d{2}-\d{2}$/.test(x.date)).sort((a, b) => a.date < b.date ? -1 : 1) : [] };
@@ -505,7 +516,7 @@
   }
 
   // ---------- onglets ----------
-  const VUES = ["portefeuille", "budget", "decider", "comparer", "claude", "strategie"];
+  const VUES = ["portefeuille", "budget", "claude", "strategie"];
   let vueActive = "portefeuille";
   function montrer(vue) {
     if (!VUES.includes(vue)) vue = "portefeuille";
@@ -514,13 +525,14 @@
       $("vue-" + v).hidden = v !== vue;
       $("t-" + v).setAttribute("aria-selected", v === vue ? "true" : "false");
     }
-    if (vue === "comparer") { planifierSimulation(); rendreIC(); }
+    if (vue === "strategie") rendreIC();
     if (vue === "portefeuille") rendreHistorique();
     if (vue === "budget") rendre12Mois();
     window.scrollTo({ top: 0 });
   }
   document.querySelectorAll(".onglet").forEach(b => b.addEventListener("click", () => montrer(b.dataset.vue)));
-  const vueDe = hash => ({ patrimoine: "portefeuille", simuler: "comparer" })[hash] || hash;
+  // Anciens liens : Décider et Simuler n'existent plus (Claude fait ces vérifications et ces simulations).
+  const vueDe = hash => ({ accueil: "portefeuille", patrimoine: "portefeuille", simuler: "strategie", comparer: "strategie", decider: "claude" })[hash] || hash;
   window.addEventListener("hashchange", () => { const v = vueDe(location.hash.slice(1)); if (VUES.includes(v)) montrer(v); });
 
   // ---------- rendu : portefeuille ----------
@@ -736,6 +748,57 @@
         h("ul", { class: "constats" }, erreurs.map(e => h("li", {}, pastille("info", "Info"), h("p", { text: `${e.ligne} : ${e.message}` }))))) : null);
   }
 
+  // ---------- À faire ----------
+  const jourMois = iso => new Date(iso + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+  function ajouterTache(texte, echeance, source) {
+    texte = String(texte || "").trim().slice(0, 300);
+    if (!texte) return null;
+    const deja = S.taches.items.find(t => !t.fait && norm(t.texte) === norm(texte));
+    if (deja) return deja;
+    const t = { id: uid(), texte, echeance: /^\d{4}-\d{2}-\d{2}$/.test(echeance || "") ? echeance : "", fait: false, faitLe: "", source, cree: aujourdhui() };
+    S.taches.items.push(t);
+    enregistrer("taches");
+    return t;
+  }
+  function cocherTache(id, fait) {
+    const t = S.taches.items.find(x => x.id === id);
+    if (!t) return null;
+    t.fait = fait; t.faitLe = fait ? aujourdhui() : "";
+    enregistrer("taches");
+    return t;
+  }
+  const echeanceTri = t => t.echeance || "9999-12-31";
+  function rendreTaches() {
+    const z = $("taches"), auj = aujourdhui();
+    const afaire = S.taches.items.filter(t => !t.fait).sort((a, b) => echeanceTri(a) < echeanceTri(b) ? -1 : echeanceTri(a) > echeanceTri(b) ? 1 : a.cree < b.cree ? 1 : -1);
+    const faites = S.taches.items.filter(t => t.fait).sort((a, b) => a.faitLe < b.faitLe ? 1 : -1);
+    $("taches-note").textContent = afaire.length ? `${afaire.length} à faire` : "";
+    const quand = t => {
+      if (!t.echeance) return null;
+      if (t.echeance < auj) return pastille("bloquant", "en retard : " + jourMois(t.echeance));
+      if (t.echeance === auj) return pastille("attention", "aujourd'hui");
+      const j = Math.round((new Date(t.echeance + "T12:00:00") - new Date(auj + "T12:00:00")) / 86400000);
+      return pastille(j <= 3 ? "attention" : "info", "avant le " + jourMois(t.echeance));
+    };
+    const ligne = t => h("li", { class: "tache" + (t.fait ? " faite" : "") },
+      h("input", { type: "checkbox", checked: t.fait, "aria-label": (t.fait ? "Remettre à faire : " : "Fait : ") + t.texte, onchange: e => { cocherTache(t.id, e.target.checked); rendreTaches(); } }),
+      h("div", { class: "tache-texte" }, h("span", { text: t.texte }),
+        h("div", { class: "tache-meta" }, t.fait ? (t.faitLe ? h("span", { text: "fait le " + jourMois(t.faitLe) }) : null) : quand(t),
+          t.source === "claude" ? h("span", { text: "décidé avec Claude" }) : null,
+          !t.fait && claudePret ? h("button", { type: "button", class: "lien", text: "En parler à Claude", onclick: () => demanderDansChat(`À propos de ma tâche « ${t.texte} » : `) }) : null)),
+      h("button", { type: "button", class: "btn btn-discret btn-petit", text: "×", title: "Supprimer", "aria-label": "Supprimer " + t.texte, onclick: () => { S.taches.items = S.taches.items.filter(x => x.id !== t.id); enregistrer("taches"); rendreTaches(); } }));
+    vider(z, afaire.length ? h("ul", { class: "taches" }, afaire.map(ligne))
+      : h("p", { class: "vide", text: claudePret ? "Rien à faire pour l'instant. Quand tu décides quelque chose avec Claude (un virement, un achat, une vérification), il l'ajoute ici." : "Rien à faire pour l'instant." }));
+    const zf = $("taches-faites"), ouvert = !!(zf.querySelector("details") || {}).open;
+    vider(zf, faites.length ? h("details", { class: "sous-repli", open: ouvert }, h("summary", { text: `Fait (${faites.length})` }),
+      h("ul", { class: "taches" }, faites.slice(0, 15).map(ligne)),
+      h("div", { class: "actions" }, h("button", { type: "button", class: "btn btn-discret btn-petit", text: "Effacer les tâches faites", onclick: () => { S.taches.items = S.taches.items.filter(x => !x.fait); enregistrer("taches"); rendreTaches(); } }))) : null);
+  }
+  $("form-tache").addEventListener("submit", e => {
+    e.preventDefault();
+    if (ajouterTache($("tache-texte").value, $("tache-date").value, "moi")) { $("tache-texte").value = ""; $("tache-date").value = ""; rendreTaches(); }
+  });
+
   // ---------- historique du patrimoine ----------
   const totalPoint = p => num(p.epargne) + num(p.bourse) + num(p.crypto);
   function noterPoint() {
@@ -752,84 +815,145 @@
     if (pts.length > 1000) S.historique.points = pts.filter((_, i) => i >= 500 || i % 2 === 0);
     enregistrer("historique");
   }
+  // Période affichée : mémorisée dans ce navigateur (une préférence d'affichage, pas une donnée).
+  const PERIODES = [{ id: "1m", nom: "1 mois", mois: 1 }, { id: "3m", nom: "3 mois", mois: 3 }, { id: "6m", nom: "6 mois", mois: 6 }, { id: "1a", nom: "1 an", mois: 12 }, { id: "tout", nom: "Tout" }];
+  const vueHisto = (() => { try { return { periode: "tout", mode: "total", ...JSON.parse(localStorage.getItem(CLE("vue-historique")) || "{}") }; } catch (_) { return { periode: "tout", mode: "total" }; } })();
+  const garderVueHisto = () => { try { localStorage.setItem(CLE("vue-historique"), JSON.stringify(vueHisto)); } catch (_) {} };
+  const pasRond = brut => { const e = Math.pow(10, Math.floor(Math.log10(Math.max(brut, 1e-9)))), f = brut / e; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * e; };
   function rendreHistorique() {
-    const pts = S.historique.points, z = $("historique-graphe");
+    const tous = S.historique.points, z = $("historique-graphe");
+    const fin = tous.length ? tous[tous.length - 1].date : aujourdhui();
+    // Bornes de la période choisie (ou du zoom fait à la souris ou au doigt).
+    let debutP = "", finP = fin;
+    if (vueHisto.periode === "zoom" && vueHisto.du && vueHisto.au) { debutP = vueHisto.du; finP = vueHisto.au; }
+    else { const per = PERIODES.find(x => x.id === vueHisto.periode); if (per && per.mois) debutP = ajouterMois(fin, -per.mois); }
+    const pts = tous.filter(p => (!debutP || p.date >= debutP) && p.date <= finP);
+    const segments = (nom, liste, actif, f) => h("div", { class: "segments", role: "radiogroup", "aria-label": nom }, liste.map(x => h("label", {},
+      h("input", { type: "radio", name: "h-" + nom, value: x.id, checked: x.id === actif, onchange: () => f(x.id) }), h("span", { text: x.nom }))));
+    vider($("historique-outils"), tous.length >= 2 ? [
+      h("div", { class: "actions" }, segments("Période", PERIODES, vueHisto.periode, id => { vueHisto.periode = id; delete vueHisto.du; delete vueHisto.au; garderVueHisto(); rendreHistorique(); }),
+        vueHisto.periode === "zoom" ? h("button", { type: "button", class: "btn btn-ghost btn-petit", text: `${jourMois(debutP)} – ${jourMois(finP)} ×`, "aria-label": "Annuler le zoom", onclick: () => { vueHisto.periode = "tout"; delete vueHisto.du; delete vueHisto.au; garderVueHisto(); rendreHistorique(); } }) : null),
+      segments("Affichage", [{ id: "total", nom: "Total" }, { id: "detail", nom: "Détail" }], vueHisto.mode, id => { vueHisto.mode = id; garderVueHisto(); rendreHistorique(); })] : null);
     const series = [
       { cle: "epargne", nom: "Épargne", couleur: COULEURS_PATRIMOINE.epargne },
       { cle: "bourse", nom: "Bourse", couleur: COULEURS_PATRIMOINE.bourse },
       { cle: "crypto", nom: "Crypto", couleur: COULEURS_PATRIMOINE.crypto }
-    ].filter(se => pts.some(p => num(p[se.cle]) > 0));
-    $("historique-note").textContent = pts.length ? `${pts.length} relevé${pts.length > 1 ? "s" : ""} depuis le ${dateFr(pts[0].date)}` : "";
-    vider($("historique-legende"), pts.length >= 2 ? series.map(se => h("span", {}, h("i", { class: "puce", style: "background:" + se.couleur }), se.nom)) : null);
-    if (pts.length < 2) {
+    ].filter(se => tous.some(p => num(p[se.cle]) > 0));
+    const detail = vueHisto.mode === "detail";
+    $("historique-note").textContent = tous.length ? `${tous.length} relevé${tous.length > 1 ? "s" : ""} depuis le ${dateFr(tous[0].date)}` : "";
+    vider($("historique-legende"), pts.length >= 2 && detail ? series.map(se => h("span", {}, h("i", { class: "puce", style: "background:" + se.couleur }), se.nom)) : null);
+    $("historique-aide").textContent = "";
+    if (tous.length < 2) {
       const base = "La courbe se dessine à chaque mise à jour de tes cours ou de tes soldes, un point par jour.";
       vider(z, h("p", { class: "vide", text: S.portefeuille.exemple || S.portefeuille.comptes.some(estExempleCompte)
         ? "La courbe démarre avec tes vrais chiffres : rien n'est noté tant que l'exemple est affiché."
-        : pts.length ? `Premier relevé le ${dateFr(pts[0].date)} : ${eur(totalPoint(pts[0]), 0)}. ${base}` : base }));
+        : tous.length ? `Premier relevé le ${dateFr(tous[0].date)} : ${eur(totalPoint(tous[0]), 0)}. ${base}` : base }));
       return;
     }
+    if (pts.length < 2) { vider(z, h("p", { class: "vide", text: `Pas assez de relevés sur cette période (le premier date du ${dateFr(tous[0].date)}). Choisis une période plus longue.` })); return; }
     if (!z.clientWidth) return;
-    const W = Math.round(Math.max(300, Math.min(900, z.clientWidth))), H = W < 520 ? 200 : 240, m = { g: 52, d: 14, h: 10, b: 26 };
+    // Ce qui a changé sur la période : la variation totale, dont les plus-values.
+    const p0 = pts[0], p1 = pts[pts.length - 1], dTotal = totalPoint(p1) - totalPoint(p0);
+    const pvDe = p => num(p.bourse) + num(p.crypto) - num(p.investi), dPv = pvDe(p1) - pvDe(p0);
+    $("historique-aide").textContent = `Du ${dateFr(p0.date)} au ${dateFr(p1.date)} : ${eurSigne(dTotal)} (${pctSigne(dTotal / Math.max(1, totalPoint(p0)) * 100)})${num(p1.investi) > 0 ? `, dont ${eurSigne(dPv)} de plus-values ; le reste vient de tes versements et de ton épargne` : ""}. Fais glisser sur la courbe pour zoomer.`;
+    const W = Math.round(Math.max(300, Math.min(900, z.clientWidth))), H = W < 520 ? 200 : 240, m = { g: 56, d: 14, h: 10, b: 26 };
     const t = p => new Date(p.date + "T12:00:00").getTime();
-    const t0 = t(pts[0]), t1 = t(pts[pts.length - 1]);
-    const ymaxBrut = Math.max(1, ...pts.map(totalPoint));
-    const pas = (() => { const brut = ymaxBrut / 4, e = Math.pow(10, Math.floor(Math.log10(brut))), f = brut / e; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * e; })();
-    const ymax = Math.ceil(ymaxBrut / pas) * pas;
+    const t0 = t(p0), t1 = t(p1);
+    // Total : l'échelle suit la période, pour voir les variations. Détail : les trois parts empilées depuis 0.
+    let ymin = 0, ymax, pas;
+    if (detail) {
+      const brut = Math.max(1, ...pts.map(totalPoint));
+      pas = pasRond(brut / 4); ymax = Math.ceil(brut / pas) * pas;
+    } else {
+      const vals = pts.map(totalPoint), lo = Math.min(...vals), hi = Math.max(...vals), marge = Math.max((hi - lo) * 0.15, hi * 0.002, 1);
+      pas = pasRond((hi - lo + 2 * marge) / 4);
+      ymin = Math.max(0, Math.floor((lo - marge) / pas) * pas); ymax = Math.ceil((hi + marge) / pas) * pas;
+    }
     const x = p => m.g + (t(p) - t0) / Math.max(1, t1 - t0) * (W - m.g - m.d);
-    const y = v => m.h + (1 - v / ymax) * (H - m.h - m.b);
+    const y = v => m.h + (1 - (v - ymin) / Math.max(1e-9, ymax - ymin)) * (H - m.h - m.b);
     const NS = "http://www.w3.org/2000/svg";
     const sv = (tag, attrs, txt) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v); if (txt != null) e.textContent = txt; return e; };
-    const svg = sv("svg", { viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: "img", "aria-label": `Patrimoine du ${dateFr(pts[0].date)} au ${dateFr(pts[pts.length - 1].date)} : de ${eur(totalPoint(pts[0]), 0)} à ${eur(totalPoint(pts[pts.length - 1]), 0)}` });
-    for (let v = 0; v <= ymax + 1e-6; v += pas) {
+    const svg = sv("svg", { viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: "img", "aria-label": `Patrimoine du ${dateFr(p0.date)} au ${dateFr(p1.date)} : de ${eur(totalPoint(p0), 0)} à ${eur(totalPoint(p1), 0)}` });
+    for (let v = ymin; v <= ymax + 1e-6; v += pas) {
       svg.append(sv("line", { class: "grille-h", x1: m.g, x2: W - m.d, y1: y(v), y2: y(v) }));
-      svg.append(sv("text", { x: m.g - 8, y: y(v) + 4, "text-anchor": "end" }, compact(v)));
+      // Échelle serrée (vue Total) : les euros en entier, sinon tous les repères liraient « 41 k€ ».
+      svg.append(sv("text", { x: m.g - 8, y: y(v) + 4, "text-anchor": "end" }, pas >= 1000 ? compact(v) : nf(0, 0).format(v)));
     }
     const jours = (t1 - t0) / 86400000;
     const fmt = jours > 75 ? { month: "short", year: "2-digit" } : { day: "numeric", month: "short" };
-    const nbTicks = Math.max(2, Math.min(6, Math.floor((W - m.g - m.d) / 90)));
+    const nbTicks = Math.max(2, Math.min(6, Math.floor((W - m.g - m.d) / 90), Math.round(jours) + 1));
     for (let k = 0; k < nbTicks; k++) {
       const tk = t0 + (t1 - t0) * k / (nbTicks - 1);
       const xx = m.g + k / (nbTicks - 1) * (W - m.g - m.d);
       svg.append(sv("text", { x: xx, y: H - 8, "text-anchor": k === 0 ? "start" : k === nbTicks - 1 ? "end" : "middle" }, new Date(tk).toLocaleDateString("fr-FR", fmt)));
     }
-    svg.append(sv("line", { class: "axe", x1: m.g, x2: W - m.d, y1: y(0), y2: y(0) }));
-    const cumul = pts.map(() => 0);
-    for (const se of series) {
-      const bas = cumul.slice();
-      pts.forEach((p, i) => { cumul[i] += num(p[se.cle]); });
-      const haut = pts.map((p, i) => `${x(p)},${y(cumul[i])}`);
-      const dessous = pts.map((p, i) => `${x(p)},${y(bas[i])}`).reverse();
-      svg.append(sv("polygon", { points: [...haut, ...dessous].join(" "), style: `fill:${se.couleur};opacity:0.16;stroke:none` }));
-      svg.append(sv("polyline", { points: haut.join(" "), style: `fill:none;stroke:${se.couleur};stroke-width:2;stroke-linejoin:round;stroke-linecap:round` }));
+    if (ymin === 0) svg.append(sv("line", { class: "axe", x1: m.g, x2: W - m.d, y1: y(0), y2: y(0) }));
+    let couleurPoint = "var(--accent)";
+    if (detail) {
+      const cumul = pts.map(() => 0);
+      for (const se of series) {
+        const bas = cumul.slice();
+        pts.forEach((p, i) => { cumul[i] += num(p[se.cle]); });
+        const haut = pts.map((p, i) => `${x(p)},${y(cumul[i])}`);
+        const dessous = pts.map((p, i) => `${x(p)},${y(bas[i])}`).reverse();
+        svg.append(sv("polygon", { points: [...haut, ...dessous].join(" "), style: `fill:${se.couleur};opacity:0.16;stroke:none` }));
+        svg.append(sv("polyline", { points: haut.join(" "), style: `fill:none;stroke:${se.couleur};stroke-width:2;stroke-linejoin:round;stroke-linecap:round` }));
+      }
+      if (series.length) couleurPoint = series[series.length - 1].couleur;
+    } else {
+      const ligneTotal = pts.map(p => `${x(p)},${y(totalPoint(p))}`);
+      svg.append(sv("polygon", { points: [...ligneTotal, `${x(p1)},${H - m.b}`, `${x(p0)},${H - m.b}`].join(" "), style: "fill:var(--accent);opacity:0.1;stroke:none" }));
+      svg.append(sv("polyline", { points: ligneTotal.join(" "), style: "fill:none;stroke:var(--accent);stroke-width:2;stroke-linejoin:round;stroke-linecap:round" }));
     }
-    const der = pts[pts.length - 1];
-    svg.append(sv("circle", { cx: x(der), cy: y(totalPoint(der)), r: 4, style: `fill:${series.length ? series[series.length - 1].couleur : "var(--encre)"};stroke:var(--surface);stroke-width:2` }));
+    svg.append(sv("circle", { cx: x(p1), cy: y(totalPoint(p1)), r: 4, style: `fill:${couleurPoint};stroke:var(--surface);stroke-width:2` }));
     const repere = sv("line", { x1: 0, x2: 0, y1: m.h, y2: H - m.b, style: "stroke:var(--encre-2);stroke-width:1;opacity:0", "pointer-events": "none" });
-    svg.append(repere);
+    const selection = sv("rect", { class: "selection-zoom", x: 0, y: m.h, width: 0, height: H - m.h - m.b, "pointer-events": "none" });
+    svg.append(repere, selection);
     const zone = sv("rect", { x: m.g, y: m.h, width: W - m.g - m.d, height: H - m.h - m.b, style: "fill:transparent;cursor:crosshair;touch-action:pan-y" });
     svg.append(zone);
     const bulle = h("div", { class: "info-bulle", hidden: true });
     vider(z, svg, bulle);
+    const versX = clientX => { const r = svg.getBoundingClientRect(); return Math.max(m.g, Math.min(W - m.d, (clientX - r.left) / r.width * W)); };
     const montrerPoint = clientX => {
-      const r = svg.getBoundingClientRect();
-      const px = (clientX - r.left) / r.width * W;
+      const r = svg.getBoundingClientRect(), px = versX(clientX);
       let i = 0, best = Infinity;
       pts.forEach((p, k) => { const d = Math.abs(x(p) - px); if (d < best) { best = d; i = k; } });
       const p = pts[i];
       repere.setAttribute("x1", x(p)); repere.setAttribute("x2", x(p)); repere.style.opacity = "0.5";
-      const pv = num(p.bourse) + num(p.crypto) - num(p.investi);
       vider(bulle, h("b", { text: dateFr(p.date) }),
         series.map(se => h("div", { class: "ligne-serie" }, h("span", {}, h("span", { class: "puce", style: "background:" + se.couleur + ";margin-right:6px" }), se.nom), h("span", { class: "chiffre", text: eur(num(p[se.cle]), 0) }))),
         h("div", { class: "ligne-serie" }, h("b", { text: "Total" }), h("b", { class: "chiffre", text: eur(totalPoint(p), 0) })),
-        num(p.investi) > 0 ? h("div", { class: "ligne-serie muet" }, h("span", { text: "dont plus-values latentes" }), h("span", { class: "chiffre", text: eurSigne(pv) })) : null);
+        num(p.investi) > 0 ? h("div", { class: "ligne-serie muet" }, h("span", { text: "dont plus-values latentes" }), h("span", { class: "chiffre", text: eurSigne(pvDe(p)) })) : null);
       bulle.hidden = false;
       const gauche = x(p) / W * r.width, largeur = bulle.offsetWidth || 190;
       bulle.style.left = (gauche + 12 + largeur > r.width ? Math.max(0, gauche - 12 - largeur) : gauche + 12) + "px";
       bulle.style.top = "8px";
     };
-    zone.addEventListener("pointermove", e => montrerPoint(e.clientX));
-    zone.addEventListener("pointerdown", e => montrerPoint(e.clientX));
-    zone.addEventListener("pointerleave", () => { bulle.hidden = true; repere.style.opacity = "0"; });
+    // Glisser pour zoomer : la zone choisie devient la période affichée.
+    let depart = null;
+    zone.addEventListener("pointerdown", e => { depart = versX(e.clientX); try { zone.setPointerCapture(e.pointerId); } catch (_) {} montrerPoint(e.clientX); });
+    zone.addEventListener("pointermove", e => {
+      if (depart != null && Math.abs(versX(e.clientX) - depart) > 8) {
+        const a = Math.min(depart, versX(e.clientX)), b = Math.max(depart, versX(e.clientX));
+        selection.setAttribute("x", a); selection.setAttribute("width", b - a);
+        bulle.hidden = true; repere.style.opacity = "0";
+        return;
+      }
+      montrerPoint(e.clientX);
+    });
+    const finir = e => {
+      if (depart == null) return;
+      const a = Math.min(depart, versX(e.clientX)), b = Math.max(depart, versX(e.clientX));
+      depart = null; selection.setAttribute("width", 0);
+      if (b - a <= 8) return;
+      // Les relevés dans la zone choisie fixent la nouvelle période.
+      const dedans = pts.filter(p => x(p) >= a - 2 && x(p) <= b + 2);
+      if (dedans.length < 2) { $("historique-aide").textContent = "Sélectionne une zone qui contient au moins deux relevés."; return; }
+      Object.assign(vueHisto, { periode: "zoom", du: dedans[0].date, au: dedans[dedans.length - 1].date }); garderVueHisto(); rendreHistorique();
+    };
+    zone.addEventListener("pointerup", finir);
+    zone.addEventListener("pointercancel", () => { depart = null; selection.setAttribute("width", 0); });
+    zone.addEventListener("pointerleave", () => { if (depart == null) { bulle.hidden = true; repere.style.opacity = "0"; } });
   }
 
   function rendreRepartition(syn) {
@@ -858,7 +982,9 @@
   }
 
   function rendreAlertes(syn) {
-    vider($("alertes"), alertes(syn).map(a => h("li", {}, pastille(a.niveau, { ok: "OK", attention: "À voir", bloquant: "Règle", info: "Info" }[a.niveau]), h("p", { text: a.texte }))));
+    const liste = alertes(syn).filter(a => a.niveau !== "ok");
+    $("carte-alertes").hidden = !liste.length;
+    vider($("alertes"), liste.map(a => h("li", {}, pastille(a.niveau, { ok: "OK", attention: "À voir", bloquant: "Règle", info: "Info" }[a.niveau]), h("p", { text: a.texte }))));
   }
 
   function rendreVersement(syn) {
@@ -867,7 +993,7 @@
     if (pl.versEpargne > 0) rangs.push(h("tr", {}, h("td", {}, h("div", { class: "nom-ligne" }, h("span", { text: pl.complete || pl.obj <= 0 ? "Épargne" : "Épargne de précaution" }),
       h("small", { text: pl.compte ? "sur " + pl.compte.nom : "sur ton livret" }))), h("td", { class: "num chiffre", text: eur(pl.versEpargne, 0) })));
     if (pl.investir > 0) rangs.push(h("tr", {}, h("td", {}, h("div", { class: "nom-ligne" }, h("span", { text: "À investir" }),
-      h("small", { text: pl.investir > pl.vi ? `${eur(pl.vi, 0)} prévus + ${eur(pl.investir - pl.vi, 0)} libérés par l'épargne de précaution complète` : "réparti ci-dessous" }))), h("td", { class: "num chiffre", text: eur(pl.investir, 0) })));
+      h("small", { text: pl.investir > pl.vi ? `${eur(pl.vi, 0)} prévus + ${eur(pl.investir - pl.vi, 0)} libérés par l'épargne de précaution complète` : "détail : « Sur quelle ligne investir »" }))), h("td", { class: "num chiffre", text: eur(pl.investir, 0) })));
     vider($("plan-mois"), rangs.length ? h("div", { class: "defile" }, h("table", {}, h("tbody", {}, rangs,
       h("tr", { class: "table-total" }, h("td", { text: "Effort d'épargne du mois" }), h("td", { class: "num chiffre", text: eur(pl.versEpargne + pl.investir, 0) })))))
       : h("p", { class: "vide", text: "Fixe tes versements mensuels (épargne de précaution et investissements) dans Ma stratégie." }));
@@ -1420,14 +1546,15 @@
 - Tu n'as accès ni aux cours en direct ni à l'actualité : tes connaissances sur une entreprise, un fonds ou un taux peuvent être datées ; dis-le quand ça compte. Ne donne jamais de prévision de cours ni de promesse de rendement.
 - Distingue les faits, les hypothèses et ton avis. Tu l'aides à raisonner ; la décision lui appartient. Ce n'est pas un conseil en investissement réglementé, inutile de le répéter à chaque message.
 - Fiscalité française 2026 : flat tax 31,4 % (12,8 % d'impôt + 18,6 % de prélèvements sociaux), y compris sur les intérêts d'un compte rémunéré ; Livret A et LDDS : 1,7 % net d'impôt (plafonds 22 950 € et 12 000 €) ; PEA : après 5 ans, seuls les prélèvements sociaux de 18,6 % sur les gains, versements plafonnés à 150 000 € ; crypto : 31,4 % sur les gains seulement en repassant en euros, échanges entre cryptos non imposés, rien si les ventes de l'année ne dépassent pas 305 € ; assurance-vie : prélèvements sociaux 17,2 %, après 8 ans abattement de 4 600 € (9 200 € en couple) puis 7,5 % d'impôt (jusqu'à 150 000 € de primes).
-- L'épargne de précaution fait partie de sa stratégie : tiens compte de sa progression et du partage de son effort mensuel entre elle et ses investissements.`;
+- L'épargne de précaution fait partie de sa stratégie : tiens compte de sa progression et du partage de son effort mensuel entre elle et ses investissements.
+- Sa liste « À faire » s'affiche sur l'accueil de l'outil. Quand vous arrivez à une action concrète (un virement, un achat, une vente, une vérification à faire), ajoute-la avec l'outil ajouter_taches : une phrase courte à l'impératif, avec le montant et le compte, et une échéance si elle est connue. Trois tâches au plus par réponse, jamais un doublon de sa liste, et rien qu'il a refusé. Dis-lui en une ligne ce que tu as ajouté. Quand il dit avoir fait une tâche, coche-la avec terminer_tache ; si elle n'a plus lieu d'être, retire-la.`;
 
   function contexteInvestisseur() {
     const st = S.strategie, pr = st.profil, r = st.regles, syn = synthese();
     const risque = (B.RISQUES.find(x => x.id === pr.risque) || {}).nom || pr.risque;
     const reaction = (B.REACTIONS.find(x => x.id === pr.reaction) || {}).nom || pr.reaction;
     const L = [];
-    L.push(`Date du jour : ${dateFr(aujourdhui())}.`);
+    L.push(`Date du jour : ${new Date().toLocaleDateString("fr-FR", { weekday: "long" })} ${dateFr(aujourdhui())}.`);
     const pat = patrimoine(syn), pl = planDuMois();
     L.push(`\nPROFIL${st.exemple ? " (modèle de départ, pas encore personnalisé)" : ""} : objectif « ${pr.objectifTexte} » ; ${eur(num(pr.objectifMontant), 0)} (en euros d'aujourd'hui) visés pour ${pr.objectifAnnee} ; horizon ${num(pr.horizon)} ans ; profil ${risque} ; après une baisse de 30 % : « ${reaction} » ; versement mensuel investi ${eur(num(pr.versementMensuel), 0)} ; versement mensuel sur l'épargne de précaution ${eur(num(pr.versementPrecaution), 0)}${pr.basculer ? " (basculé vers les investissements une fois l'objectif atteint)" : ""} ; dépenses mensuelles ${eur(num(pr.depensesMensuelles), 0)}${pr.courtier ? ` ; courtier : ${pr.courtier}` : ""}.`);
     L.push(`\nPATRIMOINE${S.portefeuille.exemple || S.portefeuille.comptes.some(estExempleCompte) ? " (contient des données d'EXEMPLE fictives)" : ""} : ${eur(pat.total, 0)} au total = épargne ${eur(pat.epargne, 0)} + bourse ${eur(pat.bourse, 0)} + crypto ${eur(pat.crypto, 0)}.`);
@@ -1459,13 +1586,21 @@
     if (plb.revenus > 0 || Object.keys(M).length) {
       L.push(`\nBUDGET PRÉVU (par mois) : revenus ${eur(plb.revenus, 0)}, dépenses ${eur(plb.depenses, 0)}, versements d'épargne ${eur(plb.epargne, 0)}, reste à vivre ${eur(plb.reste, 0)}${plb.taux != null ? `, taux d'épargne ${pct(plb.taux, 0)}` : ""}.` +
         (Object.keys(S.budget.prevu).length ? " Détail : " + B.CATEGORIES_BUDGET.filter(c => num(S.budget.prevu[c.id])).map(c => `${c.nom} ${eur(num(S.budget.prevu[c.id]), 0)}`).join(", ") + "." : ""));
-      const moisRecents = Object.keys(M).filter(k => M[k].mouvements.length).sort().slice(-3);
+      const moisRecents = moisAvecOperations().filter(k => k <= cleMois(new Date())).slice(-3);
       for (const k of moisRecents) {
         const b = bilanMois(k);
         const top = B.CATEGORIES_BUDGET.filter(c => c.type === "depense" && b.parCat[c.id] < 0).sort((x, y) => b.parCat[x.id] - b.parCat[y.id]).slice(0, 5).map(c => `${c.nom} ${eur(-b.parCat[c.id], 0)}`).join(", ");
         L.push(`BUDGET RÉEL ${nomMois(k)} : revenus ${eur(b.revenus, 0)}, dépenses ${eur(b.depenses, 0)}, mis de côté ${eur(b.epargne, 0)}${b.taux != null ? `, taux d'épargne ${pct(b.taux, 0)}` : ""}${top ? ` ; principales dépenses : ${top}` : ""}.`);
       }
     }
+    const p = paie(), netPaie = netDepuisBrut(p.brut).net * (1 - p.pas / 100);
+    if (num(S.budget.paie && S.budget.paie.brut)) L.push(`\nPAIE : ${eur(netPaie, 0)} net par mois (${eur(p.brut, 0)} brut, ${nf(0, 2).format(p.heures)} h${Math.abs(p.brut / p.heures / PAIE.smicHoraire - 1) < 0.01 ? ", au SMIC" : ""}), plus les heures supplémentaires éventuelles${num(S.budget.prevu.aides) ? ` ; prime d'activité ${eur(num(S.budget.prevu.aides), 0)} par mois` : ""}.${jourDecalage() > 0 ? ` Une paie reçue à partir du ${jourDecalage()} (en général vers le 29) finance le mois suivant : le budget la compte pour ce mois-là.` : ""}`);
+    const ops = mouvementsDuMois(cleMois(new Date())).sort((a, b) => a.date < b.date ? 1 : -1).slice(0, 20);
+    if (ops.length) L.push(`OPÉRATIONS DU MOIS EN COURS (compte courant) :\n` + ops.map(m => `- ${dateFr(m.date)} | ${m.libelle} | ${eurSigne(m.montant)} | ${(CAT[m.categorie] || {}).nom || m.categorie}`).join("\n"));
+    const afaire = S.taches.items.filter(t => !t.fait);
+    L.push(afaire.length ? "\nSA LISTE À FAIRE (id | tâche | échéance | origine) :\n" + afaire.map(t => `- ${t.id} | ${t.texte} | ${t.echeance ? dateFr(t.echeance) : "—"} | ${t.source === "claude" ? "décidé avec toi" : "ajoutée par lui"}`).join("\n") : "\nSA LISTE À FAIRE : vide.");
+    const faitesRecentes = S.taches.items.filter(t => t.fait).sort((a, b) => a.faitLe < b.faitLe ? 1 : -1).slice(0, 5);
+    if (faitesRecentes.length) L.push("Faites récemment : " + faitesRecentes.map(t => `${t.texte}${t.faitLe ? " (" + dateFr(t.faitLe) + ")" : ""}`).join(" ; ") + ".");
     const j = S.journal.entrees.slice(0, 5);
     if (j.length) L.push("\nDERNIÈRES DÉCISIONS DU JOURNAL :\n" + j.map(x => `- ${dateFr(x.date)} : ${SENS[x.sens] || x.sens} ${x.actif} (${eur(num(x.montant), 0)}), statut ${STATUTS[x.statut] || x.statut} ; raison : ${x.raison || "—"}${x.bilan ? " ; bilan : " + x.bilan : ""}`).join("\n"));
     return L.join("\n");
@@ -1478,8 +1613,17 @@
   let moisBudget = cleMois(new Date());
   const nomMois = cle => new Date(cle + "-15T12:00:00").toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
   const decalerMois = (cle, n) => { const d = new Date(cle + "-15T12:00:00"); d.setMonth(d.getMonth() + n); return cleMois(d); };
+  // Une paie versée en fin de mois (le 29 octobre) finance le mois suivant : elle compte pour novembre.
+  const jourDecalage = () => S.budget.paieDecalee == null ? 25 : num(S.budget.paieDecalee);
+  const estDecale = m => jourDecalage() > 0 && m.categorie === "salaire" && m.montant > 0 && Number(m.date.slice(8, 10)) >= jourDecalage();
+  // Les opérations qui comptent pour un mois : celles du mois, sauf la paie de fin de mois, plus celle du mois d'avant.
+  function mouvementsDuMois(cle) {
+    const ici = (M[cle] || { mouvements: [] }).mouvements, avant = (M[decalerMois(cle, -1)] || { mouvements: [] }).mouvements;
+    return [...ici.filter(m => !estDecale(m)), ...avant.filter(estDecale)];
+  }
+  const moisAvecOperations = () => [...new Set(Object.keys(M).flatMap(k => [k, decalerMois(k, 1)]))].filter(k => mouvementsDuMois(k).length).sort();
   function bilanMois(cle) {
-    const mv = (M[cle] || { mouvements: [] }).mouvements;
+    const mv = mouvementsDuMois(cle);
     let revenus = 0, depenses = 0, epargne = 0;
     const parCat = {};
     for (const m of mv) {
@@ -1489,7 +1633,9 @@
       else if (t === "depense") depenses -= m.montant;
       else epargne -= m.montant;
     }
-    return { nb: mv.length, revenus, depenses, epargne, solde: revenus - depenses, reste: revenus - depenses - epargne, taux: revenus > 0 ? (revenus - depenses) / revenus * 100 : null, parCat };
+    // Un taux d'épargne sous −100 % (un mois presque sans revenu) ne veut rien dire : on ne l'affiche pas.
+    const taux = revenus > 0 ? (revenus - depenses) / revenus * 100 : null;
+    return { nb: mv.length, revenus, depenses, epargne, solde: revenus - depenses, reste: revenus - depenses - epargne, taux: taux != null && taux >= -100 ? taux : null, parCat };
   }
   function planBudget() {
     const pv = S.budget.prevu, pr = S.strategie.profil;
@@ -1501,7 +1647,8 @@
   }
   // Moyenne des dépenses réelles sur les trois derniers mois complets qui ont des opérations.
   function moyenneDepenses() {
-    const mois = Object.keys(M).filter(k => k < cleMois(new Date()) && M[k].mouvements.length).sort().slice(-3);
+    // Un mois suivi seulement à partir du 11 (le premier mois importé, souvent) fausserait la moyenne.
+    const mois = moisAvecOperations().filter(k => k < cleMois(new Date()) && mouvementsDuMois(k).some(m => m.date.slice(0, 7) === k && Number(m.date.slice(8, 10)) <= 10)).slice(-3);
     if (!mois.length) return null;
     return { mois: mois.length, depenses: somme(mois, k => bilanMois(k).depenses) / mois.length, revenus: somme(mois, k => bilanMois(k).revenus) / mois.length };
   }
@@ -1544,7 +1691,11 @@
       tuile("Mis de côté", eur(b.nb ? b.epargne : pl.epargne, 0), b.nb ? vs(pl.epargne) : "selon ta stratégie"),
       tuile("Taux d'épargne", (b.nb ? b.taux : pl.taux) == null ? "—" : pct(b.nb ? b.taux : pl.taux, 0), "des revenus, hors dépenses"),
       tuile(b.nb ? "Reste sur le compte" : "Reste à vivre", eur(b.nb ? b.reste : pl.reste, 0), null, (b.nb ? b.reste : pl.reste) < 0 ? "perte" : null));
-    $("b-tuiles-note").textContent = b.nb ? `${b.nb} opération${b.nb > 1 ? "s" : ""} en ${nomMois(moisBudget)}. Les virements vers l'épargne et les investissements ne comptent pas comme des dépenses.` : `Pas encore d'opération en ${nomMois(moisBudget)} : ce sont les chiffres prévus.`;
+    const paieArrivee = mouvementsDuMois(moisBudget).filter(m => m.date.slice(0, 7) !== moisBudget);
+    $("b-tuiles-note").textContent = (b.nb ? `${b.nb} opération${b.nb > 1 ? "s" : ""} en ${nomMois(moisBudget)}. Les virements vers l'épargne et les investissements ne comptent pas comme des dépenses.` : `Pas encore d'opération en ${nomMois(moisBudget)} : ce sont les chiffres prévus.`)
+      + (paieArrivee.length ? ` Ta paie du ${paieArrivee.map(m => dateFr(m.date)).join(", ")} (${eur(somme(paieArrivee, m => m.montant), 2)}) compte pour ${nomMois(moisBudget).split(" ")[0]}.` : "");
+    remplir("b-decalage", jourDecalage() > 0);
+    remplir("b-decalage-jour", jourDecalage() || 25);
     // Par catégorie
     const cats = B.CATEGORIES_BUDGET.filter(c => c.type === "depense").map(c => ({ c, depense: Math.max(0, -(b.parCat[c.id] || 0)), prevu: num(S.budget.prevu[c.id]) })).filter(x => x.depense > 0 || x.prevu > 0).sort((a, b) => b.depense - a.depense || b.prevu - a.prevu);
     const ech = Math.max(1, ...cats.map(x => Math.max(x.depense, x.prevu)));
@@ -1562,6 +1713,8 @@
     rendreOperations(); rendrePlanBudget(); rendrePaie(); rendreDemenagement(); rendre12Mois();
   }
   $("b-mois-prec").addEventListener("click", () => { moisBudget = decalerMois(moisBudget, -1); rendreBudget(); });
+  $("b-decalage").addEventListener("change", e => { S.budget.paieDecalee = e.target.checked ? (num($("b-decalage-jour").value) || 25) : 0; enregistrer("budget"); rendreBudget(); });
+  $("b-decalage-jour").addEventListener("change", e => { const j = Math.max(1, Math.min(31, Math.round(num(e.target.value)) || 25)); S.budget.paieDecalee = j; enregistrer("budget"); rendreBudget(); });
   $("b-mois-suiv").addEventListener("click", () => { moisBudget = decalerMois(moisBudget, 1); rendreBudget(); });
 
   const optsCategories = (types) => B.CATEGORIES_BUDGET.filter(c => !types || types.includes(c.type)).map(c => ({ value: c.id, label: c.nom }));
@@ -1575,28 +1728,66 @@
     }
     for (const k of touches) { M[k].mouvements.sort((a, b) => a.date < b.date ? 1 : -1); enregistrer("mois:" + k); }
   }
+  // Retrouve une opération dans son document du mois (celui de sa date).
+  function majMouvement(m, f) {
+    const doc = M[m.date.slice(0, 7)], x = doc && doc.mouvements.find(y => y.id === m.id);
+    if (!x) return;
+    if (f(x, doc) === "retirer") doc.mouvements = doc.mouvements.filter(y => y.id !== m.id);
+    enregistrer("mois:" + m.date.slice(0, 7));
+  }
+  const dateCourte = iso => new Date(iso + "T12:00:00").toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" });
+  let propositionRegle = null;
   function rendreOperations() {
     const z = $("b-operations");
-    if (aFocus(z)) return;
-    const mv = (M[moisBudget] || { mouvements: [] }).mouvements;
-    if (!mv.length) { vider(z, h("p", { class: "vide", text: `Aucune opération en ${nomMois(moisBudget)}. Importe un relevé de ta banque ou ajoute une opération à la main.` })); return; }
-    const majMv = (id, f) => { const m = (M[moisBudget] || { mouvements: [] }).mouvements.find(x => x.id === id); if (!m) return; f(m); enregistrer("mois:" + moisBudget); rendreBudget(); };
-    vider(z, h("div", { class: "defile" }, h("table", {},
+    if (enSaisie(z)) return;
+    const comptees = mouvementsDuMois(moisBudget);
+    // La paie de fin de mois partie au mois suivant reste visible, grisée.
+    const parties = (M[moisBudget] || { mouvements: [] }).mouvements.filter(estDecale);
+    const regles = S.budget.regles;
+    const blocRegle = propositionRegle ? h("div", { class: "fiche", style: "display:grid;gap:8px" },
+      h("p", { text: `Toujours classer « ${propositionRegle.motif} » en ${CAT[propositionRegle.categorie].nom} ?` }),
+      h("p", { class: "petit muet", text: "Les opérations déjà enregistrées avec ce libellé sont reclassées, et les prochains relevés importés aussi." }),
+      h("div", { class: "actions" },
+        h("button", { class: "btn btn-petit", text: "Oui, toujours", onclick: () => {
+          const pr = propositionRegle; propositionRegle = null;
+          S.budget.regles = [...S.budget.regles.filter(r => norm(r.motif) !== norm(pr.motif)), { motif: pr.motif, categorie: pr.categorie }];
+          enregistrer("budget");
+          for (const [k, doc] of Object.entries(M)) {
+            let touche = false;
+            for (const x of doc.mouvements) if (norm(x.libelle).includes(norm(pr.motif)) && x.categorie !== pr.categorie) { x.categorie = pr.categorie; touche = true; }
+            if (touche) enregistrer("mois:" + k);
+          }
+          rendreBudget();
+        } }),
+        h("button", { class: "btn btn-discret btn-petit", text: "Seulement cette fois", onclick: () => { propositionRegle = null; rendreOperations(); } }))) : null;
+    const blocRegles = regles.length ? h("details", { class: "sous-repli" }, h("summary", { text: `Mes règles de classement (${regles.length})` }),
+      h("ul", { class: "taches" }, regles.map(r => h("li", { class: "tache", style: "grid-template-columns:1fr auto" },
+        h("span", { text: `« ${r.motif} » → ${CAT[r.categorie].nom}` }),
+        h("button", { class: "btn btn-discret btn-petit", text: "Retirer", "aria-label": "Retirer la règle " + r.motif, onclick: () => { S.budget.regles = S.budget.regles.filter(x => x !== r); enregistrer("budget"); rendreOperations(); } })))),
+      h("p", { class: "note", text: "Quand tu changes la catégorie d'une opération, la page propose d'en faire une règle." })) : null;
+    if (!comptees.length && !parties.length) { vider(z, h("p", { class: "vide", text: `Aucune opération en ${nomMois(moisBudget)}. Importe un relevé de ta banque ou ajoute une opération à la main.` }), blocRegles); return; }
+    const rang = (m, partie) => {
+      const sel = h("select", { id: "cat-" + m.id, "aria-label": "Catégorie de " + m.libelle, onchange: e => {
+        const cat = e.target.value;
+        e.target.blur();
+        majMouvement(m, x => { x.categorie = cat; });
+        propositionRegle = regles.some(r => norm(m.libelle).includes(norm(r.motif)) && r.categorie === cat) ? null : { motif: m.libelle.trim(), categorie: cat };
+        rendreBudget();
+      } });
+      options(sel, optsCategories(), m.categorie);
+      const decale = m.date.slice(0, 7) !== moisBudget;
+      return h("tr", { class: partie ? "muet" : null },
+        h("td", { class: "chiffre", text: dateCourte(m.date) }),
+        h("td", { style: "min-width:160px" }, m.libelle,
+          decale ? h("small", { class: "muet", text: ` · paie du ${dateFr(m.date)}, comptée en ${nomMois(moisBudget).split(" ")[0]}` }) : null,
+          partie ? h("small", { text: ` · comptée en ${nomMois(decalerMois(moisBudget, 1)).split(" ")[0]}` }) : null),
+        h("td", {}, sel),
+        h("td", { class: "num chiffre " + (m.montant >= 0 && !partie ? "gain" : ""), text: eurSigne(m.montant) }),
+        h("td", {}, h("button", { class: "btn btn-discret btn-petit", text: "Retirer", "aria-label": "Retirer " + m.libelle, onclick: () => { majMouvement(m, () => "retirer"); rendreBudget(); } })));
+    };
+    vider(z, blocRegle, h("div", { class: "defile" }, h("table", {},
       h("thead", {}, h("tr", {}, ["Date", "Libellé", "Catégorie", "Montant", ""].map((t, i) => h("th", { class: i === 3 ? "num" : null, text: t })))),
-      h("tbody", {}, [...mv].sort((a, b) => a.date < b.date ? 1 : -1).map(m => {
-        const sel = h("select", { id: "cat-" + m.id, "aria-label": "Catégorie de " + m.libelle, onchange: e => majMv(m.id, x => { x.categorie = e.target.value; }) });
-        options(sel, optsCategories(), m.categorie);
-        return h("tr", {},
-          h("td", { class: "chiffre", text: new Date(m.date + "T12:00:00").toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" }) }),
-          h("td", { style: "min-width:160px", text: m.libelle }),
-          h("td", {}, sel),
-          h("td", { class: "num chiffre " + (m.montant >= 0 ? "gain" : ""), text: eurSigne(m.montant) }),
-          h("td", {}, h("button", { class: "btn btn-discret btn-petit", text: "Retirer", "aria-label": "Retirer " + m.libelle, onclick: () => {
-            const doc = M[moisBudget]; if (!doc) return;
-            doc.mouvements = doc.mouvements.filter(x => x.id !== m.id);
-            enregistrer("mois:" + moisBudget); rendreBudget();
-          } })));
-      })))));
+      h("tbody", {}, [...comptees].sort((a, b) => a.date < b.date ? 1 : -1).map(m => rang(m, false)), parties.map(m => rang(m, true))))), blocRegles);
   }
   $("b-ajouter").addEventListener("click", () => {
     const f = $("b-fiche-op");
@@ -1649,13 +1840,20 @@
     if (images.length && !claudeImages) { $("b-import-etat").textContent = "Les images ne peuvent pas être envoyées ici : colle plutôt le texte."; return; }
     if (!texte.trim() && !images.length) { $("b-import-etat").textContent = "Colle un texte ou ajoute un fichier."; return; }
     const annee = moisBudget.slice(0, 4);
+    // Ce que la page sait déjà de ses habitudes : ses règles, et ses opérations déjà classées (les plus récentes).
+    const vus = new Map();
+    for (const k of Object.keys(M).sort().reverse()) for (const m of M[k].mouvements) if (!vus.has(norm(m.libelle)) && vus.size < 40) vus.set(norm(m.libelle), `${m.libelle} (${m.montant > 0 ? "crédit" : "débit"}) → ${m.categorie}`);
+    const regles = S.budget.regles;
     const prompt = `Tu lis un relevé de compte bancaire d'un particulier français (export CSV, texte copié ou captures d'écran). Extrais chaque opération.
 Réponds uniquement par un objet JSON : {"operations":[{"date":"2026-11-03","libelle":"CARREFOUR CITY PARIS","montant":-23.45,"categorie":"courses"}]}
 Règles :
 - montant en euros, négatif pour un débit, positif pour un crédit. date au format AAAA-MM-JJ (année ${annee} si elle manque).
 - categorie parmi : ${B.CATEGORIES_BUDGET.map(c => `${c.id} (${c.nom})`).join(", ")}.
 - Un virement vers un livret, un PEA, un compte-titres, un plan d'investissement, Trade Republic ou une plateforme crypto : "epargne" (négatif). Un retour d'argent depuis ces comptes : "epargne" (positif).
-- Salaire, paie : "salaire". CAF, APL, bourse d'études : "aides". Un remboursement (santé, achat retourné) : la catégorie de la dépense d'origine, montant positif.
+- Salaire, paie (souvent un virement au nom de l'employeur en fin de mois) : "salaire". CAF, APL, prime d'activité, bourse d'études : "aides". Un remboursement (santé, achat retourné) : la catégorie de la dépense d'origine, montant positif.
+- Carburant : "transport", y compris à la station d'un supermarché (Carrefour, Leclerc, Intermarché, Super U, Auchan…) : libellé avec STATION, CARBU, DAC, ESSENCE ou GAZOLE, ou un plein de 30 à 120 €. Péage, parking, entretien et crédit de la voiture : "transport".${regles.length ? `
+- SES RÈGLES, à appliquer en priorité (le libellé contient… → catégorie) : ${regles.map(r => `« ${r.motif} » → ${r.categorie}`).join(" ; ")}.` : ""}${vus.size ? `
+- Ses opérations déjà classées, à suivre pour un libellé identique ou proche :\n${[...vus.values()].join("\n")}` : ""}
 - Libellé court et lisible. N'invente aucune opération ; ignore les soldes, totaux et opérations en attente.${texte ? "\n\nRELEVÉ :\n" + texte.slice(0, 80000) : ""}${images.length ? "\n\nLes captures jointes montrent le relevé." : ""}`;
     $("b-import-lire").disabled = true; $("b-import-etat").textContent = "Claude lit ton relevé…";
     ctlImportB = new AbortController();
@@ -1666,6 +1864,8 @@ Règles :
       const existants = new Set(Object.values(M).flatMap(d => d.mouvements.map(m => `${m.date}|${num(m.montant).toFixed(2)}|${norm(m.libelle)}`)));
       importOps = (r && Array.isArray(r.operations) ? r.operations : []).filter(o => o && /^\d{4}-\d{2}-\d{2}$/.test(o.date) && num(o.montant) !== 0).map(o => {
         const op = { id: uid(), date: o.date, libelle: String(o.libelle || "Opération").slice(0, 120), montant: Math.round(num(o.montant) * 100) / 100, categorie: CAT[o.categorie] ? o.categorie : (num(o.montant) > 0 ? "autres-revenus" : "autres") };
+        const regle = regles.find(r => norm(op.libelle).includes(norm(r.motif)));
+        if (regle) { op.categorie = regle.categorie; op.regle = regle.motif; }
         op.doublon = existants.has(`${op.date}|${op.montant.toFixed(2)}|${norm(op.libelle)}`);
         op.garder = !op.doublon;
         return op;
@@ -1689,13 +1889,13 @@ Règles :
           return h("tr", {},
             h("td", {}, h("input", { type: "checkbox", checked: o.garder, "aria-label": "Garder " + o.libelle, onchange: e => { o.garder = e.target.checked; } })),
             h("td", { class: "chiffre", text: new Date(o.date + "T12:00:00").toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "2-digit" }) }),
-            h("td", { style: "min-width:160px" }, o.libelle, o.doublon ? h("small", { class: "muet", text: " · déjà enregistrée" }) : null),
+            h("td", { style: "min-width:160px" }, o.libelle, o.doublon ? h("small", { class: "muet", text: " · déjà enregistrée" }) : null, o.regle ? h("small", { class: "muet", text: " · ta règle" }) : null),
             h("td", {}, sel),
             h("td", { class: "num chiffre " + (o.montant >= 0 ? "gain" : ""), text: eurSigne(o.montant) }));
         })))),
       doublons ? h("p", { class: "note", text: `${doublons} opération${doublons > 1 ? "s semblent" : " semble"} déjà enregistrée${doublons > 1 ? "s" : ""} : décochée${doublons > 1 ? "s" : ""}.` }) : null,
       h("div", { class: "actions" }, h("button", { class: "btn", text: "Enregistrer les opérations cochées", onclick: () => {
-        const gardees = importOps.filter(o => o.garder).map(({ doublon, garder, ...o }) => o);
+        const gardees = importOps.filter(o => o.garder).map(({ doublon, garder, regle, ...o }) => o);
         if (!gardees.length) return;
         ajouterMouvements(gardees);
         const mois = gardees.map(o => o.date.slice(0, 7)).sort();
@@ -1898,7 +2098,7 @@ Règles :
 
   function rendre12Mois() {
     const z = $("b-12-graphe");
-    const mois = Array.from({ length: 12 }, (_, i) => decalerMois(moisBudget, i - 11)).filter(k => M[k] && M[k].mouvements.length);
+    const mois = Array.from({ length: 12 }, (_, i) => decalerMois(moisBudget, i - 11)).filter(k => mouvementsDuMois(k).length);
     const coul = { revenus: "var(--serie-1)", depenses: "var(--serie-2)" };
     if (mois.length < 2) {
       vider($("b-12-legende")); vider($("b-12-tableau"));
@@ -1969,31 +2169,6 @@ Règles :
     { id: "q-argent", principe: "allocation", texte: "Je sais où ira l'argent de la vente." },
     { id: "q-impot", principe: "enveloppes", texte: "J'ai regardé l'impôt éventuel." }
   ];
-  const coches = {};
-  let groupeCheck = null;
-
-  function lireOperation() {
-    const sens = (document.querySelector('input[name="d-sens"]:checked') || {}).value || "acheter";
-    const ligneId = $("d-ligne").value;
-    const ligne = ligneId ? S.portefeuille.lignes.find(l => l.id === ligneId) : null;
-    const achat = sens === "acheter" || sens === "renforcer";
-    return {
-      sens, achat, ligne,
-      nom: ligne ? ligne.nom : $("d-nom").value.trim(),
-      type: ligne ? ligne.type : $("d-type").value,
-      poche: ligne ? ligne.poche : $("d-poche").value,
-      enveloppe: ligne ? ligne.enveloppe : $("d-enveloppe").value,
-      frais: ligne ? num(ligne.frais) : ($("d-frais").value === "" ? null : num($("d-frais").value)),
-      zone: ligne ? ligne.zone : $("d-zone").value,
-      montant: num($("d-montant").value),
-      horizon: num($("d-horizon").value),
-      depuis: num($("d-depuis").value),
-      prevu: $("d-prevu").value === "oui",
-      raison: $("d-raison").value.trim(),
-      reponses: Object.fromEntries((achat ? CHECK_ACHAT : CHECK_VENTE).map(q => [q.id, !!coches[q.id]]))
-    };
-  }
-
   // Passe une opération en revue selon la stratégie : renvoie les constats et la répartition après.
   function verifierOperation(op) {
     const st = S.strategie, r = st.regles, F = B.FISCALITE, out = [];
@@ -2124,150 +2299,6 @@ Règles :
       : { niveau: "ok", titre: "Conforme à ta stratégie" };
     return { constats: out, verdict, avant, apres };
   }
-
-  function rendreFormDecider() {
-    const sel = $("d-ligne");
-    if (!aFocus(sel)) {
-      const v = sel.value;
-      options(sel, [{ value: "", label: "Nouvel actif…" }, ...S.portefeuille.lignes.map(l => ({ value: l.id, label: `${l.nom} · ${l.enveloppe}` }))], v);
-    }
-    if (!$("d-type").options.length) options($("d-type"), optsTypes(), "ETF");
-    if (!$("d-enveloppe").options.length) options($("d-enveloppe"), optsEnveloppes(), "PEA");
-    if (!$("d-zone").options.length) options($("d-zone"), optsZones(), "");
-    if (!aFocus($("d-poche"))) { const v = $("d-poche").value; options($("d-poche"), optsPoches("Aucune poche"), v); }
-    const sens = (document.querySelector('input[name="d-sens"]:checked') || {}).value || "acheter";
-    $("d-nouveau").hidden = !!sel.value;
-    const groupe = sens === "acheter" || sens === "renforcer" ? "achat" : "vente";
-    if (groupe !== groupeCheck) {
-      groupeCheck = groupe;
-      vider($("d-checklist"), (groupe === "achat" ? CHECK_ACHAT : CHECK_VENTE).map(q => h("label", { class: "case" },
-        h("input", { type: "checkbox", id: q.id, checked: !!coches[q.id], onchange: e => { coches[q.id] = e.target.checked; rendreDecision(); } }),
-        h("span", { text: q.texte }))));
-    }
-  }
-
-  let avisSignature = null;
-  function rendreDecision() {
-    rendreFormDecider();
-    const op = lireOperation();
-    const res = verifierOperation(op);
-    const v = res.verdict;
-    vider($("d-verdict"), op.nom ? h("div", { class: "verdict v-" + v.niveau }, pastille(v.niveau, { ok: "OK", attention: "À voir", bloquant: "Règle" }[v.niveau]), h("b", { text: v.titre })) : null);
-    vider($("d-constats"), res.constats.map(c => h("li", {}, pastille(c.niveau, { ok: "OK", attention: "À voir", bloquant: "Règle", info: "Info" }[c.niveau]), h("p", { text: c.texte }))));
-    const lignesTab = res.apres.poches.filter(p => num(p.cible) > 0 || p.valeur > 0).map(p => {
-      const av = res.avant.poches.find(x => x.id === p.id);
-      return h("tr", {}, h("td", { text: p.nom }), h("td", { class: "num chiffre", text: pct(av ? av.poids : 0) }), h("td", { class: "num chiffre", text: pct(p.poids) }), h("td", { class: "num chiffre", text: pct(num(p.cible), 0) }));
-    });
-    vider($("d-apres"), op.montant > 0 && lignesTab.length ? [h("h3", { text: "Ta répartition" }), h("div", { class: "defile" }, h("table", {},
-      h("thead", {}, h("tr", {}, h("th", { text: "Poche" }), h("th", { class: "num", text: "Avant" }), h("th", { class: "num", text: "Après" }), h("th", { class: "num", text: "Cible" }))),
-      h("tbody", {}, lignesTab)))] : null);
-    $("btn-avis").hidden = !claudePret || !op.nom;
-    $("btn-noter").disabled = !op.nom;
-    const sig = JSON.stringify(op);
-    const note = $("d-avis").querySelector(".avis-perime");
-    if (note) note.hidden = sig === avisSignature;
-    return { op, res };
-  }
-  $("form-decider").addEventListener("input", () => rendreDecision());
-  $("form-decider").addEventListener("change", () => rendreDecision());
-  $("form-decider").addEventListener("submit", e => e.preventDefault());
-
-  function texteOperation(op, res) {
-    return `OPÉRATION ÉTUDIÉE : ${SENS[op.sens]} ${op.nom} (${op.type}, enveloppe ${op.enveloppe}, poche ${(S.strategie.poches.find(p => p.id === op.poche) || {}).nom || "aucune"}${op.frais != null ? ", frais " + pct(op.frais, 2) : ""}) pour ${eur(op.montant, 0)}. Durée de détention prévue : ${({ 1: "moins d'un an", 3: "1 à 5 ans", 8: "5 à 10 ans", 15: "plus de 10 ans" })[op.horizon] || "?"}. Prévu dans le plan : ${op.prevu ? "oui" : "non"}. Il y pense depuis : ${({ 0: "aujourd'hui", 2: "quelques jours", 10: "plus d'une semaine" })[op.depuis]}.
-Sa raison : ${op.raison || "(non écrite)"}
-Check-list : ${(op.achat ? CHECK_ACHAT : CHECK_VENTE).map(q => `${op.reponses[q.id] ? "[x]" : "[ ]"} ${q.texte}`).join(" ; ")}
-VÉRIFICATIONS DE L'OUTIL (verdict : ${res.verdict.titre}) :
-${res.constats.map(c => `- [${c.niveau}] ${c.texte}`).join("\n")}`;
-  }
-
-  let ctlAvis = null;
-  $("btn-avis").addEventListener("click", async () => {
-    if (!sample) return;
-    const { op, res } = rendreDecision();
-    const z = $("d-avis");
-    ctlAvis = new AbortController();
-    const bulle = h("div", { class: "bulle bulle-claude pense", text: "Claude réfléchit…" });
-    const perime = h("p", { class: "note avis-perime", hidden: true, text: "L'opération a changé depuis cet avis." });
-    vider(z, h("h3", { text: "Avis de Claude" }), bulle, perime);
-    avisSignature = JSON.stringify(op);
-    $("btn-avis").disabled = true; $("btn-avis-stop").hidden = false;
-    const prompt = `${CONSIGNES}\n\n${contexteInvestisseur()}\n\n${texteOperation(op, res)}\n\nDonne ton avis sur cette opération, en 250 mots au plus, avec ces titres :\n#### En une phrase\n#### Ce qui va dans son sens\n#### Ce qui coince avec ta stratégie\n#### Ce que je sais de cet actif (dis-le si tu ne le connais pas ou si tes informations peuvent être datées)\n#### Questions à te poser avant de décider (2 ou 3)\nSi l'opération semble impulsive, joue l'avocat du diable.`;
-    try {
-      const r = await sample(prompt, { signal: ctlAvis.signal, cache: false, onText: ({ text }) => { bulle.className = "bulle bulle-claude"; vider(bulle, markdown(text)); } });
-      dernierAvis = r.text;
-      if (r.truncated) z.append(h("p", { class: "note", text: "Réponse coupée : demande-lui moins à la fois." }));
-    } catch (e) {
-      if (e && e.text) { bulle.className = "bulle bulle-claude"; vider(bulle, markdown(e.text)); dernierAvis = e.text; }
-      else if (!(e && e.code === "cancelled")) vider(bulle, h("span", { class: "erreur", text: messageErreur(e) }));
-      else vider(bulle, h("span", { class: "muet", text: "Arrêté." }));
-    } finally {
-      $("btn-avis").disabled = false; $("btn-avis-stop").hidden = true; ctlAvis = null;
-    }
-  });
-  let dernierAvis = "";
-  $("btn-avis-stop").addEventListener("click", () => ctlAvis && ctlAvis.abort());
-
-  $("btn-noter").addEventListener("click", () => {
-    const { op, res } = rendreDecision();
-    if (!op.nom) return;
-    const entree = {
-      id: uid(), date: aujourdhui(), sens: op.sens, actif: op.nom, ligneId: op.ligne ? op.ligne.id : "", enveloppe: op.enveloppe,
-      montant: op.montant, raison: op.raison, verdict: res.verdict.niveau, verdictTitre: res.verdict.titre,
-      points: res.constats.filter(c => c.niveau === "bloquant" || c.niveau === "attention").map(c => c.texte).slice(0, 12),
-      avis: avisSignature === JSON.stringify(op) ? String(dernierAvis || "").slice(0, 3000) : "",
-      revoir: ajouterMois(aujourdhui(), 6), statut: "a-faire", bilan: ""
-    };
-    S.journal.entrees.unshift(entree);
-    if (S.journal.entrees.length > 300) S.journal.entrees.length = 300;
-    enregistrer("journal"); rendreJournal();
-    const b = $("btn-noter"); b.textContent = "Noté au journal ✓";
-    setTimeout(() => { b.textContent = "Noter au journal"; }, 2200);
-  });
-
-  function rendreJournal() {
-    const z = $("journal");
-    if (aFocus(z)) return;
-    const filtre = (document.querySelector('input[name="j-filtre"]:checked') || {}).value || "tout";
-    const auj = aujourdhui();
-    const aRevoir = e => e.revoir && e.revoir <= auj && !e.bilan && e.statut !== "abandonnee";
-    let liste = S.journal.entrees;
-    if (filtre === "revoir") liste = liste.filter(aRevoir);
-    const nbRevoir = S.journal.entrees.filter(aRevoir).length;
-    $("j-filtre-revoir").nextElementSibling.textContent = nbRevoir ? `Bilans à faire (${nbRevoir})` : "Bilans à faire";
-    if (!liste.length) {
-      vider(z, h("p", { class: "vide", text: filtre === "revoir" ? "Aucun bilan à faire pour l'instant." : "Aucune décision notée. Étudie une opération ci-dessus puis « Noter au journal » : dans six mois, tu pourras comparer ce que tu pensais et ce qui s'est passé." }));
-      return;
-    }
-    const maj = (e, champ, val) => { e[champ] = val; enregistrer("journal"); };
-    vider(z, liste.map(e => {
-      const bilanZone = h("label", { class: "champ", hidden: !(e.bilan || aRevoir(e)) }, h("span", { text: "Bilan : qu'est-ce qui s'est passé, qu'est-ce que j'en retiens ?" }),
-        h("textarea", { id: "bilan-" + e.id, rows: 2, value: e.bilan || "", oninput: ev => maj(e, "bilan", ev.target.value), onblur: () => rendreJournal() }));
-      const confirmer = h("span", { class: "confirmer", hidden: true }, "Supprimer cette entrée ?",
-        h("button", { class: "btn btn-danger btn-petit", text: "Oui", onclick: () => { S.journal.entrees = S.journal.entrees.filter(x => x.id !== e.id); enregistrer("journal"); rendreJournal(); } }),
-        h("button", { class: "btn btn-discret btn-petit", text: "Non", onclick: () => { confirmer.hidden = true; } }));
-      const avis = e.avis ? h("details", {}, h("summary", { text: "Avis de Claude à ce moment-là" }), markdown(e.avis)) : null;
-      return h("article", { class: "entree" + (aRevoir(e) ? " a-revoir" : "") },
-        h("div", { class: "entree-tete" },
-          h("span", { class: "chiffre petit muet", text: dateFr(e.date) }),
-          h("b", { text: `${SENS[e.sens] || e.sens} ${e.actif}` }),
-          h("span", { class: "chiffre", text: num(e.montant) ? eur(num(e.montant), 0) : "" }),
-          pastille(e.verdict === "bloquant" ? "bloquant" : e.verdict === "attention" ? "attention" : "ok", e.verdictTitre || ""),
-          aRevoir(e) ? pastille("attention", "bilan à faire") : null),
-        e.raison ? h("p", { text: "Pourquoi : " + e.raison }) : h("p", { class: "muet", text: "Pas de raison écrite." }),
-        e.points && e.points.length ? h("details", {}, h("summary", { text: `Points relevés (${e.points.length})` }), h("ul", { class: "constats" }, e.points.map(t => h("li", {}, pastille("attention", "À voir"), h("p", { text: t }))))) : null,
-        avis,
-        h("div", { class: "champs" },
-          h("label", { class: "champ" }, h("span", { text: "Statut" }), (() => { const s = h("select", { id: "statut-" + e.id, onchange: ev => { maj(e, "statut", ev.target.value); rendreJournal(); } }); options(s, Object.entries(STATUTS).map(([value, label]) => ({ value, label: label[0].toUpperCase() + label.slice(1) })), e.statut); return s; })()),
-          h("label", { class: "champ" }, h("span", { text: "Faire le bilan le" }), h("input", { type: "date", id: "revoir-" + e.id, value: e.revoir || "", onchange: ev => { maj(e, "revoir", ev.target.value); rendreJournal(); } }))),
-        bilanZone,
-        h("div", { class: "actions" },
-          !bilanZone.hidden ? null : h("button", { class: "btn btn-ghost btn-petit", text: "Faire le bilan maintenant", onclick: () => { bilanZone.hidden = false; bilanZone.querySelector("textarea").focus(); } }),
-          claudePret ? h("button", { class: "btn btn-ghost btn-petit", text: "En parler à Claude", onclick: () => demanderDansChat(`Aide-moi à faire le bilan de cette décision du ${dateFr(e.date)} : ${SENS[e.sens]} ${e.actif} pour ${eur(num(e.montant), 0)}. Ma raison à l'époque : ${e.raison || "non écrite"}.${e.bilan ? " Mon bilan : " + e.bilan : ""} Qu'est-ce que je peux en retenir, sur le raisonnement plus que sur le résultat ?`) }) : null,
-          h("button", { class: "btn btn-discret btn-petit", text: "Supprimer", onclick: () => { confirmer.hidden = false; } }),
-          confirmer));
-    }));
-  }
-  document.querySelectorAll('input[name="j-filtre"]').forEach(r => r.addEventListener("change", rendreJournal));
 
   // ---------- COMPARER : simulation de Monte-Carlo ----------
   const NB_SIM = 1500;
@@ -2422,97 +2453,6 @@ ${res.constats.map(c => `- [${c.niveau}] ${c.texte}`).join("\n")}`;
     if (!Array.isArray(c.strategies) || !c.strategies.length) c.strategies = comparerDefaut().strategies;
     return c;
   }
-  function parametresSimulation() {
-    const c = cmp();
-    return {
-      capital: c.capital, versement: c.versement, duree: c.duree, inflation: c.inflation,
-      strategies: c.strategies.map(s => ({ ...s, poids: s.source === "cible" ? poidsDeCible() : s.source === "actuel" ? poidsActuels() : s.poids })),
-      hypotheses: c.hypotheses, fiscalite: c.fiscalite,
-      objectif: { montant: S.strategie.profil.objectifMontant, annee: S.strategie.profil.objectifAnnee }
-    };
-  }
-  const enregistrerComparer = () => { enregistrer("comparer"); planifierSimulation(); };
-
-  function rendreComparerForm() {
-    const c = cmp();
-    remplir("cmp-capital", c.capital); remplir("cmp-versement", c.versement); remplir("cmp-duree", c.duree);
-    remplir("cmp-inflation", c.inflation); remplir("cmp-reel", c.reel);
-    const z = $("cmp-strategies");
-    if (!aFocus(z)) {
-      const couleurs = ["var(--serie-1)", "var(--serie-2)", "var(--serie-3)"];
-      const PRINC = ["actions", "obligations", "monetaire", "livret"];
-      vider(z, c.strategies.map((s, i) => {
-        const poids = s.source === "cible" ? poidsDeCible() : s.source === "actuel" ? poidsActuels() : s.poids;
-        const lie = !!s.source;
-        const total = somme(B.CLASSES, cl => num(poids[cl.id]));
-        const champPoids = cl => [h("label", { for: `cmp-${i}-${cl.id}`, text: cl.nom }),
-          h("input", { type: "number", id: `cmp-${i}-${cl.id}`, min: "0", max: "100", step: "1", inputmode: "decimal", value: String(num(poids[cl.id]) || 0), disabled: lie,
-            oninput: e => { s.poids[cl.id] = num(e.target.value); enregistrerComparer(); majTotal(); } })];
-        const totalEl = h("span", { class: "total-poids" });
-        const majTotal = () => {
-          const t = somme(B.CLASSES, cl => num((s.source ? poids : s.poids)[cl.id]));
-          vider(totalEl, Math.abs(t - 100) < 0.05 ? pastille("ok", "Total 100 %") : pastille("attention", `Total ${pct(t)} : ramené à 100 %`));
-        };
-        majTotal();
-        const autres = B.CLASSES.filter(cl => !PRINC.includes(cl.id));
-        const presets = [{ value: "", label: "Partir de…" }, { value: "cible", label: "Ma cible (suit ma stratégie)" }, { value: "actuel", label: "Mon portefeuille actuel" }, ...B.PRESETS_COMPARER.map(x => ({ value: x.id, label: x.nom }))];
-        const selPreset = h("select", { id: `cmp-${i}-preset`, "aria-label": "Partir d'une stratégie type", onchange: e => {
-          const v = e.target.value; if (!v) return;
-          if (v === "cible") Object.assign(s, { nom: "Ma cible", source: "cible", frais: fraisActuels() });
-          else if (v === "actuel") Object.assign(s, { nom: "Mon portefeuille", source: "actuel", frais: fraisActuels() });
-          else { const x = B.PRESETS_COMPARER.find(x => x.id === v); Object.assign(s, { nom: x.nom, source: "", poids: { ...x.poids }, frais: x.frais, enveloppe: x.enveloppe }); }
-          enregistrerComparer(); e.target.blur(); rendreComparerForm();
-        } });
-        options(selPreset, presets, "");
-        const selEnv = h("select", { id: `cmp-${i}-env`, onchange: e => { s.enveloppe = e.target.value; enregistrerComparer(); } });
-        options(selEnv, [{ value: "PEA", label: "PEA" }, { value: "CTO", label: "Compte-titres" }, { value: "Crypto", label: "Wallet crypto" }, { value: "AV", label: "Assurance-vie" }, { value: "aucune", label: "Sans impôt (livret)" }], s.enveloppe);
-        const selEntree = h("select", { id: `cmp-${i}-entree`, onchange: e => { s.entree = e.target.value; enregistrerComparer(); } });
-        options(selEntree, [{ value: "immediat", label: "Investi tout de suite" }, { value: "etale", label: "Étalé sur 12 mois" }], s.entree || "immediat");
-        return h("div", { class: "strat" },
-          h("div", { class: "strat-tete" }, h("span", { class: "puce", style: "background:" + couleurs[i] }),
-            h("input", { id: `cmp-${i}-nom`, value: s.nom, "aria-label": "Nom de la stratégie", oninput: e => { s.nom = e.target.value; enregistrer("comparer"); dessinerResultats(); } }),
-            c.strategies.length > 1 ? h("button", { class: "btn btn-discret btn-petit", text: "Retirer", "aria-label": "Retirer " + s.nom, onclick: () => { c.strategies.splice(i, 1); enregistrerComparer(); rendreComparerForm(); } }) : null),
-          selPreset,
-          lie ? h("p", { class: "petit muet" }, s.source === "cible" ? "Suit ton allocation cible. " : "Suit ton portefeuille actuel. ",
-            h("button", { class: "btn btn-ghost btn-petit", text: "Modifier à la main", onclick: () => { s.poids = { ...poids }; s.source = ""; enregistrerComparer(); rendreComparerForm(); } })) : null,
-          h("div", { class: "poids" }, PRINC.map(id => champPoids(B.CLASSES.find(cl => cl.id === id)))),
-          h("details", { open: autres.some(cl => num(poids[cl.id]) > 0) }, h("summary", { text: "Autres classes" }), h("div", { class: "poids" }, autres.map(champPoids))),
-          totalEl,
-          h("div", { class: "poids" },
-            h("label", { for: `cmp-${i}-frais`, text: "Frais (% / an)" }),
-            h("input", { type: "number", id: `cmp-${i}-frais`, min: "0", max: "5", step: "0.05", inputmode: "decimal", value: String(num(s.frais)), oninput: e => { s.frais = num(e.target.value); enregistrerComparer(); } })),
-          h("label", { class: "champ" }, h("span", { text: "Enveloppe" }), selEnv),
-          h("label", { class: "champ" }, h("span", { text: "Capital de départ" }), selEntree),
-          total === 0 ? h("p", { class: "erreur", text: "Mets au moins une classe au-dessus de 0 %." }) : null);
-      }), c.strategies.length < 3 ? h("button", { class: "btn btn-ghost", style: "align-self:start", text: "Ajouter une stratégie", onclick: () => {
-        c.strategies.push({ nom: "100 % actions monde", source: "", poids: { actions: 100 }, frais: 0.3, enveloppe: "PEA", entree: "immediat" });
-        enregistrerComparer(); rendreComparerForm();
-      } }) : null);
-    }
-    const zh = $("cmp-hypotheses");
-    if (!aFocus(zh)) {
-      vider(zh, h("span", { class: "etiquette", text: "Classe" }), h("span", { class: "etiquette", text: "Rendement" }), h("span", { class: "etiquette", text: "Volatilité" }),
-        B.CLASSES.map(cl => [h("span", { text: cl.nom }),
-          h("input", { type: "number", id: `hyp-r-${cl.id}`, step: "0.1", inputmode: "decimal", "aria-label": "Rendement " + cl.nom, value: String(c.hypotheses[cl.id].rendement), oninput: e => { c.hypotheses[cl.id].rendement = num(e.target.value); enregistrerComparer(); } }),
-          h("input", { type: "number", id: `hyp-v-${cl.id}`, step: "0.5", min: "0", inputmode: "decimal", "aria-label": "Volatilité " + cl.nom, value: String(c.hypotheses[cl.id].volatilite), oninput: e => { c.hypotheses[cl.id].volatilite = Math.max(0, num(e.target.value)); enregistrerComparer(); } })]));
-    }
-    const zf = $("cmp-fiscalite");
-    if (!aFocus(zf)) {
-      const f = c.fiscalite;
-      const ch = (cle, lib, step) => h("label", { class: "champ" }, h("span", { text: lib }), h("input", { type: "number", id: "fis-" + cle, step: step || "0.1", min: "0", inputmode: "decimal", value: String(f[cle]), oninput: e => { f[cle] = num(e.target.value); enregistrerComparer(); } }));
-      vider(zf, ch("ir", "Impôt flat tax (%)"), ch("ps", "Prélèvements sociaux (%)"), ch("psAV", "Prél. sociaux assurance-vie (%)"), ch("irAV8", "Impôt assurance-vie après 8 ans (%)"), ch("abattementAV", "Abattement assurance-vie (€)", "100"));
-    }
-  }
-  [["cmp-capital", "capital"], ["cmp-versement", "versement"], ["cmp-duree", "duree"], ["cmp-inflation", "inflation"]].forEach(([id, cle]) =>
-    $(id).addEventListener("input", e => { cmp()[cle] = num(e.target.value); enregistrerComparer(); }));
-  $("cmp-reel").addEventListener("change", e => { cmp().reel = e.target.checked; enregistrer("comparer"); dessinerResultats(); });
-  $("btn-cmp-mes-chiffres").addEventListener("click", () => {
-    const c = cmp(), syn = synthese(), pr = S.strategie.profil;
-    c.capital = Math.round(syn.total); c.versement = num(pr.versementMensuel); c.duree = num(pr.horizon) || c.duree;
-    enregistrerComparer(); rendreComparerForm();
-  });
-  $("btn-cmp-hyp-defaut").addEventListener("click", () => { const c = cmp(); c.hypotheses = hypothesesDefaut(); c.fiscalite = { ...B.FISCALITE }; enregistrerComparer(); rendreComparerForm(); });
-
   // ---------- intérêts composés ----------
   // Versements en début de mois, rendement net des frais capitalisé chaque mois.
   function interetsComposes(p) {
@@ -2629,164 +2569,48 @@ ${res.constats.map(c => `- [${c.niveau}] ${c.texte}`).join("\n")}`;
     zone.addEventListener("pointerleave", () => { bulle.hidden = true; });
   }
 
-  let minuteurSim = null, signatureSim = "", dernierResultat = null, dernierParams = null;
-  function planifierSimulation() {
-    if (vueActive !== "comparer") return;
-    clearTimeout(minuteurSim);
-    minuteurSim = setTimeout(() => {
-      const p = parametresSimulation();
-      const sig = JSON.stringify(p);
-      if (sig === signatureSim && dernierResultat) { dessinerResultats(); return; }
-      $("cmp-etat").textContent = "Calcul…";
-      setTimeout(() => {
-        const t0 = performance.now();
-        dernierResultat = simuler(p); dernierParams = p; signatureSim = sig;
-        $("cmp-etat").textContent = `Calculé en ${Math.round(performance.now() - t0)} ms`;
-        dessinerResultats();
-      }, 20);
-    }, 250);
-  }
-  function majLegende() {
-    if (!dernierParams) return;
-    const couleurs = ["var(--serie-1)", "var(--serie-2)", "var(--serie-3)"];
-    vider($("cmp-legende"), cmp().strategies.map((s, i) => h("span", {}, h("i", { class: "puce", style: "background:" + couleurs[i] }), s.nom)),
-      h("span", {}, h("i", { style: "display:inline-block;width:18px;height:2px;background:var(--muted);vertical-align:middle;margin-right:6px" }), "Total versé"));
-  }
-
-  function dessinerResultats() {
-    if (!dernierResultat || !dernierParams) return;
-    const { duree, res, anneeObj, verseAnnees } = dernierResultat;
-    const reel = cmp().reel;
-    const couleurs = ["var(--serie-1)", "var(--serie-2)", "var(--serie-3)"];
-    const noms = res.map((_, i) => (cmp().strategies[i] || dernierParams.strategies[i]).nom);
-    majLegende();
-    const conv = (v, b) => reel ? v / b.deflateur : v;
-    const verse = a => reel ? verseAnnees[a].reel : verseAnnees[a].nominal;
-    // Graphique en éventail, dessiné à la largeur réelle pour garder des textes lisibles.
-    const conteneur = $("cmp-graphe");
-    const W = Math.round(Math.max(300, Math.min(1100, conteneur.clientWidth || 720)));
-    const H = W < 520 ? 240 : 300, m = { g: 52, d: 14, h: 12, b: 28 };
-    const ymaxBrut = Math.max(1, ...res.flatMap(r => r.bandes.map(b => conv(b.p90, b))), ...verseAnnees.map((_, a) => verse(a)));
-    const pas = (() => { const brut = ymaxBrut / 4, e = Math.pow(10, Math.floor(Math.log10(brut))), f = brut / e; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * e; })();
-    const ymax = Math.ceil(ymaxBrut / pas) * pas;
-    const x = a => m.g + a / duree * (W - m.g - m.d);
-    const y = v => m.h + (1 - v / ymax) * (H - m.h - m.b);
-    const NS = "http://www.w3.org/2000/svg";
-    const s = (tag, attrs, txt) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v); if (txt != null) e.textContent = txt; return e; };
-    const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: "img", "aria-label": "Évolution médiane et fourchette de chaque stratégie ; le tableau ci-dessous donne les chiffres." });
-    for (let v = 0; v <= ymax + 1e-6; v += pas) {
-      svg.append(s("line", { class: "grille-h", x1: m.g, x2: W - m.d, y1: y(v), y2: y(v) }));
-      svg.append(s("text", { x: m.g - 8, y: y(v) + 4, "text-anchor": "end" }, compact(v)));
-    }
-    const maxEtiquettes = Math.max(2, Math.floor((W - m.g - m.d) / 56));
-    const pasX = [1, 2, 5, 10].find(p => duree / p <= maxEtiquettes) || 10;
-    for (let a = 0; a <= duree; a += pasX) svg.append(s("text", { x: x(a), y: H - 8, "text-anchor": a === 0 ? "start" : "middle" }, a === 0 ? "auj." : a + " an" + (a > 1 ? "s" : "")));
-    svg.append(s("line", { class: "axe", x1: m.g, x2: W - m.d, y1: y(0), y2: y(0) }));
-    res.forEach((r, i) => {
-      const haut = r.bandes.map(b => `${x(b.a)},${y(conv(b.p90, b))}`), bas = r.bandes.map(b => `${x(b.a)},${y(conv(b.p10, b))}`).reverse();
-      svg.append(s("polygon", { points: [...haut, ...bas].join(" "), style: `fill:${couleurs[i]};opacity:0.10;stroke:none` }));
-    });
-    svg.append(s("polyline", { points: verseAnnees.map((_, a) => `${x(a)},${y(verse(a))}`).join(" "), style: "fill:none;stroke:var(--muted);stroke-width:1.5" }));
-    res.forEach((r, i) => {
-      svg.append(s("polyline", { points: r.bandes.map(b => `${x(b.a)},${y(conv(b.p50, b))}`).join(" "), style: `fill:none;stroke:${couleurs[i]};stroke-width:2;stroke-linejoin:round;stroke-linecap:round` }));
-      const fin = r.bandes[duree];
-      svg.append(s("circle", { cx: x(duree), cy: y(conv(fin.p50, fin)), r: 4, style: `fill:${couleurs[i]};stroke:var(--surface);stroke-width:2` }));
-    });
-    const repere = s("line", { x1: 0, x2: 0, y1: m.h, y2: H - m.b, style: "stroke:var(--encre-2);stroke-width:1;opacity:0", "pointer-events": "none" });
-    svg.append(repere);
-    const zoneSouris = s("rect", { x: m.g, y: m.h, width: W - m.g - m.d, height: H - m.h - m.b, style: "fill:transparent;cursor:crosshair;touch-action:pan-y" });
-    svg.append(zoneSouris);
-    const bulle = h("div", { class: "info-bulle", hidden: true });
-    vider(conteneur, svg, bulle);
-    const montrerAnnee = clientX => {
-      const r = svg.getBoundingClientRect();
-      const px = (clientX - r.left) / r.width * W;
-      const a = Math.max(0, Math.min(duree, Math.round((px - m.g) / (W - m.g - m.d) * duree)));
-      repere.setAttribute("x1", x(a)); repere.setAttribute("x2", x(a)); repere.style.opacity = "0.5";
-      vider(bulle, h("b", { text: a === 0 ? "Aujourd'hui" : `Dans ${a} an${a > 1 ? "s" : ""}` }),
-        res.map((rr, i) => { const b = rr.bandes[a]; return h("div", { class: "ligne-serie" }, h("span", {}, h("span", { class: "puce", style: "background:" + couleurs[i] + ";margin-right:6px" }), noms[i]), h("span", { class: "chiffre", text: compact(conv(b.p50, b)) })); }),
-        h("div", { class: "ligne-serie muet" }, h("span", { text: "Total versé" }), h("span", { class: "chiffre", text: compact(verse(a)) })));
-      bulle.hidden = false;
-      const gauche = x(a) / W * r.width;
-      const largeur = bulle.offsetWidth || 190;
-      bulle.style.left = (gauche + 12 + largeur > r.width ? Math.max(0, gauche - 12 - largeur) : gauche + 12) + "px";
-      bulle.style.top = "8px";
-    };
-    zoneSouris.addEventListener("pointermove", e => montrerAnnee(e.clientX));
-    zoneSouris.addEventListener("pointerdown", e => montrerAnnee(e.clientX));
-    zoneSouris.addEventListener("pointerleave", () => { bulle.hidden = true; repere.style.opacity = "0"; });
-
-    // Tableau.
-    const fin = r => reel ? r.deflateur : 1;
-    const objectif = S.strategie.profil;
-    const lignes = [
-      [reel ? "Total versé, en euros d'aujourd'hui" : "Total versé", r => eur(reel ? r.verseReel : r.verse, 0)],
-      ["Résultat médian, net d'impôts", r => eur(r.p50 / fin(r), 0)],
-      ["Si ça se passe mal (1 chance sur 10 de faire pire)", r => eur(r.p10 / fin(r), 0)],
-      ["Si ça se passe bien (1 chance sur 10 de faire mieux)", r => eur(r.p90 / fin(r), 0)],
-      ["Impôts à la sortie (cas médian)", r => eur(r.impotMedian / fin(r), 0)],
-      ["Ce que coûtent les frais (cas médian)", r => eur(r.fraisMedian / fin(r), 0)],
-      [reel ? "Risque de perdre du pouvoir d'achat sur tes versements" : "Risque de finir sous le total versé", r => pct((reel ? r.perteReel : r.perte) * 100, 0)],
-      ["Pire baisse en cours de route (médiane · 1 fois sur 10)", r => `${pct(r.baisseMed * 100, 0)} · ${pct(r.baisseP90 * 100, 0)}`]
-    ];
-    if (anneeObj != null && anneeObj >= 1 && anneeObj <= duree && num(objectif.objectifMontant) > 0)
-      lignes.push([`Chance d'avoir ${eur(num(objectif.objectifMontant), 0)} d'aujourd'hui, net, en ${objectif.objectifAnnee}`, r => r.objectif == null ? "—" : pct(r.objectif * 100, 0)]);
-    else if (num(objectif.objectifMontant) > 0 && anneeObj != null)
-      lignes.push([`Objectif de ${eur(num(objectif.objectifMontant), 0)} en ${objectif.objectifAnnee}`, () => anneeObj > duree ? "après la durée simulée" : "date passée"]);
-    const avecCrypto = dernierParams.strategies.some(st => num(st.poids.crypto) > 0 && num(st.poids.crypto) < 100);
-    vider($("cmp-tableau"), avecCrypto ? h("p", { class: "note", text: "Attention : avec la crypto, très volatile, le rééquilibrage mensuel du modèle crée un gain théorique qui dépend entièrement de l'hypothèse de rendement choisie pour elle. Personne ne connaît ce rendement : ne te fie pas à l'écart entre stratégies avec et sans crypto." }) : null, h("table", {},
-      h("thead", {}, h("tr", {}, h("th", { text: `Dans ${duree} ans${reel ? ", en euros d'aujourd'hui" : ""}` }), noms.map((n, i) => h("th", { class: "num" }, h("span", { class: "puce", style: "background:" + couleurs[i] + ";margin-right:6px" }), n)))),
-      h("tbody", {}, lignes.map(([lib, f]) => h("tr", {}, h("td", { text: lib }), res.map(r => h("td", { class: "num chiffre", text: f(r) })))))));
-    $("btn-cmp-claude").hidden = !claudePret;
-  }
   let minuteurRedim = null;
-  window.addEventListener("resize", () => { clearTimeout(minuteurRedim); minuteurRedim = setTimeout(() => { if (vueActive === "comparer") { dessinerResultats(); rendreIC(); } if (vueActive === "portefeuille") rendreHistorique(); if (vueActive === "budget") rendre12Mois(); }, 200); });
+  window.addEventListener("resize", () => { clearTimeout(minuteurRedim); minuteurRedim = setTimeout(() => { if (vueActive === "strategie") rendreIC(); if (vueActive === "portefeuille") rendreHistorique(); if (vueActive === "budget") rendre12Mois(); }, 200); });
 
-  function texteComparaison() {
-    if (!dernierResultat || !dernierParams) return "";
-    const { duree, res } = dernierResultat, p = dernierParams, reel = cmp().reel;
-    const L = [`SIMULATION (Monte-Carlo, ${NB_SIM} tirages, mensuel) : capital de départ ${eur(num(p.capital), 0)}, ${eur(num(p.versement), 0)} par mois, ${duree} ans, inflation ${pct(num(p.inflation))}. Montants ${reel ? "en euros d'aujourd'hui" : "en euros courants"}, nets d'impôts à la sortie.`];
-    L.push("Hypothèses (rendement composé / volatilité) : " + B.CLASSES.map(c => `${c.nom} ${p.hypotheses[c.id].rendement} % / ${p.hypotheses[c.id].volatilite} %`).join(" ; ") + ".");
-    p.strategies.forEach((s, i) => {
-      const r = res[i], d = reel ? r.deflateur : 1;
-      L.push(`- ${s.nom} : ${B.CLASSES.filter(c => num(s.poids[c.id]) > 0).map(c => `${c.nom} ${num(s.poids[c.id])} %`).join(", ")} ; frais ${pct(num(s.frais), 2)} ; enveloppe ${s.enveloppe} ; ${s.entree === "etale" ? "capital étalé sur 12 mois" : "capital investi tout de suite"}. Versé ${eur(reel ? r.verseReel : r.verse, 0)} ; médiane ${eur(r.p50 / d, 0)} ; 1 sur 10 pire ${eur(r.p10 / d, 0)} ; 1 sur 10 meilleur ${eur(r.p90 / d, 0)} ; impôts médians ${eur(r.impotMedian / d, 0)} ; coût des frais ${eur(r.fraisMedian / d, 0)} ; ${reel ? "risque de perdre du pouvoir d'achat sur ses versements" : "risque de finir sous le versé"} ${pct((reel ? r.perteReel : r.perte) * 100, 0)} ; pire baisse médiane ${pct(r.baisseMed * 100, 0)} (1 fois sur 10 : ${pct(r.baisseP90 * 100, 0)})${r.objectif != null ? ` ; chance d'atteindre l'objectif ${pct(r.objectif * 100, 0)}` : ""}.`);
-    });
-    return L.join("\n");
-  }
-  let ctlCmp = null;
-  $("btn-cmp-claude").addEventListener("click", async () => {
-    if (!sample || !dernierResultat) return;
-    const z = $("cmp-avis");
-    ctlCmp = new AbortController();
-    const bulle = h("div", { class: "bulle bulle-claude pense", text: "Claude réfléchit…" });
-    vider(z, h("h3", { text: "Ce qu'en pense Claude" }), bulle);
-    $("btn-cmp-claude").disabled = true; $("btn-cmp-stop").hidden = false;
-    const prompt = `${CONSIGNES}\n\n${contexteInvestisseur()}\n\n${texteComparaison()}\n\nCommente cette comparaison pour lui, en 220 mots au plus : ce que les écarts veulent dire concrètement, laquelle colle le mieux à son objectif, à son horizon et à sa réaction face à une baisse, et la limite principale de ce modèle. Pas de prévision.`;
-    try {
-      await sample(prompt, { signal: ctlCmp.signal, cache: false, onText: ({ text }) => { bulle.className = "bulle bulle-claude"; vider(bulle, markdown(text)); } });
-    } catch (e) {
-      if (e && e.text) { bulle.className = "bulle bulle-claude"; vider(bulle, markdown(e.text)); }
-      else vider(bulle, h("span", { class: e && e.code === "cancelled" ? "muet" : "erreur", text: e && e.code === "cancelled" ? "Arrêté." : messageErreur(e) }));
-    } finally { $("btn-cmp-claude").disabled = false; $("btn-cmp-stop").hidden = true; ctlCmp = null; }
-  });
-  $("btn-cmp-stop").addEventListener("click", () => ctlCmp && ctlCmp.abort());
+
 
   // ---------- CLAUDE : discussion ----------
   const SUGGESTIONS = [
     { texte: "Que faire de mon argent ce mois-ci ?" },
-    { texte: "Mon patrimoine respecte-t-il ma stratégie ?" },
-    { texte: "Livret A ou compte rémunéré pour mon épargne de précaution ?" },
     { texte: "Analyse mon budget : où puis-je épargner plus ?" },
-    { texte: "Quelle part de crypto est raisonnable pour moi ?" },
-    { texte: "Passe une action en revue selon mes règles : ", remplir: true },
+    { texte: "Je veux acheter ou vendre : passe l'opération en revue selon mes règles. ", remplir: true },
+    { texte: "Compare 100 % ETF Monde et un 80/20 sur mon horizon." },
     { texte: "Que faire si la bourse baisse de 30 % ?" }
   ];
   let ctlChat = null, enCoursChat = false;
   function demanderDansChat(texte) { montrer("claude"); $("c-message").value = texte; $("c-message").focus(); }
 
+  let tour = { ajoutees: [], faites: [] };
   function outilsChat() {
     if (!claudeOutils) return undefined;
     return [
+      { name: "ajouter_taches", description: "Ajoute des tâches à sa liste « À faire », affichée sur l'accueil de l'outil : les actions concrètes décidées dans la discussion (un virement, un achat, une vente, une vérification). Renvoie les tâches ajoutées avec leur identifiant.",
+        inputSchema: { type: "object", properties: { taches: { type: "array", maxItems: 3, items: { type: "object", properties: {
+          texte: { type: "string", description: "Une phrase courte à l'impératif, avec le montant et le compte. Ex. : « Virer 685 € sur le LEP »" },
+          echeance: { type: "string", description: "Date limite au format AAAA-MM-JJ, si elle est connue" } }, required: ["texte"] } } }, required: ["taches"] },
+        execute: input => {
+          const ajout = [];
+          for (const t of (Array.isArray(input.taches) ? input.taches : []).slice(0, 3)) { const x = ajouterTache(t.texte, t.echeance, "claude"); if (x) ajout.push(x); }
+          if (!ajout.length) throw new Error("Aucune tâche valide.");
+          tour.ajoutees.push(...ajout.map(x => x.texte));
+          rendreTaches();
+          return ajout.map(x => ({ id: x.id, texte: x.texte, echeance: x.echeance || null }));
+        } },
+      { name: "terminer_tache", description: "Coche une tâche de sa liste « À faire » quand il dit l'avoir faite, ou la retire si elle n'a plus lieu d'être.",
+        inputSchema: { type: "object", properties: { id: { type: "string", description: "Identifiant de la tâche, tel que dans sa liste" }, retirer: { type: "boolean", description: "true pour la supprimer au lieu de la cocher" } }, required: ["id"] },
+        execute: input => {
+          const t = S.taches.items.find(x => x.id === String(input.id || ""));
+          if (!t) throw new Error("Tâche introuvable : reprends l'identifiant de sa liste.");
+          if (input.retirer) { S.taches.items = S.taches.items.filter(x => x !== t); enregistrer("taches"); } else cocherTache(t.id, true);
+          tour.faites.push((input.retirer ? "retirée : " : "") + t.texte);
+          rendreTaches();
+          return { ok: true, texte: t.texte };
+        } },
       { name: "repartir_versement", description: "Calcule comment répartir un montant à investir entre les poches de sa stratégie pour se rapprocher de la cible sans vendre. Renvoie, par poche, le montant, la ligne conseillée et le poids après versement.",
         inputSchema: { type: "object", properties: { montant: { type: "number", description: "Montant à investir, en euros" } }, required: ["montant"] },
         execute: input => {
@@ -2835,10 +2659,7 @@ ${res.constats.map(c => `- [${c.niveau}] ${c.texte}`).join("\n")}`;
     $("btn-c-envoyer").disabled = !claudePret || enCoursChat;
     $("c-message").disabled = !claudePret;
     const syn = synthese();
-    $("c-contexte").textContent = claudePret ? `Claude voit ta stratégie, tes principes, ton épargne, ton portefeuille${syn.lignes.length && S.portefeuille.coursMaj ? " (cours du " + dateFr(S.portefeuille.coursMaj) + ")" : ""} et ton journal.` : "";
-    vider($("c-suggestions"), claudePret ? SUGGESTIONS.map(s => h("button", { class: "suggestion", text: s.texte, onclick: () => {
-      if (s.remplir) { $("c-message").value = s.texte; $("c-message").focus(); } else envoyerChat(s.texte);
-    } })) : null);
+    $("c-contexte").textContent = claudePret ? `Claude voit ta stratégie, ton épargne, ton portefeuille${syn.lignes.length && S.portefeuille.coursMaj ? " (cours du " + dateFr(S.portefeuille.coursMaj) + ")" : ""}, ton budget et ta liste À faire.` : "";
     if (enCoursChat) return;
     if (!claudePret) {
       vider(fil, h("div", { class: "carte" }, h("h3", { text: "Claude répond sur la page publiée" }),
@@ -2846,12 +2667,25 @@ ${res.constats.map(c => `- [${c.niveau}] ${c.texte}`).join("\n")}`;
       return;
     }
     if (!msgs.length) {
-      vider(fil, h("div", { class: "bulle bulle-claude" }, markdown("Bonjour ! Je connais ta stratégie, tes règles, tes principes, ton épargne et ton portefeuille. Demande-moi quoi faire de ton argent ce mois-ci, ce que je pense d'une action au regard de tes règles, ou comment réagir si le marché baisse.\n\nJe ne vois ni les cours en direct ni l'actualité : pour une décision, vérifie toujours les chiffres du jour.")));
+      // Les questions toutes prêtes n'apparaissent que sur une discussion vide.
+      vider(fil, h("div", { class: "bulle bulle-claude" }, markdown("Bonjour ! Je connais ta stratégie, tes règles, ton épargne, ton portefeuille et ton budget. Ce qu'on décide ensemble, je l'ajoute à ta liste « À faire » sur l'accueil.\n\nJe ne vois ni les cours en direct ni l'actualité : pour une décision, vérifie toujours les chiffres du jour.")),
+        h("div", { class: "suggestions" }, SUGGESTIONS.map(x => h("button", { class: "suggestion", text: x.texte, onclick: () => {
+          if (x.remplir) { $("c-message").value = x.texte; $("c-message").focus(); } else envoyerChat(x.texte);
+        } }))));
       return;
     }
-    vider(fil, msgs.map(m => m.role === "user" ? h("div", { class: "bulle bulle-moi", text: m.content }) : h("div", { class: "bulle bulle-claude" }, markdown(m.content))));
+    vider(fil, msgs.map(bulleMessage));
   }
 
+  function bulleMessage(m) {
+    if (m.role === "user") return h("div", { class: "bulle bulle-moi", text: m.content });
+    const t = m.taches || {};
+    return [h("div", { class: "bulle bulle-claude" }, markdown(m.content)),
+      (t.ajoutees || []).length || (t.faites || []).length ? h("p", { class: "note-taches" },
+        (t.ajoutees || []).length ? `Ajouté à ta liste À faire : ${t.ajoutees.join(" ; ")}. ` : "",
+        (t.faites || []).length ? `Coché : ${t.faites.join(" ; ")}. ` : "",
+        h("button", { type: "button", class: "lien", text: "Voir ma liste", onclick: () => montrer("portefeuille") })) : null];
+  }
   async function envoyerChat(texte) {
     texte = String(texte || "").trim();
     if (!texte || !sample || enCoursChat) return;
@@ -2863,8 +2697,9 @@ ${res.constats.map(c => `- [${c.niveau}] ${c.texte}`).join("\n")}`;
     enCoursChat = true;
     rendreChat();
     const fil = $("c-fil");
-    vider(fil, msgs.map(m => m.role === "user" ? h("div", { class: "bulle bulle-moi", text: m.content }) : h("div", { class: "bulle bulle-claude" }, markdown(m.content))));
+    vider(fil, msgs.map(bulleMessage));
     const bulle = h("div", { class: "bulle bulle-claude pense", text: "Claude réfléchit…" });
+    tour = { ajoutees: [], faites: [] };
     fil.append(bulle);
     bulle.scrollIntoView({ block: "nearest", behavior: "smooth" });
     $("btn-c-stop").hidden = false;
@@ -2875,13 +2710,14 @@ ${res.constats.map(c => `- [${c.niveau}] ${c.texte}`).join("\n")}`;
     const opts = { signal: ctlChat.signal, onText: ({ text }) => { bulle.className = "bulle bulle-claude"; vider(bulle, markdown(text)); } };
     const outils = outilsChat();
     if (outils) {
-      opts.tools = outils.map(o => ({ ...o, execute: (input) => { if (bulle.classList.contains("pense")) bulle.textContent = "Claude fait le calcul avec l'outil…"; return o.execute(input); } }));
+      opts.tools = outils.map(o => ({ ...o, execute: (input) => { if (bulle.classList.contains("pense")) bulle.textContent = o.name.includes("tache") ? "Claude met à jour ta liste À faire…" : "Claude fait le calcul avec l'outil…"; return o.execute(input); } }));
     } else opts.cache = false;
     if ($("c-approfondi").checked) opts.modelTier = "complex";
     try {
       const r = await sample(tours, opts);
       msgs.push({ role: "assistant", content: r.text.slice(0, 12000) });
       if (r.truncated) msgs[msgs.length - 1].content += "\n\n*(Réponse coupée : demande-moi la suite.)*";
+      if (tour.ajoutees.length || tour.faites.length) msgs[msgs.length - 1].taches = { ajoutees: tour.ajoutees.slice(0, 5), faites: tour.faites.slice(0, 5) };
     } catch (e) {
       if (e && e.text) msgs.push({ role: "assistant", content: e.text.slice(0, 12000) + (e.code === "cancelled" ? "\n\n*(Arrêté.)*" : "\n\n*(Réponse interrompue.)*") });
       else if (!(e && e.code === "cancelled")) { enCoursChat = false; ctlChat = null; $("btn-c-stop").hidden = true; rendreChat(); $("c-fil").append(h("p", { class: "erreur", text: messageErreur(e) })); return; }
@@ -3324,7 +3160,7 @@ ${texte.slice(0, 20000)}`;
   }
   $("btn-exporter").addEventListener("click", async () => {
     if (!downloads) return;
-    const data = JSON.stringify({ app: "Boussole Bourse", date: aujourdhui(), strategie: S.strategie, portefeuille: S.portefeuille, journal: S.journal, comparer: S.comparer, historique: S.historique, budget: S.budget, operations: M }, null, 2);
+    const data = JSON.stringify({ app: "Boussole Bourse", date: aujourdhui(), strategie: S.strategie, portefeuille: S.portefeuille, taches: S.taches, journal: S.journal, comparer: S.comparer, historique: S.historique, budget: S.budget, operations: M }, null, 2);
     try { await downloads.save({ filename: `boussole-bourse-${aujourdhui()}.json`, data }); } catch (_) {}
   });
   $("btn-effacer").addEventListener("click", () => { $("effacer-confirmer").hidden = false; });
@@ -3333,7 +3169,7 @@ ${texte.slice(0, 20000)}`;
     $("effacer-confirmer").hidden = true;
     const aEffacer = DOCS.filter(n => !DOCS_ROBOT.includes(n));
     for (const n of aEffacer) { clearTimeout(stock.minuteurs[n]); stock.sale[n] = false; S[n] = defauts(n); }
-    signatureSim = ""; dernierResultat = null; annulerModele = null;
+    annulerModele = null;
     toutRendre();
     if (stock.mode === "page") {
       for (const n of aEffacer) stock.enCours[n] = true;
@@ -3356,15 +3192,25 @@ ${texte.slice(0, 20000)}`;
     rendreEnCours = true;
     try {
       const syn = synthese();
-      rendreBandeau(); rendreReleve(syn); rendrePrecaution(); rendreHistorique(); rendreRepartition(syn); rendreAlertes(syn); rendreVersement(syn); rendreEnveloppes(syn); rendreComptes(); rendreCoursDirect(); rendreLignes(syn);
+      rendreBandeau(); rendreReleve(syn); rendreTaches(); rendrePrecaution(); rendreHistorique(); rendreRepartition(syn); rendreAlertes(syn); rendreVersement(syn); rendreEnveloppes(syn); rendreComptes(); rendreCoursDirect(); rendreLignes(syn);
       $("btn-importer").hidden = !claudePret;
       rendreBudget();
-      rendreDecision(); rendreJournal();
-      rendreComparerForm(); rendreIC(); planifierSimulation(); if (dernierResultat) $("btn-cmp-claude").hidden = !claudePret;
+      rendreIC();
       rendreChat();
       rendreStrategie();
     } finally { rendreEnCours = false; }
   }
+
+  // Cartes repliables : ouvertes ou fermées comme la dernière fois, dans ce navigateur.
+  const replisOuverts = (() => { try { return new Set(JSON.parse(localStorage.getItem(CLE("replis")) || "[]")); } catch (_) { return new Set(); } })();
+  document.querySelectorAll("details.repli").forEach(d => {
+    if (replisOuverts.has(d.id)) d.open = true;
+    d.addEventListener("toggle", () => {
+      if (d.open) replisOuverts.add(d.id); else replisOuverts.delete(d.id);
+      try { localStorage.setItem(CLE("replis"), JSON.stringify([...replisOuverts])); } catch (_) {}
+      if (d.open && d.id === "repli-12mois") rendre12Mois();
+    });
+  });
 
   // ---------- démarrage ----------
   const depart = vueDe(location.hash.slice(1));

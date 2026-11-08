@@ -168,7 +168,7 @@ a { color: var(--accent); }
 .btn-petit { padding: 4px 10px; min-height: 30px; font-size: 0.82rem; }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .champs { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
-.champ { display: grid; gap: 4px; min-width: 0; }
+.champ { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; min-width: 0; }
 .champ > span { font-size: 0.8rem; color: var(--encre-2); font-weight: 600; }
 .champ-large { grid-column: 1 / -1; }
 input, select, textarea {
@@ -275,6 +275,31 @@ tbody tr:hover td { background: color-mix(in srgb, var(--surface-2) 55%, transpa
 .poids input { min-height: 32px; padding: 4px 8px; }
 .total-poids { font-size: 0.8rem; }
 details > summary { cursor: pointer; font-weight: 600; color: var(--accent); font-size: 0.88rem; }
+/* Cartes repliables : le titre ouvre et ferme la carte. */
+details.repli > summary { list-style: none; color: inherit; font-size: inherit; font-weight: inherit; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+details.repli > summary::-webkit-details-marker { display: none; }
+details.repli > summary h2 { display: flex; align-items: center; gap: 10px; }
+details.repli > summary h2::before { content: ""; flex: none; width: 7px; height: 7px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(-45deg); transition: transform 0.15s; }
+details.repli[open] > summary h2::before { transform: rotate(45deg); }
+details.repli[open] > summary { margin-bottom: 14px; }
+.repli-corps { display: grid; gap: 12px; }
+.repli-corps > * { min-width: 0; }
+.repli-corps > p { max-width: 68ch; }
+/* À faire */
+.taches { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.tache { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: start; padding: 8px 0; border-bottom: 1px solid var(--trait); }
+.tache:last-child { border-bottom: 0; }
+.tache input[type="checkbox"] { width: 20px; height: 20px; margin: 1px 0 0; accent-color: var(--accent); }
+.tache-texte { display: grid; gap: 3px; min-width: 0; overflow-wrap: anywhere; }
+.tache-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 0.78rem; color: var(--muted); }
+.tache.faite .tache-texte > span:first-child { text-decoration: line-through; color: var(--muted); }
+.ajout-tache { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; }
+@media (max-width: 520px) { .ajout-tache { grid-template-columns: 1fr auto; } .ajout-tache input[type="text"], .ajout-tache #tache-texte { grid-column: 1 / -1; } }
+.lien { border: 0; background: none; padding: 0; font: inherit; color: var(--accent); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+/* Graphique du patrimoine */
+.graphe-outils { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center; }
+.graphe-outils .segments span { padding: 4px 10px; font-size: 0.8rem; }
+.selection-zoom { fill: var(--accent); opacity: 0.12; }
 details[open] > summary { margin-bottom: 10px; }
 .hypotheses { display: grid; grid-template-columns: minmax(120px, 1fr) 90px 90px; gap: 6px 10px; align-items: center; font-size: 0.86rem; }
 
@@ -288,6 +313,7 @@ details[open] > summary { margin-bottom: 10px; }
 .suggestions { display: flex; flex-wrap: wrap; gap: 8px; }
 .suggestion { border: 1px solid var(--trait); background: var(--surface); color: var(--encre); border-radius: 999px; padding: 6px 12px; font: 0.86rem var(--f-texte); cursor: pointer; text-align: left; }
 .suggestion:hover { border-color: var(--accent); color: var(--accent); }
+.note-taches { justify-self: start; font-size: 0.8rem; color: var(--muted); margin: -6px 0 0 4px; }
 .composer { display: grid; gap: 8px; position: sticky; bottom: 0; background: var(--fond); padding-block: 8px; }
 @media (max-width: 760px) { .composer { bottom: calc(var(--barre-h) + env(safe-area-inset-bottom, 0px)); } }
 .composer textarea { min-height: 64px; }
@@ -347,17 +373,11 @@ details[open] > summary { margin-bottom: 10px; }
     </div>
     <nav class="onglets" role="tablist" aria-label="Sections">
       <button class="onglet" role="tab" id="t-portefeuille" data-vue="portefeuille" aria-selected="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"></path><path d="M7 15l4-4 3 3 5-6"></path></svg>
-        Patrimoine</button>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"></path><path d="M5 10v10h14V10"></path><path d="M10 20v-6h4v6"></path></svg>
+        Accueil</button>
       <button class="onglet" role="tab" id="t-budget" data-vue="budget" aria-selected="false">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="2"></rect><path d="M3 10h18"></path><path d="M16 15h2"></path><path d="M7 6V4h10v2"></path></svg>
         Budget</button>
-      <button class="onglet" role="tab" id="t-decider" data-vue="decider" aria-selected="false">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"></path><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"></path></svg>
-        Décider</button>
-      <button class="onglet" role="tab" id="t-comparer" data-vue="comparer" aria-selected="false">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"></path><path d="M10 20V4"></path><path d="M16 20v-7"></path><path d="M22 20H2"></path></svg>
-        Simuler</button>
       <button class="onglet" role="tab" id="t-claude" data-vue="claude" aria-selected="false">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"></path></svg>
         Claude</button>
@@ -380,40 +400,45 @@ details[open] > summary { margin-bottom: 10px; }
     </div>
 
     <div class="grille">
+      <div class="carte c7" id="carte-taches">
+        <div class="carte-tete"><h2>À faire</h2><span class="petit muet" id="taches-note"></span></div>
+        <div id="taches"></div>
+        <form class="ajout-tache" id="form-tache" autocomplete="off">
+          <input id="tache-texte" maxlength="200" placeholder="Ajouter une tâche…" aria-label="Nouvelle tâche">
+          <input type="date" id="tache-date" aria-label="À faire avant le">
+          <button class="btn btn-petit" type="submit">Ajouter</button>
+        </form>
+        <div id="taches-faites"></div>
+      </div>
+      <div class="carte c5">
+        <div class="carte-tete"><h2>Ce mois-ci</h2></div>
+        <div id="plan-mois"></div>
+        <div class="actions"><button class="btn btn-ghost btn-petit" id="btn-rentree">J'ai reçu de l'argent (prime, chèque…)</button></div>
+        <div class="fiche" id="fiche-rentree" hidden></div>
+        <details class="sous-repli">
+          <summary>Sur quelle ligne investir</summary>
+          <div class="champs">
+            <label class="champ"><span>Montant à investir (€)</span><input type="number" id="versement-montant" min="0" step="10" inputmode="decimal"></label>
+          </div>
+          <div id="versement-resultat"></div>
+        </details>
+      </div>
+
       <div class="carte c5">
         <div class="carte-tete"><h2>Mon épargne de précaution</h2><span id="precaution-statut"></span></div>
         <div id="precaution"></div>
       </div>
       <div class="carte c7">
         <div class="carte-tete"><h2>Mon patrimoine dans le temps</h2><span class="petit muet" id="historique-note"></span></div>
+        <div class="graphe-outils" id="historique-outils"></div>
         <div class="legende" id="historique-legende"></div>
         <div class="graphe" id="historique-graphe"></div>
+        <p class="note" id="historique-aide"></p>
       </div>
 
-      <div class="carte c7">
-        <div class="carte-tete"><h2>Mes investissements</h2><span class="petit muet" id="repart-note"></span></div>
-        <div class="repart" id="repartition"></div>
-        <div class="legende"><span><i class="cle-barre"></i>Aujourd'hui</span><span><i class="cle-cible"></i>Ta cible</span><span><i class="cle-marge"></i>Ta marge</span></div>
-      </div>
-      <div class="carte c5">
+      <div class="carte c12" id="carte-alertes">
         <h2>Ce qui demande ton attention</h2>
         <ul class="constats" id="alertes"></ul>
-      </div>
-
-      <div class="carte c5">
-        <div class="carte-tete"><h2>Ce mois-ci</h2></div>
-        <p class="petit muet">Ton effort d'épargne du mois, partagé selon ta stratégie : d'abord ce qui va à l'épargne de précaution, puis l'argent à investir, réparti pour rapprocher chaque poche de sa cible sans rien vendre.</p>
-        <div id="plan-mois"></div>
-        <div class="actions"><button class="btn btn-ghost btn-petit" id="btn-rentree">J'ai reçu de l'argent (prime, chèque…)</button></div>
-        <div class="fiche" id="fiche-rentree" hidden></div>
-        <div class="champs">
-          <label class="champ"><span>Montant à investir (€)</span><input type="number" id="versement-montant" min="0" step="10" inputmode="decimal"></label>
-        </div>
-        <div id="versement-resultat"></div>
-      </div>
-      <div class="carte c7">
-        <h2>Mes enveloppes</h2>
-        <div id="enveloppes"></div>
       </div>
 
       <div class="carte c12">
@@ -468,7 +493,9 @@ details[open] > summary { margin-bottom: 10px; }
         <button class="btn btn-discret btn-petit" id="b-mois-suiv" aria-label="Mois suivant">›</button>
       </div>
     </div>
-    <div class="carte"><div class="tuiles" id="b-tuiles"></div><p class="note" id="b-tuiles-note"></p></div>
+    <div class="carte"><div class="tuiles" id="b-tuiles"></div><p class="note" id="b-tuiles-note"></p>
+      <label class="case petit"><input type="checkbox" id="b-decalage"><span>Ma paie arrive en fin de mois : elle compte pour le mois suivant si elle tombe à partir du <input type="number" id="b-decalage-jour" min="1" max="31" step="1" inputmode="numeric" aria-label="Jour du mois" style="width:64px;display:inline-block;min-height:30px;padding:2px 6px"></span></label>
+    </div>
     <div class="grille">
       <div class="carte c7">
         <div class="carte-tete"><h2>Par catégorie</h2><span class="petit muet" id="b-cat-note"></span></div>
@@ -504,7 +531,8 @@ details[open] > summary { margin-bottom: 10px; }
         <div id="b-operations"></div>
       </div>
       <div class="carte c12" id="carte-paie">
-        <div class="carte-tete"><h2>Ma paie</h2><span class="petit muet" id="paie-note"></span></div>
+        <details class="repli" id="repli-paie"><summary><h2>Ma paie</h2><span class="petit muet" id="paie-note"></span></summary>
+        <div class="repli-corps">
         <p class="petit muet">Ta paie d'aujourd'hui, une paie différente (heures en plus, prime, augmentation) et ta paie des prochaines années, traduites en ce que tu pourras mettre de côté.</p>
         <h3>Aujourd'hui</h3>
         <div class="champs">
@@ -529,14 +557,18 @@ details[open] > summary { margin-bottom: 10px; }
           <label class="champ" style="max-width:240px"><span>Hausse du SMIC (%/an)</span><input type="number" id="paie-hausse" min="0" max="10" step="0.1" inputmode="decimal"></label>
         </div>
         <div id="paie-futur"></div>
+        </div></details>
       </div>
       <div class="carte c6">
-        <div class="carte-tete"><h2>Mon budget prévu</h2><span id="b-plan-total"></span></div>
+        <details class="repli" id="repli-prevu"><summary><h2>Mon budget prévu</h2><span id="b-plan-total"></span></summary>
+        <div class="repli-corps">
         <p class="petit muet">Ce que tu prévois chaque mois. Tes versements d'épargne viennent de ta stratégie.</p>
         <div id="b-plan"></div>
+        </div></details>
       </div>
       <div class="carte c12">
-        <div class="carte-tete"><h2>Et si je déménage ?</h2><span class="petit muet">Pour lire les annonces avec tes chiffres</span></div>
+        <details class="repli" id="repli-demenagement"><summary><h2>Et si je déménage ?</h2><span class="petit muet">Pour lire les annonces avec tes chiffres</span></summary>
+        <div class="repli-corps">
         <p class="petit muet">Indique ce que coûterait un logement : la page montre ton nouveau budget, ce que tu pourras encore investir et ce que ça change pour ton objectif à 50 ans.</p>
         <div class="champs">
           <label class="champ"><span>Loyer charges comprises (€)</span><input type="number" id="dm-loyer" min="0" step="10" inputmode="decimal" placeholder="550"></label>
@@ -548,141 +580,16 @@ details[open] > summary { margin-bottom: 10px; }
           <label class="champ"><span>Dépôt de garantie, frais d'emménagement (€)</span><input type="number" id="dm-installation" min="0" step="100" inputmode="decimal" placeholder="1500"></label>
         </div>
         <div id="dm-resultat"></div>
+        </div></details>
       </div>
       <div class="carte c6">
-        <h2>Sur 12 mois</h2>
+        <details class="repli" id="repli-12mois"><summary><h2>Sur 12 mois</h2></summary>
+        <div class="repli-corps">
         <div class="legende" id="b-12-legende"></div>
         <div class="graphe" id="b-12-graphe"></div>
         <div class="defile" id="b-12-tableau"></div>
+        </div></details>
       </div>
-    </div>
-  </section>
-
-  <!-- ============ DÉCIDER ============ -->
-  <section class="vue" id="vue-decider" role="tabpanel" aria-labelledby="t-decider" hidden>
-    <div class="vue-titre"><h2>Avant d'acheter ou de vendre</h2><span class="petit muet">Ta stratégie passe l'opération en revue</span></div>
-    <div class="grille">
-      <form class="carte c6" id="form-decider" autocomplete="off">
-        <div class="segments" role="radiogroup" aria-label="Opération">
-          <label><input type="radio" name="d-sens" value="acheter" id="d-sens-acheter" checked><span>Acheter</span></label>
-          <label><input type="radio" name="d-sens" value="renforcer" id="d-sens-renforcer"><span>Renforcer</span></label>
-          <label><input type="radio" name="d-sens" value="alleger" id="d-sens-alleger"><span>Alléger</span></label>
-          <label><input type="radio" name="d-sens" value="vendre" id="d-sens-vendre"><span>Vendre</span></label>
-        </div>
-        <div class="champs">
-          <label class="champ champ-large"><span>Quel actif ?</span><select id="d-ligne"></select></label>
-        </div>
-        <div class="champs" id="d-nouveau">
-          <label class="champ champ-large"><span>Nom</span><input id="d-nom" placeholder="Ex. : ETF S&amp;P 500, Schneider Electric…"></label>
-          <label class="champ"><span>Type</span><select id="d-type"></select></label>
-          <label class="champ"><span>Poche</span><select id="d-poche"></select></label>
-          <label class="champ"><span>Enveloppe</span><select id="d-enveloppe"></select></label>
-          <label class="champ"><span>Zone</span><select id="d-zone"></select></label>
-          <label class="champ"><span>Frais annuels (%)</span><input type="number" id="d-frais" min="0" step="0.05" inputmode="decimal" placeholder="0,20"></label>
-        </div>
-        <div class="champs">
-          <label class="champ"><span>Montant (€)</span><input type="number" id="d-montant" min="0" step="10" inputmode="decimal" placeholder="500"></label>
-          <label class="champ"><span>Je compte le garder</span>
-            <select id="d-horizon"><option value="1">Moins d'un an</option><option value="3">1 à 5 ans</option><option value="8" selected>5 à 10 ans</option><option value="15">Plus de 10 ans</option></select></label>
-          <label class="champ"><span>J'y pense depuis</span>
-            <select id="d-depuis"><option value="0">Aujourd'hui</option><option value="2">Quelques jours</option><option value="10">Plus d'une semaine</option></select></label>
-          <label class="champ"><span>C'est prévu dans mon plan</span>
-            <select id="d-prevu"><option value="non">Non</option><option value="oui">Oui</option></select></label>
-        </div>
-        <label class="champ"><span>Pourquoi ?</span><textarea id="d-raison" rows="3" placeholder="Ce que j'attends, et ce qui me ferait changer d'avis."></textarea></label>
-        <fieldset class="champ" style="border:0;padding:0;margin:0">
-          <span class="etiquette" style="margin-bottom:6px">Check-list</span>
-          <div class="constats" id="d-checklist"></div>
-        </fieldset>
-      </form>
-
-      <div class="carte c6" id="decider-resultat">
-        <h2>Ce que dit ta stratégie</h2>
-        <div id="d-verdict"></div>
-        <ul class="constats" id="d-constats"></ul>
-        <div id="d-apres"></div>
-        <div class="actions">
-          <button class="btn" id="btn-avis" hidden>Avis de Claude</button>
-          <button class="btn btn-ghost" id="btn-noter">Noter au journal</button>
-          <button class="btn btn-discret" id="btn-avis-stop" hidden>Arrêter</button>
-        </div>
-        <div id="d-avis"></div>
-      </div>
-
-      <div class="carte c12">
-        <div class="carte-tete">
-          <h2>Mon journal de décisions</h2>
-          <div class="segments" role="radiogroup" aria-label="Filtre du journal">
-            <label><input type="radio" name="j-filtre" value="tout" id="j-filtre-tout" checked><span>Tout</span></label>
-            <label><input type="radio" name="j-filtre" value="revoir" id="j-filtre-revoir"><span>Bilans à faire</span></label>
-          </div>
-        </div>
-        <div class="journal" id="journal"></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ COMPARER ============ -->
-  <section class="vue" id="vue-comparer" role="tabpanel" aria-labelledby="t-comparer" hidden>
-    <div class="vue-titre"><h2>Simuler</h2><span class="petit muet">Intérêts composés, puis stratégies comparées sur 1 500 avenirs possibles</span></div>
-
-    <div class="carte" id="carte-interets">
-      <div class="carte-tete"><h2>Intérêts composés</h2><button class="btn btn-ghost btn-petit" id="btn-ic-mes-chiffres">Reprendre mes chiffres</button></div>
-      <p class="petit muet">Un rendement régulier chaque année, sans les hauts et les bas du marché : la mécanique des intérêts qui rapportent des intérêts. Pour l'incertitude, compare des stratégies plus bas.</p>
-      <div class="champs">
-        <label class="champ"><span>Capital de départ (€)</span><input type="number" id="ic-capital" min="0" step="100" inputmode="decimal"></label>
-        <label class="champ"><span>Versement mensuel (€)</span><input type="number" id="ic-versement" min="0" step="10" inputmode="decimal"></label>
-        <label class="champ"><span>Hausse des versements (%/an)</span><input type="number" id="ic-hausse" min="0" max="20" step="0.5" inputmode="decimal"></label>
-        <label class="champ"><span>Rendement annuel (%)</span><input type="number" id="ic-taux" min="-10" max="30" step="0.1" inputmode="decimal"></label>
-        <label class="champ"><span>Durée (années)</span><input type="number" id="ic-duree" min="1" max="60" step="1" inputmode="numeric"></label>
-        <label class="champ"><span>Frais annuels (%)</span><input type="number" id="ic-frais" min="0" max="5" step="0.05" inputmode="decimal"></label>
-        <label class="champ"><span>Inflation (%/an)</span><input type="number" id="ic-inflation" min="0" max="10" step="0.1" inputmode="decimal"></label>
-        <label class="champ"><span>Objectif (€ d'aujourd'hui)</span><input type="number" id="ic-objectif" min="0" step="1000" inputmode="decimal"></label>
-      </div>
-      <div id="ic-resultat"></div>
-      <div class="legende" id="ic-legende"></div>
-      <div class="graphe" id="ic-graphe"></div>
-      <details><summary>Année par année</summary><div class="defile" id="ic-tableau"></div></details>
-    </div>
-
-    <div class="vue-titre"><h2 style="font-size:1.2rem">Comparer des stratégies</h2></div>
-    <div class="carte">
-      <div class="carte-tete"><h3>Point de départ</h3><button class="btn btn-ghost btn-petit" id="btn-cmp-mes-chiffres">Reprendre mes chiffres</button></div>
-      <div class="champs">
-        <label class="champ"><span>Capital de départ (€)</span><input type="number" id="cmp-capital" min="0" step="100" inputmode="decimal"></label>
-        <label class="champ"><span>Versement mensuel (€)</span><input type="number" id="cmp-versement" min="0" step="10" inputmode="decimal"></label>
-        <label class="champ"><span>Durée (années)</span><input type="number" id="cmp-duree" min="1" max="40" step="1" inputmode="numeric"></label>
-        <label class="champ"><span>Inflation (%/an)</span><input type="number" id="cmp-inflation" min="0" max="10" step="0.1" inputmode="decimal"></label>
-      </div>
-      <label class="case"><input type="checkbox" id="cmp-reel" checked><span>Afficher en euros d'aujourd'hui (corrigés de l'inflation)</span></label>
-    </div>
-
-    <div class="strategies" id="cmp-strategies"></div>
-
-    <div class="carte">
-      <div class="carte-tete"><h2>Ce que ça donne</h2><span class="petit muet" id="cmp-etat"></span></div>
-      <div class="legende" id="cmp-legende"></div>
-      <div class="graphe" id="cmp-graphe"></div>
-      <p class="note">Ligne : le résultat médian (une chance sur deux de faire mieux). Bande : 8 avenirs sur 10 tombent dedans. Valeurs avant impôts ; le tableau donne le net.</p>
-      <div class="defile" id="cmp-tableau"></div>
-      <div class="actions">
-        <button class="btn" id="btn-cmp-claude" hidden>Demander à Claude de commenter</button>
-        <button class="btn btn-discret" id="btn-cmp-stop" hidden>Arrêter</button>
-      </div>
-      <div id="cmp-avis"></div>
-    </div>
-
-    <div class="carte">
-      <details id="cmp-hyp-details">
-        <summary>Hypothèses de marché et fiscalité</summary>
-        <div style="display:grid;gap:14px">
-          <p class="note">Rendement annuel moyen composé espéré et volatilité (amplitude des variations d'une année sur l'autre), inspirés de l'histoire longue. Ce ne sont pas des prévisions : change-les pour tester d'autres mondes.</p>
-          <div class="hypotheses" id="cmp-hypotheses"></div>
-          <div class="champs" id="cmp-fiscalite"></div>
-          <p class="note">Fiscalité appliquée à la sortie sur les gains : PEA (5 ans et plus) prélèvements sociaux seuls ; compte-titres flat tax ; assurance-vie (8 ans et plus) abattement puis taux réduit ; « sans impôt » pour un livret. Taux 2026 selon impots.gouv.fr.</p>
-          <div class="actions"><button class="btn btn-discret btn-petit" id="btn-cmp-hyp-defaut">Revenir aux valeurs de départ</button></div>
-        </div>
-      </details>
     </div>
   </section>
 
@@ -698,7 +605,6 @@ details[open] > summary { margin-bottom: 10px; }
       </div>
       <div class="fil" id="c-fil"></div>
       <div class="composer">
-        <div class="suggestions" id="c-suggestions"></div>
         <textarea id="c-message" rows="2" placeholder="Pose ta question : une action, un ETF, ta stratégie, une baisse de marché…"></textarea>
         <div class="actions">
           <button class="btn" id="btn-c-envoyer">Envoyer</button>
@@ -723,7 +629,7 @@ details[open] > summary { margin-bottom: 10px; }
       </div>
 
       <div class="carte c6">
-        <h2>Mon profil</h2>
+        <h2>Mon plan</h2>
         <div class="champs">
           <label class="champ champ-large"><span>Mon objectif</span><input id="s-objectif-texte"></label>
           <label class="champ"><span>Montant visé (€ d'aujourd'hui)</span><input type="number" id="s-objectif-montant" min="0" step="1000" inputmode="decimal"></label>
@@ -748,21 +654,47 @@ details[open] > summary { margin-bottom: 10px; }
           <div id="s-paliers"></div>
           <div class="actions"><button class="btn btn-ghost btn-petit" id="btn-s-palier">Ajouter un palier</button></div>
         </div>
-        <p class="note">Les soldes se tiennent dans Patrimoine, rubrique « Mes comptes d'épargne » : coche les comptes qui forment ton épargne de précaution.</p>
+        <p class="note">Les soldes se tiennent dans Accueil, rubrique « Mes comptes d'épargne » : coche les comptes qui forment ton épargne de précaution.</p>
+      </div>
+      <div class="carte c6" id="carte-interets">
+        <div class="carte-tete"><h2>Intérêts composés</h2><button class="btn btn-ghost btn-petit" id="btn-ic-mes-chiffres">Reprendre mes chiffres</button></div>
+        <p class="petit muet">Un rendement régulier chaque année, sans les hauts et les bas du marché : la mécanique des intérêts qui rapportent des intérêts. Pour comparer des stratégies avec les hauts et les bas du marché, demande à Claude.</p>
+        <div class="champs">
+          <label class="champ"><span>Capital de départ (€)</span><input type="number" id="ic-capital" min="0" step="100" inputmode="decimal"></label>
+          <label class="champ"><span>Versement mensuel (€)</span><input type="number" id="ic-versement" min="0" step="10" inputmode="decimal"></label>
+          <label class="champ"><span>Hausse des versements (%/an)</span><input type="number" id="ic-hausse" min="0" max="20" step="0.5" inputmode="decimal"></label>
+          <label class="champ"><span>Rendement annuel (%)</span><input type="number" id="ic-taux" min="-10" max="30" step="0.1" inputmode="decimal"></label>
+          <label class="champ"><span>Durée (années)</span><input type="number" id="ic-duree" min="1" max="60" step="1" inputmode="numeric"></label>
+          <label class="champ"><span>Frais annuels (%)</span><input type="number" id="ic-frais" min="0" max="5" step="0.05" inputmode="decimal"></label>
+          <label class="champ"><span>Inflation (%/an)</span><input type="number" id="ic-inflation" min="0" max="10" step="0.1" inputmode="decimal"></label>
+          <label class="champ"><span>Objectif (€ d'aujourd'hui)</span><input type="number" id="ic-objectif" min="0" step="1000" inputmode="decimal"></label>
+        </div>
+        <div id="ic-resultat"></div>
+        <div class="legende" id="ic-legende"></div>
+        <div class="graphe" id="ic-graphe"></div>
+        <details><summary>Année par année</summary><div class="defile" id="ic-tableau"></div></details>
       </div>
 
+
       <div class="carte c6">
-        <div class="carte-tete"><h2>Mon allocation cible</h2><span id="s-total-cible"></span></div>
+        <details class="repli" id="repli-allocation"><summary><h2>Mon allocation cible</h2><span id="s-total-cible"></span></summary>
+        <div class="repli-corps">
         <div id="s-poches"></div>
         <div class="actions">
           <button class="btn btn-ghost btn-petit" id="btn-s-poche">Ajouter une poche</button>
           <label class="champ" style="flex:1 1 200px"><span class="sr">Partir d'un modèle</span><select id="s-modele"></select></label>
         </div>
         <p class="note">Chaque ligne de ton portefeuille se range dans une poche. « Ligne à renforcer » : celle qui reçoit les versements de la poche.</p>
+        <h3>Aujourd'hui</h3>
+        <p class="petit muet" id="repart-note"></p>
+        <div class="repart" id="repartition"></div>
+        <div class="legende"><span><i class="cle-barre"></i>Aujourd'hui</span><span><i class="cle-cible"></i>Ta cible</span><span><i class="cle-marge"></i>Ta marge</span></div>
+        </div></details>
       </div>
 
       <div class="carte c6">
-        <h2>Mes règles</h2>
+        <details class="repli" id="repli-regles"><summary><h2>Mes règles</h2></summary>
+        <div class="repli-corps">
         <div class="champs">
           <label class="champ"><span>Poids max d'une action en direct (%)</span><input type="number" id="s-max-action" min="0" max="100" step="0.5" inputmode="decimal"></label>
           <label class="champ"><span>Total max des actions en direct (%)</span><input type="number" id="s-max-direct" min="0" max="100" step="1" inputmode="decimal"></label>
@@ -778,39 +710,51 @@ details[open] > summary { margin-bottom: 10px; }
           <div id="s-regles-libres" style="display:grid;gap:6px"></div>
           <div class="actions"><button class="btn btn-ghost btn-petit" id="btn-s-regle">Ajouter une règle</button></div>
         </div>
+        </div></details>
       </div>
 
       <div class="carte c6">
-        <h2>Mes enveloppes</h2>
+        <details class="repli" id="repli-enveloppes"><summary><h2>Mes enveloppes</h2></summary>
+        <div class="repli-corps">
         <div class="champs">
           <label class="champ"><span>PEA ouvert le</span><input type="date" id="s-pea-ouverture"></label>
           <label class="champ"><span>Versements cumulés sur le PEA (€)</span><input type="number" id="s-pea-versements" min="0" step="100" inputmode="decimal"></label>
           <label class="champ"><span>Assurance-vie ouverte le</span><input type="date" id="s-av-ouverture"></label>
         </div>
         <p class="note">Le délai fiscal court à partir de la date d'ouverture (ou du premier versement). Laisse vide si tu n'as pas l'enveloppe.</p>
+        <div id="enveloppes"></div>
+        </div></details>
       </div>
 
       <div class="carte c12">
-        <div class="carte-tete"><h2>Les règles des grands investisseurs</h2><span class="petit muet" id="s-sagesse-compte"></span></div>
+        <details class="repli" id="repli-sagesse"><summary><h2>Les règles des grands investisseurs</h2><span class="petit muet" id="s-sagesse-compte"></span></summary>
+        <div class="repli-corps">
         <p class="petit muet">Ce que Buffett, Bogle, Munger, Lynch, Graham et d'autres répètent, traduit pour ta stratégie. Les règles cochées sont données à Claude et entrent dans ta stratégie à copier.</p>
         <div class="principes" id="s-sagesse"></div>
+        </div></details>
       </div>
 
-      <div class="carte c12">
-        <div class="carte-tete"><h2>Ma stratégie pour Claude</h2><button class="btn btn-petit" id="btn-copier-strategie">Copier</button></div>
+      <div class="carte c6">
+        <details class="repli" id="repli-texte-claude"><summary><h2>Ma stratégie pour Claude</h2></summary>
+        <div class="repli-corps">
         <p class="petit">Ce texte résume ta stratégie, tes règles et ta situation, et se met à jour avec la page. Colle-le dans claude.ai, dans les préférences de ton profil ou dans les instructions d'un projet « Investissement » : Claude le connaîtra dans toutes tes conversations, même hors de cette page.</p>
+        <div class="actions"><button class="btn btn-petit" id="btn-copier-strategie">Copier</button></div>
         <textarea id="s-texte-claude" rows="16" readonly></textarea>
         <span class="petit muet" id="s-copie-etat"></span>
+        </div></details>
       </div>
 
       <div class="carte c12">
-        <div class="carte-tete"><h2>Les principes que j'applique</h2><span class="petit muet" id="s-principes-compte"></span></div>
+        <details class="repli" id="repli-principes"><summary><h2>Les principes que j'applique</h2><span class="petit muet" id="s-principes-compte"></span></summary>
+        <div class="repli-corps">
         <p class="petit muet">Les principes cochés pilotent les vérifications et sont donnés à Claude à chaque question.</p>
         <div class="principes" id="s-principes"></div>
+        </div></details>
       </div>
 
       <div class="carte c12">
-        <h2>Mes données</h2>
+        <details class="repli" id="repli-donnees"><summary><h2>Mes données</h2></summary>
+        <div class="repli-corps">
         <p class="petit" id="s-donnees-texte"></p>
         <div class="actions">
           <button class="btn btn-discret" id="btn-exporter" hidden>Enregistrer une copie (JSON)</button>
@@ -820,6 +764,7 @@ details[open] > summary { margin-bottom: 10px; }
             <button class="btn btn-discret btn-petit" id="btn-effacer-non">Non</button></span>
         </div>
         <p class="note">Boussole Bourse t'aide à appliquer ta propre stratégie. Ce n'est pas un conseil en investissement : les simulations reposent sur des hypothèses, et Claude ne voit ni les cours en direct ni l'actualité.</p>
+        </div></details>
       </div>
     </div>
   </section>

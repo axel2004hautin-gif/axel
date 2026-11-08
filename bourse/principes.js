@@ -36,13 +36,13 @@ window.BOUSSOLE = (() => {
       outil: "Suit les dates de tes enveloppes, le plafond du PEA, l'impôt latent du compte-titres et du wallet crypto, et applique la bonne fiscalité dans Comparer." },
     { id: "biais", groupe: "Comportement", titre: "Se méfier de ses propres réflexes",
       texte: "La peur de rater une hausse, la peur de perdre, l'excès de confiance après quelques gains, l'attachement au prix d'achat : ces réflexes font acheter haut et vendre bas. Un délai de réflexion et une check-list les désamorcent.",
-      outil: "Applique ton délai de réflexion aux achats non prévus et pose les questions de la check-list dans Décider." },
+      outil: "Claude applique ton délai de réflexion aux achats non prévus et te pose les questions de la check-list quand il passe une opération en revue." },
     { id: "journal", groupe: "Comportement", titre: "Écrire ses décisions",
       texte: "Noter pourquoi on achète, ce qu'on attend et ce qui ferait changer d'avis, puis faire le bilan quelques mois plus tard. On apprend de la qualité de ses raisonnements, pas seulement de ses résultats.",
       outil: "Chaque opération étudiée peut être notée au journal, avec une date de bilan." },
     { id: "comprendre", groupe: "Actions en direct", titre: "N'acheter que ce qu'on comprend",
       texte: "Savoir expliquer en deux phrases ce que fait l'entreprise ou ce que réplique l'ETF, d'où vient l'argent, et ce qui pourrait mal tourner. Si l'explication ne tient pas, c'est un pari.",
-      outil: "Fait partie de la check-list de Décider ; Claude te demande de l'expliquer." },
+      outil: "Fait partie de la check-list d'une opération ; Claude te demande de l'expliquer." },
     { id: "valorisation", groupe: "Actions en direct", titre: "Le prix payé compte",
       texte: "Une excellente entreprise achetée trop cher peut rester un mauvais placement pendant des années. Regarder le rapport cours / bénéfices (PER), la croissance des bénéfices, la dette, les marges et ce qui protège l'entreprise de ses concurrents, et garder une marge de sécurité.",
       outil: "Claude passe une action en revue sur ces critères quand tu le lui demandes." },
@@ -51,7 +51,7 @@ window.BOUSSOLE = (() => {
       outil: "Un achat de ce type est signalé comme contraire à tes règles quand la règle est active." },
     { id: "volatilite", groupe: "Risque", titre: "Une baisse n'est pas une perte définitive",
       texte: "Un indice diversifié qui baisse de 30 % n'a fait perdre que ceux qui vendent pendant la baisse. Une action seule, elle, peut ne jamais revenir à son prix. Vendre après une chute fige la perte : à faire seulement si la raison d'acheter a disparu.",
-      outil: "Une vente en perte non prévue par ta stratégie est signalée dans Décider." }
+      outil: "Claude signale une vente en perte non prévue par ta stratégie quand il passe l'opération en revue." }
   ];
 
   // Classes d'actifs pour les répartitions et le simulateur. Rendement = rendement annuel moyen
