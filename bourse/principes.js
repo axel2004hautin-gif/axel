@@ -191,7 +191,7 @@ window.BOUSSOLE = (() => {
     { id: "factures", nom: "Énergie, internet, téléphone", type: "depense", fixe: true },
     { id: "assurances", nom: "Assurances", type: "depense", fixe: true },
     { id: "abonnements", nom: "Abonnements", type: "depense", fixe: true },
-    { id: "transport", nom: "Transport", type: "depense" },
+    { id: "transport", nom: "Transport (essence, crédit voiture)", type: "depense", fixe: true },
     { id: "courses", nom: "Courses", type: "depense" },
     { id: "restaurants", nom: "Restaurants et sorties", type: "depense" },
     { id: "loisirs", nom: "Loisirs", type: "depense" },
@@ -202,6 +202,8 @@ window.BOUSSOLE = (() => {
     { id: "etudes", nom: "Études et formation", type: "depense" },
     { id: "impots", nom: "Impôts", type: "depense" },
     { id: "frais", nom: "Frais bancaires", type: "depense" },
+    // Un retrait d'espèces compte comme dépensé : l'argent ne revient pas sur le compte.
+    { id: "especes", nom: "Retraits d'espèces", type: "depense" },
     { id: "autres", nom: "Autres dépenses", type: "depense" },
     { id: "epargne", nom: "Épargne et investissement", type: "epargne" }
   ];

@@ -4,27 +4,19 @@ Mon outil d'investissement : il suit tout mon patrimoine (épargne de précautio
 
 Ouvre `index.html` dans un navigateur (rien à installer). Sur la page publiée sur claude.ai, les données suivent sur le téléphone et l'ordinateur, et Claude est disponible.
 
-## Les quatre onglets
+## Les six pages
 
-**Accueil**
-- **Mon patrimoine**, juste en dessous : le total (épargne + bourse + crypto), la part de chacun, la plus-value latente, la dernière séance et la date des cours.
-- **À faire** : ma liste de tâches. Ce que je décide avec Claude (un virement, un achat, une vérification) s'y ajoute tout seul, avec une échéance si elle est connue ; Claude coche une tâche quand je lui dis l'avoir faite. Ajout à la main possible ; les tâches faites se rangent dans « Fait ».
-- **Mon mois**, tout en haut, visible sans faire défiler même sur un téléphone. Premier tableau, à remplir une fois par mois : salaire, prime d'activité, autres revenus prévus, dépenses fixes (essence, crédit voiture, abonnements) et dépenses variables ; tant qu'une case est vide, la page propose un montant en gris (les opérations du mois, le mois d'avant ou ma paie calculée). Second tableau : ce que je garde sur le compte courant (mes dépenses), ce que je verse sur l'épargne de précaution (le LEP) et sur le PEA. Le partage suit ma stratégie : le plan du palier en cours (685 € d'épargne, 435 € investis), l'épargne de précaution d'abord si l'argent manque, et ce qui dépasse le plan comme une prime (il complète d'abord le palier). À partir du 25, le tableau passe au mois suivant, celui que ma paie de fin de mois finance ; les flèches changent de mois. « J'ai reçu de l'argent » et « Sur quelle ligne investir » sont sous les tableaux.
-- **Mon épargne de précaution** : par paliers datés (6 000 € au 5 janvier, puis 9 000 € fin 2027), avec ce qu'il faut verser par paie pour tenir la date.
-- **Mon patrimoine dans le temps** : la courbe sur 1 mois, 3 mois, 6 mois, 1 an ou tout ; glisser sur la courbe (à la souris ou au doigt) zoome sur la période choisie. « Total » ajuste l'échelle pour voir les variations ; « Détail » empile épargne, bourse et crypto depuis 0. Sous la courbe : la variation de la période, dont les plus-values.
-- **Ce qui demande ton attention** : seulement quand quelque chose s'écarte de ma stratégie ou de mes règles.
-- **Mes comptes d'épargne** et **Mes lignes** : soldes, taux, plafonds, cours en direct, ajout, vente, import d'une capture de Trade Republic avec Claude.
+**1. Patrimoine** : tout se voit sans faire défiler. À gauche, la pyramide : le montant total, puis la bourse (PEA, compte-titres et crypto) et l'épargne, chacune avec sa part du patrimoine, puis la plus-value latente, la dernière séance et les livrets d'épargne de précaution (Livret Jeune, LEP). À droite, la courbe du patrimoine : 1 jour (depuis le relevé précédent), 1 semaine, 1 mois, 1 an, MAX ou une période choisie (deux dates, ou glisser sur la courbe) ; « Total » ajuste l'échelle, « Détail » empile épargne, bourse et crypto.
 
-**Budget**
-- **Le mois** : revenus, dépenses, ce qui a été mis de côté, taux d'épargne et reste sur le compte, comparés au budget prévu. Ma paie arrive vers le 29 : une paie reçue à partir du 25 (réglable) compte pour le mois suivant, celui qu'elle finance.
-- **Par catégorie**, **Ce que dit ton budget**, **Mes opérations** : import d'un relevé avec Claude (texte, CSV ou captures) ou ajout à la main. Quand je change la catégorie d'une opération, la page propose d'en faire une règle (« CARREFOUR MARZY » → Transport) : les opérations déjà enregistrées sont reclassées, et Claude applique mes règles et suit mes classements passés aux imports suivants.
-- Repliés, à ouvrir au besoin : **Ma paie** (le net calculé depuis le brut avec les taux de ma fiche de paie, au centime près ; heures supplémentaires, prime, augmentation demandée ; les prochaines années), **Mon budget prévu**, **Sur 12 mois**, **Et si je déménage ?**.
+**2. Mon mois** : en haut, cinq cases (salaire, prime d'activité, autres revenus prévus, dépenses fixes, dépenses variables), puis « Où va mon argent ? » : ce qui reste sur le compte courant (dépenses fixes et variables) et ce qui est mis de côté, avec le taux d'épargne (LEP et PEA). Un clic sur une case ouvre son détail en dessous : le montant du mois à saisir (tant qu'il est vide, la page propose celui des opérations ou du mois d'avant), les opérations du mois de cette case, et ses outils : la paie calculée depuis la fiche de paie pour le salaire, l'épargne de précaution et ses paliers pour le LEP, la ligne à acheter pour le PEA. Le partage suit le plan du palier en cours ; ce qui dépasse complète d'abord l'épargne de précaution, ce qui manque est pris d'abord sur l'investissement. À partir du 25, la page prépare le mois suivant, celui que la paie de fin de mois finance. Un retrait d'espèces compte comme dépensé. « Je viens de recevoir de l'argent imprévu » envoie le montant à Claude avec ce que propose la stratégie. Les opérations s'ajoutent à la main, par l'import d'un relevé, ou en montrant ses captures à Claude ; une catégorie changée peut devenir une règle de classement.
 
-**Claude** : la discussion. Claude voit ma stratégie, mon épargne, mon portefeuille, ma paie, les opérations du mois et ma liste À faire ; il peut répartir un versement, passer un achat ou une vente en revue selon mes règles, comparer des stratégies sur 800 avenirs possibles, et tenir ma liste À faire. Les questions toutes prêtes n'apparaissent que sur une discussion vide. Il ne voit ni les cours en direct ni l'actualité.
+**3. Épargne** : mes comptes d'épargne (Livret A, Livret Jeune, LEP, compte courant), avec le solde que je remplis, le taux, le taux net, le plafond et ceux qui forment l'épargne de précaution.
 
-**Stratégie** : mon plan (objectif, horizon, risque, versements, paliers d'épargne de précaution) et le calcul des **intérêts composés** (capital final, part des intérêts, versement nécessaire pour un objectif). Repliés : mon allocation cible (avec la répartition d'aujourd'hui), mes règles, mes enveloppes (PEA : 5 ans, plafond ; impôt latent du compte-titres et de la crypto), « Ma stratégie pour Claude » (le texte à copier dans claude.ai), les règles des grands investisseurs, les 15 principes, mes données.
+**4. Bourse** : mes lignes, les cours en direct, l'ajout, la vente et l'import d'une capture de Trade Republic.
 
-Les sections repliées restent ouvertes ou fermées comme la dernière fois, sur chaque appareil.
+**5. Claude** : il voit toutes les pages (patrimoine, mon mois et ses opérations, épargne, bourse, stratégie). Je peux joindre des captures de la Caisse d'Épargne ou de Trade Republic pour lui montrer ce que j'ai fait : il peut enregistrer les opérations dans mon mois et mettre à jour le solde d'un compte quand je le lui demande. Il passe aussi un achat ou une vente en revue selon mes règles et compare des stratégies. Il ne voit ni les cours en direct ni l'actualité.
+
+**6. Stratégie** : mon plan (objectif, horizon, versements, paliers d'épargne de précaution) et les intérêts composés ; repliés : allocation cible, règles, enveloppes, « Ma stratégie pour Claude », règles des grands investisseurs, principes, données.
 
 ## Les principes intégrés
 
@@ -52,7 +44,7 @@ Une tâche planifiée de mon compte (« Boussole Bourse : cours du marché ») s
 
 ## Les données
 
-Sur la page publiée, chaque personne a ses propres documents, privés, sous `data/users/<id>/` : `strategie`, `portefeuille` (lignes et comptes d'épargne), `taches` (ma liste À faire), `historique` (un relevé par jour), `budget` (budget prévu, paie, règles de classement) et `budget/mois/AAAA-MM` (opérations du mois), `journal`, `comparer`, `discussion`, plus `marche` (cours) et `robot` (la tâche planifiée), écrits par le robot. Si je partage la page, chacun a les siens. Ouverte en fichier local, la page les garde dans le navigateur. « Enregistrer une copie » exporte tout en JSON.
+Sur la page publiée, chaque personne a ses propres documents, privés, sous `data/users/<id>/` : `strategie`, `portefeuille` (lignes et comptes d'épargne), `historique` (un relevé par jour), `budget` (les cases de Mon mois par mois, paie, règles de classement) et `budget/mois/AAAA-MM` (opérations du mois), `journal`, `comparer`, `discussion`, plus `marche` (cours) et `robot` (la tâche planifiée), écrits par le robot. Si je partage la page, chacun a les siens. Ouverte en fichier local, la page les garde dans le navigateur. « Enregistrer une copie » exporte tout en JSON.
 
 ## Publier la page
 

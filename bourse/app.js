@@ -82,7 +82,7 @@
   // ---------- état ----------
   const CATEGORIE_IDS = new Set(B.CATEGORIES_BUDGET.map(c => c.id));
   const CHAMPS_MOIS = ["salaire", "primeActivite", "autres", "fixes", "variables"];
-  const DOCS = ["strategie", "portefeuille", "taches", "journal", "comparer", "discussion", "historique", "budget", "marche", "robot"];
+  const DOCS = ["strategie", "portefeuille", "journal", "comparer", "discussion", "historique", "budget", "marche", "robot"];
   // `marche` et `robot` sont écrits par le robot des cours (tâche planifiée), jamais par la page.
   const DOCS_ROBOT = ["marche", "robot"];
   const S = {};
@@ -91,11 +91,10 @@
       case "strategie": return clone(B.STRATEGIE_DEPART);
       case "portefeuille": return { exemple: false, coursMaj: "", lignes: [], comptes: [] };
       case "journal": return { entrees: [] };
-      case "taches": return { items: [] };
       case "comparer": return null;
       case "discussion": return { messages: [] };
       case "historique": return { points: [] };
-      case "budget": return { prevu: {}, demenagement: {}, paie: {}, regles: [], mensuel: {} };
+      case "budget": return { prevu: {}, paie: {}, regles: [], mensuel: {} };
       case "marche": return { maj: "", cours: {}, symboles: {}, erreurs: [], sources: [] };
       case "robot": return { trigger: "", horaire: "" };
     }
@@ -136,12 +135,8 @@
       return r;
     }
     if (nom === "journal") return { entrees: Array.isArray(d.entrees) ? d.entrees : [] };
-    if (nom === "taches") return { items: Array.isArray(d.items) ? d.items.filter(t => t && String(t.texte || "").trim()).map(t => ({
-      id: String(t.id || uid()), texte: String(t.texte).trim().slice(0, 300), echeance: /^\d{4}-\d{2}-\d{2}$/.test(t.echeance || "") ? t.echeance : "",
-      fait: !!t.fait, faitLe: /^\d{4}-\d{2}-\d{2}$/.test(t.faitLe || "") ? t.faitLe : "", source: t.source === "claude" ? "claude" : "moi", cree: String(t.cree || "") })) : [] };
     if (nom === "discussion") return { messages: Array.isArray(d.messages) ? d.messages.filter(m => m && (m.role === "user" || m.role === "assistant") && m.content) : [] };
     if (nom === "budget") return { prevu: d.prevu && typeof d.prevu === "object" ? Object.fromEntries(Object.entries(d.prevu).map(([k, v]) => [k, num(v)])) : {},
-      demenagement: d.demenagement && typeof d.demenagement === "object" ? Object.fromEntries(Object.entries(d.demenagement).map(([k, v]) => [k, num(v)])) : {},
       // « net », « promoAnnee » et « promoBrut » : anciens champs (le net se calcule maintenant depuis le brut).
       paie: d.paie && typeof d.paie === "object" ? Object.fromEntries(Object.entries(d.paie).filter(([k]) => !["net", "promoAnnee", "promoBrut"].includes(k))) : {},
       // Jour à partir duquel une paie compte pour le mois suivant (0 : jamais ; absent : le 25).
@@ -520,7 +515,7 @@
   }
 
   // ---------- onglets ----------
-  const VUES = ["portefeuille", "budget", "claude", "strategie"];
+  const VUES = ["portefeuille", "mois", "epargne", "bourse", "claude", "strategie"];
   let vueActive = "portefeuille";
   function montrer(vue) {
     if (!VUES.includes(vue)) vue = "portefeuille";
@@ -531,12 +526,11 @@
     }
     if (vue === "strategie") rendreIC();
     if (vue === "portefeuille") rendreHistorique();
-    if (vue === "budget") rendre12Mois();
     window.scrollTo({ top: 0 });
   }
   document.querySelectorAll(".onglet").forEach(b => b.addEventListener("click", () => montrer(b.dataset.vue)));
   // Anciens liens : Décider et Simuler n'existent plus (Claude fait ces vérifications et ces simulations).
-  const vueDe = hash => ({ accueil: "portefeuille", patrimoine: "portefeuille", simuler: "strategie", comparer: "strategie", decider: "claude" })[hash] || hash;
+  const vueDe = hash => ({ accueil: "portefeuille", patrimoine: "portefeuille", budget: "mois", simuler: "strategie", comparer: "strategie", decider: "claude" })[hash] || hash;
   window.addEventListener("hashchange", () => { const v = vueDe(location.hash.slice(1)); if (VUES.includes(v)) montrer(v); });
 
   // ---------- rendu : portefeuille ----------
@@ -579,34 +573,39 @@
   }
 
   const COULEURS_PATRIMOINE = { epargne: "var(--serie-3)", bourse: "var(--serie-1)", crypto: "var(--serie-2)" };
-  function rendreReleve(syn) {
-    const pat = patrimoine(syn);
-    const stat = (lib, val, cls) => h("div", { class: "releve-ligne" }, h("span", { class: "etiquette", text: lib }), h("span", { class: "chiffre " + (cls || ""), text: val }));
-    vider($("releve"),
-      h("div", { class: "releve-ligne" }, h("span", { class: "etiquette", text: "Mon patrimoine" }), h("span", { class: "releve-total", text: eur(pat.total, 0) })),
-      stat("Épargne", eur(pat.epargne, 0)),
-      pat.autreEpargne > 0 ? stat("dont précaution", eur(pat.precaution, 0)) : null,
-      stat("Bourse", eur(pat.bourse, 0)),
-      pat.crypto > 0 || S.strategie.poches.some(p => p.classe === "crypto") ? stat("Crypto", eur(pat.crypto, 0)) : null,
-      syn.lignes.length ? stat("Plus-value latente", `${eurSigne(syn.pv)} (${pctSigne(syn.pvPct)})`, syn.pv >= 0 ? "gain" : "perte") : null,
-      syn.varJour != null ? stat("Sur la dernière séance", `${eurSigne(syn.varJour)} (${pctSigne(syn.varJourPct)})`, syn.varJour >= 0 ? "gain" : "perte") : null,
-      syn.lignes.length ? stat(syn.enDirect ? "Cours en direct" : "Cours du", syn.enDirect ? momentFr(S.marche.maj) : S.portefeuille.coursMaj ? dateFr(S.portefeuille.coursMaj) : "non renseigné") : null);
-    const parts = [
-      { nom: "Épargne", valeur: pat.epargne, couleur: COULEURS_PATRIMOINE.epargne },
-      { nom: "Bourse", valeur: pat.bourse, couleur: COULEURS_PATRIMOINE.bourse },
-      { nom: "Crypto", valeur: pat.crypto, couleur: COULEURS_PATRIMOINE.crypto }
-    ].filter(x => x.valeur > 0);
-    const zb = $("patrimoine-barre");
-    if (pat.total <= 0) { vider(zb); return; }
-    const barre = h("div", { class: "barre-seg", role: "list", "aria-label": "Répartition du patrimoine" },
-      parts.map(x => {
-        const part = x.valeur / pat.total * 100;
-        return h("div", { role: "listitem", tabindex: "0", title: `${x.nom} : ${eur(x.valeur, 0)} (${pct(part)})`, "aria-label": `${x.nom} : ${eur(x.valeur, 0)}, ${pct(part)}`, style: `flex:${x.valeur} 1 0;background:${x.couleur}` },
-          h("span", { style: "padding:0 8px", text: pct(part, 0) }));
-      }));
-    vider(zb, barre, h("div", { class: "legende", style: "margin-top:8px" }, parts.map(x => h("span", {}, h("i", { class: "puce", style: "background:" + x.couleur }), x.nom))));
-    // Une part trop étroite pour son pourcentage n'en affiche pas : il reste au survol et dans le relevé.
-    requestAnimationFrame(() => barre.querySelectorAll("[role=listitem]").forEach(seg => { const t = seg.firstChild; if (t && t.offsetWidth > seg.clientWidth) t.remove(); }));
+  // La pyramide : le total, puis la bourse et l'épargne, puis leur détail. Chaque % est la part du patrimoine.
+  function rendrePyramide(syn) {
+    const pat = patrimoine(syn), z = $("pyramide");
+    const total = pat.total, bourse = pat.bourse + pat.crypto, epargne = pat.epargne;
+    const part = v => total > 0 ? pct(v / total * 100, 0) : "—";
+    const caseP = (lib, montant, pastilleTxt, sous, cls, titre) => h("div", { class: "case" + (cls ? " " + cls : ""), title: titre || null },
+      h("span", { class: "case-etiquette", text: lib }), h("span", { class: "case-montant", text: montant }),
+      pastilleTxt ? h("span", { class: "case-pct", text: pastilleTxt }) : null, sous ? h("span", { class: "case-sous", text: sous }) : null);
+    const pl = planDuMois();
+    const barre = total > 0 ? h("div", { class: "py-barre", role: "img", "aria-label": `Épargne ${part(epargne)}, bourse ${part(bourse)}` },
+      epargne > 0 ? h("span", { class: "py-seg py-seg-epargne", style: `flex:${epargne} 1 0` }) : null,
+      bourse > 0 ? h("span", { class: "py-seg py-seg-bourse", style: `flex:${bourse} 1 0` }) : null) : null;
+    const livrets = S.portefeuille.comptes.filter(c => c.precaution && num(c.solde) >= 50).slice(0, 2);
+    const caseLivret = c => {
+      const t = tauxNet(c), plein = num(c.plafond) > 0 && num(c.solde) >= num(c.plafond) - 0.5;
+      return caseP(nomCourt(c.nom), eur(num(c.solde), 0), part(num(c.solde)), plein ? "au plafond" : t != null ? `${pct(t, 1)} net` : null, null, c.nom);
+    };
+    const enDirect = syn.lignes.length && syn.enDirect;
+    vider(z,
+      h("h2", { class: "case case-titre", text: "Mon patrimoine" }),
+      h("div", { class: "py-rang py-1" }, h("div", { class: "case case-total" },
+        h("span", { class: "case-etiquette", text: "Montant total" }), h("span", { class: "case-montant", text: eur(total, 0) }),
+        h("span", { class: "case-pct", text: "100 %" }), barre)),
+      h("div", { class: "py-rang py-2" },
+        caseP("Bourse", eur(bourse, 0), part(bourse), pat.crypto > 0 ? `dont ${eur(pat.crypto, 0)} de crypto` : "PEA et compte-titres"),
+        caseP("Épargne", eur(epargne, 0), part(epargne), pl.obj > 0 ? `dont ${eur(pat.precaution, 0)} de précaution sur ${eur(pl.obj, 0)}` : null)),
+      h("div", { class: "py-rang py-3", style: `grid-template-columns:repeat(${2 + livrets.length}, minmax(0, 1fr))` },
+        caseP("Plus-value latente", syn.lignes.length ? eurSigne(syn.pv) : "—", syn.lignes.length ? pctSigne(syn.pvPct) : null, null, syn.pv >= 0 ? "gain" : "perte"),
+        caseP("Dernière séance", syn.varJour != null ? eurSigne(syn.varJour) : "—", syn.varJour != null ? pctSigne(syn.varJourPct) : null, null, syn.varJour == null ? null : syn.varJour >= 0 ? "gain" : "perte"),
+        livrets.map(caseLivret)),
+      syn.lignes.length ? h("p", { class: "py-pied" }, enDirect ? `Cours en direct ${momentFr(S.marche.maj)}` : `Cours du ${S.portefeuille.coursMaj ? dateFr(S.portefeuille.coursMaj) : "?"}`, " · ",
+        h("button", { type: "button", class: "lien", text: "Mes lignes", onclick: () => montrer("bourse") }), " · ",
+        h("button", { type: "button", class: "lien", text: "Mes comptes", onclick: () => montrer("epargne") })) : null);
   }
 
   function rendrePrecaution() {
@@ -791,95 +790,131 @@
     const enveloppes = [...new Set(lignes.filter(x => x.ligne).map(x => x.ligne.enveloppe))];
     return { cle, e, sug, v, revenus, depenses, dispo, precaution, investir, garder, plaisir, surplus, plan: pl.versEpargne + pl.investir, pl, lignes, enveloppes, rempli: CHAMPS_MOIS.filter(c => e[c] != null).length };
   }
-  const MM_CHAMPS = { salaire: "mm-salaire", primeActivite: "mm-prime", autres: "mm-autres", fixes: "mm-fixes", variables: "mm-variables" };
-  for (const [c, id] of Object.entries(MM_CHAMPS)) $(id).addEventListener("input", e => {
-    const cle = moisTableau || moisParDefaut();
-    S.budget.mensuel ||= {};
-    const m = (S.budget.mensuel[cle] ||= {});
-    if (e.target.value === "") delete m[c]; else m[c] = num(e.target.value);
-    if (!Object.keys(m).length) delete S.budget.mensuel[cle];
-    enregistrer("budget"); rendreMonMois(); rendreVersement(synthese());
-  });
-  $("mm-prec").addEventListener("click", () => { moisTableau = decalerMois(moisTableau || moisParDefaut(), -1); rendreMonMois(true); rendreVersement(synthese()); });
-  $("mm-suiv").addEventListener("click", () => { moisTableau = decalerMois(moisTableau || moisParDefaut(), 1); rendreMonMois(true); rendreVersement(synthese()); });
+  const moisMM = () => moisTableau || moisParDefaut();
+  // Les cases de « Mon mois » et le détail que chacune ouvre sous les cases.
+  const CAT_FIXES = B.CATEGORIES_BUDGET.filter(c => c.type === "depense" && c.fixe).map(c => c.id);
+  const CAT_VARIABLES = B.CATEGORIES_BUDGET.filter(c => c.type === "depense" && !c.fixe).map(c => c.id);
+  const CASES_MM = {
+    salaire: { nom: "Salaire", champ: "salaire", cats: ["salaire"], blocs: ["mmd-paie"], lib: "Salaire reçu pour ce mois (€)" },
+    primeActivite: { nom: "Prime d'activité", champ: "primeActivite", cats: ["aides"], lib: "Prime d'activité du mois (€)" },
+    autres: { nom: "Autres revenus prévus", champ: "autres", cats: ["autres-revenus"], lib: "Autres revenus prévus (€)" },
+    fixes: { nom: "Dépenses fixes", champ: "fixes", cats: CAT_FIXES, lib: "Dépenses fixes prévues (€)" },
+    variables: { nom: "Dépenses variables", champ: "variables", cats: CAT_VARIABLES, lib: "Dépenses variables prévues (€)" },
+    courant: { nom: "Compte courant", cats: [...CAT_FIXES, ...CAT_VARIABLES] },
+    cote: { nom: "Mis de côté", cats: ["epargne"], blocs: ["mmd-precaution", "mmd-investir"] },
+    lep: { nom: "Épargne de précaution", cats: ["epargne"], blocs: ["mmd-precaution"] },
+    pea: { nom: "Investissements", cats: ["epargne"], blocs: ["mmd-investir"] }
+  };
+  let detailMM = null;
+  const nomCourt = nom => String(nom).replace(/\s*\(.*\)\s*$/, "");
+  const montantMM = x => eur(x, Math.abs(x % 1) > 0.004 ? 2 : 0);
+  const nomInvest = r => r.enveloppes.length === 1 ? (r.enveloppes[0] === "PEA" ? "PEA" : (B.ENVELOPPES.find(x => x.id === r.enveloppes[0]) || {}).nom || r.enveloppes[0]) : "Investissements";
+  const reelMM = (cle, cats) => somme(mouvementsDuMois(cle).filter(m => cats.includes(m.categorie)), m => m.montant);
+
   function rendreMonMois(forcer) {
-    const cle = moisTableau || moisParDefaut(), r = monMois(cle);
-    $("mm-titre").textContent = "Mon mois de " + nomMois(cle).split(" ")[0] + (cle.slice(0, 4) !== String(new Date().getFullYear()) ? " " + cle.slice(0, 4) : "");
-    for (const [c, id] of Object.entries(MM_CHAMPS)) {
-      const el = $(id);
-      el.placeholder = nf(0, 2).format(num(r.sug[c]));
-      if (forcer || !aFocus(el)) el.value = r.e[c] != null ? String(r.e[c]) : "";
-    }
-    $("mm-dispo").textContent = eur(r.dispo, 2);
-    $("mm-dispo").className = "num chiffre" + (r.dispo < 0 ? " perte" : "");
-    const pl = r.pl;
-    // Trois cases côte à côte : elles tiennent sur un écran de téléphone sous le premier tableau.
-    const montantMM = x => eur(x, Math.abs(x % 1) > 0.004 ? 2 : 0);
-    const nomCourt = nom => String(nom).replace(/\s*\(.*\)\s*$/, "");
-    const env = r.enveloppes.length === 1 ? (r.enveloppes[0] === "PEA" ? "PEA" : (B.ENVELOPPES.find(x => x.id === r.enveloppes[0]) || {}).nom || r.enveloppes[0]) : "Investissements";
-    const surQuoi = r.lignes.filter(x => x.ligne).map(x => x.ligne.nom).join(", ");
-    const tuileMM = (lib, sous, montant, titre) => h("div", { class: "tuile mm-tuile", title: titre || null }, h("span", { class: "etiquette", text: lib }), h("b", { class: "chiffre", text: montantMM(montant) }), h("span", { class: "petit muet", text: sous }));
-    vider($("mm-repartition"), h("div", { class: "mm-tuiles" },
-      tuileMM("Compte courant", r.plaisir ? `à garder, dont ${eur(r.plaisir, 0)} pour toi` : "à garder", r.garder),
-      tuileMM(pl.compte ? nomCourt(pl.compte.nom) : "Épargne de précaution", pl.compte ? "à verser (précaution)" : "à verser", r.precaution, pl.compte ? pl.compte.nom : null),
-      tuileMM(env, "à verser", r.investir, surQuoi ? "Pour " + surQuoi : null)));
+    const cle = moisMM(), r = monMois(cle), pl = r.pl, mois = nomMois(cle).split(" ")[0];
+    $("b-importer").hidden = !claudePret;
+    $("mm-titre").textContent = "Mon mois de " + mois + (cle.slice(0, 4) !== String(new Date().getFullYear()) ? " " + cle.slice(0, 4) : "");
+    const caseMM = (cleCase, lib, montant, sous, cls) => h("button", { type: "button", class: "case" + (cls ? " " + cls : ""), "data-detail": cleCase, "aria-pressed": detailMM === cleCase ? "true" : "false" },
+      h("span", { class: "case-etiquette", text: lib }), h("span", { class: "case-montant", text: montantMM(montant) }), sous ? h("span", { class: "case-sous", text: sous }) : null);
+    const sousEntree = c => {
+      if (c === "fixes" || c === "variables") { const d = -reelMM(cle, CASES_MM[c].cats); return d > 0 ? `${eur(d, 0)} dépensés` : r.e[c] == null ? "proposé" : null; }
+      return r.e[c] == null ? "proposé" : null;
+    };
+    vider($("mm-entrees"), CHAMPS_MOIS.map(c => caseMM(c, CASES_MM[c].nom, r.v(c), sousEntree(c), r.e[c] == null ? "estime" : null)));
+    $("mm-courant-titre").textContent = `Compte courant : ${montantMM(r.garder)}`;
+    $("mm-courant-titre").setAttribute("aria-pressed", detailMM === "courant" ? "true" : "false");
+    vider($("mm-courant"), caseMM("fixes", "Dépenses fixes", r.v("fixes"), null), caseMM("variables", "Dépenses variables", r.v("variables"), r.plaisir ? `+ ${eur(r.plaisir, 0)} pour toi` : null));
+    const cote = r.precaution + r.investir, taux = r.revenus > 0 ? cote / r.revenus * 100 : null;
+    $("mm-cote-titre").textContent = `Mis de côté : ${montantMM(cote)}${taux != null ? ` · ${pct(taux, 0)} d'épargne` : ""}`;
+    $("mm-cote-titre").setAttribute("aria-pressed", detailMM === "cote" ? "true" : "false");
+    vider($("mm-cote"), caseMM("lep", pl.compte ? nomCourt(pl.compte.nom) : "Épargne de précaution", r.precaution, pl.compte ? "épargne de précaution" : null),
+      caseMM("pea", nomInvest(r), r.investir, r.lignes.length === 1 && r.lignes[0].ligne ? r.lignes[0].poche.nom : null));
     const notes = [];
-    if (r.rempli < CHAMPS_MOIS.length) notes.push("Les montants en gris sont proposés par la page (tes opérations du mois ou le mois d'avant) : remplace-les par les tiens.");
-    if (r.dispo < 0) notes.push(`Tes dépenses dépassent tes revenus de ${eur(-r.dispo, 0)} : rien à verser ce mois-ci.`);
+    if (r.dispo < 0) notes.push(`Tes dépenses dépassent tes revenus de ${eur(-r.dispo, 0)} : rien à mettre de côté ce mois-ci.`);
     else if (r.dispo < r.plan - 0.5) notes.push(`Il manque ${eur(r.plan - r.dispo, 0)} pour suivre ton plan (${eur(pl.versEpargne, 0)} d'épargne et ${eur(pl.investir, 0)} investis) : ton épargne de précaution passe en premier.`);
     else if (r.surplus >= 1) notes.push(`${eur(r.surplus, 0)} de plus que ton plan (${eur(pl.versEpargne, 0)} + ${eur(pl.investir, 0)}) : ${pl.manque > 0 ? "ils complètent d'abord ton épargne de précaution, comme une prime" : "ils suivent le partage de ta stratégie"}.`);
+    if (r.rempli < CHAMPS_MOIS.length) notes.push("Les cases « proposé » viennent de tes opérations ou du mois d'avant : clique dessus pour mettre ton montant.");
     $("mm-note").textContent = notes.join(" ");
+    rendreDetailMM(forcer);
   }
 
-  // ---------- À faire ----------
-  const jourMois = iso => new Date(iso + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
-  function ajouterTache(texte, echeance, source) {
-    texte = String(texte || "").trim().slice(0, 300);
-    if (!texte) return null;
-    const deja = S.taches.items.find(t => !t.fait && norm(t.texte) === norm(texte));
-    if (deja) return deja;
-    const t = { id: uid(), texte, echeance: /^\d{4}-\d{2}-\d{2}$/.test(echeance || "") ? echeance : "", fait: false, faitLe: "", source, cree: aujourdhui() };
-    S.taches.items.push(t);
-    enregistrer("taches");
-    return t;
+  // Le détail d'une case, sous les cases : son montant, ce qui s'est passé dans le mois, et ses outils.
+  function rendreDetailMM(forcer) {
+    const cle = moisMM(), r = monMois(cle), pl = r.pl, mois = nomMois(cle).split(" ")[0];
+    const cfg = detailMM ? CASES_MM[detailMM] : null;
+    $("mmd-titre").textContent = cfg ? `${detailMM === "lep" && pl.compte ? nomCourt(pl.compte.nom) : detailMM === "pea" ? nomInvest(r) : cfg.nom} · ${mois}` : `Mes opérations de ${mois}`;
+    $("mmd-intro").textContent = cfg ? "" : "Clique sur une case du tableau pour voir son détail ici.";
+    $("mmd-intro").hidden = !!cfg;
+    $("mmd-montant-zone").hidden = !(cfg && cfg.champ);
+    if (cfg && cfg.champ) {
+      const el = $("mmd-montant");
+      $("mmd-montant-lib").textContent = cfg.lib;
+      el.placeholder = nf(0, 2).format(num(r.sug[cfg.champ]));
+      if (forcer || !aFocus(el)) el.value = r.e[cfg.champ] != null ? String(r.e[cfg.champ]) : "";
+      $("mmd-montant-aide").textContent = r.e[cfg.champ] == null ? `La page propose ${eur(num(r.sug[cfg.champ]), 2)} (${
+        { salaire: "ta paie reçue pour ce mois, sinon ta paie calculée", primeActivite: "ta prime d'activité reçue, sinon celle de ton budget", autres: "le mois d'avant", fixes: "le mois d'avant", variables: "le mois d'avant" }[cfg.champ]}) : tape ton montant pour le remplacer.` : "Efface la case pour revenir au montant proposé par la page.";
+    }
+    for (const b of ["mmd-paie", "mmd-precaution", "mmd-investir"]) $(b).hidden = !(cfg && (cfg.blocs || []).includes(b));
+    const lignes = [];
+    const ligneTxt = t => lignes.push(h("p", { text: t }));
+    if (cfg) {
+      const reel = reelMM(cle, cfg.cats);
+      if (detailMM === "fixes" || detailMM === "variables") {
+        const prevu = r.v(detailMM), depense = Math.max(0, -reel);
+        ligneTxt(`Dépensé en ${mois} : ${eur(depense, 2)} sur ${eur(prevu, 0)} prévus${depense > prevu ? ` (${eur(depense - prevu, 0)} de plus)` : ` (il reste ${eur(prevu - depense, 0)})`}.`);
+        lignes.push(h("p", { class: "petit muet", text: detailMM === "fixes" ? `Comptées ici : ${CAT_FIXES.map(c => CAT[c].nom.toLowerCase()).join(", ")}.` : `Comptées ici : ${CAT_VARIABLES.map(c => CAT[c].nom.toLowerCase()).join(", ")}. Un retrait d'espèces compte comme dépensé, même s'il te reste des billets.` }));
+      } else if (detailMM === "courant") {
+        const cc = S.portefeuille.comptes.find(c => c.type === "courant");
+        ligneTxt(`À garder sur le compte courant : ${montantMM(r.garder)}, pour tes dépenses fixes (${eur(r.v("fixes"), 0)}) et variables (${eur(r.v("variables"), 0)})${r.plaisir ? ` et ${eur(r.plaisir, 0)} pour te faire plaisir` : ""}.`);
+        ligneTxt(`Dépensé en ${mois} : ${eur(Math.max(0, -reel), 2)}.${cc ? ` Solde du ${cc.nom.toLowerCase()} : ${eur(num(cc.solde), 2)} (à mettre à jour dans la page Épargne).` : ""}`);
+      } else if (detailMM === "cote" || detailMM === "lep" || detailMM === "pea") {
+        if (detailMM !== "pea") ligneTxt(`À verser sur ${pl.compte ? pl.compte.nom : "ton épargne de précaution"} : ${eur(r.precaution, 0)}${r.precaution > pl.versEpargne + 0.5 ? ` = ${eur(pl.versEpargne, 0)} prévus par ta stratégie + ${eur(r.precaution - pl.versEpargne, 0)} en plus de ton plan, qui complètent d'abord ton épargne de précaution` : r.precaution < pl.versEpargne - 0.5 ? `, au lieu des ${eur(pl.versEpargne, 0)} prévus : ce mois-ci, l'argent manque` : ", comme prévu par ta stratégie"}.`);
+        if (detailMM !== "lep") ligneTxt(`À verser sur le ${nomInvest(r)} : ${eur(r.investir, 0)}${r.investir < pl.investir - 0.5 ? `, au lieu des ${eur(pl.investir, 0)} prévus` : r.investir > pl.investir + 0.5 ? ` = ${eur(pl.investir, 0)} prévus + ${eur(r.investir - pl.investir, 0)} en plus` : ", comme prévu par ta stratégie"}.`);
+        if (detailMM === "cote" && r.revenus > 0) ligneTxt(`En tout : ${eur(r.precaution + r.investir, 0)} mis de côté, soit ${pct((r.precaution + r.investir) / r.revenus * 100, 0)} de tes revenus du mois.`);
+        if (reel) lignes.push(h("p", { class: "petit muet", text: `Déjà versé en ${mois} d'après tes opérations : ${eur(Math.max(0, -reel), 2)}.` }));
+      } else if (reel) ligneTxt(`Reçu en ${mois} d'après tes opérations : ${eur(reel, 2)}.`);
+    }
+    vider($("mmd-contenu"), lignes);
+    if (!$("mmd-investir").hidden) rendreVersement(synthese());
+    rendreOperations();
   }
-  function cocherTache(id, fait) {
-    const t = S.taches.items.find(x => x.id === id);
-    if (!t) return null;
-    t.fait = fait; t.faitLe = fait ? aujourdhui() : "";
-    enregistrer("taches");
-    return t;
-  }
-  const echeanceTri = t => t.echeance || "9999-12-31";
-  function rendreTaches() {
-    const z = $("taches"), auj = aujourdhui();
-    const afaire = S.taches.items.filter(t => !t.fait).sort((a, b) => echeanceTri(a) < echeanceTri(b) ? -1 : echeanceTri(a) > echeanceTri(b) ? 1 : a.cree < b.cree ? 1 : -1);
-    const faites = S.taches.items.filter(t => t.fait).sort((a, b) => a.faitLe < b.faitLe ? 1 : -1);
-    $("taches-note").textContent = afaire.length ? `${afaire.length} à faire` : "";
-    const quand = t => {
-      if (!t.echeance) return null;
-      if (t.echeance < auj) return pastille("bloquant", "en retard : " + jourMois(t.echeance));
-      if (t.echeance === auj) return pastille("attention", "aujourd'hui");
-      const j = Math.round((new Date(t.echeance + "T12:00:00") - new Date(auj + "T12:00:00")) / 86400000);
-      return pastille(j <= 3 ? "attention" : "info", "avant le " + jourMois(t.echeance));
-    };
-    const ligne = t => h("li", { class: "tache" + (t.fait ? " faite" : "") },
-      h("input", { type: "checkbox", checked: t.fait, "aria-label": (t.fait ? "Remettre à faire : " : "Fait : ") + t.texte, onchange: e => { cocherTache(t.id, e.target.checked); rendreTaches(); } }),
-      h("div", { class: "tache-texte" }, h("span", { text: t.texte }),
-        h("div", { class: "tache-meta" }, t.fait ? (t.faitLe ? h("span", { text: "fait le " + jourMois(t.faitLe) }) : null) : quand(t),
-          t.source === "claude" ? h("span", { text: "décidé avec Claude" }) : null,
-          !t.fait && claudePret ? h("button", { type: "button", class: "lien", text: "En parler à Claude", onclick: () => demanderDansChat(`À propos de ma tâche « ${t.texte} » : `) }) : null)),
-      h("button", { type: "button", class: "btn btn-discret btn-petit", text: "×", title: "Supprimer", "aria-label": "Supprimer " + t.texte, onclick: () => { S.taches.items = S.taches.items.filter(x => x.id !== t.id); enregistrer("taches"); rendreTaches(); } }));
-    vider(z, afaire.length ? h("ul", { class: "taches" }, afaire.map(ligne))
-      : h("p", { class: "vide", text: claudePret ? "Rien à faire pour l'instant. Quand tu décides quelque chose avec Claude (un virement, un achat, une vérification), il l'ajoute ici." : "Rien à faire pour l'instant." }));
-    const zf = $("taches-faites"), ouvert = !!(zf.querySelector("details") || {}).open;
-    vider(zf, faites.length ? h("details", { class: "sous-repli", open: ouvert }, h("summary", { text: `Fait (${faites.length})` }),
-      h("ul", { class: "taches" }, faites.slice(0, 15).map(ligne)),
-      h("div", { class: "actions" }, h("button", { type: "button", class: "btn btn-discret btn-petit", text: "Effacer les tâches faites", onclick: () => { S.taches.items = S.taches.items.filter(x => !x.fait); enregistrer("taches"); rendreTaches(); } }))) : null);
-  }
-  $("form-tache").addEventListener("submit", e => {
+  $("vue-mois").addEventListener("click", e => {
+    const b = e.target.closest("[data-detail]");
+    if (!b) return;
+    detailMM = detailMM === b.dataset.detail ? null : b.dataset.detail;
+    rendreMonMois(true);
+    $("mm-detail").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+  $("mmd-montant").addEventListener("input", e => {
+    const cfg = detailMM && CASES_MM[detailMM];
+    if (!cfg || !cfg.champ) return;
+    const cle = moisMM();
+    S.budget.mensuel ||= {};
+    const m = (S.budget.mensuel[cle] ||= {});
+    if (e.target.value === "") delete m[cfg.champ]; else m[cfg.champ] = num(e.target.value);
+    if (!Object.keys(m).length) delete S.budget.mensuel[cle];
+    enregistrer("budget"); rendreMonMois();
+  });
+  $("mm-prec").addEventListener("click", () => { moisTableau = decalerMois(moisMM(), -1); rendreMonMois(true); });
+  $("mm-suiv").addEventListener("click", () => { moisTableau = decalerMois(moisMM(), 1); rendreMonMois(true); });
+  // De l'argent imprévu : on en parle avec Claude, avec ce que propose la stratégie.
+  $("mm-imprevu").addEventListener("click", () => {
+    const f = $("mm-imprevu-fiche"); f.hidden = !f.hidden;
+    $("mm-imprevu").setAttribute("aria-expanded", f.hidden ? "false" : "true");
+    if (!f.hidden) $("mm-imprevu-montant").focus();
+  });
+  $("mm-imprevu-annuler").addEventListener("click", () => { $("mm-imprevu-fiche").hidden = true; $("mm-imprevu").setAttribute("aria-expanded", "false"); });
+  $("mm-imprevu-fiche").addEventListener("submit", e => {
     e.preventDefault();
-    if (ajouterTache($("tache-texte").value, $("tache-date").value, "moi")) { $("tache-texte").value = ""; $("tache-date").value = ""; rendreTaches(); }
+    const m = num($("mm-imprevu-montant").value), origine = $("mm-imprevu-origine").value.trim();
+    if (!(m > 0)) return;
+    const c = conseilRentree(m);
+    const propose = [c.plaisir ? `${eur(c.plaisir, 0)} pour me faire plaisir` : "", ...c.versComptes.map(v => `${eur(v.montant, 0)} sur ${v.compte ? v.compte.nom : "un livret"}`), ...c.plan.map(x => `${eur(x.montant, 0)} sur ${x.ligne ? x.ligne.nom : x.poche.nom}`)].filter(Boolean).join(", ");
+    const texte = `Je viens de recevoir ${eur(m, 2)}${origine ? ` (${origine})` : ""}, que je n'avais pas prévu. La page propose : ${propose || "rien à placer"}. Qu'est-ce que j'en fais ?`;
+    $("mm-imprevu-fiche").hidden = true; $("mm-imprevu").setAttribute("aria-expanded", "false");
+    $("mm-imprevu-montant").value = ""; $("mm-imprevu-origine").value = "";
+    if (claudePret) { montrer("claude"); envoyerChat(texte); } else demanderDansChat(texte);
   });
 
   // ---------- historique du patrimoine ----------
@@ -899,24 +934,37 @@
     enregistrer("historique");
   }
   // Période affichée : mémorisée dans ce navigateur (une préférence d'affichage, pas une donnée).
-  const PERIODES = [{ id: "1m", nom: "1 mois", mois: 1 }, { id: "3m", nom: "3 mois", mois: 3 }, { id: "6m", nom: "6 mois", mois: 6 }, { id: "1a", nom: "1 an", mois: 12 }, { id: "tout", nom: "Tout" }];
-  const vueHisto = (() => { try { return { periode: "tout", mode: "total", ...JSON.parse(localStorage.getItem(CLE("vue-historique")) || "{}") }; } catch (_) { return { periode: "tout", mode: "total" }; } })();
+  const PERIODES = [{ id: "1j", nom: "1 jour" }, { id: "1s", nom: "1 semaine", jours: 7 }, { id: "1m", nom: "1 mois", mois: 1 }, { id: "1a", nom: "1 an", mois: 12 }, { id: "tout", nom: "MAX" }, { id: "choix", nom: "Période" }];
+  const vueHisto = (() => {
+    let v = { periode: "tout", mode: "total" };
+    try { v = { ...v, ...JSON.parse(localStorage.getItem(CLE("vue-historique")) || "{}") }; } catch (_) {}
+    if (v.periode === "zoom") v.periode = "choix";
+    if (!PERIODES.some(x => x.id === v.periode)) v.periode = "tout";
+    return v;
+  })();
   const garderVueHisto = () => { try { localStorage.setItem(CLE("vue-historique"), JSON.stringify(vueHisto)); } catch (_) {} };
   const pasRond = brut => { const e = Math.pow(10, Math.floor(Math.log10(Math.max(brut, 1e-9)))), f = brut / e; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * e; };
   function rendreHistorique() {
     const tous = S.historique.points, z = $("historique-graphe");
     const fin = tous.length ? tous[tous.length - 1].date : aujourdhui();
     // Bornes de la période choisie (ou du zoom fait à la souris ou au doigt).
+    // 1 jour : depuis le relevé précédent (un relevé par jour). Période : les dates choisies, ou la zone glissée sur la courbe.
     let debutP = "", finP = fin;
-    if (vueHisto.periode === "zoom" && vueHisto.du && vueHisto.au) { debutP = vueHisto.du; finP = vueHisto.au; }
-    else { const per = PERIODES.find(x => x.id === vueHisto.periode); if (per && per.mois) debutP = ajouterMois(fin, -per.mois); }
+    const per = PERIODES.find(x => x.id === vueHisto.periode);
+    if (vueHisto.periode === "1j") debutP = tous.length >= 2 ? tous[tous.length - 2].date : fin;
+    else if (vueHisto.periode === "choix") { debutP = vueHisto.du || (tous[0] || {}).date || fin; finP = vueHisto.au || fin; if (debutP > finP) [debutP, finP] = [finP, debutP]; }
+    else if (per && per.jours) debutP = isoDate(new Date(new Date(fin + "T12:00:00").getTime() - per.jours * 86400000));
+    else if (per && per.mois) debutP = ajouterMois(fin, -per.mois);
     const pts = tous.filter(p => (!debutP || p.date >= debutP) && p.date <= finP);
     const segments = (nom, liste, actif, f) => h("div", { class: "segments", role: "radiogroup", "aria-label": nom }, liste.map(x => h("label", {},
       h("input", { type: "radio", name: "h-" + nom, value: x.id, checked: x.id === actif, onchange: () => f(x.id) }), h("span", { text: x.nom }))));
-    vider($("historique-outils"), tous.length >= 2 ? [
-      h("div", { class: "actions" }, segments("Période", PERIODES, vueHisto.periode, id => { vueHisto.periode = id; delete vueHisto.du; delete vueHisto.au; garderVueHisto(); rendreHistorique(); }),
-        vueHisto.periode === "zoom" ? h("button", { type: "button", class: "btn btn-ghost btn-petit", text: `${jourMois(debutP)} – ${jourMois(finP)} ×`, "aria-label": "Annuler le zoom", onclick: () => { vueHisto.periode = "tout"; delete vueHisto.du; delete vueHisto.au; garderVueHisto(); rendreHistorique(); } }) : null),
-      segments("Affichage", [{ id: "total", nom: "Total" }, { id: "detail", nom: "Détail" }], vueHisto.mode, id => { vueHisto.mode = id; garderVueHisto(); rendreHistorique(); })] : null);
+    const zo = $("historique-outils");
+    if (!enSaisie(zo)) vider(zo, tous.length >= 2 ? [
+      segments("Période", PERIODES, vueHisto.periode, id => { vueHisto.periode = id; if (id === "choix") { vueHisto.du = debutP || tous[0].date; vueHisto.au = finP; } garderVueHisto(); rendreHistorique(); }),
+      segments("Affichage", [{ id: "total", nom: "Total" }, { id: "detail", nom: "Détail" }], vueHisto.mode, id => { vueHisto.mode = id; garderVueHisto(); rendreHistorique(); }),
+      vueHisto.periode === "choix" ? h("div", { class: "actions periode-dates" },
+        h("label", { class: "champ" }, h("span", { text: "Du" }), h("input", { type: "date", value: debutP, min: tous[0].date, max: fin, onchange: e => { if (e.target.value) { vueHisto.du = e.target.value; garderVueHisto(); e.target.blur(); rendreHistorique(); } } })),
+        h("label", { class: "champ" }, h("span", { text: "Au" }), h("input", { type: "date", value: finP, min: tous[0].date, max: fin, onchange: e => { if (e.target.value) { vueHisto.au = e.target.value; garderVueHisto(); e.target.blur(); rendreHistorique(); } } }))) : null] : null);
     const series = [
       { cle: "epargne", nom: "Épargne", couleur: COULEURS_PATRIMOINE.epargne },
       { cle: "bourse", nom: "Bourse", couleur: COULEURS_PATRIMOINE.bourse },
@@ -933,13 +981,14 @@
         : tous.length ? `Premier relevé le ${dateFr(tous[0].date)} : ${eur(totalPoint(tous[0]), 0)}. ${base}` : base }));
       return;
     }
-    if (pts.length < 2) { vider(z, h("p", { class: "vide", text: `Pas assez de relevés sur cette période (le premier date du ${dateFr(tous[0].date)}). Choisis une période plus longue.` })); return; }
+    if (pts.length < 2) { vider(z, h("p", { class: "vide", text: `Pas assez de relevés sur cette période (un relevé par jour, le premier le ${dateFr(tous[0].date)}). Choisis une période plus longue.` })); return; }
     if (!z.clientWidth) return;
     // Ce qui a changé sur la période : la variation totale, dont les plus-values.
     const p0 = pts[0], p1 = pts[pts.length - 1], dTotal = totalPoint(p1) - totalPoint(p0);
     const pvDe = p => num(p.bourse) + num(p.crypto) - num(p.investi), dPv = pvDe(p1) - pvDe(p0);
     $("historique-aide").textContent = `Du ${dateFr(p0.date)} au ${dateFr(p1.date)} : ${eurSigne(dTotal)} (${pctSigne(dTotal / Math.max(1, totalPoint(p0)) * 100)})${num(p1.investi) > 0 ? `, dont ${eurSigne(dPv)} de plus-values ; le reste vient de tes versements et de ton épargne` : ""}. Fais glisser sur la courbe pour zoomer.`;
-    const W = Math.round(Math.max(300, Math.min(900, z.clientWidth))), H = W < 520 ? 200 : 240, m = { g: 56, d: 14, h: 10, b: 26 };
+    // À côté de la pyramide, la courbe prend la hauteur de la carte.
+    const W = Math.round(Math.max(300, Math.min(900, z.clientWidth))), H = W < 520 ? 200 : window.innerWidth >= 1000 ? 330 : 240, m = { g: 56, d: 14, h: 10, b: 26 };
     const t = p => new Date(p.date + "T12:00:00").getTime();
     const t0 = t(p0), t1 = t(p1);
     // Total : l'échelle suit la période, pour voir les variations. Détail : les trois parts empilées depuis 0.
@@ -1032,7 +1081,7 @@
       // Les relevés dans la zone choisie fixent la nouvelle période.
       const dedans = pts.filter(p => x(p) >= a - 2 && x(p) <= b + 2);
       if (dedans.length < 2) { $("historique-aide").textContent = "Sélectionne une zone qui contient au moins deux relevés."; return; }
-      Object.assign(vueHisto, { periode: "zoom", du: dedans[0].date, au: dedans[dedans.length - 1].date }); garderVueHisto(); rendreHistorique();
+      Object.assign(vueHisto, { periode: "choix", du: dedans[0].date, au: dedans[dedans.length - 1].date }); garderVueHisto(); rendreHistorique();
     };
     zone.addEventListener("pointerup", finir);
     zone.addEventListener("pointercancel", () => { depart = null; selection.setAttribute("width", 0); });
@@ -1062,12 +1111,6 @@
     });
     if (syn.hors.length) rangs.push(ligne("Hors stratégie", syn.horsValeur / (syn.total || 1) * 100, null, syn.hors.length + (syn.hors.length > 1 ? " lignes" : " ligne"), ["info", "sans poche"]));
     vider(z, rangs.length ? rangs : h("p", { class: "vide", text: "Définis ton allocation cible dans Ma stratégie." }));
-  }
-
-  function rendreAlertes(syn) {
-    const liste = alertes(syn).filter(a => a.niveau !== "ok");
-    $("carte-alertes").hidden = !liste.length;
-    vider($("alertes"), liste.map(a => h("li", {}, pastille(a.niveau, { ok: "OK", attention: "À voir", bloquant: "Règle", info: "Info" }[a.niveau]), h("p", { text: a.texte }))));
   }
 
   function rendreVersement(syn) {
@@ -1137,77 +1180,6 @@
     if (!raisons.length && plaisir > 0) raisons.push("tout est pour toi");
     return { montant, plaisir, prec, enPlus, investir, versComptes, plan, raisons, pl };
   }
-  const TYPES_RENTREE = [
-    { id: "prime", nom: "Prime de mon employeur", categorie: "salaire" },
-    { id: "heures-sup", nom: "Heures supplémentaires", categorie: "salaire" },
-    { id: "aide", nom: "Prime d'activité ou aide", categorie: "aides" },
-    { id: "cadeau", nom: "Cadeau, chèque", categorie: "autres-revenus" },
-    { id: "remboursement", nom: "Remboursement", categorie: "autres-revenus" },
-    { id: "autre", nom: "Autre rentrée", categorie: "autres-revenus" }
-  ];
-  function ouvrirRentree() {
-    montrer("portefeuille");
-    const f = $("fiche-rentree"), pr = S.strategie.profil;
-    const champ = (lib, el) => h("label", { class: "champ" }, h("span", { text: lib }), el);
-    const res = h("div", { id: "r-resultat" });
-    const type = h("select", { id: "r-type" });
-    options(type, TYPES_RENTREE.map(t => ({ value: t.id, label: t.nom })), "prime");
-    const montant = h("input", { type: "number", id: "r-montant", min: "0", step: "1", inputmode: "decimal", placeholder: "300" });
-    const date = h("input", { type: "date", id: "r-date", value: aujourdhui() });
-    const plaisir = h("input", { type: "number", id: "r-plaisir", min: "0", max: "100", step: "5", inputmode: "decimal", value: String(num(pr.partPlaisir)) });
-    const calculer = () => {
-      const m = num(montant.value);
-      if (!(m > 0)) { vider(res, h("p", { class: "vide", text: "Indique le montant reçu." })); return; }
-      const c = conseilRentree(m);
-      const rangs = [];
-      if (c.plaisir > 0) rangs.push(h("tr", {}, h("td", {}, h("div", { class: "nom-ligne" }, h("span", { text: "Pour te faire plaisir" }), h("small", { text: `${num(plaisir.value)} % de la somme` }))), h("td", { class: "num chiffre", text: eur(c.plaisir, 0) })));
-      for (const v of c.versComptes) rangs.push(h("tr", {}, h("td", {}, h("div", { class: "nom-ligne" }, h("span", { text: v.compte ? v.compte.nom : "Un autre livret" }), h("small", { text: v.compte ? "épargne de précaution" : "tes livrets de précaution sont pleins" }))), h("td", { class: "num chiffre", text: eur(v.montant, 0) })));
-      for (const x of c.plan) rangs.push(h("tr", {}, h("td", {}, h("div", { class: "nom-ligne" }, h("span", { text: x.ligne ? x.ligne.nom : x.poche.nom }), h("small", { text: x.ligne ? (enFractions(x.ligne) ? "en fractions" : x.parts > 0 ? `≈ ${x.parts} part${x.parts > 1 ? "s" : ""} à ${eur(x.ligne.coursEff, 2)}` : "moins d'une part") : "ligne à choisir" }))), h("td", { class: "num chiffre", text: eur(x.montant, 0) })));
-      const reste = c.pl.manque - c.prec;
-      vider(res, h("div", { class: "aperçu" },
-        h("p", {}, h("b", { text: "Ce que dit ta stratégie : " }), c.raisons.join(" ; ") + "."),
-        h("div", { class: "defile" }, h("table", {}, h("tbody", {}, rangs))),
-        c.prec > 0 ? h("p", { class: "petit muet", text: reste > 0 ? `Après ce versement, il manquera encore ${eur(reste, 0)} à ton épargne de précaution.` : `Avec ce versement, ton palier de ${eur(c.pl.obj, 0)} est atteint.` }) : null,
-        h("div", { class: "actions" },
-          h("button", { class: "btn", text: "C'est fait : mettre à jour mes comptes", onclick: () => appliquerRentree(c, type.value, date.value || aujourdhui(), true) }),
-          h("button", { class: "btn btn-discret", text: "Noter seulement dans mon budget", onclick: () => appliquerRentree(c, type.value, date.value || aujourdhui(), false) }),
-          claudePret ? h("button", { class: "btn btn-ghost btn-petit", text: "En parler à Claude", onclick: () => demanderDansChat(`J'ai reçu ${eur(m, 0)} (${TYPES_RENTREE.find(t => t.id === type.value).nom.toLowerCase()}). L'outil propose : ${[c.plaisir ? `${eur(c.plaisir, 0)} pour me faire plaisir` : "", ...c.versComptes.map(v => `${eur(v.montant, 0)} sur ${v.compte ? v.compte.nom : "un livret"}`), ...c.plan.map(x => `${eur(x.montant, 0)} sur ${x.ligne ? x.ligne.nom : x.poche.nom}`)].filter(Boolean).join(", ")}. Qu'en penses-tu ?`) }) : null)));
-    };
-    montant.addEventListener("input", calculer);
-    plaisir.addEventListener("input", calculer);
-    plaisir.addEventListener("change", e => { S.strategie.profil.partPlaisir = Math.min(100, Math.max(0, num(e.target.value))); enregistrer("strategie"); });
-    vider(f, h("h3", { text: "J'ai reçu de l'argent" }),
-      h("div", { class: "champs" }, champ("Montant reçu (€)", montant), champ("C'est…", type), champ("Reçu le", date), champ("Part pour te faire plaisir (%)", plaisir)),
-      res,
-      h("div", { class: "actions" }, h("button", { class: "btn btn-discret btn-petit", text: "Fermer", onclick: () => { f.hidden = true; } })));
-    calculer();
-    f.hidden = false;
-    f.scrollIntoView({ block: "nearest", behavior: "smooth" });
-    montant.focus({ preventScroll: true });
-  }
-  function appliquerRentree(c, type, date, comptes) {
-    const t = TYPES_RENTREE.find(x => x.id === type) || TYPES_RENTREE.find(x => x.id === "autre");
-    const ops = [{ date, libelle: t.nom, montant: c.montant, categorie: t.categorie }];
-    const verse = c.prec + c.enPlus + c.investir;
-    if (comptes) {
-      for (const v of c.versComptes) if (v.compte) { const k = S.portefeuille.comptes.find(x => x.id === v.compte.id); if (k) k.solde = Math.round((num(k.solde) + v.montant) * 100) / 100; }
-      for (const x of c.plan) {
-        const l = x.ligne && S.portefeuille.lignes.find(y => y.id === x.ligne.id);
-        if (!l || l.sansQuantite || !(x.ligne.coursEff > 0)) continue;
-        const q = enFractions(l) ? x.montant / x.ligne.coursEff : Math.floor(x.montant / x.ligne.coursEff);
-        if (q > 0) { l.pru = (num(l.pru) * num(l.quantite) + q * x.ligne.coursEff) / (num(l.quantite) + q); l.quantite = num(l.quantite) + q; }
-        if (l.enveloppe === "PEA") S.strategie.enveloppes.peaVersements = Math.round((num(S.strategie.enveloppes.peaVersements) + x.montant) * 100) / 100;
-      }
-      enregistrer("portefeuille"); enregistrer("strategie"); noterPoint();
-    }
-    if (verse > 0) ops.push({ date, libelle: `Mis de côté : ${t.nom.toLowerCase()}`, montant: -verse, categorie: "epargne" });
-    ajouterMouvements(ops);
-    $("fiche-rentree").hidden = true;
-    toutRendre();
-  }
-  $("btn-rentree").addEventListener("click", ouvrirRentree);
-  $("b-rentree").addEventListener("click", ouvrirRentree);
-
   function rendreEnveloppes(syn) {
     const e = S.strategie.enveloppes, F = B.FISCALITE, rangs = [];
     const val = id => syn.parEnveloppe[id] || { valeur: 0, investi: 0 };
@@ -1624,7 +1596,8 @@
 - Distingue les faits, les hypothèses et ton avis. Tu l'aides à raisonner ; la décision lui appartient. Ce n'est pas un conseil en investissement réglementé, inutile de le répéter à chaque message.
 - Fiscalité française 2026 : flat tax 31,4 % (12,8 % d'impôt + 18,6 % de prélèvements sociaux), y compris sur les intérêts d'un compte rémunéré ; Livret A et LDDS : 1,7 % net d'impôt (plafonds 22 950 € et 12 000 €) ; PEA : après 5 ans, seuls les prélèvements sociaux de 18,6 % sur les gains, versements plafonnés à 150 000 € ; crypto : 31,4 % sur les gains seulement en repassant en euros, échanges entre cryptos non imposés, rien si les ventes de l'année ne dépassent pas 305 € ; assurance-vie : prélèvements sociaux 17,2 %, après 8 ans abattement de 4 600 € (9 200 € en couple) puis 7,5 % d'impôt (jusqu'à 150 000 € de primes).
 - L'épargne de précaution fait partie de sa stratégie : tiens compte de sa progression et du partage de son effort mensuel entre elle et ses investissements.
-- Sa liste « À faire » s'affiche sur l'accueil de l'outil. Quand vous arrivez à une action concrète (un virement, un achat, une vente, une vérification à faire), ajoute-la avec l'outil ajouter_taches : une phrase courte à l'impératif, avec le montant et le compte, et une échéance si elle est connue. Trois tâches au plus par réponse, jamais un doublon de sa liste, et rien qu'il a refusé. Dis-lui en une ligne ce que tu as ajouté. Quand il dit avoir fait une tâche, coche-la avec terminer_tache ; si elle n'a plus lieu d'être, retire-la.`;
+- Tu vois tout l'outil : 1. Patrimoine (total, bourse, épargne, plus-value, courbe), 2. Mon mois (ce qu'il prévoit de recevoir et de dépenser, et ce qui va sur le compte courant, le LEP et le PEA, avec ses opérations du mois), 3. Épargne (ses comptes et leurs soldes), 4. Bourse (ses lignes), 6. Stratégie. Les chiffres sont ci-dessous.
+- Il peut te montrer des captures de la Caisse d'Épargne ou de Trade Republic. Lis-les avec soin, dis ce que tu y vois, et rapproche-les de son plan du mois. Propose d'enregistrer ses opérations (outil enregistrer_operations) et de mettre à jour un solde (outil mettre_a_jour_solde) ; fais-le quand il le demande ou l'accepte, puis dis en une ligne ce que tu as changé. Un retrait d'espèces compte comme dépensé (catégorie « especes »), même s'il reste des billets.`;
 
   function contexteInvestisseur() {
     const st = S.strategie, pr = st.profil, r = st.regles, syn = synthese();
@@ -1672,14 +1645,12 @@
     }
     const p = paie(), netPaie = netDepuisBrut(p.brut).net * (1 - p.pas / 100);
     if (num(S.budget.paie && S.budget.paie.brut)) L.push(`\nPAIE : ${eur(netPaie, 0)} net par mois (${eur(p.brut, 0)} brut, ${nf(0, 2).format(p.heures)} h${Math.abs(p.brut / p.heures / PAIE.smicHoraire - 1) < 0.01 ? ", au SMIC" : ""}), plus les heures supplémentaires éventuelles${num(S.budget.prevu.aides) ? ` ; prime d'activité ${eur(num(S.budget.prevu.aides), 0)} par mois` : ""}.${jourDecalage() > 0 ? ` Une paie reçue à partir du ${jourDecalage()} (en général vers le 29) finance le mois suivant : le budget la compte pour ce mois-là.` : ""}`);
-    const ops = mouvementsDuMois(cleMois(new Date())).sort((a, b) => a.date < b.date ? 1 : -1).slice(0, 20);
-    if (ops.length) L.push(`OPÉRATIONS DU MOIS EN COURS (compte courant) :\n` + ops.map(m => `- ${dateFr(m.date)} | ${m.libelle} | ${eurSigne(m.montant)} | ${(CAT[m.categorie] || {}).nom || m.categorie}`).join("\n"));
+    for (const k of [...new Set([cleMois(new Date()), moisMM()])].sort()) {
+      const ops = mouvementsDuMois(k).sort((a, b) => a.date < b.date ? 1 : -1).slice(0, 40);
+      if (ops.length) L.push(`OPÉRATIONS COMPTÉES POUR ${nomMois(k).toUpperCase()} (compte courant) :\n` + ops.map(m => `- ${dateFr(m.date)} | ${m.libelle} | ${eurSigne(m.montant)} | ${m.categorie}`).join("\n"));
+    }
     const mm = monMois(moisTableau || moisParDefaut());
-    L.push(`MON MOIS (tableau de début de mois, ${nomMois(mm.cle)}${mm.rempli < CHAMPS_MOIS.length ? ", en partie estimé par la page" : ""}) : salaire ${eur(mm.v("salaire"), 2)}, prime d'activité ${eur(mm.v("primeActivite"), 2)}, autres revenus ${eur(mm.v("autres"), 0)} ; dépenses fixes ${eur(mm.v("fixes"), 0)}, variables ${eur(mm.v("variables"), 0)}. Partage proposé : ${eur(mm.garder, 0)} gardés sur le compte courant, ${eur(mm.precaution, 0)} sur l'épargne de précaution${mm.pl.compte ? " (" + mm.pl.compte.nom + ")" : ""}, ${eur(mm.investir, 0)} investis${mm.enveloppes.length === 1 ? " (" + mm.enveloppes[0] + ")" : ""}.`);
-    const afaire = S.taches.items.filter(t => !t.fait);
-    L.push(afaire.length ? "\nSA LISTE À FAIRE (id | tâche | échéance | origine) :\n" + afaire.map(t => `- ${t.id} | ${t.texte} | ${t.echeance ? dateFr(t.echeance) : "—"} | ${t.source === "claude" ? "décidé avec toi" : "ajoutée par lui"}`).join("\n") : "\nSA LISTE À FAIRE : vide.");
-    const faitesRecentes = S.taches.items.filter(t => t.fait).sort((a, b) => a.faitLe < b.faitLe ? 1 : -1).slice(0, 5);
-    if (faitesRecentes.length) L.push("Faites récemment : " + faitesRecentes.map(t => `${t.texte}${t.faitLe ? " (" + dateFr(t.faitLe) + ")" : ""}`).join(" ; ") + ".");
+    L.push(`\nMON MOIS (page 2, ${nomMois(mm.cle)}${mm.rempli < CHAMPS_MOIS.length ? ", cases en partie proposées par la page" : ""}) : salaire ${eur(mm.v("salaire"), 2)}, prime d'activité ${eur(mm.v("primeActivite"), 2)}, autres revenus prévus ${eur(mm.v("autres"), 0)} ; dépenses fixes prévues ${eur(mm.v("fixes"), 0)} (dépensé : ${eur(Math.max(0, -reelMM(mm.cle, CAT_FIXES)), 0)}), variables prévues ${eur(mm.v("variables"), 0)} (dépensé : ${eur(Math.max(0, -reelMM(mm.cle, CAT_VARIABLES)), 0)}). Où va l'argent : ${eur(mm.garder, 0)} gardés sur le compte courant, ${eur(mm.precaution, 0)} sur l'épargne de précaution${mm.pl.compte ? " (" + mm.pl.compte.nom + ")" : ""}, ${eur(mm.investir, 0)} investis${mm.enveloppes.length === 1 ? " (" + mm.enveloppes[0] + ")" : ""}${mm.revenus > 0 ? `, soit ${pct((mm.precaution + mm.investir) / mm.revenus * 100, 0)} d'épargne` : ""}.`);
     const j = S.journal.entrees.slice(0, 5);
     if (j.length) L.push("\nDERNIÈRES DÉCISIONS DU JOURNAL :\n" + j.map(x => `- ${dateFr(x.date)} : ${SENS[x.sens] || x.sens} ${x.actif} (${eur(num(x.montant), 0)}), statut ${STATUTS[x.statut] || x.statut} ; raison : ${x.raison || "—"}${x.bilan ? " ; bilan : " + x.bilan : ""}`).join("\n"));
     return L.join("\n");
@@ -1689,7 +1660,6 @@
   const CAT = Object.fromEntries(B.CATEGORIES_BUDGET.map(c => [c.id, c]));
   const catType = id => (CAT[id] || CAT.autres).type;
   const cleMois = d => isoDate(d).slice(0, 7);
-  let moisBudget = cleMois(new Date());
   const nomMois = cle => new Date(cle + "-15T12:00:00").toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
   const decalerMois = (cle, n) => { const d = new Date(cle + "-15T12:00:00"); d.setMonth(d.getMonth() + n); return cleMois(d); };
   // Une paie versée en fin de mois (le 29 octobre) finance le mois suivant : elle compte pour novembre.
@@ -1731,70 +1701,8 @@
     if (!mois.length) return null;
     return { mois: mois.length, depenses: somme(mois, k => bilanMois(k).depenses) / mois.length, revenus: somme(mois, k => bilanMois(k).revenus) / mois.length };
   }
-  function alertesBudget() {
-    const out = [], pl = planBudget(), pr = S.strategie.profil, b = bilanMois(moisBudget);
-    const ajoute = (niveau, texte, action) => out.push({ niveau, texte, action });
-    if (pl.revenus <= 0) ajoute("info", "Renseigne tes revenus et tes dépenses prévus dans « Mon budget prévu » : la page compare chaque mois le réel au prévu, et ta stratégie à ce que ton budget permet d'épargner.");
-    else {
-      if (pl.reste < 0) ajoute("bloquant", `Ton budget prévu ne tient pas : après ${eur(pl.depenses, 0)} de dépenses, il reste ${eur(pl.capacite, 0)} pour ${eur(pl.epargne, 0)} de versements prévus par ta stratégie. Réduis une dépense ou un versement.`);
-      else if (pl.epargne > 0 && pl.reste > Math.max(100, pl.revenus * 0.1)) ajoute("info", `Ton budget prévu laisse ${eur(pl.reste, 0)} par mois après tes versements : de quoi ${planDuMois().manque > 0 ? "accélérer ton épargne de précaution" : "investir davantage"}, ou une marge pour l'imprévu.`);
-      if (pl.taux != null) ajoute(pl.taux >= 10 ? "ok" : "attention", `Taux d'épargne prévu : ${pct(pl.taux, 0)} de tes revenus${pl.taux < 10 ? ", en dessous des 10 % souvent visés" : ""}.`);
-    }
-    if (b.nb) {
-      for (const c of B.CATEGORIES_BUDGET.filter(c => c.type === "depense")) {
-        const depense = Math.max(0, -(b.parCat[c.id] || 0)), prevu = num(S.budget.prevu[c.id]);
-        if (prevu > 0 && depense > prevu * 1.05) ajoute("attention", `${c.nom} : ${eur(depense, 0)} dépensés en ${nomMois(moisBudget)} pour ${eur(prevu, 0)} prévus (+${eur(depense - prevu, 0)}).`);
-      }
-      if (b.taux != null && pl.taux != null && b.revenus > 0 && moisBudget < cleMois(new Date())) ajoute(b.taux >= pl.taux - 2 ? "ok" : "attention", `En ${nomMois(moisBudget)}, tu as épargné ${pct(b.taux, 0)} de tes revenus (prévu : ${pct(pl.taux, 0)}).`);
-    }
-    const moy = moyenneDepenses();
-    if (moy && moy.depenses > 0 && Math.abs(moy.depenses / Math.max(1, num(pr.depensesMensuelles)) - 1) > 0.1)
-      ajoute("info", `Tes dépenses réelles font ${eur(moy.depenses, 0)} par mois en moyenne (${moy.mois} mois), contre ${eur(num(pr.depensesMensuelles), 0)} dans ta stratégie : ton objectif d'épargne de précaution en dépend.`,
-        { texte: `Utiliser ${eur(Math.round(moy.depenses / 10) * 10, 0)}`, faire: () => modifier("strategie", st => { st.profil.depensesMensuelles = Math.round(moy.depenses / 10) * 10; }) });
-    else if (!moy && pl.depenses > 0 && Math.abs(pl.depenses / Math.max(1, num(pr.depensesMensuelles)) - 1) > 0.1)
-      ajoute("info", `Ton budget prévoit ${eur(pl.depenses, 0)} de dépenses par mois, contre ${eur(num(pr.depensesMensuelles), 0)} dans ta stratégie : ton objectif d'épargne de précaution en dépend.`,
-        { texte: `Utiliser ${eur(pl.depenses, 0)}`, faire: () => modifier("strategie", st => { st.profil.depensesMensuelles = pl.depenses; }) });
-    const ordre = { bloquant: 0, attention: 1, info: 2, ok: 3 };
-    return out.sort((a, b) => ordre[a.niveau] - ordre[b.niveau]);
-  }
-
-  function rendreBudget() {
-    $("b-mois").textContent = nomMois(moisBudget);
-    $("b-importer").hidden = !claudePret;
-    const b = bilanMois(moisBudget), pl = planBudget();
-    const tuile = (lib, val, sous, cls) => h("div", { class: "tuile" }, h("span", { class: "etiquette", text: lib }), h("b", { class: cls || null, text: val }), sous ? h("span", { class: "petit muet", text: sous }) : null);
-    const vs = prevu => prevu > 0 ? `prévu : ${eur(prevu, 0)}` : null;
-    vider($("b-tuiles"),
-      tuile("Revenus", eur(b.nb ? b.revenus : pl.revenus, 0), b.nb ? vs(pl.revenus) : "prévu"),
-      tuile("Dépenses", eur(b.nb ? b.depenses : pl.depenses, 0), b.nb ? vs(pl.depenses) : "prévu"),
-      tuile("Mis de côté", eur(b.nb ? b.epargne : pl.epargne, 0), b.nb ? vs(pl.epargne) : "selon ta stratégie"),
-      tuile("Taux d'épargne", (b.nb ? b.taux : pl.taux) == null ? "—" : pct(b.nb ? b.taux : pl.taux, 0), "des revenus, hors dépenses"),
-      tuile(b.nb ? "Reste sur le compte" : "Reste à vivre", eur(b.nb ? b.reste : pl.reste, 0), null, (b.nb ? b.reste : pl.reste) < 0 ? "perte" : null));
-    const paieArrivee = mouvementsDuMois(moisBudget).filter(m => m.date.slice(0, 7) !== moisBudget);
-    $("b-tuiles-note").textContent = (b.nb ? `${b.nb} opération${b.nb > 1 ? "s" : ""} en ${nomMois(moisBudget)}. Les virements vers l'épargne et les investissements ne comptent pas comme des dépenses.` : `Pas encore d'opération en ${nomMois(moisBudget)} : ce sont les chiffres prévus.`)
-      + (paieArrivee.length ? ` Ta paie du ${paieArrivee.map(m => dateFr(m.date)).join(", ")} (${eur(somme(paieArrivee, m => m.montant), 2)}) compte pour ${nomMois(moisBudget).split(" ")[0]}.` : "");
-    remplir("b-decalage", jourDecalage() > 0);
-    remplir("b-decalage-jour", jourDecalage() || 25);
-    // Par catégorie
-    const cats = B.CATEGORIES_BUDGET.filter(c => c.type === "depense").map(c => ({ c, depense: Math.max(0, -(b.parCat[c.id] || 0)), prevu: num(S.budget.prevu[c.id]) })).filter(x => x.depense > 0 || x.prevu > 0).sort((a, b) => b.depense - a.depense || b.prevu - a.prevu);
-    const ech = Math.max(1, ...cats.map(x => Math.max(x.depense, x.prevu)));
-    $("b-cat-note").textContent = b.nb ? "" : "Budget prévu seulement";
-    vider($("b-categories"), cats.length ? cats.map(x => h("div", { class: "repart-ligne" },
-      h("div", { class: "repart-tete" }, h("b", { text: x.c.nom }), h("span", { class: "actions" },
-        h("span", { class: "chiffre", text: `${eur(x.depense, 0)}${x.prevu ? " / " + eur(x.prevu, 0) : ""}` }),
-        x.prevu > 0 && b.nb ? (x.depense > x.prevu * 1.05 ? pastille("attention", "dépassé") : pastille("ok", "dans le budget")) : null)),
-      h("div", { class: "piste", role: "img", "aria-label": `${x.c.nom} : ${eur(x.depense, 0)} dépensés${x.prevu ? ", budget " + eur(x.prevu, 0) : ""}` },
-        h("div", { class: "rempli", style: `width:${Math.min(100, x.depense / ech * 100)}%` }),
-        x.prevu > 0 ? h("div", { class: "cible", style: `left:calc(${x.prevu / ech * 100}% - 1px)` }) : null)))
-      : h("p", { class: "vide", text: "Rien à afficher : fixe ton budget prévu ou importe un relevé." }));
-    vider($("b-alertes"), alertesBudget().map(a => h("li", {}, pastille(a.niveau, { ok: "OK", attention: "À voir", bloquant: "Budget", info: "Info" }[a.niveau]),
-      h("div", { style: "display:grid;gap:6px" }, h("p", { text: a.texte }), a.action ? h("div", {}, h("button", { class: "btn btn-ghost btn-petit", text: a.action.texte, onclick: a.action.faire })) : null))));
-    rendreOperations(); rendrePlanBudget(); rendrePaie(); rendreDemenagement(); rendre12Mois();
-  }
-  $("b-mois-prec").addEventListener("click", () => { moisBudget = decalerMois(moisBudget, -1); rendreBudget(); });
-  $("b-decalage").addEventListener("change", e => { S.budget.paieDecalee = e.target.checked ? (num($("b-decalage-jour").value) || 25) : 0; enregistrer("budget"); rendreBudget(); });
-  $("b-decalage-jour").addEventListener("change", e => { const j = Math.max(1, Math.min(31, Math.round(num(e.target.value)) || 25)); S.budget.paieDecalee = j; enregistrer("budget"); rendreBudget(); });
-  $("b-mois-suiv").addEventListener("click", () => { moisBudget = decalerMois(moisBudget, 1); rendreBudget(); });
+  $("b-decalage").addEventListener("change", e => { S.budget.paieDecalee = e.target.checked ? (num($("b-decalage-jour").value) || 25) : 0; enregistrer("budget"); rendreMonMois(); });
+  $("b-decalage-jour").addEventListener("change", e => { const j = Math.max(1, Math.min(31, Math.round(num(e.target.value)) || 25)); S.budget.paieDecalee = j; enregistrer("budget"); rendreMonMois(); });
 
   const optsCategories = (types) => B.CATEGORIES_BUDGET.filter(c => !types || types.includes(c.type)).map(c => ({ value: c.id, label: c.nom }));
   function ajouterMouvements(liste) {
@@ -1819,9 +1727,10 @@
   function rendreOperations() {
     const z = $("b-operations");
     if (enSaisie(z)) return;
-    const comptees = mouvementsDuMois(moisBudget);
+    const cle = moisMM(), cats = detailMM ? CASES_MM[detailMM].cats : null, garde = m => !cats || cats.includes(m.categorie);
+    const comptees = mouvementsDuMois(cle).filter(garde);
     // La paie de fin de mois partie au mois suivant reste visible, grisée.
-    const parties = (M[moisBudget] || { mouvements: [] }).mouvements.filter(estDecale);
+    const parties = (M[cle] || { mouvements: [] }).mouvements.filter(estDecale).filter(garde);
     const regles = S.budget.regles;
     const blocRegle = propositionRegle ? h("div", { class: "fiche", style: "display:grid;gap:8px" },
       h("p", { text: `Toujours classer « ${propositionRegle.motif} » en ${CAT[propositionRegle.categorie].nom} ?` }),
@@ -1836,7 +1745,7 @@
             for (const x of doc.mouvements) if (norm(x.libelle).includes(norm(pr.motif)) && x.categorie !== pr.categorie) { x.categorie = pr.categorie; touche = true; }
             if (touche) enregistrer("mois:" + k);
           }
-          rendreBudget();
+          rendreMonMois();
         } }),
         h("button", { class: "btn btn-discret btn-petit", text: "Seulement cette fois", onclick: () => { propositionRegle = null; rendreOperations(); } }))) : null;
     const blocRegles = regles.length ? h("details", { class: "sous-repli" }, h("summary", { text: `Mes règles de classement (${regles.length})` }),
@@ -1844,25 +1753,25 @@
         h("span", { text: `« ${r.motif} » → ${CAT[r.categorie].nom}` }),
         h("button", { class: "btn btn-discret btn-petit", text: "Retirer", "aria-label": "Retirer la règle " + r.motif, onclick: () => { S.budget.regles = S.budget.regles.filter(x => x !== r); enregistrer("budget"); rendreOperations(); } })))),
       h("p", { class: "note", text: "Quand tu changes la catégorie d'une opération, la page propose d'en faire une règle." })) : null;
-    if (!comptees.length && !parties.length) { vider(z, h("p", { class: "vide", text: `Aucune opération en ${nomMois(moisBudget)}. Importe un relevé de ta banque ou ajoute une opération à la main.` }), blocRegles); return; }
+    if (!comptees.length && !parties.length) { vider(z, h("p", { class: "vide", text: `Aucune opération ${detailMM ? "de ce type " : ""}en ${nomMois(cle)}. Montre tes captures à Claude, importe un relevé ou ajoute une opération à la main.` }), blocRegles); return; }
     const rang = (m, partie) => {
       const sel = h("select", { id: "cat-" + m.id, "aria-label": "Catégorie de " + m.libelle, onchange: e => {
         const cat = e.target.value;
         e.target.blur();
         majMouvement(m, x => { x.categorie = cat; });
         propositionRegle = regles.some(r => norm(m.libelle).includes(norm(r.motif)) && r.categorie === cat) ? null : { motif: m.libelle.trim(), categorie: cat };
-        rendreBudget();
+        rendreMonMois();
       } });
       options(sel, optsCategories(), m.categorie);
-      const decale = m.date.slice(0, 7) !== moisBudget;
+      const decale = m.date.slice(0, 7) !== cle;
       return h("tr", { class: partie ? "muet" : null },
         h("td", { class: "chiffre", text: dateCourte(m.date) }),
         h("td", { style: "min-width:160px" }, m.libelle,
-          decale ? h("small", { class: "muet", text: ` · paie du ${dateFr(m.date)}, comptée en ${nomMois(moisBudget).split(" ")[0]}` }) : null,
-          partie ? h("small", { text: ` · comptée en ${nomMois(decalerMois(moisBudget, 1)).split(" ")[0]}` }) : null),
+          decale ? h("small", { class: "muet", text: ` · paie du ${dateFr(m.date)}, comptée en ${nomMois(cle).split(" ")[0]}` }) : null,
+          partie ? h("small", { text: ` · comptée en ${nomMois(decalerMois(cle, 1)).split(" ")[0]}` }) : null),
         h("td", {}, sel),
         h("td", { class: "num chiffre " + (m.montant >= 0 && !partie ? "gain" : ""), text: eurSigne(m.montant) }),
-        h("td", {}, h("button", { class: "btn btn-discret btn-petit", text: "Retirer", "aria-label": "Retirer " + m.libelle, onclick: () => { majMouvement(m, () => "retirer"); rendreBudget(); } })));
+        h("td", {}, h("button", { class: "btn btn-discret btn-petit", text: "Retirer", "aria-label": "Retirer " + m.libelle, onclick: () => { majMouvement(m, () => "retirer"); rendreMonMois(); } })));
     };
     vider(z, blocRegle, h("div", { class: "defile" }, h("table", {},
       h("thead", {}, h("tr", {}, ["Date", "Libellé", "Catégorie", "Montant", ""].map((t, i) => h("th", { class: i === 3 ? "num" : null, text: t })))),
@@ -1874,9 +1783,12 @@
     const sens = h("select", { id: "o-sens", onchange: () => majCats() });
     options(sens, [{ value: "depense", label: "Dépense" }, { value: "revenu", label: "Revenu" }, { value: "epargne", label: "Versement vers l'épargne" }, { value: "retrait", label: "Retrait de l'épargne" }], "depense");
     const cat = h("select", { id: "o-cat" });
-    const majCats = () => { const v = sens.value; options(cat, optsCategories([v === "retrait" ? "epargne" : v]), v === "epargne" || v === "retrait" ? "epargne" : v === "revenu" ? "salaire" : "courses"); };
+    // La case ouverte donne le type et la catégorie de départ.
+    const catDetail = detailMM && CASES_MM[detailMM].cats.length === 1 ? CASES_MM[detailMM].cats[0] : detailMM === "fixes" ? "transport" : detailMM === "variables" || detailMM === "courant" ? "courses" : null;
+    if (catDetail) sens.value = catType(catDetail) === "revenu" ? "revenu" : catType(catDetail) === "epargne" ? "epargne" : "depense";
+    const majCats = () => { const v = sens.value; const types = [v === "retrait" ? "epargne" : v]; options(cat, optsCategories(types), catDetail && types.includes(catType(catDetail)) ? catDetail : v === "epargne" || v === "retrait" ? "epargne" : v === "revenu" ? "salaire" : "courses"); };
     majCats();
-    const dateDefaut = moisBudget === cleMois(new Date()) ? aujourdhui() : moisBudget + "-01";
+    const dateDefaut = moisMM() === cleMois(new Date()) ? aujourdhui() : moisMM() + "-01";
     const erreur = h("p", { class: "erreur", hidden: true });
     vider(f, h("h3", { text: "Ajouter une opération" }),
       h("div", { class: "champs" },
@@ -1892,7 +1804,7 @@
           if (!(montant > 0) || !date) { erreur.textContent = "Indique une date et un montant."; erreur.hidden = false; return; }
           const signe = sens.value === "revenu" || sens.value === "retrait" ? 1 : -1;
           ajouterMouvements([{ date, libelle: $("o-libelle").value.trim() || CAT[cat.value].nom, montant: signe * montant, categorie: cat.value }]);
-          moisBudget = date.slice(0, 7); f.hidden = true; rendreBudget();
+          f.hidden = true; rendreMonMois();
         } }),
         h("button", { class: "btn btn-discret", text: "Annuler", onclick: () => { f.hidden = true; } })));
     f.hidden = false;
@@ -1918,7 +1830,7 @@
     }
     if (images.length && !claudeImages) { $("b-import-etat").textContent = "Les images ne peuvent pas être envoyées ici : colle plutôt le texte."; return; }
     if (!texte.trim() && !images.length) { $("b-import-etat").textContent = "Colle un texte ou ajoute un fichier."; return; }
-    const annee = moisBudget.slice(0, 4);
+    const annee = moisMM().slice(0, 4);
     // Ce que la page sait déjà de ses habitudes : ses règles, et ses opérations déjà classées (les plus récentes).
     const vus = new Map();
     for (const k of Object.keys(M).sort().reverse()) for (const m of M[k].mouvements) if (!vus.has(norm(m.libelle)) && vus.size < 40) vus.set(norm(m.libelle), `${m.libelle} (${m.montant > 0 ? "crédit" : "débit"}) → ${m.categorie}`);
@@ -1930,7 +1842,8 @@ Règles :
 - categorie parmi : ${B.CATEGORIES_BUDGET.map(c => `${c.id} (${c.nom})`).join(", ")}.
 - Un virement vers un livret, un PEA, un compte-titres, un plan d'investissement, Trade Republic ou une plateforme crypto : "epargne" (négatif). Un retour d'argent depuis ces comptes : "epargne" (positif).
 - Salaire, paie (souvent un virement au nom de l'employeur en fin de mois) : "salaire". CAF, APL, prime d'activité, bourse d'études : "aides". Un remboursement (santé, achat retourné) : la catégorie de la dépense d'origine, montant positif.
-- Carburant : "transport", y compris à la station d'un supermarché (Carrefour, Leclerc, Intermarché, Super U, Auchan…) : libellé avec STATION, CARBU, DAC, ESSENCE ou GAZOLE, ou un plein de 30 à 120 €. Péage, parking, entretien et crédit de la voiture : "transport".${regles.length ? `
+- Carburant : "transport", y compris à la station d'un supermarché (Carrefour, Leclerc, Intermarché, Super U, Auchan…) : libellé avec STATION, CARBU, DAC, ESSENCE ou GAZOLE, ou un plein de 30 à 120 €. Péage, parking, entretien et crédit de la voiture : "transport".
+- Retrait d'espèces (RETRAIT, DAB, ESPECES) : "especes", compté comme dépensé.${regles.length ? `
 - SES RÈGLES, à appliquer en priorité (le libellé contient… → catégorie) : ${regles.map(r => `« ${r.motif} » → ${r.categorie}`).join(" ; ")}.` : ""}${vus.size ? `
 - Ses opérations déjà classées, à suivre pour un libellé identique ou proche :\n${[...vus.values()].join("\n")}` : ""}
 - Libellé court et lisible. N'invente aucune opération ; ignore les soldes, totaux et opérations en attente.${texte ? "\n\nRELEVÉ :\n" + texte.slice(0, 80000) : ""}${images.length ? "\n\nLes captures jointes montrent le relevé." : ""}`;
@@ -1978,32 +1891,9 @@ Règles :
         if (!gardees.length) return;
         ajouterMouvements(gardees);
         const mois = gardees.map(o => o.date.slice(0, 7)).sort();
-        moisBudget = mois[mois.length - 1];
         importOps = null; vider(z); $("b-fiche-import").hidden = true; $("b-import-texte").value = ""; $("b-import-fichiers").value = ""; $("b-import-etat").textContent = "";
-        rendreBudget();
+        rendreMonMois();
       } }))));
-  }
-
-  function rendrePlanBudget() {
-    const z = $("b-plan");
-    const pl = planBudget();
-    vider($("b-plan-total"), pl.revenus > 0 ? (pl.reste >= 0 ? pastille("ok", `reste ${eur(pl.reste, 0)}`) : pastille("bloquant", `manque ${eur(-pl.reste, 0)}`)) : null);
-    if (aFocus(z)) return;
-    const ligne = c => h("tr", {}, h("td", { text: c.nom }), h("td", { class: "num" }, h("input", { type: "number", class: "solde", id: "prevu-" + c.id, min: "0", step: "10", inputmode: "decimal", value: num(S.budget.prevu[c.id]) ? String(num(S.budget.prevu[c.id])) : "", placeholder: "0", "aria-label": "Budget " + c.nom,
-      onchange: e => { const v = num(e.target.value); if (v > 0) S.budget.prevu[c.id] = v; else delete S.budget.prevu[c.id]; enregistrer("budget"); rendreBudget(); } })));
-    const pr = S.strategie.profil;
-    vider(z, h("div", { class: "defile" }, h("table", {},
-      h("tbody", {},
-        h("tr", {}, h("th", { colspan: "2", text: "Revenus" })), B.CATEGORIES_BUDGET.filter(c => c.type === "revenu").map(ligne),
-        h("tr", { class: "table-total" }, h("td", { text: "Total des revenus" }), h("td", { class: "num chiffre", text: eur(pl.revenus, 0) })),
-        h("tr", {}, h("th", { colspan: "2", text: "Dépenses fixes" })), B.CATEGORIES_BUDGET.filter(c => c.type === "depense" && c.fixe).map(ligne),
-        h("tr", {}, h("th", { colspan: "2", text: "Dépenses courantes" })), B.CATEGORIES_BUDGET.filter(c => c.type === "depense" && !c.fixe).map(ligne),
-        h("tr", { class: "table-total" }, h("td", { text: "Total des dépenses" }), h("td", { class: "num chiffre", text: eur(pl.depenses, 0) })),
-        h("tr", {}, h("th", { colspan: "2", text: "Épargne (Ma stratégie)" })),
-        h("tr", {}, h("td", { text: "Épargne de précaution" }), h("td", { class: "num chiffre", text: eur(planDuMois().versEpargne, 0) })),
-        h("tr", {}, h("td", { text: "Investissements" }), h("td", { class: "num chiffre", text: eur(planDuMois().investir, 0) })),
-        h("tr", { class: "table-total" }, h("td", { text: "Reste à vivre" }), h("td", { class: "num chiffre " + (pl.reste < 0 ? "perte" : ""), text: eur(pl.reste, 0) }))))),
-      h("div", { class: "actions" }, h("button", { class: "btn btn-ghost btn-petit", text: "Modifier mes versements", onclick: () => { montrer("strategie"); $("s-versement-precaution").focus(); } })));
   }
 
   // ---------- ma paie ----------
@@ -2129,107 +2019,6 @@ Règles :
           h("td", { class: "num chiffre", text: eur(r.total, 0) }), h("td", { class: "num chiffre", text: eur(r.reel, 0) }),
           h("td", { class: "num chiffre", text: eur(r.capacite, 0) })))))),
       h("p", { class: "note", text: "Sans heures supplémentaires. * Si tes dépenses restent celles de ton budget prévu (chez tes parents), augmentées de l'inflation : à recalculer avec « Et si je déménage ? ». Estimations : cotisations de ta fiche de paie, prime d'activité qui baisse d'environ 39 % de chaque hausse de revenu, prime d'ancienneté de la convention de l'habillement (catégorie de ta fiche de paie) ; pour la prime d'activité exacte, le simulateur de la CAF fait foi." }));
-  }
-
-  // ---------- et si je déménage ? ----------
-  const DM_CHAMPS = ["loyer", "energie", "assurance", "courses", "autres", "apl", "installation"];
-  DM_CHAMPS.forEach(k => $("dm-" + k).addEventListener("input", e => {
-    S.budget.demenagement ||= {};
-    const v = num(e.target.value);
-    if (e.target.value === "") delete S.budget.demenagement[k]; else S.budget.demenagement[k] = v;
-    enregistrer("budget"); rendreDemenagement();
-  }));
-  function rendreDemenagement() {
-    const d = S.budget.demenagement || {};
-    for (const k of DM_CHAMPS) remplir("dm-" + k, d[k] != null ? d[k] : "");
-    const z = $("dm-resultat");
-    if (!(num(d.loyer) > 0)) { vider(z, h("p", { class: "vide", text: "Indique au moins un loyer pour voir ce qu'il change." })); return; }
-    const pl = planBudget(), pr = S.strategie.profil, syn = synthese(), plm = planDuMois();
-    const enPlus = num(d.loyer) + num(d.energie) + num(d.assurance) + num(d.courses) + num(d.autres) - num(d.apl);
-    const depenses = pl.depenses + enPlus, capacite = pl.revenus - depenses;
-    // Épargne de précaution après le déménagement : on garde le versement du dernier palier.
-    const ps = plm.paliers, dernier = ps[ps.length - 1];
-    const versPrec = dernier ? num(dernier.versement) : num(pr.versementPrecaution);
-    const investir = Math.max(0, capacite - versPrec);
-    const cible = dernier ? num(dernier.montant) : objectifPrecaution();
-    const mois = depenses > 0 ? cible / depenses : null;
-    const salaire = num(S.budget.prevu.salaire), loyerMax = salaire / 3;
-    const annees = Math.max(1, num(pr.objectifAnnee) - new Date().getFullYear());
-    const proj = v => interetsComposes({ capital: syn.total, versement: v, hausse: 2, taux: 7, duree: annees, frais: syn.fraisMoyen || 0.2, inflation: 2, objectif: 0 }).fin.valeur;
-    const avant = plm.investir, finAvant = proj(dernier ? num(dernier.investi) : avant), finApres = proj(investir);
-    const constats = [];
-    if (capacite < 0) constats.push(["bloquant", `Ce logement ne tient pas dans ton budget : il manquerait ${eur(-capacite, 0)} chaque mois.`]);
-    else if (capacite < versPrec) constats.push(["attention", `Après les dépenses, il resterait ${eur(capacite, 0)} par mois : moins que les ${eur(versPrec, 0)} prévus pour ton épargne de précaution, et rien à investir.`]);
-    if (salaire > 0 && num(d.loyer) > loyerMax) constats.push(["attention", `Les propriétaires demandent souvent un salaire d'au moins 3 fois le loyer : avec ${eur(salaire, 0)}, ça fait un loyer jusqu'à ${eur(Math.floor(loyerMax / 10) * 10, 0)} environ (un garant peut compenser).`]);
-    else if (salaire > 0) constats.push(["ok", `Loyer sous le tiers de ton salaire (${eur(Math.floor(loyerMax / 10) * 10, 0)} au plus) : la règle des 3 fois le loyer que demandent souvent les propriétaires est respectée.`]);
-    if (mois != null) constats.push([mois >= 3 ? "ok" : "attention", `Ton épargne de précaution de ${eur(cible, 0)} couvrirait ${nf(0, 1).format(mois)} mois de tes nouvelles dépenses${mois < 3 ? " : vise au moins 3 mois avant de partir" : ""}.`]);
-    if (num(d.installation) > 0) constats.push(["info", `Les ${eur(num(d.installation), 0)} d'installation (dépôt de garantie, meubles…) sont à mettre de côté à part : pris sur l'épargne de précaution, elle tomberait à ${eur(Math.max(0, plm.act - num(d.installation)), 0)}.`]);
-    const tuile = (lib, val, sous, cls) => h("div", { class: "tuile" }, h("span", { class: "etiquette", text: lib }), h("b", { class: cls || null, text: val }), sous ? h("span", { class: "petit muet", text: sous }) : null);
-    vider(z,
-      h("div", { class: "tuiles" },
-        tuile("Dépenses par mois", eur(depenses, 0), `aujourd'hui : ${eur(pl.depenses, 0)}`),
-        tuile("Ce qui reste à épargner", eur(capacite, 0), `aujourd'hui : ${eur(pl.capacite, 0)}`, capacite < 0 ? "perte" : null),
-        tuile("Investi chaque mois", eur(investir, 0), `après ${eur(versPrec, 0)} d'épargne de précaution`),
-        tuile(`À tes 50 ans (${num(pr.objectifAnnee)})`, compact(finApres), `au lieu de ${compact(finAvant)} sans déménager`)),
-      h("ul", { class: "constats" }, constats.map(([n, t]) => h("li", {}, pastille(n, { ok: "OK", attention: "À voir", bloquant: "Budget", info: "Info" }[n]), h("p", { text: t })))),
-      h("p", { class: "note", text: `Projection à 7 % par an avec des versements qui augmentent de 2 % par an, comme dans Simuler. Ton salaire et tes autres dépenses restent ceux de ton budget prévu.` }));
-  }
-
-  function rendre12Mois() {
-    const z = $("b-12-graphe");
-    const mois = Array.from({ length: 12 }, (_, i) => decalerMois(moisBudget, i - 11)).filter(k => mouvementsDuMois(k).length);
-    const coul = { revenus: "var(--serie-1)", depenses: "var(--serie-2)" };
-    if (mois.length < 2) {
-      vider($("b-12-legende")); vider($("b-12-tableau"));
-      vider(z, h("p", { class: "vide", text: "Le graphique apparaît à partir de deux mois d'opérations." }));
-      return;
-    }
-    vider($("b-12-legende"), h("span", {}, h("i", { class: "puce", style: "background:" + coul.revenus }), "Revenus"), h("span", {}, h("i", { class: "puce", style: "background:" + coul.depenses }), "Dépenses"));
-    const bil = mois.map(k => ({ k, ...bilanMois(k) }));
-    vider($("b-12-tableau"), h("table", {},
-      h("thead", {}, h("tr", {}, ["Mois", "Revenus", "Dépenses", "Mis de côté", "Taux d'épargne"].map((t, i) => h("th", { class: i ? "num" : null, text: t })))),
-      h("tbody", {}, bil.map(b => h("tr", {}, h("td", { text: nomMois(b.k) }), h("td", { class: "num chiffre", text: eur(b.revenus, 0) }), h("td", { class: "num chiffre", text: eur(b.depenses, 0) }), h("td", { class: "num chiffre", text: eur(b.epargne, 0) }), h("td", { class: "num chiffre", text: b.taux == null ? "—" : pct(b.taux, 0) }))))));
-    if (!z.clientWidth) return;
-    const W = Math.round(Math.max(300, Math.min(900, z.clientWidth))), H = 220, m = { g: 52, d: 10, h: 10, b: 26 };
-    const ymaxBrut = Math.max(1, ...bil.map(b => Math.max(b.revenus, b.depenses)));
-    const pas = (() => { const brut = ymaxBrut / 4, e = Math.pow(10, Math.floor(Math.log10(brut))), f = brut / e; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * e; })();
-    const ymax = Math.ceil(ymaxBrut / pas) * pas;
-    const larg = (W - m.g - m.d) / bil.length, barre = Math.max(3, Math.min(24, (larg - 10) / 2));
-    const y = v => m.h + (1 - v / ymax) * (H - m.h - m.b);
-    const NS = "http://www.w3.org/2000/svg";
-    const sv = (tag, attrs, txt) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v); if (txt != null) e.textContent = txt; return e; };
-    const svg = sv("svg", { viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: "img", "aria-label": "Revenus et dépenses par mois ; le tableau donne les chiffres." });
-    for (let v = 0; v <= ymax + 1e-6; v += pas) {
-      svg.append(sv("line", { class: "grille-h", x1: m.g, x2: W - m.d, y1: y(v), y2: y(v) }));
-      svg.append(sv("text", { x: m.g - 8, y: y(v) + 4, "text-anchor": "end" }, compact(v)));
-    }
-    const r = Math.min(4, barre / 2);
-    const colonne = (x0, v, c) => { const y0 = y(v), hh = y(0) - y0; if (hh <= 0) return; svg.append(sv("path", { d: `M${x0},${y(0)} V${y0 + r} Q${x0},${y0} ${x0 + r},${y0} H${x0 + barre - r} Q${x0 + barre},${y0} ${x0 + barre},${y0 + r} V${y(0)} Z`, style: "fill:" + c })); };
-    bil.forEach((b, i) => {
-      const x0 = m.g + larg * i + (larg - barre * 2 - 2) / 2;
-      colonne(x0, b.revenus, coul.revenus); colonne(x0 + barre + 2, b.depenses, coul.depenses);
-      svg.append(sv("text", { x: m.g + larg * i + larg / 2, y: H - 8, "text-anchor": "middle" }, new Date(b.k + "-15T12:00:00").toLocaleDateString("fr-FR", { month: "short" })));
-    });
-    svg.append(sv("line", { class: "axe", x1: m.g, x2: W - m.d, y1: y(0), y2: y(0) }));
-    const zone = sv("rect", { x: m.g, y: m.h, width: W - m.g - m.d, height: H - m.h - m.b, style: "fill:transparent;touch-action:pan-y" });
-    svg.append(zone);
-    const bulle = h("div", { class: "info-bulle", hidden: true });
-    vider(z, svg, bulle);
-    const montrerB = clientX => {
-      const rr = svg.getBoundingClientRect(), px = (clientX - rr.left) / rr.width * W;
-      const i = Math.max(0, Math.min(bil.length - 1, Math.floor((px - m.g) / larg))), b = bil[i];
-      vider(bulle, h("b", { text: nomMois(b.k) }),
-        h("div", { class: "ligne-serie" }, h("span", {}, h("span", { class: "puce", style: "background:" + coul.revenus + ";margin-right:6px" }), "Revenus"), h("span", { class: "chiffre", text: eur(b.revenus, 0) })),
-        h("div", { class: "ligne-serie" }, h("span", {}, h("span", { class: "puce", style: "background:" + coul.depenses + ";margin-right:6px" }), "Dépenses"), h("span", { class: "chiffre", text: eur(b.depenses, 0) })),
-        h("div", { class: "ligne-serie muet" }, h("span", { text: "Taux d'épargne" }), h("span", { class: "chiffre", text: b.taux == null ? "—" : pct(b.taux, 0) })));
-      bulle.hidden = false;
-      const gauche = (m.g + larg * i + larg / 2) / W * rr.width, largeur = bulle.offsetWidth || 190;
-      bulle.style.left = (gauche + 12 + largeur > rr.width ? Math.max(0, gauche - 12 - largeur) : gauche + 12) + "px";
-      bulle.style.top = "8px";
-    };
-    zone.addEventListener("pointermove", e => montrerB(e.clientX));
-    zone.addEventListener("pointerdown", e => montrerB(e.clientX));
-    zone.addEventListener("pointerleave", () => { bulle.hidden = true; });
   }
 
   // ---------- DÉCIDER ----------
@@ -2649,7 +2438,7 @@ Règles :
   }
 
   let minuteurRedim = null;
-  window.addEventListener("resize", () => { clearTimeout(minuteurRedim); minuteurRedim = setTimeout(() => { if (vueActive === "strategie") rendreIC(); if (vueActive === "portefeuille") rendreHistorique(); if (vueActive === "budget") rendre12Mois(); }, 200); });
+  window.addEventListener("resize", () => { clearTimeout(minuteurRedim); minuteurRedim = setTimeout(() => { if (vueActive === "strategie") rendreIC(); if (vueActive === "portefeuille") rendreHistorique(); }, 200); });
 
 
 
@@ -2664,31 +2453,41 @@ Règles :
   let ctlChat = null, enCoursChat = false;
   function demanderDansChat(texte) { montrer("claude"); $("c-message").value = texte; $("c-message").focus(); }
 
-  let tour = { ajoutees: [], faites: [] };
+  let tour = { changements: [] };
   function outilsChat() {
     if (!claudeOutils) return undefined;
     return [
-      { name: "ajouter_taches", description: "Ajoute des tâches à sa liste « À faire », affichée sur l'accueil de l'outil : les actions concrètes décidées dans la discussion (un virement, un achat, une vente, une vérification). Renvoie les tâches ajoutées avec leur identifiant.",
-        inputSchema: { type: "object", properties: { taches: { type: "array", maxItems: 3, items: { type: "object", properties: {
-          texte: { type: "string", description: "Une phrase courte à l'impératif, avec le montant et le compte. Ex. : « Virer 685 € sur le LEP »" },
-          echeance: { type: "string", description: "Date limite au format AAAA-MM-JJ, si elle est connue" } }, required: ["texte"] } } }, required: ["taches"] },
+      { name: "enregistrer_operations", description: "Enregistre des opérations de son compte courant dans son budget (page Mon mois) : celles de ses captures ou qu'il te décrit. Les doublons déjà enregistrés sont ignorés et ses règles de classement s'appliquent. Renvoie ce qui a été ajouté.",
+        inputSchema: { type: "object", properties: { operations: { type: "array", maxItems: 60, items: { type: "object", properties: {
+          date: { type: "string", description: "AAAA-MM-JJ" }, libelle: { type: "string" }, montant: { type: "number", description: "En euros : négatif pour un débit, positif pour un crédit" },
+          categorie: { type: "string", enum: B.CATEGORIES_BUDGET.map(c => c.id) } }, required: ["date", "libelle", "montant", "categorie"] } } }, required: ["operations"] },
         execute: input => {
-          const ajout = [];
-          for (const t of (Array.isArray(input.taches) ? input.taches : []).slice(0, 3)) { const x = ajouterTache(t.texte, t.echeance, "claude"); if (x) ajout.push(x); }
-          if (!ajout.length) throw new Error("Aucune tâche valide.");
-          tour.ajoutees.push(...ajout.map(x => x.texte));
-          rendreTaches();
-          return ajout.map(x => ({ id: x.id, texte: x.texte, echeance: x.echeance || null }));
+          const cles = new Set(Object.values(M).flatMap(d => d.mouvements.map(m => `${m.date}|${num(m.montant).toFixed(2)}|${norm(m.libelle)}`)));
+          const ajout = [], ignorees = [];
+          for (const o of (Array.isArray(input.operations) ? input.operations : []).slice(0, 60)) {
+            if (!o || !/^\d{4}-\d{2}-\d{2}$/.test(o.date || "") || !num(o.montant)) continue;
+            const op = { date: o.date, libelle: String(o.libelle || "Opération").slice(0, 120), montant: Math.round(num(o.montant) * 100) / 100, categorie: CAT[o.categorie] ? o.categorie : num(o.montant) > 0 ? "autres-revenus" : "autres" };
+            const regle = S.budget.regles.find(r => norm(op.libelle).includes(norm(r.motif)));
+            if (regle) op.categorie = regle.categorie;
+            const k = `${op.date}|${op.montant.toFixed(2)}|${norm(op.libelle)}`;
+            if (cles.has(k)) { ignorees.push(op.libelle); continue; }
+            cles.add(k); ajout.push(op);
+          }
+          if (ajout.length) { ajouterMouvements(ajout); rendreMonMois(); }
+          tour.changements.push(...ajout.map(o => `${o.libelle} ${eurSigne(o.montant)}`));
+          return { ajoutees: ajout.map(o => `${o.date} ${o.libelle} ${o.montant} € (${o.categorie})`), deja_enregistrees: ignorees };
         } },
-      { name: "terminer_tache", description: "Coche une tâche de sa liste « À faire » quand il dit l'avoir faite, ou la retire si elle n'a plus lieu d'être.",
-        inputSchema: { type: "object", properties: { id: { type: "string", description: "Identifiant de la tâche, tel que dans sa liste" }, retirer: { type: "boolean", description: "true pour la supprimer au lieu de la cocher" } }, required: ["id"] },
+      { name: "mettre_a_jour_solde", description: "Met à jour le solde d'un de ses comptes (page Épargne : Livret A, Livret Jeune, LEP, compte courant…) d'après une capture ou ce qu'il te dit. Renvoie l'ancien et le nouveau solde.",
+        inputSchema: { type: "object", properties: { compte: { type: "string", description: "Nom du compte, tel que dans sa liste" }, solde: { type: "number", description: "Nouveau solde en euros" } }, required: ["compte", "solde"] },
         execute: input => {
-          const t = S.taches.items.find(x => x.id === String(input.id || ""));
-          if (!t) throw new Error("Tâche introuvable : reprends l'identifiant de sa liste.");
-          if (input.retirer) { S.taches.items = S.taches.items.filter(x => x !== t); enregistrer("taches"); } else cocherTache(t.id, true);
-          tour.faites.push((input.retirer ? "retirée : " : "") + t.texte);
-          rendreTaches();
-          return { ok: true, texte: t.texte };
+          const n = norm(input.compte || ""), comptes = S.portefeuille.comptes;
+          const c = comptes.find(k => norm(k.nom) === n) || comptes.find(k => norm(k.nom).includes(n) || n.includes(norm(nomCourt(k.nom))));
+          if (!c) throw new Error("Compte introuvable. Ses comptes : " + comptes.map(k => k.nom).join(", "));
+          if (!(num(input.solde) >= 0)) throw new Error("Solde invalide.");
+          const avant = num(c.solde), apres = Math.round(num(input.solde) * 100) / 100;
+          majCompte(c.id, k => { k.solde = apres; });
+          tour.changements.push(`${c.nom} : ${eur(avant, 2)} → ${eur(apres, 2)}`);
+          return { compte: c.nom, ancien_solde: avant, nouveau_solde: apres };
         } },
       { name: "repartir_versement", description: "Calcule comment répartir un montant à investir entre les poches de sa stratégie pour se rapprocher de la cible sans vendre. Renvoie, par poche, le montant, la ligne conseillée et le poids après versement.",
         inputSchema: { type: "object", properties: { montant: { type: "number", description: "Montant à investir, en euros" } }, required: ["montant"] },
@@ -2736,9 +2535,10 @@ Règles :
     const fil = $("c-fil");
     const msgs = S.discussion.messages;
     $("btn-c-envoyer").disabled = !claudePret || enCoursChat;
+    rendrePieces();
     $("c-message").disabled = !claudePret;
     const syn = synthese();
-    $("c-contexte").textContent = claudePret ? `Claude voit ta stratégie, ton épargne, ton portefeuille${syn.lignes.length && S.portefeuille.coursMaj ? " (cours du " + dateFr(S.portefeuille.coursMaj) + ")" : ""}, ton budget et ta liste À faire.` : "";
+    $("c-contexte").textContent = claudePret ? `Claude voit toutes les pages : patrimoine, mon mois et ses opérations, épargne, bourse${syn.lignes.length && S.portefeuille.coursMaj ? " (cours du " + dateFr(S.portefeuille.coursMaj) + ")" : ""} et stratégie.` : "";
     if (enCoursChat) return;
     if (!claudePret) {
       vider(fil, h("div", { class: "carte" }, h("h3", { text: "Claude répond sur la page publiée" }),
@@ -2747,7 +2547,7 @@ Règles :
     }
     if (!msgs.length) {
       // Les questions toutes prêtes n'apparaissent que sur une discussion vide.
-      vider(fil, h("div", { class: "bulle bulle-claude" }, markdown("Bonjour ! Je connais ta stratégie, tes règles, ton épargne, ton portefeuille et ton budget. Ce qu'on décide ensemble, je l'ajoute à ta liste « À faire » sur l'accueil.\n\nJe ne vois ni les cours en direct ni l'actualité : pour une décision, vérifie toujours les chiffres du jour.")),
+      vider(fil, h("div", { class: "bulle bulle-claude" }, markdown("Bonjour ! Je vois toutes les pages de l'outil : ton patrimoine, ton mois, tes comptes, tes lignes et ta stratégie. Montre-moi tes captures de la Caisse d'Épargne ou de Trade Republic : je regarde ce que tu as fait et je peux enregistrer tes opérations et tes soldes.\n\nJe ne vois ni les cours en direct ni l'actualité : pour une décision, vérifie toujours les chiffres du jour.")),
         h("div", { class: "suggestions" }, SUGGESTIONS.map(x => h("button", { class: "suggestion", text: x.texte, onclick: () => {
           if (x.remplir) { $("c-message").value = x.texte; $("c-message").focus(); } else envoyerChat(x.texte);
         } }))));
@@ -2758,18 +2558,31 @@ Règles :
 
   function bulleMessage(m) {
     if (m.role === "user") return h("div", { class: "bulle bulle-moi", text: m.content });
-    const t = m.taches || {};
+    const ch = Array.isArray(m.changements) ? m.changements : [];
     return [h("div", { class: "bulle bulle-claude" }, markdown(m.content)),
-      (t.ajoutees || []).length || (t.faites || []).length ? h("p", { class: "note-taches" },
-        (t.ajoutees || []).length ? `Ajouté à ta liste À faire : ${t.ajoutees.join(" ; ")}. ` : "",
-        (t.faites || []).length ? `Coché : ${t.faites.join(" ; ")}. ` : "",
-        h("button", { type: "button", class: "lien", text: "Voir ma liste", onclick: () => montrer("portefeuille") })) : null];
+      ch.length ? h("p", { class: "note-taches", text: "Enregistré dans l'outil : " + ch.join(" ; ") + "." }) : null];
   }
+  // Captures jointes au prochain message (relevés de la Caisse d'Épargne, activité Trade Republic…).
+  let piecesChat = [];
+  function rendrePieces() {
+    $("btn-c-images").hidden = !(claudePret && claudeImages);
+    vider($("c-pieces"), piecesChat.map((f, i) => h("span", { class: "piece" }, h("span", { text: f.name || "capture" }),
+      h("button", { type: "button", "aria-label": "Retirer " + (f.name || "la capture"), text: "×", onclick: () => { piecesChat.splice(i, 1); rendrePieces(); } }))));
+  }
+  $("btn-c-images").addEventListener("click", () => { $("c-images").accept = (claudeImages && claudeImages.mediaTypes || ["image/*"]).join(","); $("c-images").click(); });
+  $("c-images").addEventListener("change", e => {
+    const max = claudeImages ? claudeImages.maxCount || 5 : 5;
+    piecesChat = [...piecesChat, ...Array.from(e.target.files || []).filter(f => f.type.startsWith("image/"))].slice(0, max);
+    e.target.value = ""; rendrePieces();
+  });
   async function envoyerChat(texte) {
     texte = String(texte || "").trim();
+    const images = claudeImages ? piecesChat.slice(0, claudeImages.maxCount || 5) : [];
+    if (!texte && images.length) texte = "Voici mes captures : regarde ce que j'ai fait.";
     if (!texte || !sample || enCoursChat) return;
     const msgs = S.discussion.messages;
-    msgs.push({ role: "user", content: texte.slice(0, 8000) });
+    msgs.push({ role: "user", content: texte.slice(0, 8000) + (images.length ? `\n\n(${images.length} capture${images.length > 1 ? "s" : ""} jointe${images.length > 1 ? "s" : ""})` : "") });
+    piecesChat = []; rendrePieces();
     if (msgs.length > 40) msgs.splice(0, msgs.length - 40);
     enregistrer("discussion");
     $("c-message").value = "";
@@ -2778,7 +2591,7 @@ Règles :
     const fil = $("c-fil");
     vider(fil, msgs.map(bulleMessage));
     const bulle = h("div", { class: "bulle bulle-claude pense", text: "Claude réfléchit…" });
-    tour = { ajoutees: [], faites: [] };
+    tour = { changements: [] };
     fil.append(bulle);
     bulle.scrollIntoView({ block: "nearest", behavior: "smooth" });
     $("btn-c-stop").hidden = false;
@@ -2789,14 +2602,15 @@ Règles :
     const opts = { signal: ctlChat.signal, onText: ({ text }) => { bulle.className = "bulle bulle-claude"; vider(bulle, markdown(text)); } };
     const outils = outilsChat();
     if (outils) {
-      opts.tools = outils.map(o => ({ ...o, execute: (input) => { if (bulle.classList.contains("pense")) bulle.textContent = o.name.includes("tache") ? "Claude met à jour ta liste À faire…" : "Claude fait le calcul avec l'outil…"; return o.execute(input); } }));
+      opts.tools = outils.map(o => ({ ...o, execute: (input) => { if (bulle.classList.contains("pense")) bulle.textContent = o.name === "enregistrer_operations" ? "Claude enregistre tes opérations…" : o.name === "mettre_a_jour_solde" ? "Claude met à jour ton solde…" : "Claude fait le calcul avec l'outil…"; return o.execute(input); } }));
     } else opts.cache = false;
     if ($("c-approfondi").checked) opts.modelTier = "complex";
+    if (images.length) opts.images = images;
     try {
       const r = await sample(tours, opts);
       msgs.push({ role: "assistant", content: r.text.slice(0, 12000) });
       if (r.truncated) msgs[msgs.length - 1].content += "\n\n*(Réponse coupée : demande-moi la suite.)*";
-      if (tour.ajoutees.length || tour.faites.length) msgs[msgs.length - 1].taches = { ajoutees: tour.ajoutees.slice(0, 5), faites: tour.faites.slice(0, 5) };
+      if (tour.changements.length) msgs[msgs.length - 1].changements = tour.changements.slice(0, 30);
     } catch (e) {
       if (e && e.text) msgs.push({ role: "assistant", content: e.text.slice(0, 12000) + (e.code === "cancelled" ? "\n\n*(Arrêté.)*" : "\n\n*(Réponse interrompue.)*") });
       else if (!(e && e.code === "cancelled")) { enCoursChat = false; ctlChat = null; $("btn-c-stop").hidden = true; rendreChat(); $("c-fil").append(h("p", { class: "erreur", text: messageErreur(e) })); return; }
@@ -3239,7 +3053,7 @@ ${texte.slice(0, 20000)}`;
   }
   $("btn-exporter").addEventListener("click", async () => {
     if (!downloads) return;
-    const data = JSON.stringify({ app: "Boussole Bourse", date: aujourdhui(), strategie: S.strategie, portefeuille: S.portefeuille, taches: S.taches, journal: S.journal, comparer: S.comparer, historique: S.historique, budget: S.budget, operations: M }, null, 2);
+    const data = JSON.stringify({ app: "Boussole Bourse", date: aujourdhui(), strategie: S.strategie, portefeuille: S.portefeuille, journal: S.journal, comparer: S.comparer, historique: S.historique, budget: S.budget, operations: M }, null, 2);
     try { await downloads.save({ filename: `boussole-bourse-${aujourdhui()}.json`, data }); } catch (_) {}
   });
   $("btn-effacer").addEventListener("click", () => { $("effacer-confirmer").hidden = false; });
@@ -3271,9 +3085,9 @@ ${texte.slice(0, 20000)}`;
     rendreEnCours = true;
     try {
       const syn = synthese();
-      rendreBandeau(); rendreMonMois(); rendreReleve(syn); rendreTaches(); rendrePrecaution(); rendreHistorique(); rendreRepartition(syn); rendreAlertes(syn); rendreVersement(syn); rendreEnveloppes(syn); rendreComptes(); rendreCoursDirect(); rendreLignes(syn);
+      rendreBandeau(); rendrePyramide(syn); rendrePrecaution(); rendreHistorique(); rendreRepartition(syn); rendreEnveloppes(syn); rendreComptes(); rendreCoursDirect(); rendreLignes(syn);
+      rendreMonMois(); rendrePaie();
       $("btn-importer").hidden = !claudePret;
-      rendreBudget();
       rendreIC();
       rendreChat();
       rendreStrategie();
@@ -3287,7 +3101,6 @@ ${texte.slice(0, 20000)}`;
     d.addEventListener("toggle", () => {
       if (d.open) replisOuverts.add(d.id); else replisOuverts.delete(d.id);
       try { localStorage.setItem(CLE("replis"), JSON.stringify([...replisOuverts])); } catch (_) {}
-      if (d.open && d.id === "repli-12mois") rendre12Mois();
     });
   });
 

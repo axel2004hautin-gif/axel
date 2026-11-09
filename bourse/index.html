@@ -36,6 +36,7 @@
   --f-texte: "Instrument Sans", "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
   --f-chiffres: "DM Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
   --rayon: 10px;
+  --panneau: #2a1db4; --panneau-2: #1b1290; --case: #ffffff; --case-encre: #1c1480; --case-doux: #ecebfb; --case-gain: #0f7a3e; --case-perte: #bf342b; --case-choisie: #8fe3ff;
   --barre-h: 64px;
 }
 @media (prefers-color-scheme: dark) {
@@ -44,6 +45,7 @@
     --muted: #8a909b; --trait: #2a3039; --accent: #b6a8f6; --accent-doux: #28233f; --sur-accent: #16122a;
     --gain: #45c37a; --gain-fond: #132c1d; --perte: #f27b70; --perte-fond: #371b19; --alerte: #e6b04f;
     --alerte-fond: #32270f; --serie-1: #3987e5; --serie-2: #d95926; --serie-3: #199e70;
+    --panneau: #211a6e; --panneau-2: #150f4d; --case: #2c2580; --case-encre: #efedff; --case-doux: #3b3399; --case-gain: #5fd892; --case-perte: #ff8f84; --case-choisie: #8fe3ff;
     color-scheme: dark;
   }
 }
@@ -52,6 +54,7 @@
   --muted: #8a909b; --trait: #2a3039; --accent: #b6a8f6; --accent-doux: #28233f; --sur-accent: #16122a;
   --gain: #45c37a; --gain-fond: #132c1d; --perte: #f27b70; --perte-fond: #371b19; --alerte: #e6b04f;
   --alerte-fond: #32270f; --serie-1: #3987e5; --serie-2: #d95926; --serie-3: #199e70;
+  --panneau: #211a6e; --panneau-2: #150f4d; --case: #2c2580; --case-encre: #efedff; --case-doux: #3b3399; --case-gain: #5fd892; --case-perte: #ff8f84; --case-choisie: #8fe3ff;
   color-scheme: dark;
 }
 
@@ -146,10 +149,6 @@ a { color: var(--accent); }
 .bandeau p { flex: 1 1 280px; }
 
 /* Chiffre principal */
-.releve { display: flex; flex-wrap: wrap; gap: 12px 32px; align-items: flex-end; }
-.releve .releve-total { font-family: var(--f-titre); font-size: clamp(2.2rem, 6vw, 3.2rem); font-weight: 750; line-height: 1.05; letter-spacing: -0.02em; }
-.releve-ligne { display: grid; gap: 2px; }
-.releve-ligne .chiffre { font-size: 1.05rem; }
 
 /* Boutons et champs */
 .btn {
@@ -285,28 +284,72 @@ details.repli[open] > summary { margin-bottom: 14px; }
 .repli-corps { display: grid; gap: 12px; }
 .repli-corps > * { min-width: 0; }
 .repli-corps > p { max-width: 68ch; }
-/* Mon mois */
-.mon-mois { display: grid; gap: 12px 24px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); align-items: start; }
-.mm-bloc { display: grid; gap: 6px; min-width: 0; }
-.mm-bloc h3 { font-size: 0.82rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
-.mm-table td { padding: 5px 0; vertical-align: middle; }
-.mm-table td.num { padding-left: 10px; white-space: nowrap; }
-.mm-table input { width: 116px; min-height: 32px; padding: 3px 8px; text-align: right; }
-.mm-table .nom-ligne small { font-size: 0.74rem; }
-.mm-table .table-total td { padding-top: 7px; }
-.mm-tuiles { display: grid; gap: 8px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.mm-tuile { padding: 10px; align-content: start; }
-.mm-tuile .etiquette { overflow-wrap: anywhere; }
-.mm-tuile b { font-size: 1.15rem; white-space: nowrap; }
-@media (max-width: 520px) {
-  .mm-table .nom-ligne small { display: none; }
-  .mm-table td { padding: 3px 0; }
-  .mm-tuile { padding: 8px; }
-  .mm-tuile b { font-size: 1rem; }
-  #carte-mon-mois { padding: 12px 14px; }
+/* Panneaux : « Mon patrimoine » et « Mon mois » (cases blanches sur fond bleu) */
+.panneau { background: linear-gradient(160deg, var(--panneau), var(--panneau-2)); border-radius: 20px; padding: 22px; display: grid; gap: 14px; color: var(--case-encre); min-width: 0; }
+.case {
+  background: var(--case); color: var(--case-encre); border: 0; border-radius: 14px; padding: 14px 12px; font: inherit;
+  display: grid; gap: 4px; align-content: center; justify-items: center; text-align: center; min-width: 0;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.06) inset, 0 10px 24px -16px rgba(5,2,40,0.75);
 }
-#carte-mon-mois { gap: 10px; }
-#carte-mon-mois .carte-tete { align-items: center; }
+button.case { cursor: pointer; transition: transform 0.12s ease, box-shadow 0.12s ease; }
+button.case:hover { transform: translateY(-2px); }
+button.case:focus-visible { outline: 3px solid var(--case-choisie); outline-offset: 2px; }
+button.case[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--case-choisie), 0 10px 24px -16px rgba(5,2,40,0.75); }
+.case-etiquette { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.8; overflow-wrap: anywhere; }
+.case-montant { font-family: var(--f-titre); font-size: 1.45rem; font-weight: 750; letter-spacing: -0.01em; line-height: 1.15; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.case-pct { font-family: var(--f-chiffres); font-size: 0.76rem; font-weight: 500; padding: 1px 9px; border-radius: 999px; background: var(--case-doux); }
+.case-sous { font-size: 0.74rem; opacity: 0.72; line-height: 1.3; }
+.case.gain .case-montant, .case.gain .case-pct { color: var(--case-gain); }
+.case.perte .case-montant, .case.perte .case-pct { color: var(--case-perte); }
+.case.estime .case-montant { opacity: 0.55; }
+.case-titre { justify-self: center; font-family: var(--f-titre); font-size: clamp(1.15rem, 3.2vw, 1.7rem); font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; padding: 12px 34px; margin: 0; }
+.case-bandeau { font-family: var(--f-titre); font-size: 1.05rem; font-weight: 700; padding: 11px 16px; }
+.case-entete { font-family: var(--f-titre); font-size: 1rem; font-weight: 700; padding: 9px 14px; }
+.case-action { width: 100%; }
+/* Accueil : la pyramide à gauche, la courbe à droite */
+.accueil { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); align-items: stretch; }
+@media (min-width: 1000px) { .accueil { grid-template-columns: minmax(0, 11fr) minmax(0, 10fr); } }
+.pyramide { justify-items: center; align-content: start; }
+.py-rang { display: grid; gap: 12px; width: 100%; }
+.py-1 { max-width: 360px; }
+.py-2 { max-width: 560px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.py-2 .case { padding-block: 18px; }
+.py-3 .case-montant { font-size: 1.15rem; }
+.case-total .case-montant { font-size: 2rem; }
+.py-barre { display: flex; gap: 2px; width: 100%; height: 8px; margin-top: 6px; border-radius: 999px; overflow: hidden; }
+.py-seg-epargne { background: var(--serie-3); }
+.py-seg-bourse { background: var(--serie-1); }
+.py-pied { color: rgba(255,255,255,0.78); font-size: 0.8rem; text-align: center; margin: 0; }
+.py-pied .lien { color: #ffffff; }
+@media (max-width: 560px) {
+  .panneau { padding: 16px 12px; gap: 10px; border-radius: 16px; }
+  .py-3 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .case-montant { font-size: 1.2rem; }
+  .case-total .case-montant { font-size: 1.6rem; }
+}
+#carte-historique { align-content: start; }
+/* Mon mois */
+.mm-tete { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.mm-fleche { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(255,255,255,0.16); color: #ffffff; font-size: 1.5rem; line-height: 1; cursor: pointer; }
+.mm-fleche:hover { background: rgba(255,255,255,0.28); }
+.mm-entrees { display: grid; gap: 12px; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.mm-entrees .case { min-height: 118px; }
+.mm-sorties { display: grid; gap: 16px 28px; grid-template-columns: repeat(2, minmax(0, 1fr)); padding-inline: 4%; }
+.mm-groupe { display: grid; gap: 10px; align-content: start; }
+.mm-paire { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.mm-paire .case { min-height: 100px; }
+.mm-imprevu { justify-items: stretch; text-align: left; gap: 10px; }
+.mm-imprevu .champ > span { color: var(--case-encre); }
+@media (max-width: 860px) {
+  .mm-entrees { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .mm-entrees .case { grid-column: span 2; min-height: 92px; }
+  .mm-entrees .case:nth-child(4), .mm-entrees .case:nth-child(5) { grid-column: span 3; }
+  .mm-sorties { grid-template-columns: minmax(0, 1fr); padding-inline: 0; }
+}
+#mm-detail { scroll-margin-top: 90px; }
+.mmd-montant { display: grid; gap: 4px; max-width: 320px; }
+.mmd-bloc { display: grid; gap: 10px; border-top: 1px solid var(--trait); padding-top: 12px; }
+.mmd-bloc[hidden] { display: none; }
 /* À faire */
 .taches { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
 .tache { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: start; padding: 8px 0; border-bottom: 1px solid var(--trait); }
@@ -321,6 +364,8 @@ details.repli[open] > summary { margin-bottom: 14px; }
 /* Graphique du patrimoine */
 .graphe-outils { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center; }
 .graphe-outils .segments span { padding: 4px 10px; font-size: 0.8rem; }
+.periode-dates { width: 100%; }
+.periode-dates .champ { flex: 1 1 140px; max-width: 200px; }
 .selection-zoom { fill: var(--accent); opacity: 0.12; }
 details[open] > summary { margin-bottom: 10px; }
 .hypotheses { display: grid; grid-template-columns: minmax(120px, 1fr) 90px 90px; gap: 6px 10px; align-items: center; font-size: 0.86rem; }
@@ -335,6 +380,11 @@ details[open] > summary { margin-bottom: 10px; }
 .suggestions { display: flex; flex-wrap: wrap; gap: 8px; }
 .suggestion { border: 1px solid var(--trait); background: var(--surface); color: var(--encre); border-radius: 999px; padding: 6px 12px; font: 0.86rem var(--f-texte); cursor: pointer; text-align: left; }
 .suggestion:hover { border-color: var(--accent); color: var(--accent); }
+.pieces { display: flex; flex-wrap: wrap; gap: 6px; }
+.pieces:empty { display: none; }
+.piece { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--trait); background: var(--surface); border-radius: 999px; padding: 3px 4px 3px 10px; font-size: 0.8rem; max-width: 100%; }
+.piece span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px; }
+.piece button { border: 0; background: var(--surface-2); color: var(--encre-2); border-radius: 999px; width: 22px; height: 22px; cursor: pointer; }
 .note-taches { justify-self: start; font-size: 0.8rem; color: var(--muted); margin: -6px 0 0 4px; }
 .composer { display: grid; gap: 8px; position: sticky; bottom: 0; background: var(--fond); padding-block: 8px; }
 @media (max-width: 760px) { .composer { bottom: calc(var(--barre-h) + env(safe-area-inset-bottom, 0px)); } }
@@ -395,11 +445,17 @@ details[open] > summary { margin-bottom: 10px; }
     </div>
     <nav class="onglets" role="tablist" aria-label="Sections">
       <button class="onglet" role="tab" id="t-portefeuille" data-vue="portefeuille" aria-selected="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"></path><path d="M5 10v10h14V10"></path><path d="M10 20v-6h4v6"></path></svg>
-        Accueil</button>
-      <button class="onglet" role="tab" id="t-budget" data-vue="budget" aria-selected="false">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="2"></rect><path d="M3 10h18"></path><path d="M16 15h2"></path><path d="M7 6V4h10v2"></path></svg>
-        Budget</button>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"></path><path d="M7 15l4-4 3 3 5-6"></path></svg>
+        Patrimoine</button>
+      <button class="onglet" role="tab" id="t-mois" data-vue="mois" aria-selected="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18"></path><path d="M8 3v4"></path><path d="M16 3v4"></path></svg>
+        Mon mois</button>
+      <button class="onglet" role="tab" id="t-epargne" data-vue="epargne" aria-selected="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 7h-1.5A5.5 5.5 0 0 0 7 6.5 6 6 0 0 0 4 12c0 2 1 3.6 2.5 4.6V20h3v-2h4v2h3v-3.4A5.6 5.6 0 0 0 19 13h2V9h-2z"></path><circle cx="15.5" cy="10.5" r="0.8" fill="currentColor"></circle></svg>
+        Épargne</button>
+      <button class="onglet" role="tab" id="t-bourse" data-vue="bourse" aria-selected="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"></path><path d="M10 20V4"></path><path d="M16 20v-7"></path><path d="M22 20H2"></path></svg>
+        Bourse</button>
       <button class="onglet" role="tab" id="t-claude" data-vue="claude" aria-selected="false">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"></path></svg>
         Claude</button>
@@ -412,81 +468,128 @@ details[open] > summary { margin-bottom: 10px; }
 
 <main class="page">
 
-  <!-- ============ PORTEFEUILLE ============ -->
+  <!-- ============ 1. PATRIMOINE ============ -->
   <section class="vue" id="vue-portefeuille" role="tabpanel" aria-labelledby="t-portefeuille">
     <div id="bandeau-exemple"></div>
-
-    <div class="carte" id="carte-mon-mois">
-      <div class="carte-tete">
-        <h2 id="mm-titre">Mon mois</h2>
-        <div class="actions">
-          <button class="btn btn-discret btn-petit" id="mm-prec" aria-label="Mois précédent">‹</button>
-          <button class="btn btn-discret btn-petit" id="mm-suiv" aria-label="Mois suivant">›</button>
-        </div>
-      </div>
-      <div class="mon-mois">
-        <div class="mm-bloc">
-          <h3>Ce qui rentre et ce qui sort</h3>
-          <table class="mm-table"><tbody>
-            <tr><td><label for="mm-salaire">Salaire</label></td><td class="num"><input type="number" id="mm-salaire" min="0" step="0.01" inputmode="decimal"></td></tr>
-            <tr><td><label for="mm-prime">Prime d'activité</label></td><td class="num"><input type="number" id="mm-prime" min="0" step="0.01" inputmode="decimal"></td></tr>
-            <tr><td><label for="mm-autres">Autres revenus prévus</label></td><td class="num"><input type="number" id="mm-autres" min="0" step="0.01" inputmode="decimal"></td></tr>
-            <tr><td><div class="nom-ligne"><label for="mm-fixes">Dépenses fixes</label><small>essence, crédit voiture, abonnements</small></div></td><td class="num"><input type="number" id="mm-fixes" min="0" step="1" inputmode="decimal"></td></tr>
-            <tr><td><div class="nom-ligne"><label for="mm-variables">Dépenses variables</label><small>courses, sorties, imprévus</small></div></td><td class="num"><input type="number" id="mm-variables" min="0" step="1" inputmode="decimal"></td></tr>
-            <tr class="table-total"><td>Disponible</td><td class="num chiffre" id="mm-dispo"></td></tr>
-          </tbody></table>
-        </div>
-        <div class="mm-bloc">
-          <h3>Où va mon argent</h3>
-          <div id="mm-repartition"></div>
-        </div>
-      </div>
-      <p class="note" id="mm-note"></p>
-      <div class="actions"><button class="btn btn-ghost btn-petit" id="btn-rentree">J'ai reçu de l'argent (prime, chèque…)</button></div>
-      <div class="fiche" id="fiche-rentree" hidden></div>
-      <details class="sous-repli">
-        <summary>Sur quelle ligne investir</summary>
-        <div class="champs">
-          <label class="champ"><span>Montant à investir (€)</span><input type="number" id="versement-montant" min="0" step="10" inputmode="decimal"></label>
-        </div>
-        <div id="versement-resultat"></div>
-      </details>
-    </div>
-
-    <div class="carte">
-      <div class="releve" id="releve"></div>
-      <div id="patrimoine-barre"></div>
-    </div>
-
-    <div class="grille">
-      <div class="carte c6" id="carte-taches">
-        <div class="carte-tete"><h2>À faire</h2><span class="petit muet" id="taches-note"></span></div>
-        <div id="taches"></div>
-        <form class="ajout-tache" id="form-tache" autocomplete="off">
-          <input id="tache-texte" maxlength="200" placeholder="Ajouter une tâche…" aria-label="Nouvelle tâche">
-          <input type="date" id="tache-date" aria-label="À faire avant le">
-          <button class="btn btn-petit" type="submit">Ajouter</button>
-        </form>
-        <div id="taches-faites"></div>
-      </div>
-      <div class="carte c6">
-        <div class="carte-tete"><h2>Mon épargne de précaution</h2><span id="precaution-statut"></span></div>
-        <div id="precaution"></div>
-      </div>
-      <div class="carte c12">
+    <div class="accueil">
+      <div class="panneau pyramide" id="pyramide"></div>
+      <div class="carte" id="carte-historique">
         <div class="carte-tete"><h2>Mon patrimoine dans le temps</h2><span class="petit muet" id="historique-note"></span></div>
         <div class="graphe-outils" id="historique-outils"></div>
         <div class="legende" id="historique-legende"></div>
         <div class="graphe" id="historique-graphe"></div>
         <p class="note" id="historique-aide"></p>
       </div>
+    </div>
+  </section>
 
-      <div class="carte c12" id="carte-alertes">
-        <h2>Ce qui demande ton attention</h2>
-        <ul class="constats" id="alertes"></ul>
+  <!-- ============ 2. MON MOIS ============ -->
+  <section class="vue" id="vue-mois" role="tabpanel" aria-labelledby="t-mois" hidden>
+    <div class="panneau mm">
+      <div class="mm-tete">
+        <button class="mm-fleche" id="mm-prec" aria-label="Mois précédent">‹</button>
+        <h2 class="case case-titre" id="mm-titre">Mon mois</h2>
+        <button class="mm-fleche" id="mm-suiv" aria-label="Mois suivant">›</button>
+      </div>
+      <div class="mm-entrees" id="mm-entrees"></div>
+      <div class="case case-bandeau">Où va mon argent ?</div>
+      <div class="mm-sorties">
+        <div class="mm-groupe">
+          <button class="case case-entete" data-detail="courant" id="mm-courant-titre">Compte courant</button>
+          <div class="mm-paire" id="mm-courant"></div>
+        </div>
+        <div class="mm-groupe">
+          <button class="case case-entete" data-detail="cote" id="mm-cote-titre">Mis de côté</button>
+          <div class="mm-paire" id="mm-cote"></div>
+        </div>
+      </div>
+      <button class="case case-bandeau case-action" id="mm-imprevu" aria-expanded="false">Je viens de recevoir de l'argent imprévu et je souhaite voir avec Claude ce que j'en fais</button>
+      <form class="case mm-imprevu" id="mm-imprevu-fiche" hidden autocomplete="off">
+        <label class="champ"><span>Montant reçu (€)</span><input type="number" id="mm-imprevu-montant" min="0" step="0.01" inputmode="decimal" required></label>
+        <label class="champ"><span>D'où vient-il ?</span><input id="mm-imprevu-origine" placeholder="Ex. : prime de fin d'année, chèque de Noël"></label>
+        <div class="actions"><button class="btn" type="submit">Voir avec Claude</button><button class="btn btn-discret" type="button" id="mm-imprevu-annuler">Annuler</button></div>
+      </form>
+    </div>
+    <p class="note" id="mm-note"></p>
+
+    <div class="carte" id="mm-detail">
+      <div class="carte-tete">
+        <h2 id="mmd-titre">Détail</h2>
+        <div class="actions">
+          <button class="btn btn-ghost btn-petit" id="b-importer" hidden>Importer mes opérations avec Claude</button>
+          <button class="btn btn-ghost btn-petit" id="b-ajouter">Ajouter une opération</button>
+        </div>
+      </div>
+        <div class="fiche" id="b-fiche-import" hidden>
+          <h3>Importer un relevé de compte</h3>
+          <p class="petit">Colle les opérations copiées depuis ta banque, ou ajoute un fichier CSV ou des captures d'écran (par exemple l'onglet Activité de Trade Republic). Claude range chaque opération dans une catégorie ; tu vérifies avant d'enregistrer. Pour un PDF, copie son texte ou fais une capture.</p>
+          <label class="champ"><span>Texte copié</span><textarea id="b-import-texte" rows="5" placeholder="03/11 CARTE CARREFOUR CITY -23,45&#10;05/11 VIR SALAIRE NOVEMBRE +1 650,00"></textarea></label>
+          <label class="champ"><span>Fichiers (CSV, texte ou captures)</span><input type="file" id="b-import-fichiers" multiple></label>
+          <div class="actions">
+            <button class="btn" id="b-import-lire">Lire avec Claude</button>
+            <button class="btn btn-discret" id="b-import-annuler">Annuler</button>
+            <span class="petit muet" id="b-import-etat"></span>
+          </div>
+          <div id="b-import-apercu"></div>
+        </div>
+        <div class="fiche" id="b-fiche-op" hidden></div>
+      <p class="petit muet" id="mmd-intro"></p>
+      <div class="mmd-montant" id="mmd-montant-zone">
+        <label class="champ"><span id="mmd-montant-lib">Montant prévu ce mois-ci (€)</span><input type="number" id="mmd-montant" min="0" step="0.01" inputmode="decimal"></label>
+        <p class="petit muet" id="mmd-montant-aide"></p>
+      </div>
+      <div id="mmd-contenu"></div>
+      <div id="b-operations"></div>
+
+      <div class="mmd-bloc" id="mmd-paie" hidden>
+        <label class="case petit"><input type="checkbox" id="b-decalage"><span>Ma paie arrive en fin de mois : elle compte pour le mois suivant si elle tombe à partir du <input type="number" id="b-decalage-jour" min="1" max="31" step="1" inputmode="numeric" aria-label="Jour du mois" style="width:64px;display:inline-block;min-height:30px;padding:2px 6px"></span></label>
+        <details class="repli" id="repli-paie"><summary><h2>Ma paie</h2><span class="petit muet" id="paie-note"></span></summary>
+        <div class="repli-corps">
+        <p class="petit muet">Ta paie calculée depuis ta fiche de paie, une paie différente (heures en plus, prime, augmentation) et ta paie des prochaines années.</p>
+        <h3>Aujourd'hui</h3>
+        <div class="champs">
+          <label class="champ champ-large"><span>Mon poste</span><input id="paie-poste" placeholder="Ex. : vendeur en CDI à temps plein"></label>
+          <label class="champ"><span>Salaire brut mensuel (€)</span><input type="number" id="paie-brut" min="0" step="0.01" inputmode="decimal"></label>
+          <label class="champ"><span>Heures par mois</span><input type="number" id="paie-heures" min="0" step="0.01" inputmode="decimal"></label>
+          <label class="champ"><span>Prélèvement à la source (%)</span><input type="number" id="paie-pas" min="0" max="45" step="0.1" inputmode="decimal"></label>
+          <label class="champ"><span>Entré dans l'entreprise le</span><input type="date" id="paie-entree"></label>
+          <label class="champ"><span>Catégorie (classification)</span><select id="paie-categorie"><option value="1-2">1 ou 2</option><option value="3-4">3 ou 4</option><option value="5-6">5 ou 6</option><option value="7-8">7 ou 8</option></select></label>
+        </div>
+        <label class="case"><input type="checkbox" id="paie-smic"><span>Mon salaire suit le SMIC (il augmente quand le SMIC est revalorisé)</span></label>
+        <div id="paie-aujourdhui"></div>
+        <h3>Simuler un mois</h3>
+        <div class="champs">
+          <label class="champ"><span>Heures supplémentaires dans le mois</span><input type="number" id="paie-hs" min="0" max="60" step="0.5" inputmode="decimal" placeholder="0"></label>
+          <label class="champ"><span>Prime brute (€)</span><input type="number" id="paie-prime" min="0" step="10" inputmode="decimal" placeholder="0"></label>
+          <label class="champ"><span>Augmentation demandée (€ brut/mois)</span><input type="number" id="paie-augm" min="0" step="10" inputmode="decimal" placeholder="0"></label>
+        </div>
+        <div id="paie-simulation"></div>
+        <h3>Les prochaines années</h3>
+        <div class="champs">
+          <label class="champ" style="max-width:240px"><span>Hausse du SMIC (%/an)</span><input type="number" id="paie-hausse" min="0" max="10" step="0.1" inputmode="decimal"></label>
+        </div>
+        <div id="paie-futur"></div>
+        </div></details>
       </div>
 
-      <div class="carte c12">
+      <div class="mmd-bloc" id="mmd-precaution" hidden>
+        <div class="carte-tete"><h3>Mon épargne de précaution</h3><span id="precaution-statut"></span></div>
+        <div id="precaution"></div>
+      </div>
+
+      <div class="mmd-bloc" id="mmd-investir" hidden>
+        <h3>Sur quelle ligne investir</h3>
+        <div class="champs">
+          <label class="champ"><span>Montant à investir (€)</span><input type="number" id="versement-montant" min="0" step="10" inputmode="decimal"></label>
+        </div>
+        <div id="versement-resultat"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 3. ÉPARGNE ============ -->
+  <section class="vue" id="vue-epargne" role="tabpanel" aria-labelledby="t-epargne" hidden>
+      <div class="carte">
         <div class="carte-tete">
           <h2>Mes comptes d'épargne</h2>
           <div class="actions">
@@ -496,8 +599,11 @@ details[open] > summary { margin-bottom: 10px; }
         <div class="fiche" id="fiche-compte" hidden></div>
         <div id="comptes"></div>
       </div>
+  </section>
 
-      <div class="carte c12">
+  <!-- ============ 4. BOURSE ============ -->
+  <section class="vue" id="vue-bourse" role="tabpanel" aria-labelledby="t-bourse" hidden>
+      <div class="carte">
         <div class="carte-tete">
           <h2>Mes lignes</h2>
           <div class="actions">
@@ -525,117 +631,6 @@ details[open] > summary { margin-bottom: 10px; }
         <div class="fiche" id="fiche-ligne" hidden></div>
         <div id="lignes"></div>
       </div>
-    </div>
-  </section>
-
-  <!-- ============ BUDGET ============ -->
-  <section class="vue" id="vue-budget" role="tabpanel" aria-labelledby="t-budget" hidden>
-    <div class="vue-titre">
-      <h2>Mon budget</h2>
-      <div class="actions">
-        <button class="btn btn-discret btn-petit" id="b-mois-prec" aria-label="Mois précédent">‹</button>
-        <b id="b-mois" style="min-width:130px;text-align:center"></b>
-        <button class="btn btn-discret btn-petit" id="b-mois-suiv" aria-label="Mois suivant">›</button>
-      </div>
-    </div>
-    <div class="carte"><div class="tuiles" id="b-tuiles"></div><p class="note" id="b-tuiles-note"></p>
-      <label class="case petit"><input type="checkbox" id="b-decalage"><span>Ma paie arrive en fin de mois : elle compte pour le mois suivant si elle tombe à partir du <input type="number" id="b-decalage-jour" min="1" max="31" step="1" inputmode="numeric" aria-label="Jour du mois" style="width:64px;display:inline-block;min-height:30px;padding:2px 6px"></span></label>
-    </div>
-    <div class="grille">
-      <div class="carte c7">
-        <div class="carte-tete"><h2>Par catégorie</h2><span class="petit muet" id="b-cat-note"></span></div>
-        <div class="repart" id="b-categories"></div>
-        <div class="legende"><span><i class="cle-barre"></i>Dépensé</span><span><i class="cle-cible"></i>Budget prévu</span></div>
-      </div>
-      <div class="carte c5">
-        <h2>Ce que dit ton budget</h2>
-        <ul class="constats" id="b-alertes"></ul>
-      </div>
-      <div class="carte c12">
-        <div class="carte-tete">
-          <h2>Mes opérations</h2>
-          <div class="actions">
-            <button class="btn btn-petit" id="b-ajouter">Ajouter une opération</button>
-            <button class="btn btn-ghost btn-petit" id="b-importer" hidden>Importer un relevé avec Claude</button>
-            <button class="btn btn-ghost btn-petit" id="b-rentree">J'ai reçu de l'argent</button>
-          </div>
-        </div>
-        <div class="fiche" id="b-fiche-import" hidden>
-          <h3>Importer un relevé de compte</h3>
-          <p class="petit">Colle les opérations copiées depuis ta banque, ou ajoute un fichier CSV ou des captures d'écran (par exemple l'onglet Activité de Trade Republic). Claude range chaque opération dans une catégorie ; tu vérifies avant d'enregistrer. Pour un PDF, copie son texte ou fais une capture.</p>
-          <label class="champ"><span>Texte copié</span><textarea id="b-import-texte" rows="5" placeholder="03/11 CARTE CARREFOUR CITY -23,45&#10;05/11 VIR SALAIRE NOVEMBRE +1 650,00"></textarea></label>
-          <label class="champ"><span>Fichiers (CSV, texte ou captures)</span><input type="file" id="b-import-fichiers" multiple></label>
-          <div class="actions">
-            <button class="btn" id="b-import-lire">Lire avec Claude</button>
-            <button class="btn btn-discret" id="b-import-annuler">Annuler</button>
-            <span class="petit muet" id="b-import-etat"></span>
-          </div>
-          <div id="b-import-apercu"></div>
-        </div>
-        <div class="fiche" id="b-fiche-op" hidden></div>
-        <div id="b-operations"></div>
-      </div>
-      <div class="carte c12" id="carte-paie">
-        <details class="repli" id="repli-paie"><summary><h2>Ma paie</h2><span class="petit muet" id="paie-note"></span></summary>
-        <div class="repli-corps">
-        <p class="petit muet">Ta paie d'aujourd'hui, une paie différente (heures en plus, prime, augmentation) et ta paie des prochaines années, traduites en ce que tu pourras mettre de côté.</p>
-        <h3>Aujourd'hui</h3>
-        <div class="champs">
-          <label class="champ champ-large"><span>Mon poste</span><input id="paie-poste" placeholder="Ex. : vendeur en CDI à temps plein"></label>
-          <label class="champ"><span>Salaire brut mensuel (€)</span><input type="number" id="paie-brut" min="0" step="0.01" inputmode="decimal"></label>
-          <label class="champ"><span>Heures par mois</span><input type="number" id="paie-heures" min="0" step="0.01" inputmode="decimal"></label>
-          <label class="champ"><span>Prélèvement à la source (%)</span><input type="number" id="paie-pas" min="0" max="45" step="0.1" inputmode="decimal"></label>
-          <label class="champ"><span>Entré dans l'entreprise le</span><input type="date" id="paie-entree"></label>
-          <label class="champ"><span>Catégorie (classification)</span><select id="paie-categorie"><option value="1-2">1 ou 2</option><option value="3-4">3 ou 4</option><option value="5-6">5 ou 6</option><option value="7-8">7 ou 8</option></select></label>
-        </div>
-        <label class="case"><input type="checkbox" id="paie-smic"><span>Mon salaire suit le SMIC (il augmente quand le SMIC est revalorisé)</span></label>
-        <div id="paie-aujourdhui"></div>
-        <h3>Simuler un mois</h3>
-        <div class="champs">
-          <label class="champ"><span>Heures supplémentaires dans le mois</span><input type="number" id="paie-hs" min="0" max="60" step="0.5" inputmode="decimal" placeholder="0"></label>
-          <label class="champ"><span>Prime brute (€)</span><input type="number" id="paie-prime" min="0" step="10" inputmode="decimal" placeholder="0"></label>
-          <label class="champ"><span>Augmentation demandée (€ brut/mois)</span><input type="number" id="paie-augm" min="0" step="10" inputmode="decimal" placeholder="0"></label>
-        </div>
-        <div id="paie-simulation"></div>
-        <h3>Les prochaines années</h3>
-        <div class="champs">
-          <label class="champ" style="max-width:240px"><span>Hausse du SMIC (%/an)</span><input type="number" id="paie-hausse" min="0" max="10" step="0.1" inputmode="decimal"></label>
-        </div>
-        <div id="paie-futur"></div>
-        </div></details>
-      </div>
-      <div class="carte c6">
-        <details class="repli" id="repli-prevu"><summary><h2>Mon budget prévu</h2><span id="b-plan-total"></span></summary>
-        <div class="repli-corps">
-        <p class="petit muet">Ce que tu prévois chaque mois. Tes versements d'épargne viennent de ta stratégie.</p>
-        <div id="b-plan"></div>
-        </div></details>
-      </div>
-      <div class="carte c12">
-        <details class="repli" id="repli-demenagement"><summary><h2>Et si je déménage ?</h2><span class="petit muet">Pour lire les annonces avec tes chiffres</span></summary>
-        <div class="repli-corps">
-        <p class="petit muet">Indique ce que coûterait un logement : la page montre ton nouveau budget, ce que tu pourras encore investir et ce que ça change pour ton objectif à 50 ans.</p>
-        <div class="champs">
-          <label class="champ"><span>Loyer charges comprises (€)</span><input type="number" id="dm-loyer" min="0" step="10" inputmode="decimal" placeholder="550"></label>
-          <label class="champ"><span>Électricité, internet (€/mois)</span><input type="number" id="dm-energie" min="0" step="5" inputmode="decimal" placeholder="60"></label>
-          <label class="champ"><span>Assurance habitation (€/mois)</span><input type="number" id="dm-assurance" min="0" step="1" inputmode="decimal" placeholder="10"></label>
-          <label class="champ"><span>Courses en plus (€/mois)</span><input type="number" id="dm-courses" min="0" step="10" inputmode="decimal" placeholder="200"></label>
-          <label class="champ"><span>Autres dépenses en plus (€/mois)</span><input type="number" id="dm-autres" min="0" step="10" inputmode="decimal" placeholder="50"></label>
-          <label class="champ"><span>APL estimée (€/mois)</span><input type="number" id="dm-apl" min="0" step="5" inputmode="decimal" placeholder="0"></label>
-          <label class="champ"><span>Dépôt de garantie, frais d'emménagement (€)</span><input type="number" id="dm-installation" min="0" step="100" inputmode="decimal" placeholder="1500"></label>
-        </div>
-        <div id="dm-resultat"></div>
-        </div></details>
-      </div>
-      <div class="carte c6">
-        <details class="repli" id="repli-12mois"><summary><h2>Sur 12 mois</h2></summary>
-        <div class="repli-corps">
-        <div class="legende" id="b-12-legende"></div>
-        <div class="graphe" id="b-12-graphe"></div>
-        <div class="defile" id="b-12-tableau"></div>
-        </div></details>
-      </div>
-    </div>
   </section>
 
   <!-- ============ CLAUDE ============ -->
@@ -650,9 +645,12 @@ details[open] > summary { margin-bottom: 10px; }
       </div>
       <div class="fil" id="c-fil"></div>
       <div class="composer">
-        <textarea id="c-message" rows="2" placeholder="Pose ta question : une action, un ETF, ta stratégie, une baisse de marché…"></textarea>
+        <div class="pieces" id="c-pieces"></div>
+        <textarea id="c-message" rows="2" placeholder="Pose ta question, ou montre-moi tes captures de la Caisse d'Épargne ou de Trade Republic…"></textarea>
         <div class="actions">
           <button class="btn" id="btn-c-envoyer">Envoyer</button>
+          <button class="btn btn-ghost" id="btn-c-images" type="button" hidden>Joindre des captures</button>
+          <input type="file" id="c-images" accept="image/*" multiple hidden>
           <button class="btn btn-discret" id="btn-c-stop" hidden>Arrêter</button>
           <span class="petit muet" id="c-contexte"></span>
         </div>
@@ -699,7 +697,7 @@ details[open] > summary { margin-bottom: 10px; }
           <div id="s-paliers"></div>
           <div class="actions"><button class="btn btn-ghost btn-petit" id="btn-s-palier">Ajouter un palier</button></div>
         </div>
-        <p class="note">Les soldes se tiennent dans Accueil, rubrique « Mes comptes d'épargne » : coche les comptes qui forment ton épargne de précaution.</p>
+        <p class="note">Les soldes se tiennent dans la page Épargne : coche les comptes qui forment ton épargne de précaution.</p>
       </div>
       <div class="carte c6" id="carte-interets">
         <div class="carte-tete"><h2>Intérêts composés</h2><button class="btn btn-ghost btn-petit" id="btn-ic-mes-chiffres">Reprendre mes chiffres</button></div>
