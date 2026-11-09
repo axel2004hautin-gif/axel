@@ -578,7 +578,7 @@
     const pat = patrimoine(syn), z = $("pyramide");
     const total = pat.total, bourse = pat.bourse + pat.crypto, epargne = pat.epargne;
     const part = v => total > 0 ? pct(v / total * 100, 0) : "—";
-    const caseP = (lib, montant, pastilleTxt, sous, cls, titre) => h("div", { class: "case" + (cls ? " " + cls : ""), title: titre || null },
+    const caseP = (lib, montant, pastilleTxt, sous, cls, titre) => h("div", { class: "cellule" + (cls ? " " + cls : ""), title: titre || null },
       h("span", { class: "case-etiquette", text: lib }), h("span", { class: "case-montant", text: montant }),
       pastilleTxt ? h("span", { class: "case-pct", text: pastilleTxt }) : null, sous ? h("span", { class: "case-sous", text: sous }) : null);
     const pl = planDuMois();
@@ -592,8 +592,8 @@
     };
     const enDirect = syn.lignes.length && syn.enDirect;
     vider(z,
-      h("h2", { class: "case case-titre", text: "Mon patrimoine" }),
-      h("div", { class: "py-rang py-1" }, h("div", { class: "case case-total" },
+      h("h2", { class: "cellule case-titre", text: "Mon patrimoine" }),
+      h("div", { class: "py-rang py-1" }, h("div", { class: "cellule case-total" },
         h("span", { class: "case-etiquette", text: "Montant total" }), h("span", { class: "case-montant", text: eur(total, 0) }),
         h("span", { class: "case-pct", text: "100 %" }), barre)),
       h("div", { class: "py-rang py-2" },
@@ -770,25 +770,30 @@
       variables: dernier("variables") ?? somme(B.CATEGORIES_BUDGET.filter(c => c.type === "depense" && !c.fixe), c => num(pv[c.id]))
     };
   }
-  // Le partage du mois : d'abord les dépenses (gardées sur le compte courant), puis le plan de ta stratégie
-  // (épargne de précaution en premier), et ce qui dépasse le plan suit ta règle des rentrées en plus.
+  // Le partage du mois. Les dépenses restent sur le compte courant. L'épargne de précaution reçoit ce
+  // que son palier demande par paie pour tenir sa date (1 366 € à trouver en 2 paies : 683 €) ; tout le
+  // reste du salaire et de la prime d'activité est investi. Les autres revenus prévus (une prime, un
+  // chèque) suivent la règle des rentrées en plus : ils complètent d'abord le palier.
+  function besoinPrecaution(pl) {
+    if (pl.manque > 0 && pl.palier && pl.palier.date && pl.paies > 0) return Math.ceil(pl.manque / pl.paies);
+    return pl.versEpargne;
+  }
   function monMois(cle) {
     const e = (S.budget.mensuel || {})[cle] || {}, sug = suggestionsMois(cle);
     const v = c => e[c] != null ? num(e[c]) : num(sug[c]);
     const revenus = v("salaire") + v("primeActivite") + v("autres"), depenses = v("fixes") + v("variables");
-    const dispo = revenus - depenses, pl = planDuMois();
-    let precaution = 0, investir = 0, plaisir = 0, surplus = 0;
-    if (dispo > 0) {
-      precaution = Math.min(dispo, pl.versEpargne);
-      investir = Math.min(dispo - precaution, pl.investir);
-      surplus = dispo - precaution - investir;
-      if (surplus >= 1) { const c = conseilRentree(surplus, precaution); precaution += c.prec + c.enPlus; investir += c.investir; plaisir = c.plaisir; }
-    }
+    const dispo = revenus - depenses, pl = planDuMois(), cibleLEP = besoinPrecaution(pl);
+    let precaution = 0, investir = 0, plaisir = 0;
+    // La part régulière (salaire et prime d'activité, moins les dépenses) et la part en plus (autres revenus).
+    const regulier = Math.max(0, Math.min(dispo, v("salaire") + v("primeActivite") - depenses)), enPlus = Math.max(0, dispo - regulier);
+    precaution = Math.min(regulier, cibleLEP);
+    investir = regulier - precaution;
+    if (enPlus >= 1) { const c = conseilRentree(enPlus, precaution); precaution += c.prec + c.enPlus; investir += c.investir; plaisir = c.plaisir; }
     precaution = Math.floor(precaution); investir = Math.floor(investir);
     const garder = Math.round((revenus - precaution - investir) * 100) / 100;
     const lignes = investir > 0 ? repartirVersement(investir, synthese()) : [];
     const enveloppes = [...new Set(lignes.filter(x => x.ligne).map(x => x.ligne.enveloppe))];
-    return { cle, e, sug, v, revenus, depenses, dispo, precaution, investir, garder, plaisir, surplus, plan: pl.versEpargne + pl.investir, pl, lignes, enveloppes, rempli: CHAMPS_MOIS.filter(c => e[c] != null).length };
+    return { cle, e, sug, v, revenus, depenses, dispo, precaution, investir, garder, plaisir, enPlus, cibleLEP, plan: cibleLEP + pl.investir, pl, lignes, enveloppes, rempli: CHAMPS_MOIS.filter(c => e[c] != null).length };
   }
   const moisMM = () => moisTableau || moisParDefaut();
   // Les cases de « Mon mois » et le détail que chacune ouvre sous les cases.
@@ -815,7 +820,7 @@
     const cle = moisMM(), r = monMois(cle), pl = r.pl, mois = nomMois(cle).split(" ")[0];
     $("b-importer").hidden = !claudePret;
     $("mm-titre").textContent = "Mon mois de " + mois + (cle.slice(0, 4) !== String(new Date().getFullYear()) ? " " + cle.slice(0, 4) : "");
-    const caseMM = (cleCase, lib, montant, sous, cls) => h("button", { type: "button", class: "case" + (cls ? " " + cls : ""), "data-detail": cleCase, "aria-pressed": detailMM === cleCase ? "true" : "false" },
+    const caseMM = (cleCase, lib, montant, sous, cls) => h("button", { type: "button", class: "cellule" + (cls ? " " + cls : ""), "data-detail": cleCase, "aria-pressed": detailMM === cleCase ? "true" : "false" },
       h("span", { class: "case-etiquette", text: lib }), h("span", { class: "case-montant", text: montantMM(montant) }), sous ? h("span", { class: "case-sous", text: sous }) : null);
     const sousEntree = c => {
       if (c === "fixes" || c === "variables") { const d = -reelMM(cle, CASES_MM[c].cats); return d > 0 ? `${eur(d, 0)} dépensés` : r.e[c] == null ? "proposé" : null; }
@@ -831,9 +836,16 @@
     vider($("mm-cote"), caseMM("lep", pl.compte ? nomCourt(pl.compte.nom) : "Épargne de précaution", r.precaution, pl.compte ? "épargne de précaution" : null),
       caseMM("pea", nomInvest(r), r.investir, r.lignes.length === 1 && r.lignes[0].ligne ? r.lignes[0].poche.nom : null));
     const notes = [];
+    const pourquoiLEP = pl.manque > 0 && pl.palier && pl.palier.date && pl.paies > 0
+      ? `${eur(r.cibleLEP, 0)} sur ${pl.compte ? nomCourt(pl.compte.nom) : "ton épargne de précaution"} : ce qu'il faut par paie pour avoir ${eur(pl.obj, 0)} le ${dateFr(pl.palier.date)} (${eur(pl.manque, 0)} en ${pl.paies} paie${pl.paies > 1 ? "s" : ""}).`
+      : r.cibleLEP > 0 ? `${eur(r.cibleLEP, 0)} sur ton épargne de précaution, comme prévu par ta stratégie.` : "";
     if (r.dispo < 0) notes.push(`Tes dépenses dépassent tes revenus de ${eur(-r.dispo, 0)} : rien à mettre de côté ce mois-ci.`);
-    else if (r.dispo < r.plan - 0.5) notes.push(`Il manque ${eur(r.plan - r.dispo, 0)} pour suivre ton plan (${eur(pl.versEpargne, 0)} d'épargne et ${eur(pl.investir, 0)} investis) : ton épargne de précaution passe en premier.`);
-    else if (r.surplus >= 1) notes.push(`${eur(r.surplus, 0)} de plus que ton plan (${eur(pl.versEpargne, 0)} + ${eur(pl.investir, 0)}) : ${pl.manque > 0 ? "ils complètent d'abord ton épargne de précaution, comme une prime" : "ils suivent le partage de ta stratégie"}.`);
+    else {
+      if (pourquoiLEP) notes.push(pourquoiLEP);
+      if (r.precaution < r.cibleLEP - 0.5 && !r.enPlus) notes.push(`Ce mois-ci, il ne reste que ${eur(r.precaution, 0)} après tes dépenses : rien n'est investi, ton épargne de précaution passe en premier.`);
+      else if (r.investir > 0) notes.push(`Le reste, ${eur(r.investir, 0)}, va sur le ${nomInvest(r)} (ta stratégie en prévoit ${eur(pl.investir, 0)}).`);
+      if (r.enPlus >= 1) notes.push(`Tes autres revenus (${eur(r.enPlus, 0)}) sont traités comme une prime : ${pl.manque > 0 ? "ils complètent d'abord ton épargne de précaution" : "ils suivent le partage de ta stratégie"}.`);
+    }
     if (r.rempli < CHAMPS_MOIS.length) notes.push("Les cases « proposé » viennent de tes opérations ou du mois d'avant : clique dessus pour mettre ton montant.");
     $("mm-note").textContent = notes.join(" ");
     rendreDetailMM(forcer);
@@ -869,8 +881,8 @@
         ligneTxt(`À garder sur le compte courant : ${montantMM(r.garder)}, pour tes dépenses fixes (${eur(r.v("fixes"), 0)}) et variables (${eur(r.v("variables"), 0)})${r.plaisir ? ` et ${eur(r.plaisir, 0)} pour te faire plaisir` : ""}.`);
         ligneTxt(`Dépensé en ${mois} : ${eur(Math.max(0, -reel), 2)}.${cc ? ` Solde du ${cc.nom.toLowerCase()} : ${eur(num(cc.solde), 2)} (à mettre à jour dans la page Épargne).` : ""}`);
       } else if (detailMM === "cote" || detailMM === "lep" || detailMM === "pea") {
-        if (detailMM !== "pea") ligneTxt(`À verser sur ${pl.compte ? pl.compte.nom : "ton épargne de précaution"} : ${eur(r.precaution, 0)}${r.precaution > pl.versEpargne + 0.5 ? ` = ${eur(pl.versEpargne, 0)} prévus par ta stratégie + ${eur(r.precaution - pl.versEpargne, 0)} en plus de ton plan, qui complètent d'abord ton épargne de précaution` : r.precaution < pl.versEpargne - 0.5 ? `, au lieu des ${eur(pl.versEpargne, 0)} prévus : ce mois-ci, l'argent manque` : ", comme prévu par ta stratégie"}.`);
-        if (detailMM !== "lep") ligneTxt(`À verser sur le ${nomInvest(r)} : ${eur(r.investir, 0)}${r.investir < pl.investir - 0.5 ? `, au lieu des ${eur(pl.investir, 0)} prévus` : r.investir > pl.investir + 0.5 ? ` = ${eur(pl.investir, 0)} prévus + ${eur(r.investir - pl.investir, 0)} en plus` : ", comme prévu par ta stratégie"}.`);
+        if (detailMM !== "pea") ligneTxt(`À verser sur ${pl.compte ? pl.compte.nom : "ton épargne de précaution"} : ${eur(r.precaution, 0)}${pl.manque > 0 && pl.palier && pl.palier.date && pl.paies > 0 ? `. Il manque ${eur(pl.manque, 0)} pour avoir ${eur(pl.obj, 0)} le ${dateFr(pl.palier.date)}, et il reste ${pl.paies} paie${pl.paies > 1 ? "s" : ""} d'ici là : ${eur(r.cibleLEP, 0)} par paie suffisent` : ""}${r.precaution > r.cibleLEP + 0.5 ? `, plus ${eur(r.precaution - r.cibleLEP, 0)} venus de tes autres revenus` : r.precaution < r.cibleLEP - 0.5 ? `, au lieu des ${eur(r.cibleLEP, 0)} nécessaires : ce mois-ci, l'argent manque` : ""}.`);
+        if (detailMM !== "lep") ligneTxt(`À verser sur le ${nomInvest(r)} : ${eur(r.investir, 0)}, tout ce qui reste une fois tes dépenses payées et ton épargne de précaution servie (ta stratégie en prévoit ${eur(pl.investir, 0)}).`);
         if (detailMM === "cote" && r.revenus > 0) ligneTxt(`En tout : ${eur(r.precaution + r.investir, 0)} mis de côté, soit ${pct((r.precaution + r.investir) / r.revenus * 100, 0)} de tes revenus du mois.`);
         if (reel) lignes.push(h("p", { class: "petit muet", text: `Déjà versé en ${mois} d'après tes opérations : ${eur(Math.max(0, -reel), 2)}.` }));
       } else if (reel) ligneTxt(`Reçu en ${mois} d'après tes opérations : ${eur(reel, 2)}.`);
@@ -988,7 +1000,7 @@
     const pvDe = p => num(p.bourse) + num(p.crypto) - num(p.investi), dPv = pvDe(p1) - pvDe(p0);
     $("historique-aide").textContent = `Du ${dateFr(p0.date)} au ${dateFr(p1.date)} : ${eurSigne(dTotal)} (${pctSigne(dTotal / Math.max(1, totalPoint(p0)) * 100)})${num(p1.investi) > 0 ? `, dont ${eurSigne(dPv)} de plus-values ; le reste vient de tes versements et de ton épargne` : ""}. Fais glisser sur la courbe pour zoomer.`;
     // À côté de la pyramide, la courbe prend la hauteur de la carte.
-    const W = Math.round(Math.max(300, Math.min(900, z.clientWidth))), H = W < 520 ? 200 : window.innerWidth >= 1000 ? 330 : 240, m = { g: 56, d: 14, h: 10, b: 26 };
+    const W = Math.round(Math.max(300, Math.min(900, z.clientWidth))), H = window.innerWidth >= 1000 ? 320 : W < 520 ? 200 : 240, m = { g: 56, d: 14, h: 10, b: 26 };
     const t = p => new Date(p.date + "T12:00:00").getTime();
     const t0 = t(p0), t1 = t(p1);
     // Total : l'échelle suit la période, pour voir les variations. Détail : les trois parts empilées depuis 0.
